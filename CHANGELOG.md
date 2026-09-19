@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.12
+
+**The vending machine is a real machine now.** The old one was a solid block with its stock sealed inside where nobody could ever see it, and a fixed set of coloured squares that had nothing to do with what you had loaded.
+
+- **You can see in.** The cabinet is built as a shell with a glazed door, so the glass shows the racks behind it. What is on the coils is exactly what the machine is stocked with: cans on the upper shelves, bars below, and they disappear as they sell.
+- **It serves you.** Press **E** and a coil turns, the item drops, and it lands in the delivery tray at the bottom. Press **E** on the tray to reach in and take it out. The little display says READY, THANK YOU or SOLD OUT.
+- **Refilling means opening it up.** **Shift+E** swings the service door wide on its hinge and slides the racks out; only then will it take a crate. Shift+E again shuts it. Loading a closed machine tells you to open it first.
+- Proper cans and bars: a tapered can with a printed wrap, a chamfered top and a ring pull; a flow-wrapped bar with crimped ends. A drink you take from the tray is a thing you carry.
+- The cabinet also has a coin slot, a coin return and a keypad, and the coin box is still emptied by opening the machine up.
+
 ## v1.11
 
 **The shop is called Grow Co. everywhere now.** The v1.4 rename changed the window, the menu and the installer but never touched the world, so the shop front, the back gate, the delivery van, the register screen, the menu board, the shop dashboard, the creative-mode sign preset and the bug report header all still said the old name. All swept. The RF marks that are meant to be there are untouched: RF Smoking on the cigarettes, RF Supply Co. across town, and the RF lab products.
