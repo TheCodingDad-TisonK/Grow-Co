@@ -14,7 +14,7 @@
     "icon": "node tools/make-icon.js",
     "dist": "npm run check && npm run icon && electron-packager . \"RF Grow Co\" --platform=win32 --arch=x64 --out=dist --overwrite --icon=build/icon.ico --app-copyright=\"TheCodingDad-TisonK\" --ignore=\"^/dist\" --ignore=\"^/docs\" --ignore=\"^/screenshots\" --ignore=\"^/tools\" --ignore=\"^/build\" --ignore=\"^/\\.github\" --ignore=\"^/\\.git\" --prune=true",
     "zip": "node tools/zip-dist.js",
-    "installer": "npm run check && npm run icon && electron-builder --win nsis --x64",
+    "installer": "npm run check && npm run icon && electron-builder --win nsis --x64 --publish never",
     "guide": "node tools/guide-to-md.js"
   },
   "devDependencies": {
