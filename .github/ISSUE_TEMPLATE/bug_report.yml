@@ -1,0 +1,101 @@
+name: Bug report
+description: Something in the game is broken. The in-game form (F7) fills most of this in for you.
+title: "[Bug] "
+labels: ["bug", "player-report", "needs-triage"]
+assignees:
+  - TheCodingDad-TisonK
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting. **Tip:** press **F7** in the game. It opens a form, gathers your version, system and savegame, and brings you here with everything filled in. All you do is paste into "Report data" and submit.
+  - type: dropdown
+    id: category
+    attributes:
+      label: What kind of problem is it?
+      options:
+        - Gameplay and balance
+        - Crash, freeze or black screen
+        - Graphics and visuals
+        - Sound
+        - Saving and loading
+        - Menus, HUD and controls
+        - Performance
+        - Customers and selling
+        - Growing, drying and the bench
+        - Staff (Jo, guard, driver, operator)
+        - Robberies, weapons and police
+        - Basement, lab and machines
+        - Town, car and map
+        - Edit mode and creative mode
+        - Installer or desktop app
+        - Something else
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: How bad is it?
+      options:
+        - "Blocker: I cannot continue playing"
+        - "Major: a feature is broken"
+        - "Minor: annoying, but there is a way round it"
+        - "Cosmetic: it just looks or reads wrong"
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often does it happen?
+      options:
+        - Every time
+        - Often
+        - Sometimes
+        - It happened once
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where were you?
+      options:
+        - Main menu
+        - Shop floor and service window
+        - Office
+        - Grow room
+        - Dry and cure room
+        - Processing room
+        - Lobby
+        - Back room and yard
+        - Security room
+        - Upstairs flat
+        - Connoisseur lounge
+        - Roof greenhouse
+        - Basement works
+        - Extraction lab
+        - In town, on foot
+        - In town, driving
+        - Bank or gun store interior
+        - Not sure
+  - type: input
+    id: version
+    attributes:
+      label: Game version
+      placeholder: "1.1.0 (shown in the main menu)"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you see, and what were you doing right before?
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Report data
+      description: "If you used the in-game form: click here and press Ctrl+V. It pastes the full report, including your savegame if you chose to attach it. If the game told you the save was too large, drag the downloaded .txt file in here instead."
+      render: text
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else? Screenshots are very welcome.

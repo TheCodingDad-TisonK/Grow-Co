@@ -38,6 +38,8 @@ It is one HTML page and plain JavaScript on top of [three.js](https://threejs.or
 | **Your car** | Parked in your bay behind the yard gate. Haul supplies and cartons, run phone deliveries, fit upgrades in the garage. |
 | **Upstairs** | Your own flat, a connoisseur lounge with its own staircase from the lobby, and a roof greenhouse. |
 | **Make it yours** | F2 moves every piece of furniture, every sign and every wall screen. F3 is a full creative build mode. |
+| **Three save slots** | Three shops, side by side, each deleted on its own. |
+| **Bug reports** | F7 opens a form that gathers your version, system and savegame and files a labelled GitHub issue. |
 | **Living world** | Day and night, seasons, rain, storms and snow, weekends, a holiday week, power cuts and a generator. |
 
 ![The basement works](screenshots/02-basement-works.jpg)
@@ -61,7 +63,7 @@ The game needs no server logic. Anything that can serve the `game/` folder as st
 
 ## Controls
 
-`WASD` move · `Shift` run · `E` use, pick up, hand over · `Shift+E` second action · `G` put back · `1 to 6` hotbar · `Tab` inventory · `M` map · `P` silent alarm · `F2` edit mode · `F3` creative mode · right click closes menus · `Esc` pause · `F11` fullscreen
+`WASD` move · `Shift` run · `E` use, pick up, hand over · `Shift+E` second action · `G` put back · `1 to 6` hotbar · `Tab` inventory · `M` map · `P` silent alarm · `F2` edit mode · `F3` creative mode · right click closes menus · `F7` report a bug · `Esc` pause · `F11` fullscreen
 
 The main menu has a thirteen chapter guide, including an "I am stuck" chapter. The same guide is in the [wiki](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/wiki/Player-Guide).
 
@@ -73,6 +75,7 @@ game/                 the whole game: static files, playable from any web server
   grow3d.js           the simulation and the world (one file, one closure)
   grow3d-creative.js  creative build mode, plugged in through RFGROW.hooks
   guide.js            the player guide (main menu, pause menu and wiki share it)
+  report.js           the bug report form (F7)
   menu.js, menu.css   splash screen and main menu
   vendor/three/       three.js r128 (MIT)
 main.js               Electron shell
@@ -93,6 +96,7 @@ Everything lives in [`docs/`](docs) and is mirrored to the [wiki](https://github
 - [Save format](docs/Save-Format.md)
 - [Building and releasing](docs/Building-and-Releasing.md)
 - [Roadmap and ideas](docs/Roadmap-and-Ideas.md)
+- [Reporting bugs](docs/Reporting-Bugs.md)
 - [FAQ](docs/FAQ.md)
 
 ## Make it your own

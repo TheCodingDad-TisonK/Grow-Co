@@ -1,31 +1,10 @@
 # Changelog
 
-## 1.0.3
+## v1
 
-- The "not a Farming Simulator product" notice moved off the splash and is now large, at the top of the main menu. The splash is back to three seconds.
+The first public release. Everything below is in it.
 
-## 1.0.2
+- **Three save slots**, each with its own delete button and confirmation, on the main menu.
+- **Bug reporting**: F7, or a button in the pause menu and the main menu, opens a form with dropdowns for category, severity, frequency and location, and free text for what happened, what was expected and the steps. It gathers the game version, the system, the settings, where the player was standing, recent script errors, lifetime stats and, with permission, the savegame. It then fills in a GitHub issue that is labelled by area and severity and assigns the developer. An optional relay (`tools/report-relay`) files it directly for players without a GitHub account.
+- `tools/decode-report.js` pulls a reporter's savegame back out of an issue so it can be loaded in a developer slot.
 
-- A clear notice on the splash screen and the main menu: this game is not a Farming Simulator product and has nothing to do with that suite. It is a standalone hobby project. The same notice now leads the README, the wiki and the FAQ.
-- The splash stays up for five seconds so the notice can be read; a click or a key still skips it.
-
-## 1.0.1
-
-- The splash screen is now part of the page itself, so it is on screen from the first frame. The old start card no longer flashes up while the game loads.
-
-## 1.0.0
-
-First standalone release.
-
-- The full game as a desktop app for Windows, with a one-click installer, and as a static web page.
-- Splash screen, main menu with continue and new game, a thirteen chapter guide, Discord and website buttons.
-- The core loop: grow, dry, cure, grind, bag, roll, bake, sell through the service window.
-- Staff: Jo, the guard, a driver, a basement operator, a night guard.
-- RF Smoking: the basement cigarette line, four pack types, a shuttered cabinet, hand-over selling, wholesale.
-- Extraction lab: vape carts, pressed hash, gummies, chocolate.
-- Staged robberies with four robber types, five ways to fight back, a getaway car, a silent alarm, police heat.
-- An open town with a drivable car, a map, a bank and gun store you walk into, a supplier, a wholesaler, a rival to buy out, a park, a precinct, phone deliveries.
-- Upstairs split into your flat and a connoisseur lounge with its own staircase; a roof greenhouse.
-- Sliding, lockable doors controlled from the shop control box; a twelve camera security room.
-- F2 moves furniture, signs, screens and boards; F3 creative build mode.
-- Seasons, weather, weekends, a holiday week, power cuts and a generator.

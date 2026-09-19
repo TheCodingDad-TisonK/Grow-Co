@@ -4,6 +4,7 @@
 - [Home](Home)
 - [Getting started](Getting-Started)
 - [Player guide](Player-Guide)
+- [Reporting bugs](Reporting-Bugs)
 - [FAQ](FAQ)
 
 **Build on it**

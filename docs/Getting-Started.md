@@ -32,6 +32,8 @@ The **Guide** button in the main menu, and "How to play" in the pause menu, cove
 
 ## Saves
 
-The game saves by itself, all the time. The desktop app keeps the save in its own local storage inside your user profile. In a browser it lives in that browser's storage for that address. **New game** in the main menu erases it; so does **Reset save** in the pause menu.
+There are **three save slots**. The main menu lists them with their day, level and money; each has its own button, and its own delete button with a confirmation. Switching slot reloads the game.
+
+The game saves by itself, all the time. The desktop app keeps the save in its own local storage inside your user profile. In a browser it lives in that browser's storage for that address. The delete button on a slot erases that shop; **Reset save** in the pause menu erases the one you are playing.
 
 Add `?save=name` to the address (browser or `npm run serve`) to play a separate save slot, which is handy for testing.

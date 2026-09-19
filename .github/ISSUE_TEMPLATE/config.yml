@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question, idea, or just want to chat
+    url: https://discord.gg/Th2pnq36
+    about: The Discord is the quickest place for anything that is not a bug.
+  - name: Stuck in the game?
+    url: https://github.com/TheCodingDad-TisonK/RF-Grow-Co/wiki/Player-Guide#i-am-stuck
+    about: The "I am stuck" chapter of the player guide.

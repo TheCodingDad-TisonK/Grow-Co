@@ -47,6 +47,7 @@ That is the whole game in miniature. Everything else makes that loop bigger, fas
 | **F2** | edit mode: move furniture, signs, screens |
 | **F3** | creative build mode |
 | **Right click** | close the open menu or panel |
+| **F7** | report a bug |
 | **Esc** | pause menu |
 | **F11** | fullscreen (desktop app) |
 
@@ -167,4 +168,5 @@ Your car is parked in the owner bay in the yard, behind the gate. The gate opens
 - **I lost the control box, a sign or the roster.** F2, look at it, Backspace puts it back where it started.
 - **A door will not open.** It is locked: unlock it at the control box.
 - **I am broke.** Street deals in the park pay cash at once. The roof greenhouse is free. Sell the cheapest thing you can make and rebuild.
+- **Found a bug?** Press **F7**, or use Report a bug in the pause menu. Fill in the form and it collects your version, your system and your savegame for you. The more of it you fill in, the faster it gets fixed.
 - **Something is badly broken.** Pause menu, Dev tools has teleports and a "clear cooldowns" button. Your save lives in the app's local storage; "Reset save" in the pause menu starts over.

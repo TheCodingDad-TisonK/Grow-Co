@@ -10,7 +10,7 @@
   if (typeof THREE === 'undefined') { document.body.innerHTML = '<p style="padding:40px;font-family:sans-serif">three.js failed to load (vendor/three/three.min.js).</p>'; return; }
 
   // ── Utilities ─────────────────────────────────────────────────────
-  var SAVE = (function () { try { var q = new URLSearchParams(location.search).get('save'); return q ? 'rfgrowco-' + q.replace(/[^a-z0-9_-]/gi, '') : 'rfgrowco-v1'; } catch (e) { return 'rfgrowco-v1'; } })();
+  var SAVE = (function () { try { var q = new URLSearchParams(location.search).get('save'); if (q) return 'rfgrowco-' + q.replace(/[^a-z0-9_-]/gi, ''); var sl = +(localStorage.getItem('rfgrowco-slot') || 1); if (!(sl >= 1 && sl <= 3)) sl = 1; if (!localStorage.getItem('rfgrowco-slot1') && localStorage.getItem('rfgrowco-v1')) { localStorage.setItem('rfgrowco-slot1', localStorage.getItem('rfgrowco-v1')); localStorage.removeItem('rfgrowco-v1'); } return 'rfgrowco-slot' + sl; } catch (e) { return 'rfgrowco-slot1'; } })();   /* three save slots; the main menu picks one and reloads */
   var SETTINGS_KEY = 'rfgrowco-settings';
   var now = function () { return Date.now(); };
   var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };

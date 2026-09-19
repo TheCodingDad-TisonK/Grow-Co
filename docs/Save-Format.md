@@ -2,7 +2,9 @@
 
 The whole game is one JSON object, `S`, written to `localStorage` a fraction of a second after anything changes.
 
-- Key: `rfgrowco-v1`, or `rfgrowco-<name>` when the page is opened with `?save=<name>`.
+- Key: `rfgrowco-slot1`, `rfgrowco-slot2` or `rfgrowco-slot3`. Which one is loaded is remembered in `rfgrowco-slot`; the main menu writes it and reloads the page, because the game reads its save once at boot.
+- `?save=<name>` loads `rfgrowco-<name>` instead: a developer slot outside the three, which is how a reporter's savegame is opened without touching your own.
+- A save from before slots (`rfgrowco-v1`) is moved into slot 1 the first time the game starts.
 - Settings are separate, under `rfgrowco-settings`.
 - A new save is whatever `fresh()` returns. `load()` copies any missing top-level field from `fresh()` into an older save, which is what keeps old saves working after an update.
 

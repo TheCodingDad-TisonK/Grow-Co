@@ -6,6 +6,12 @@ No. It has nothing to do with Farming Simulator, GIANTS Software, or any Farming
 **Windows says it protected my PC.**
 The installer is not code signed. Choose "More info", then "Run anyway". The source is all here if you would rather build it yourself.
 
+**How many save slots are there?**
+Three. The main menu shows all three with their day, level and money; each has its own Start or Continue button and its own delete button. Switching slot reloads the game. Deleting one never touches the others.
+
+**How do I report a bug?**
+Press **F7** in the game, or use Report a bug in the pause menu. See [Reporting bugs](Reporting-Bugs).
+
 **Where is my save?**
 In the app's local storage inside your user profile (`%APPDATA%\RF Grow Co`). It survives updates and reinstalls. See [Save format](Save-Format).
 

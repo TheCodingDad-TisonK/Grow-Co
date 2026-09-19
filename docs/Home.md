@@ -12,6 +12,7 @@ This wiki is a mirror of the [`docs/`](https://github.com/TheCodingDad-TisonK/RF
 
 - **[Getting started](Getting-Started)**: install it and sell your first bag.
 - **[Player guide](Player-Guide)**: all thirteen chapters of the in-game guide, including "I am stuck".
+- **[Reporting bugs](Reporting-Bugs)**: F7 in the game does most of it for you.
 - **[FAQ](FAQ)**
 
 ## For people who want to change it

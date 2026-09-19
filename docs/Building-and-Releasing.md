@@ -8,6 +8,7 @@ npm start          # run the desktop app from source
 npm run serve      # play in a browser, http://127.0.0.1:8420/
 npm run check      # syntax check of the game scripts
 npm run guide      # regenerate docs/Player-Guide.md from game/guide.js
+npm run version    # regenerate game/version.js from package.json (npm run check does this too)
 ```
 
 There is no build step for the game itself. Edit a file in `game/`, reload (`Ctrl+R` in the app).

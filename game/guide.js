@@ -16,7 +16,7 @@ window.RF_GUIDE = [
     '<table><tr><td><b>W A S D</b></td><td>move</td></tr><tr><td><b>Shift</b></td><td>run</td></tr><tr><td><b>E</b> or left click</td><td>use, pick up, talk, hand over</td></tr><tr><td><b>Shift + E</b></td><td>the second action of a thing (the car trunk, a staff menu, the register drawer)</td></tr>' +
     '<tr><td><b>G</b> or <b>Q</b></td><td>put back what you hold</td></tr><tr><td><b>1 to 6</b>, mouse wheel</td><td>hotbar slot</td></tr><tr><td><b>Tab</b></td><td>inventory</td></tr><tr><td><b>M</b></td><td>town map</td></tr>' +
     '<tr><td><b>P</b></td><td>silent alarm (needs the upgrade)</td></tr><tr><td><b>F2</b></td><td>edit mode: move furniture, signs, screens</td></tr><tr><td><b>F3</b></td><td>creative build mode</td></tr><tr><td><b>Right click</b></td><td>close the open menu or panel</td></tr>' +
-    '<tr><td><b>Esc</b></td><td>pause menu</td></tr><tr><td><b>F11</b></td><td>fullscreen (desktop app)</td></tr></table>' +
+    '<tr><td><b>F7</b></td><td>report a bug</td></tr><tr><td><b>Esc</b></td><td>pause menu</td></tr><tr><td><b>F11</b></td><td>fullscreen (desktop app)</td></tr></table>' +
     '<p><b>In the car:</b> W and S drive, A and D steer, Space brakes, E gets out once you have stopped.</p><p><b>With a weapon in hand:</b> left click swings or fires.</p>' },
   { id: 'grow', icon: '🪴', title: 'Growing and quality', html:
     '<p>Quality is the number that decides your prices and whether connoisseurs buy at all.</p>' +
@@ -59,5 +59,6 @@ window.RF_GUIDE = [
     '<ul><li><b>No customers.</b> Is the shop open at the control box? After a police fine customers stay away for a couple of minutes. Bad weather thins them out.</li><li><b>I cannot pick something up.</b> Hands full: G puts things back, 1 to 6 switches slot.</li><li><b>The customer refuses my goods.</b> Wrong kind, or a connoisseur below his quality bar.</li>' +
     '<li><b>The machines will not start.</b> Tobacco line: you need the licence. Everything stops in a power cut without a generator.</li><li><b>I cannot buy a gun.</b> Firearms licence first (level 4, reputation 30).</li><li><b>My car is wedged.</b> Reverse with S and swing the wheel. The yard is tight: pull forward a little, then steer toward the gate.</li>' +
     '<li><b>A menu will not close.</b> Right click, or Esc.</li><li><b>I lost the control box, a sign or the roster.</b> F2, look at it, Backspace puts it back where it started.</li><li><b>A door will not open.</b> It is locked: unlock it at the control box.</li><li><b>I am broke.</b> Street deals in the park pay cash at once. The roof greenhouse is free. Sell the cheapest thing you can make and rebuild.</li>' +
+    '<li><b>Found a bug?</b> Press <b>F7</b>, or use Report a bug in the pause menu. Fill in the form and it collects your version, your system and your savegame for you. The more of it you fill in, the faster it gets fixed.</li>' +
     '<li><b>Something is badly broken.</b> Pause menu, Dev tools has teleports and a "clear cooldowns" button. Your save lives in the app\'s local storage; "Reset save" in the pause menu starts over.</li></ul>' }
 ];

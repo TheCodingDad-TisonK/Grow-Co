@@ -1,0 +1,31 @@
+name: Issue triage
+
+# Reads a player bug report as it is opened, adds an area label and a severity label from the form answers,
+# makes sure the developer is assigned, and thanks the reporter.
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    if: contains(github.event.issue.labels.*.name, 'player-report')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body || '';
+            const answer = (heading) => { const m = body.match(new RegExp('### ' + heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\n+([^\\n]+)')); return m ? m[1].trim() : ''; };
+            const areas = { 'Gameplay and balance': 'area: gameplay', 'Crash, freeze or black screen': 'area: crash', 'Graphics and visuals': 'area: graphics', 'Sound': 'area: sound', 'Saving and loading': 'area: saves', 'Menus, HUD and controls': 'area: ui', 'Performance': 'area: performance', 'Customers and selling': 'area: selling', 'Growing, drying and the bench': 'area: growing', 'Staff (Jo, guard, driver, operator)': 'area: staff', 'Robberies, weapons and police': 'area: crime', 'Basement, lab and machines': 'area: production', 'Town, car and map': 'area: town', 'Edit mode and creative mode': 'area: building', 'Installer or desktop app': 'area: app' };
+            const labels = [];
+            const area = areas[answer('What kind of problem is it?')]; if (area) labels.push(area);
+            const sev = answer('How bad is it?').split(':')[0].toLowerCase(); if (['blocker', 'major', 'minor', 'cosmetic'].includes(sev)) labels.push('severity: ' + sev);
+            if (/----- SAVE \(/.test(body)) labels.push('has-savegame');
+            const { owner, repo } = context.repo, issue_number = context.payload.issue.number;
+            if (labels.length) await github.rest.issues.addLabels({ owner, repo, issue_number, labels });
+            await github.rest.issues.addAssignees({ owner, repo, issue_number, assignees: ['TheCodingDad-TisonK'] });
+            await github.rest.issues.createComment({ owner, repo, issue_number, body: 'Thank you for the report. @TheCodingDad-TisonK has been notified.' + (labels.includes('has-savegame') ? ' The savegame is attached, which makes this much easier to reproduce.' : '') + '\n\nIf you have a screenshot or remember anything else, add it here.' });
