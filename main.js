@@ -1,7 +1,24 @@
-// Electron shell for RF Grow Co.: one window, no browser chrome, the game loaded from ./game.
+// Electron shell for Grow Co.: one window, no browser chrome, the game loaded from ./game.
 // The game itself is plain HTML + JavaScript and also runs from any static web server.
 const { app, BrowserWindow, Menu, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+// The game used to be called "RF Grow Co", and Electron keeps save data in a folder named after the app.
+// Carry that folder over once so an upgrade never looks like a lost shop.
+(function carryOldSavesOver() {
+  try {
+    const appData = app.getPath('appData');
+    const oldDir = path.join(appData, 'RF Grow Co'), newDir = path.join(appData, 'Grow Co');
+    if (fs.existsSync(oldDir) && !fs.existsSync(path.join(newDir, 'Local Storage'))) {
+      fs.mkdirSync(newDir, { recursive: true });
+      for (const name of ['Local Storage', 'Session Storage', 'Preferences']) {
+        const from = path.join(oldDir, name);
+        if (fs.existsSync(from)) fs.cpSync(from, path.join(newDir, name), { recursive: true });
+      }
+    }
+  } catch (e) { /* a fresh install has nothing to carry */ }
+})();
 
 let win = null;
 
@@ -12,8 +29,8 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 600,
     backgroundColor: '#07110b',
-    title: 'RF Grow Co.',
-    icon: path.join(__dirname, 'game', 'rf-icon.png'),
+    title: 'Grow Co.',
+    icon: path.join(__dirname, 'game', 'logo-256.png'),
     autoHideMenuBar: true,
     show: false,
     webPreferences: {

@@ -13,7 +13,7 @@ Three. The main menu shows all three with their day, level and money; each has i
 Press **F7** in the game, or use Report a bug in the pause menu. See [Reporting bugs](Reporting-Bugs).
 
 **Where is my save?**
-In the app's local storage inside your user profile (`%APPDATA%\RF Grow Co`). It survives updates and reinstalls. See [Save format](Save-Format).
+In the app's local storage inside your user profile (`%APPDATA%\Grow Co`). It survives updates and reinstalls. (The game was called RF Grow Co. before version 1.4; that older folder is carried over automatically the first time you run 1.4.) See [Save format](Save-Format).
 
 **Can I play in a browser?**
 Yes. `npm run serve`, or host the `game/` folder anywhere that serves static files.

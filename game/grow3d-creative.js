@@ -1,5 +1,5 @@
 /* ============================================================
-   RF Grow Co. — Creative mode.
+   Grow Co. — Creative mode.
    Build anything in the shop: place catalog furniture, or compose
    your own objects from primitives (box / cylinder / sphere / cone /
    wedge / plank / pole), stack them on surfaces, paint, scale, rotate,

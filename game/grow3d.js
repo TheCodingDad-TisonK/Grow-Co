@@ -1,5 +1,5 @@
 /* ============================================================
-   RF Grow Co. — 3D first-person grow simulator.
+   Grow Co. — 3D first-person grow simulator.
    Runs in its own window (grow3d.html). Same save key as the 2D
    game (rf-grow-v1) so progress carries over both ways. Economy
    is the same engine: buy, grow, cure, package, sell for cash.
@@ -2266,7 +2266,7 @@
     cityBldg(-8, 33, 11, 11, 5.5, 0x6b5a48, 'Iron & Oak Arms', 'gun'); cityDoor(-8, 27.5, -1, 6, 'gun', 'IRON & OAK', 'arms · ammunition · armour', 0xb5121b);
     cityBldg(-38, 0, 14, 14, 6.5, 0x7b8f6a, 'Green Leaf (rival)', 'rival'); cityDoor(-38, 7, 1, 7, 'rival', 'GREEN LEAF', 'dispensary · est. last year', 0x39d353);
     cityBldg(-22, -57, 26, 15, 7.5, 0x8d949c, 'RF Supply Co.', 'supply'); cityDoor(-22, -49.5, 1, 9, 'supply', 'RF SUPPLY CO.', 'trade counter · load your own car', 0xf2c21a); box(6, 3.2, 0.1, colorMat(0x5f666e, 0.5, 0.6), -12, 1.6, -49.45, { cast: false });
-    C.pois = [{ id: 'shop', name: 'RF Grow Co. (you)', x: 0, z: 0, col: '#6fdc8c' }, { id: 'bank', name: 'First Harvest Bank', x: -30, z: 27.5, col: '#5aa0d8' }, { id: 'gun', name: 'Iron & Oak Arms', x: -8, z: 27.5, col: '#e0564a' }, { id: 'rival', name: 'Green Leaf (rival)', x: -38, z: 7, col: '#39d353' }, { id: 'supply', name: 'RF Supply Co.', x: -22, z: -49.5, col: '#f2c21a' }, { id: 'park', name: 'Harvest Park', x: 28, z: 44, col: '#8fd17a' }];
+    C.pois = [{ id: 'shop', name: 'Grow Co. (you)', x: 0, z: 0, col: '#6fdc8c' }, { id: 'bank', name: 'First Harvest Bank', x: -30, z: 27.5, col: '#5aa0d8' }, { id: 'gun', name: 'Iron & Oak Arms', x: -8, z: 27.5, col: '#e0564a' }, { id: 'rival', name: 'Green Leaf (rival)', x: -38, z: 7, col: '#39d353' }, { id: 'supply', name: 'RF Supply Co.', x: -22, z: -49.5, col: '#f2c21a' }, { id: 'park', name: 'Harvest Park', x: 28, z: 44, col: '#8fd17a' }];
     // Harvest Park: lawn, a crossing of paths, trees, benches, and people who might buy off you
     var PK = { x1: 10, x2: 48, z1: 27, z2: 62 }; C.parks.push(PK); var lawn = new THREE.Mesh(new THREE.PlaneGeometry(PK.x2 - PK.x1, PK.z2 - PK.z1), colorMat(0x5c9a48, 1)); lawn.rotation.x = -Math.PI / 2; lawn.position.set(29, 0.03, 44.5); lawn.receiveShadow = true; world.group.add(lawn);
     [[38, 2.2, 29, 44.5], [2.2, 35, 29, 44.5]].forEach(function (p) { var path = new THREE.Mesh(new THREE.PlaneGeometry(p[0], p[1]), colorMat(0xc9b78f, 1)); path.rotation.x = -Math.PI / 2; path.position.set(p[2], 0.04, p[3]); world.group.add(path); }); cyl(2.2, 2.4, 0.5, colorMat(0x9aa0a6, 0.8), 29, 0.25, 44.5, null, 20); cyl(1.9, 1.9, 0.06, colorMat(0x4a90c8, 0.2, 0.3), 29, 0.5, 44.5, null, 20); world.obstacles.push({ x1: 26.7, x2: 31.3, z1: 42.2, z2: 46.8, tag: 'city', floorLevel: 0 });
@@ -5003,7 +5003,7 @@
     else if (m === 'guide') { body.hidden = false; body.innerHTML = guideHtml(); }
     else if (m === 'intro') { body.hidden = false; body.innerHTML = introMenuHtml(); }
     else if (m === 'stats') { body.hidden = false; body.innerHTML = '<h4>Lifetime</h4>' + paneStatsInner(); }
-    else if (m === 'reset') { if (confirm('Reset RF Grow Co.? All progress is lost.')) { S = fresh(); bindHotbar(); save(); world.dirty = true; rebuildDynamic(); hud(); closeMenu(); toast('Fresh start', ''); } }
+    else if (m === 'reset') { if (confirm('Reset Grow Co.? All progress is lost.')) { S = fresh(); bindHotbar(); save(); world.dirty = true; rebuildDynamic(); hud(); closeMenu(); toast('Fresh start', ''); } }
     else if (m === 'edit') { closeMenu(); if (!edit.on) editToggle(); }
     else if (m === 'dev') { body.hidden = false; body.innerHTML = devHtml(); }
     else if (m === 'creative') { closeMenu(); if (window.RFGROW && window.RFGROW.creative) window.RFGROW.creative.toggle(true); }

@@ -11,7 +11,7 @@
 
 > [!IMPORTANT]
 > **This is NOT a Farming Simulator product.**
-> RF Grow Co. has nothing to do with Farming Simulator, GIANTS Software, or any Farming Simulator mod, including the Realistic Farming mods by the same author. It is not a mod, not an add-on, not part of that suite, and it is not affiliated with or endorsed by GIANTS Software.
+> Grow Co. has nothing to do with Farming Simulator, GIANTS Software, or any Farming Simulator mod, including the Realistic Farming mods by the same author. It is not a mod, not an add-on, not part of that suite, and it is not affiliated with or endorsed by GIANTS Software.
 > It is a separate, standalone hobby project that came alive for one reason: its author enjoyed building it.
 
 ![The service window](screenshots/01-service-window.jpg)
@@ -47,7 +47,7 @@ It is one HTML page and plain JavaScript on top of [three.js](https://threejs.or
 
 ## Install and play
 
-**Windows, the easy way.** Download `RF-Grow-Co-Setup-x.y.z.exe` from the [latest release](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest) and run it. It installs for your user, adds Desktop and Start menu shortcuts and starts the game. Windows may show a SmartScreen notice because the installer is not code signed: choose "More info", then "Run anyway".
+**Windows, the easy way.** Download `Grow-Co-Setup-x.y.z.exe` from the [latest release](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest) and run it. It installs for your user, adds Desktop and Start menu shortcuts and starts the game. Windows may show a SmartScreen notice because the installer is not code signed: choose "More info", then "Run anyway".
 
 **From source, any platform.**
 

@@ -1,4 +1,4 @@
-**RF Grow Co.**
+**Grow Co.**
 
 **Play**
 - [Home](Home)

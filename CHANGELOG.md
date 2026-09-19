@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4
+
+- **The game is called Grow Co.** RF stays as the house mark on the badge; it is not part of the name. The window, the menu, the installer and the docs all say Grow Co. now.
+- Saves are carried over automatically the first time 1.4 runs, so nothing is lost in the rename.
+
 ## v1.3
 
 - **A proper logo.** The RF monogram now sits on a dark badge with a sprout, paired with a Grow Co. wordmark. One source renders every size that is used anywhere: the splash, the main menu, the favicon, the README and the Windows icon, from 16 px up to 1024 px.

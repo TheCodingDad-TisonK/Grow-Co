@@ -2,11 +2,11 @@
 
 ## Install
 
-**Windows.** Download `RF-Grow-Co-Setup-x.y.z.exe` from the [latest release](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest) and run it. One click: it installs for your user account, adds a Desktop shortcut and a Start menu entry, and starts the game. No admin rights needed.
+**Windows.** Download `Grow-Co-Setup-x.y.z.exe` from the [latest release](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest) and run it. One click: it installs for your user account, adds a Desktop shortcut and a Start menu entry, and starts the game. No admin rights needed.
 
 Windows may show a blue SmartScreen box saying it protected your PC. That is because the installer is not code signed, which costs money an indie project does not spend. Choose **More info**, then **Run anyway**.
 
-To remove the game: Settings, Apps, RF Grow Co, Uninstall. Your save is kept in your user profile and survives a reinstall.
+To remove the game: Settings, Apps, Grow Co, Uninstall. Your save is kept in your user profile and survives a reinstall.
 
 **Any platform, from source.** You need [Node.js](https://nodejs.org) 18 or newer.
 

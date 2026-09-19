@@ -18,8 +18,8 @@ There is no build step for the game itself. Edit a file in `game/`, reload (`Ctr
 ## Windows builds
 
 ```bash
-npm run installer  # dist/RF-Grow-Co-Setup-<version>.exe  (one-click installer)
-npm run dist       # dist/RF Grow Co-win32-x64/           (plain folder with the exe)
+npm run installer  # dist/Grow-Co-Setup-<version>.exe  (one-click installer)
+npm run dist       # dist/Grow Co-win32-x64/           (plain folder with the exe)
 npm run zip        # zips that folder for a release
 ```
 
@@ -47,7 +47,7 @@ Builds are not signed, so SmartScreen warns on first run. If you get a certifica
 2. Commit, then tag: `git tag v1.1.0 && git push --tags`.
 3. The **Release** workflow builds the installer on Windows and attaches it to a GitHub release for that tag.
 
-To do it by hand instead: `npm run installer`, then `gh release create v1.1.0 dist/RF-Grow-Co-Setup-1.1.0.exe --notes-file <notes>`.
+To do it by hand instead: `npm run installer`, then `gh release create v1.1.0 dist/Grow-Co-Setup-1.1.0.exe --notes-file <notes>`.
 
 ## The wiki
 

@@ -1,6 +1,6 @@
 # Architecture
 
-RF Grow Co. is deliberately simple to run and a little unusual to read. This page is the map.
+Grow Co. is deliberately simple to run and a little unusual to read. This page is the map.
 
 ## The shape of it
 

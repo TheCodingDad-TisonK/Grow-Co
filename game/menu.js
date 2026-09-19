@@ -21,7 +21,7 @@
 
   var NOTE = '<div class="rf-disclaimer"><b>NOT a Farming Simulator product.</b> This game has nothing to do with Farming Simulator, GIANTS Software, or any Farming Simulator mod. It is a separate, standalone hobby project that exists only because its author enjoyed making it.</div>';
   var splash = $('rf-splash') || el('<div class="rf-front" id="rf-splash"><div class="rf-splash-inner"><img class="rf-splash-logo" src="wordmark.png" alt="Grow Co."><div class="rf-splash-by">a game by <b>TheCodingDad</b></div></div><div class="rf-splash-skip">click or press any key</div></div>');
-  var menu = el('<div class="rf-front" id="rf-mainmenu" hidden><div class="rf-menu-card"><img src="logo-256.png" alt="Grow Co."><h1>RF Grow Co.</h1><div class="rf-menu-sub">first-person shop simulator</div>' + NOTE + '<div id="rf-menu-body"></div><div class="rf-menu-foot">a game by TheCodingDad' + (window.RF_VERSION ? ' · version ' + window.RF_VERSION : '') + (CFG.bug ? ' · F7 reports a bug' : '') + '</div></div></div>');
+  var menu = el('<div class="rf-front" id="rf-mainmenu" hidden><div class="rf-menu-card"><img src="logo-256.png" alt="Grow Co."><h1>Grow <span style="color:#6fdc8c">Co.</span></h1><div class="rf-menu-sub">first-person shop simulator</div>' + NOTE + '<div id="rf-menu-body"></div><div class="rf-menu-foot">a game by TheCodingDad' + (window.RF_VERSION ? ' · version ' + window.RF_VERSION : '') + (CFG.bug ? ' · F7 reports a bug' : '') + '</div></div></div>');
   document.body.appendChild(menu); if (!splash.parentNode) document.body.appendChild(splash);
   var card = menu.querySelector('.rf-menu-card');
 

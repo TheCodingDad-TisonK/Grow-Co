@@ -6,4 +6,4 @@ http.createServer(function (req, res) {
   var rel = decodeURIComponent(req.url.split('?')[0]); if (rel === '/') rel = '/index.html';
   var file = path.normalize(path.join(root, rel)); if (file.indexOf(root) !== 0) { res.writeHead(403); return res.end(); }
   fs.readFile(file, function (err, data) { if (err) { res.writeHead(404); return res.end('not found'); } res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' }); res.end(data); });
-}).listen(port, '127.0.0.1', function () { console.log('RF Grow Co. at http://127.0.0.1:' + port + '/'); });
+}).listen(port, '127.0.0.1', function () { console.log('Grow Co. at http://127.0.0.1:' + port + '/'); });
