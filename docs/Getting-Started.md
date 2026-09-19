@@ -2,7 +2,7 @@
 
 ## Install
 
-**Windows.** Download `Grow-Co-Setup-x.y.z.exe` from the [latest release](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest) and run it. One click: it installs for your user account, adds a Desktop shortcut and a Start menu entry, and starts the game. No admin rights needed.
+**Windows.** Download `Grow-Co-Setup-x.y.z.exe` from the [latest release](https://github.com/TheCodingDad-TisonK/Grow-Co/releases/latest) and run it. One click: it installs for your user account, adds a Desktop shortcut and a Start menu entry, and starts the game. No admin rights needed.
 
 Windows may show a blue SmartScreen box saying it protected your PC. That is because the installer is not code signed, which costs money an indie project does not spend. Choose **More info**, then **Run anyway**.
 
@@ -11,8 +11,8 @@ To remove the game: Settings, Apps, Grow Co, Uninstall. Your save is kept in you
 **Any platform, from source.** You need [Node.js](https://nodejs.org) 18 or newer.
 
 ```bash
-git clone https://github.com/TheCodingDad-TisonK/RF-Grow-Co.git
-cd RF-Grow-Co
+git clone https://github.com/TheCodingDad-TisonK/Grow-Co.git
+cd Grow-Co
 npm install
 npm start        # desktop app
 npm run serve    # or in a browser at http://127.0.0.1:8420/

@@ -6,7 +6,7 @@ A first-person shop simulator by **TheCodingDad**. Grow it, cure it, pack it, se
 > Grow Co. has nothing to do with Farming Simulator, GIANTS Software, or any Farming Simulator mod, including the Realistic Farming mods by the same author. It is not a mod, not an add-on, not part of that suite, and it is not affiliated with or endorsed by GIANTS Software.
 > It is a separate, standalone hobby project that came alive for one reason: its author enjoyed building it.
 
-This wiki is a mirror of the [`docs/`](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/tree/main/docs) folder in the repository. To change a page, edit the file there; a workflow pushes it here on every commit to `main`.
+This wiki is a mirror of the [`docs/`](https://github.com/TheCodingDad-TisonK/Grow-Co/tree/main/docs) folder in the repository. To change a page, edit the file there; a workflow pushes it here on every commit to `main`.
 
 ## For players
 
@@ -26,4 +26,4 @@ This wiki is a mirror of the [`docs/`](https://github.com/TheCodingDad-TisonK/RF
 
 ## Community
 
-[Discord](https://discord.gg/8FcgxwJ3dM) · [realisticfarming.com](https://realisticfarming.com) · [Issues](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/issues)
+[Discord](https://discord.gg/8FcgxwJ3dM) · [realisticfarming.com](https://realisticfarming.com) · [Issues](https://github.com/TheCodingDad-TisonK/Grow-Co/issues)

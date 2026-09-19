@@ -7,7 +7,7 @@
 //   npx wrangler secret put GITHUB_TOKEN        (a fine-grained token with Issues: read and write on the repo only)
 //   npx wrangler deploy
 // Then in game/version.js add:  window.RF_REPORT_ENDPOINT = 'https://<your-worker>.workers.dev/report';
-const REPO = 'TheCodingDad-TisonK/RF-Grow-Co';
+const REPO = 'TheCodingDad-TisonK/Grow-Co';
 const MAX = 400_000;             // a report larger than this is refused: a savegame is normally a few kB
 const PER_HOUR = 5;              // per IP
 const AREAS = { 'Gameplay and balance': 'area: gameplay', 'Crash, freeze or black screen': 'area: crash', 'Graphics and visuals': 'area: graphics', 'Sound': 'area: sound', 'Saving and loading': 'area: saves', 'Menus, HUD and controls': 'area: ui', 'Performance': 'area: performance', 'Customers and selling': 'area: selling', 'Growing, drying and the bench': 'area: growing', 'Staff (Jo, guard, driver, operator)': 'area: staff', 'Robberies, weapons and police': 'area: crime', 'Basement, lab and machines': 'area: production', 'Town, car and map': 'area: town', 'Edit mode and creative mode': 'area: building', 'Installer or desktop app': 'area: app' };

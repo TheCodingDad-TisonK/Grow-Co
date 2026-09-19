@@ -8,7 +8,7 @@
 // the report is posted there instead and the relay files the issue, no GitHub account needed.
 (function () {
   'use strict';
-  var REPO = 'TheCodingDad-TisonK/RF-Grow-Co';
+  var REPO = 'TheCodingDad-TisonK/Grow-Co';
   var errors = [];   // ring buffer of script errors, recorded from the very start of the page
   window.addEventListener('error', function (e) { errors.push(new Date().toISOString().slice(11, 19) + ' ' + (e.message || 'error') + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno); if (errors.length > 12) errors.shift(); });
   window.addEventListener('unhandledrejection', function (e) { errors.push(new Date().toISOString().slice(11, 19) + ' promise: ' + String(e.reason && e.reason.message || e.reason).slice(0, 160)); if (errors.length > 12) errors.shift(); });
@@ -99,7 +99,7 @@
     if (!previewOnly && (f.title.length < 6 || f.what.length < 10)) { err.textContent = 'Please give it a short title and say what happened (a sentence is enough).'; return; }
     assemble(f).then(function (r) {
       if (previewOnly) { view('<h2>What will be sent</h2><p class="rfr-lead">This exact text. The long block at the end is your savegame, compressed.</p><textarea class="rfr-preview" readonly rows="18">' + esc(r.text) + '</textarea><div class="rfr-btns"><button data-rfr="back">← Back to the form</button></div>'); return; }
-      var name = 'RF-Grow-Co-bug-report-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt';
+      var name = 'Grow-Co-bug-report-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt';
       if (window.RF_REPORT_ENDPOINT) { relay(f, r, name); return; }
       var tooBig = r.text.length > 60000, clip = tooBig ? r.text.slice(0, r.text.indexOf('----- SAVE')) + '(the savegame was too large to paste: please attach the downloaded file ' + name + ' to the issue)\n===== END =====' : r.text;
       copy(clip).then(function (copied) {

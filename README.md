@@ -3,8 +3,8 @@
 <p align="center"><b>A first-person shop simulator.</b><br>Grow it, cure it, pack it, sell it through the window. Then build a cigarette works in the basement, fight off robbers, and drive around a small open town.</p>
 
 <p align="center">
-  <a href="https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest"><b>Download for Windows</b></a> ·
-  <a href="https://github.com/TheCodingDad-TisonK/RF-Grow-Co/wiki"><b>Wiki</b></a> ·
+  <a href="https://github.com/TheCodingDad-TisonK/Grow-Co/releases/latest"><b>Download for Windows</b></a> ·
+  <a href="https://github.com/TheCodingDad-TisonK/Grow-Co/wiki"><b>Wiki</b></a> ·
   <a href="https://discord.gg/8FcgxwJ3dM"><b>Discord</b></a> ·
   <a href="https://realisticfarming.com"><b>realisticfarming.com</b></a>
 </p>
@@ -47,13 +47,13 @@ It is one HTML page and plain JavaScript on top of [three.js](https://threejs.or
 
 ## Install and play
 
-**Windows, the easy way.** Download `Grow-Co-Setup-x.y.z.exe` from the [latest release](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest) and run it. It installs for your user, adds Desktop and Start menu shortcuts and starts the game. Windows may show a SmartScreen notice because the installer is not code signed: choose "More info", then "Run anyway".
+**Windows, the easy way.** Download `Grow-Co-Setup-x.y.z.exe` from the [latest release](https://github.com/TheCodingDad-TisonK/Grow-Co/releases/latest) and run it. It installs for your user, adds Desktop and Start menu shortcuts and starts the game. Windows may show a SmartScreen notice because the installer is not code signed: choose "More info", then "Run anyway".
 
 **From source, any platform.**
 
 ```bash
-git clone https://github.com/TheCodingDad-TisonK/RF-Grow-Co.git
-cd RF-Grow-Co
+git clone https://github.com/TheCodingDad-TisonK/Grow-Co.git
+cd Grow-Co
 npm install
 npm start            # the desktop app
 npm run serve        # or play in a browser at http://127.0.0.1:8420/
@@ -65,7 +65,7 @@ The game needs no server logic. Anything that can serve the `game/` folder as st
 
 `WASD` move · `Shift` run · `E` use, pick up, hand over · `Shift+E` second action · `G` put back · `1 to 6` hotbar · `Tab` inventory · `M` map · `P` silent alarm · `F2` edit mode · `F3` creative mode · right click closes menus · `F7` report a bug · `Esc` pause · `F11` fullscreen
 
-The main menu has a thirteen chapter guide, including an "I am stuck" chapter. The same guide is in the [wiki](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/wiki/Player-Guide).
+The main menu has a thirteen chapter guide, including an "I am stuck" chapter. The same guide is in the [wiki](https://github.com/TheCodingDad-TisonK/Grow-Co/wiki/Player-Guide).
 
 ## Repository layout
 
@@ -86,7 +86,7 @@ screenshots/
 
 ## Documentation
 
-Everything lives in [`docs/`](docs) and is mirrored to the [wiki](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/wiki) on every push to `main`.
+Everything lives in [`docs/`](docs) and is mirrored to the [wiki](https://github.com/TheCodingDad-TisonK/Grow-Co/wiki) on every push to `main`.
 
 - [Getting started](docs/Getting-Started.md)
 - [Player guide](docs/Player-Guide.md)

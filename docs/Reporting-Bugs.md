@@ -26,7 +26,7 @@ Reports arrive as issues labelled `bug`, `player-report` and `needs-triage`, plu
 To load a reporter's shop:
 
 ```bash
-gh issue view 42 --repo TheCodingDad-TisonK/RF-Grow-Co --json body --jq .body > report.txt
+gh issue view 42 --repo TheCodingDad-TisonK/Grow-Co --json body --jq .body > report.txt
 node tools/decode-report.js report.txt          # writes report.save.json and prints the shop's state
 ```
 
@@ -40,7 +40,7 @@ localStorage.setItem('rfgrowco-bug', JSON.stringify(/* paste report.save.json he
 
 ## Optional: one-click reporting without GitHub
 
-If you would rather players never see GitHub, deploy the small relay in [`tools/report-relay/`](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/tree/main/tools/report-relay) (a single Cloudflare Worker) and set its address in `game/version.js`:
+If you would rather players never see GitHub, deploy the small relay in [`tools/report-relay/`](https://github.com/TheCodingDad-TisonK/Grow-Co/tree/main/tools/report-relay) (a single Cloudflare Worker) and set its address in `game/version.js`:
 
 ```js
 window.RF_REPORT_ENDPOINT = 'https://your-worker.workers.dev/report';

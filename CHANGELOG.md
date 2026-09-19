@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.1
+
+- The repository moved to github.com/TheCodingDad-TisonK/Grow-Co so the address matches the name. Old links still redirect.
+
 ## v1.4
 
 - **The game is called Grow Co.** RF stays as the house mark on the badge; it is not part of the name. The window, the menu, the installer and the docs all say Grow Co. now.
