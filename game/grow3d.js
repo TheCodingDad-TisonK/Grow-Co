@@ -2362,6 +2362,7 @@
     drive.on = true; drive.v = 0; drive.rpm = 0; drive.engineOn = false; drive.braking = false; drive.warnT = 0; drive.dashT = 0;
     drive.look.yaw = 0; drive.look.pitch = 0.12; drive.look.t = 0; drive.cam.copy(camera.position);
     carPartSet('doorL', true, true); drive.shut = { id: 'doorL', t: 1.2 };
+    tabletStow();   /* carrying the tablet in puts it in the dash cradle for the round */
     setFocus(null); dashShow(true); sfx('door'); carLamps();
     toast('🚗 I starts the engine · P handbrake · L lights · W/S drive · A/D steer · Space brake · mouse looks · E gets out', '');
   }
@@ -2615,7 +2616,7 @@
     gun:  { x1: 48, x2: 58, z1: -6, z2: 2, spawn: [53, 0.8, 0], exit: { x: -8, z: 25.4, floor: 0, yaw: 0 }, name: 'Iron & Oak Arms' }
   };
   var exp = { zoneLight: null, zone: '', wx: null, wxKind: '', beacon: null, dropHit: null, getaway: null, opT: 0, heatBand: 0, roofBeds: [], roofSigns: [], genLed: null };
-  function xs() { if (!S.x || typeof S.x !== 'object') S.x = {}; var X = S.x; if (typeof X.heat !== 'number') X.heat = 0; if (!X.staff) X.staff = { driver: false, operator: false, night: false }; if (!X.lab) X.lab = { job: null, out: { cart: 0, hash: 0, gummy: 0, choc: 0 } }; if (typeof X.lab.out.hash !== 'number') X.lab.out.hash = 0; if (!X.roof) X.roof = [0, 1, 2, 3, 4, 5].map(function () { return { stage: 'empty', t: 0 }; }); if (!X.garage) X.garage = {}; if (!X.weather) X.weather = { kind: 'clear', until: 0 }; if (!X.bagline) X.bagline = { on: false, t: 0 }; if (!S.car) carState(); if (!S.car.cigs) S.car.cigs = {}; return X; }
+  function xs() { if (!S.x || typeof S.x !== 'object') S.x = {}; var X = S.x; if (typeof X.heat !== 'number') X.heat = 0; if (!X.staff) X.staff = { driver: false, operator: false, night: false }; if (!X.lab) X.lab = { job: null, out: { cart: 0, hash: 0, gummy: 0, choc: 0 } }; if (typeof X.lab.out.hash !== 'number') X.lab.out.hash = 0; if (!X.roof) X.roof = [0, 1, 2, 3, 4, 5].map(function () { return { stage: 'empty', t: 0 }; }); if (!X.garage) X.garage = {}; if (!X.weather) X.weather = { kind: 'clear', until: 0 }; if (!X.bagline) X.bagline = { on: false, t: 0 }; if (!Array.isArray(X.jobs)) X.jobs = []; if (!X.jobT) X.jobT = { ph: 120, tab: 60 }; if (!X.tablet) X.tablet = 'dock'; if (!S.car) carState(); if (!S.car.cigs) S.car.cigs = {}; return X; }
   function powerOn() { return !!S.upgrades.generator || now() > (xs().blackoutUntil || 0); }
   function season() { return ['Spring', 'Summer', 'Autumn', 'Winter'][Math.floor(((S.day || 1) - 1) / 7) % 4]; }
   function weekend() { var d = (S.day || 1) % 7; return d === 6 || d === 0; }
@@ -2672,7 +2673,9 @@
     cityBldg(40, 2, 12, 12, 8, 0x8a6a4a, 'Corner Tobacconist', 'tobac'); cityDoor(40, 8, 1, 6, 'tobac', 'CORNER TOBACCONIST', 'buys cartons wholesale', 0xe8c27a); cityBldg(24, 0, 14, 16, 9, 0x5a6a8a, 'Police', 'police'); cityDoor(24, 8, 1, 7, 'police', 'POLICE', 'precinct 4', 0x5aa0d8);
     CITY.pois.push({ id: 'tobac', name: 'Corner Tobacconist', x: 40, z: 8, col: '#e8c27a' }, { id: 'police', name: 'Police precinct', x: 24, z: 8, col: '#5aa0d8' });
     // delivery drop marker and the weather
-    exp.beacon = cyl(0.5, 0.5, 14, new THREE.MeshBasicMaterial({ color: 0x6fdc8c, transparent: true, opacity: 0.35 }), 0, 7, 0, null, 12); exp.beacon.castShadow = false; exp.beacon.visible = false; exp.dropHit = hit(2.4, 2.4, 2.4, 0, -50, 0, { kind: 'dropoff' });
+    /* a pool of drop markers: the round can have several stops out at once, so one beacon and one hit box per open job */
+    exp.beacons = []; exp.dropHits = [];
+    for (var bi = 0; bi < JOB_MAX; bi++) { var bc = cyl(0.5, 0.5, 14, new THREE.MeshBasicMaterial({ color: 0x6fdc8c, transparent: true, opacity: 0.35 }), 0, 7, 0, null, 12); bc.castShadow = false; bc.visible = false; exp.beacons.push(bc); exp.dropHits.push(hit(2.4, 2.4, 2.4, 0, -50, 0, { kind: 'dropoff', idx: bi })); }
     var wn = 900, wgeo = new THREE.BufferGeometry(), wpos = new Float32Array(wn * 3); for (var wi = 0; wi < wn; wi++) { wpos[wi * 3] = (Math.random() - 0.5) * 36; wpos[wi * 3 + 1] = Math.random() * 16; wpos[wi * 3 + 2] = (Math.random() - 0.5) * 36; } wgeo.setAttribute('position', new THREE.BufferAttribute(wpos, 3)); exp.wx = new THREE.Points(wgeo, new THREE.PointsMaterial({ color: 0xcfe0f0, size: 0.09, transparent: true, opacity: 0.7, depthWrite: false })); exp.wx.visible = false; exp.wx.frustumCulled = false; scene.add(exp.wx);
   }
   function outdoors() { if (drive.on || player.floor === 2) return true; if (player.floor !== 0) return false; var x = player.pos.x, z = player.pos.z; return Math.abs(x) > ROOM.x + 0.3 || z > ROOM.z + 0.2 || z < -12.6 || (z < -ROOM.z - 0.2 && (x < -0.2 || x > SEC.x2 + 0.2)); }
@@ -2701,12 +2704,129 @@
     exp.opT += dt; if (exp.opT > 5) { exp.opT = 0; if (X.staff.operator && hasLic('tobacco')) { var T = tob(); T.bays.forEach(function (b) { if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; T.leaf += TOB.bayKg; } else if (b.stage === 'empty' && S.bank >= TOB.sowCost) { S.bank -= TOB.sowCost; b.stage = 'grow'; b.t = 0; } }); T.kiln.on = T.shred.on = T.maker.on = T.packer.on = true; if (T.mat < 20 && S.bank >= TOB.matCost) { S.bank -= TOB.matCost; T.mat += TOB.matUnits; } } }
     // night: someone tries the back if nobody is watching
     if (nightNow() && !X.staff.night && Math.random() < dt / 700) { var T2 = tob(), tot = CIG_KEYS.reduce(function (a, k) { return a + T2.packs[k]; }, 0), beds = X.roof.filter(function (b) { return b.stage === 'ready'; }); if (tot > 20) { CIG_KEYS.forEach(function (k) { T2.packs[k] = Math.floor(T2.packs[k] * 0.7); }); syncTobRack(); sfx('bad'); toast('🌙 Break-in! Someone got into the basement and took cartons off the rack', 'bad'); logEvent('🌙 Night break-in: about ' + Math.round(tot * 0.3) + ' packs gone from the basement. A night guard would have stopped it.', 'bad'); } else if (beds.length) { beds[0].stage = 'empty'; beds[0].t = 0; toast('🌙 Someone climbed up and stripped a roof bed', 'bad'); logEvent('🌙 A ready roof bed was stripped overnight', 'bad'); } }
-    // deliveries
-    var D = X.delivery; if (!D && shop().open && Math.random() < dt / 280) { var kinds = ['joints', 'bags'].filter(function (k) { return S.pkg[k] && S.pkg[k].n >= 2; }); var bl = CITY.blds.filter(function (b) { return !b.poi; }); if (kinds.length && bl.length) { var b2 = pick(bl), kd = pick(kinds), qty = randi(2, 4); X.delivery = D = { kind: kd, qty: qty, x: b2.x, z: b2.z + b2.d / 2 + 1.6, until: now() + 300000, born: now() }; sfx('bell'); toast('📞 Delivery order: ' + qty + ' ' + kindName(kd, qty) + ' across town — 5 minutes, pays 60% over. M shows where.', 'rare'); logEvent('📞 Phone order for delivery: ' + qty + ' ' + kindName(kd, qty), ''); } }
-    if (D) { exp.beacon.visible = true; exp.beacon.position.set(D.x, 7, D.z); exp.dropHit.position.set(D.x, 1.2, D.z); if (X.staff.driver && now() - D.born > 40000) { var got = 0, val = 0; Object.keys(S.lots[D.kind]).forEach(function (sid2) { if (got >= D.qty) return; var l = S.lots[D.kind][sid2]; if (l.n <= 0) return; var dd = lotDraw(D.kind, sid2, D.qty - got); got += dd.n; val += unitPrice(D.kind, dd.q, dd.thc) * dd.n; }); if (got > 0) { var pay = Math.round(val * 1.25); S.bank += pay; S.rep += 1; syncGoods(); toast('🚚 Your driver ran the delivery — ' + money(pay) + ' banked', 'good'); X.delivery = null; } } else if (now() > D.until) { S.rep = Math.max(0, S.rep - 1); toast('📞 The delivery customer gave up waiting · rep -1', 'bad'); X.delivery = null; } }
-    if (!X.delivery) { exp.beacon.visible = false; exp.dropHit.position.y = -50; }
+    updateJobs(dt);
     // the getaway car: catch it with yours and the loot comes back
     var G = exp.getaway; if (G) { G.t += dt; G.g.position.x += G.dir * 13 * dt; if (drive.on && Math.hypot(drive.g.position.x - G.g.position.x, drive.g.position.z - G.g.position.z) < (X.garage.bar ? 4.6 : 3.4)) { returnLoot(G.loot); S.rep += 4; sfx('hit'); toast('🚗💥 You ran the getaway car off the road — everything they took is back · rep +4', 'good'); logEvent('🚗 You caught the getaway car', 'good'); world.group.remove(G.g); exp.getaway = null; } else if (Math.abs(G.g.position.x) > CITY.x - 3 || G.t > 40) { logEvent('💨 The getaway car made it out of town with ' + (G.loot.grabbed > 0 ? money(G.loot.grabbed) : 'your goods'), 'bad'); world.group.remove(G.g); exp.getaway = null; } }
+  }
+  // ── Delivery rounds: a burner phone for the street goods, a tablet for the RF Smoking round ──
+  // Both write into one X.jobs list; `via` says which device raised it, and that decides where the
+  // goods come from (your hands vs the car) and where the money lands (pocket + heat vs the bank).
+  var JOB_MAX = 6, JOB_CAP = { phone: 2, tablet: 4 };
+  var ROADS = [['Main Street', 'z', CITY.mainZ], ['Back Street', 'z', CITY.backZ], ['North Street', 'z', CITY.northZ], ['West Avenue', 'x', CITY.westX], ['East Avenue', 'x', CITY.eastX]];
+  function addrFor(b) {   // the nearest road names the address; the door number is derived from the building so it never changes
+    var best = ROADS[0], bd = 1e9;
+    ROADS.forEach(function (r) { var d = Math.abs((r[1] === 'z' ? b.z : b.x) - r[2]); if (d < bd) { bd = d; best = r; } });
+    var n = Math.abs(Math.round(best[1] === 'z' ? b.x : b.z)); return (n < 2 ? 2 : n) + ' ' + best[0];
+  }
+  function jobsOf(via) { return xs().jobs.filter(function (j) { return j.via === via; }); }
+  function jobGoods(j) { return j.via === 'tablet' ? CIG_SKUS[j.sku].name : kindName(j.kind, j.qty); }
+  function jobSpawn(via) {
+    var X = xs(), bl = CITY.blds.filter(function (b) { return !b.poi; }); if (!bl.length) return;
+    var used = X.jobs.map(function (j) { return j.addr; }), tries = 0, b, addr;
+    do { b = pick(bl); addr = addrFor(b); tries++; } while (used.indexOf(addr) >= 0 && tries < 12);
+    if (used.indexOf(addr) >= 0) return;
+    var j = { id: 'j' + Math.random().toString(36).slice(2, 8), via: via, addr: addr, x: b.x, z: b.z + b.d / 2 + 1.6, born: now() };
+    if (via === 'tablet') {
+      j.sku = pick(CIG_KEYS); j.qty = randi(4, 12);
+      var far = Math.hypot(b.x, b.z) / 40;   /* the far side of town pays a little more for the drive */
+      j.pay = Math.round(j.qty * CIG_SKUS[j.sku].price * (1.15 + far * 0.12)); j.until = now() + randi(420, 760) * 1000;
+      sfx('chime'); toast('📋 New round job: ' + j.qty + ' × ' + CIG_SKUS[j.sku].name + ' to ' + addr + ' · ' + money(j.pay) + ' — J opens the tablet', 'rare');
+      logEvent('📋 RF Smoking order: ' + j.qty + ' × ' + CIG_SKUS[j.sku].name + ' to ' + addr, '');
+    } else {
+      var kinds = ['joints', 'bags', 'cookies'].filter(function (k) { return S.pkg[k] && S.pkg[k].n >= 2; }); if (!kinds.length) return;
+      j.kind = pick(kinds); j.qty = randi(2, 4); j.until = now() + 300000;
+      sfx('bell'); toast('📱 Burner: ' + j.qty + ' ' + kindName(j.kind, j.qty) + ' to ' + addr + ' — 5 minutes, cash in hand. J opens it.', 'rare');
+      logEvent('📱 Phone order: ' + j.qty + ' ' + kindName(j.kind, j.qty) + ' to ' + addr, '');
+    }
+    X.jobs.push(j); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render();
+  }
+  function jobDone(j, pay, how) {
+    var X = xs(); X.jobs = X.jobs.filter(function (o) { return o !== j; });
+    S.stats.deliveries = (S.stats.deliveries || 0) + 1;
+    if (j.via === 'tablet') { S.bank += pay; S.rep += 1; S.stats.roundPay = (S.stats.roundPay || 0) + pay; toast('📋 Dropped at ' + j.addr + ' — ' + money(pay) + ' invoiced to the bank · rep +1' + how, 'good'); logEvent('📋 Round drop at ' + j.addr + ': ' + money(pay), 'good'); }
+    else { S.pocket += pay; S.rep += 2; addHeat(6); toast('📱 Dropped at ' + j.addr + ' — ' + money(pay) + ' cash in your pocket · rep +2' + how, 'good'); logEvent('📱 Phone delivery at ' + j.addr + ': ' + money(pay), 'good'); }
+    sfx('cash'); world.dirty = true; hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render();
+  }
+  function updateJobs(dt) {
+    var X = xs(); if (!exp.beacons) return;
+    syncTabletDock();
+    if (!Array.isArray(X.jobs)) X.jobs = [];
+    if (X.delivery) { var od = X.delivery; X.delivery = null; X.jobs.push({ id: 'jold', via: 'phone', kind: od.kind, qty: od.qty, x: od.x, z: od.z, addr: 'across town', born: od.born, until: od.until }); }   /* a save from before the two devices keeps its open order */
+    if (shop().open) {
+      X.jobT.ph -= dt; if (X.jobT.ph <= 0 && jobsOf('phone').length < JOB_CAP.phone) { X.jobT.ph = randi(200, 330); jobSpawn('phone'); }
+      if (hasLic('tobacco')) { X.jobT.tab -= dt; if (X.jobT.tab <= 0 && jobsOf('tablet').length < JOB_CAP.tablet) { X.jobT.tab = randi(120, 220); jobSpawn('tablet'); } }
+    }
+    for (var i = X.jobs.length - 1; i >= 0; i--) {
+      var j = X.jobs[i];
+      if (X.staff.driver && now() - j.born > 45000) { if (driverRuns(j)) continue; }
+      if (now() > j.until) { X.jobs.splice(i, 1); S.rep = Math.max(0, S.rep - 1); toast((j.via === 'tablet' ? '📋 ' : '📱 ') + j.addr + ' gave up waiting · rep -1', 'bad'); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); }
+    }
+    for (var b = 0; b < exp.beacons.length; b++) {
+      var jb = X.jobs[b];
+      if (jb) { exp.beacons[b].visible = true; exp.beacons[b].material.color.setHex(jb.via === 'tablet' ? 0xffc857 : 0x6fdc8c); exp.beacons[b].position.set(jb.x, 7, jb.z); exp.dropHits[b].position.set(jb.x, 1.2, jb.z); }
+      else { exp.beacons[b].visible = false; exp.dropHits[b].position.y = -50; }
+    }
+  }
+  function driverRuns(j) {   // the hired driver clears jobs himself, for a thinner cut
+    var X = xs();
+    if (j.via === 'tablet') { var T = tob(), have = T.packs[j.sku] + (S.car.cigs[j.sku] || 0); if (have < j.qty) return false; var fromCar = Math.min(S.car.cigs[j.sku] || 0, j.qty); S.car.cigs[j.sku] -= fromCar; T.packs[j.sku] -= (j.qty - fromCar); syncTobRack(); X.jobs = X.jobs.filter(function (o) { return o !== j; }); var p = Math.round(j.pay * 0.65); S.bank += p; S.stats.deliveries = (S.stats.deliveries || 0) + 1; toast('🚚 Your driver ran ' + j.addr + ' — ' + money(p) + ' banked (his cut taken)', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true; }
+    var got = 0, val = 0; Object.keys(S.lots[j.kind]).forEach(function (sid) { if (got >= j.qty) return; var l = S.lots[j.kind][sid]; if (l.n <= 0) return; var dd = lotDraw(j.kind, sid, j.qty - got); got += dd.n; val += unitPrice(j.kind, dd.q, dd.thc) * dd.n; });
+    if (got <= 0) return false;
+    X.jobs = X.jobs.filter(function (o) { return o !== j; }); var pay = Math.round(val * 1.25); S.bank += pay; S.rep += 1; S.stats.deliveries = (S.stats.deliveries || 0) + 1; syncGoods();
+    toast('🚚 Your driver ran ' + j.addr + ' — ' + money(pay) + ' banked', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true;
+  }
+  function jobHandOver(idx) {
+    var X = xs(), j = X.jobs[idx], h = held(); if (!j) return true;
+    if (j.via === 'tablet') {
+      var near = drive.on || carNear(player.pos.x, player.pos.z, 11), inCar = near ? (S.car.cigs[j.sku] || 0) : 0, inHand = (h && h.kind === 'cigs' && h.sku === j.sku) ? h.n : 0;
+      if (inCar + inHand < j.qty) { toast('They ordered ' + j.qty + ' × ' + CIG_SKUS[j.sku].name + ' — ' + (near ? 'only ' + (inCar + inHand) + ' between the car and your hands' : 'bring the car round, or carry them in') , 'bad'); return true; }
+      var fromCar = Math.min(inCar, j.qty); if (fromCar > 0) S.car.cigs[j.sku] -= fromCar;
+      var rest = j.qty - fromCar; if (rest > 0) { h.n -= rest; if (h.n <= 0) S.held = null; }
+      jobDone(j, j.pay, fromCar > 0 ? (rest > 0 ? ' — out of the car and your hands' : ' — straight out of the boot') : '');
+      return true;
+    }
+    if (!h || h.kind !== j.kind || h.n < j.qty) { toast('They ordered ' + j.qty + ' ' + kindName(j.kind, j.qty) + ' — bring them in your hands', 'bad'); return true; }
+    var q = h.qSum / h.n, t = h.thcSum / h.n, pay = Math.round(unitPrice(j.kind, q, t) * j.qty * 1.6);
+    h.n -= j.qty; h.qSum -= q * j.qty; h.thcSum -= t * j.qty; if (h.n <= 0) S.held = null;
+    jobDone(j, pay, ''); return true;
+  }
+  // the tablet itself: it lives on its dock in the office, rides in the car once you take it out there
+  function tabletHas() { for (var i = 0; i < 6; i++) if (S.hotbar[i] && S.hotbar[i].kind === 'tablet') return true; return false; }
+  function tabletHere() { var X = xs(); if (!hasLic('tobacco')) return false; if (X.tablet === 'car') return drive.on || carNear(player.pos.x, player.pos.z, 11); return X.tablet === 'hand' && tabletHas(); }
+  function tabletBody() { if (exp.tabBody && exp.tabBody.parent) return exp.tabBody; var inst = propInst['tabletDock']; if (!inst) return null; inst.g.traverse(function (o) { if (o.userData && o.userData.tabletBody) exp.tabBody = o; }); return exp.tabBody || null; }
+  function syncTabletDock() {
+    var X = xs(); if (X.tablet === 'hand' && !tabletHas()) X.tablet = 'dock';   /* put down or lost: the dock gets it back */
+    var b = tabletBody(); if (!b) return;
+    if (b.userData.builtLit !== hasLic('tobacco')) { exp.tabBody = null; buildProp('tabletDock'); return; }   /* the screen wakes up when the licence lands */
+    b.visible = X.tablet === 'dock';
+  }
+  function tabletTake() {
+    var X = xs(); if (X.tablet === 'hand') { X.tablet = 'dock'; toast('📋 Tablet back on its dock', ''); sfx('putdown'); save(); return; }
+    if (X.tablet === 'car') { X.tablet = 'dock'; toast('📋 Took the tablet out of the car and docked it', ''); sfx('putdown'); save(); return; }
+    if (!take({ kind: 'tablet' })) return; X.tablet = 'hand'; toast('📋 Delivery tablet in hand — J opens the round. Get in the car and it slots into the cradle.', 'good'); save();
+  }
+  function tabletStow() {   // carrying it into the car drops it in the dash cradle, so it rides the round without eating a slot
+    var X = xs(); if (X.tablet !== 'hand') return;
+    for (var i = 0; i < 6; i++) if (S.hotbar[i] && S.hotbar[i].kind === 'tablet') S.hotbar[i] = null;
+    X.tablet = 'car'; toast('📋 Tablet in the cradle — J brings up the round', ''); sfx('click'); hud();
+  }
+  function jobsPanel() { ui.openPanel('jobs', hasLic('tobacco') && tabletHere() ? 'tablet' : 'phone'); }
+  function paneJobs(tab) {
+    var X = xs(), list = jobsOf(tab), rows = [];
+    if (tab === 'tablet' && !hasLic('tobacco')) return '<p class="g3-empty">The RF Smoking round needs the tobacco licence. Buy it at the laptop, and the tablet on the office dock wakes up.</p>';
+    if (tab === 'tablet' && !tabletHere()) return '<p class="g3-empty">The tablet is ' + (X.tablet === 'car' ? 'in the car, and the car is not here' : 'on its dock in the office') + '. Fetch it, and it rides in the car once you drive off with it.</p>';
+    if (!list.length) return '<p class="g3-empty">' + (tab === 'tablet' ? 'No round jobs right now. They come in while the shop is open, once the basement is making packs.' : 'Nobody is ringing. Pack some joints or bags and the phone starts going.') + '</p>';
+    var pos = drive.on ? drive.g.position : player.pos;
+    list.forEach(function (j) {
+      var n = X.jobs.indexOf(j) + 1, left = Math.max(0, Math.round((j.until - now()) / 1000)), km = Math.round(Math.hypot(j.x - pos.x, j.z - pos.z)) + ' m';
+      var have = j.via === 'tablet' ? ((S.car.cigs[j.sku] || 0) + ' in the car · ' + tob().packs[j.sku] + ' on the rack') : (S.pkg[j.kind].n + ' packed');
+      rows.push('<tr><td><b>#' + n + '</b></td><td><b>' + j.addr + '</b><br><small>' + km + ' away · ' + have + '</small></td>' +
+        '<td>' + j.qty + ' × ' + jobGoods(j) + '</td>' +
+        '<td class="' + (left < 60 ? 'bad' : '') + '">' + Math.floor(left / 60) + 'm ' + (left % 60) + 's</td>' +
+        '<td><b>' + (j.via === 'tablet' ? money(j.pay) : '~' + money(Math.round(unitPrice(j.kind, 60, 1.2) * j.qty * 1.6))) + '</b><br><small>' + (j.via === 'tablet' ? 'to the bank' : 'cash, +heat') + '</small></td></tr>');
+    });
+    return '<p class="g3-sub2">' + (tab === 'tablet' ? 'Load packs into the car at your bay (Shift+E on the car), drive the round, press <b>E</b> at each beacon. Numbers match the map on <b>M</b>.' : 'Carry the goods in your hands and press <b>E</b> at the beacon. Cash goes in your pocket and it raises your heat.') + '</p>' +
+      '<table class="g3-jobs"><tr><th></th><th>Address</th><th>Order</th><th>Left</th><th>Pays</th></tr>' + rows.join('') + '</table>';
   }
   function startGetaway(r) {
     if (exp.getaway) { world.group.remove(exp.getaway.g); } var g = new THREE.Group(); carBody(g, 0x111111); var dir = r.g.position.x > 0 ? 1 : -1; g.position.set(r.g.position.x, 0, CITY.mainZ + (dir > 0 ? 2.7 : -0.3)); g.rotation.y = dir > 0 ? -Math.PI / 2 : Math.PI / 2; world.group.add(g);
@@ -2758,7 +2878,8 @@
     if (d.kind === 'generator') return S.upgrades.generator ? 'Generator <small>fuelled and on standby</small>' : 'Generator <small>buy it for ' + money(1400) + ' · power cuts stop touching you</small>';
     if (d.kind === 'roster') return 'Staff roster <small>hire a driver, a basement operator, a night guard</small>';
     if (d.kind === 'bagLine') return S.upgrades.bagline ? 'Trim & bag line <small>' + (X.bagline.on ? 'running' : 'off') + ' · ' + (S.supplies.bag || 0) + ' baggies</small>' : 'Trim & bag line <small>install for ' + money(900) + '</small>';
-    if (d.kind === 'dropoff') { var D = X.delivery; return D ? 'Delivery customer <small>wants ' + D.qty + ' ' + kindName(D.kind, D.qty) + ' · ' + Math.max(0, Math.ceil((D.until - now()) / 1000)) + ' s left</small>' : ''; }
+    if (d.kind === 'dropoff') { var J = X.jobs[d.idx]; if (!J) return ''; var lt = Math.max(0, Math.ceil((J.until - now()) / 1000)); return (J.via === 'tablet' ? '📋 Round drop · ' : '📱 Phone customer · ') + J.addr + ' <small>wants ' + J.qty + ' × ' + jobGoods(J) + ' · ' + Math.floor(lt / 60) + 'm ' + (lt % 60) + 's left' + (J.via === 'tablet' ? ' · takes them out of the car' : '') + '</small>'; }
+    if (d.kind === 'tabletDock') return hasLic('tobacco') ? (X.tablet === 'dock' ? 'Delivery tablet <small>E takes it · J reads the round anywhere</small>' : 'Tablet dock <small>the tablet is ' + (X.tablet === 'car' ? 'in the car' : 'in your hands') + ' · E puts it back</small>') : 'Tablet dock <small>dead until you hold the tobacco licence</small>';
     return '';
   }
   function expInteract(d, h) {
@@ -2770,11 +2891,13 @@
     if (d.kind === 'roofBed') { var b = X.roof[d.idx]; if (b.stage === 'empty') { if (S.bank < 10) { toast('Seedlings cost ' + money(10), 'bad'); return true; } S.bank -= 10; b.stage = 'grow'; b.t = 0; sfx('plant'); toast('🌱 Sown — sunlight does the rest, for free', 'good'); } else if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; var q = randi(42, 60) + (X.weather.kind === 'rain' ? -4 : 0); stashAdd('sunflower', 25, q, 1.0); sfx('harvest'); toast('🌿 25 g of outdoor bud (q' + q + ') into the stash — rough stuff, perfect for the lab', 'good'); } else toast('Still growing', ''); hud(); save(); return true; }
     if (d.kind === 'generator') { if (S.upgrades.generator) toast('It will start itself on the next power cut', ''); else if (S.bank < 1400) toast('The generator costs ' + money(1400), 'bad'); else { S.bank -= 1400; S.upgrades.generator = true; sfx('cash'); toast('⚡ Generator installed — power cuts will not stop you again', 'good'); applyShopState(); hud(); save(); } return true; }
     if (d.kind === 'bagLine') { if (!S.upgrades.bagline) { if (S.bank < 900) toast('The trim & bag line costs ' + money(900), 'bad'); else { S.bank -= 900; S.upgrades.bagline = true; sfx('cash'); toast('Trim & bag line installed', 'good'); hud(); save(); } } else { X.bagline.on = !X.bagline.on; sfx('click'); toast(X.bagline.on ? '▶ Bag line running: an eighth every 4 seconds from your biggest stash, trimmed a little cleaner (+3 quality), one baggie each' : '⏹ Bag line stopped', ''); save(); } return true; }
-    if (d.kind === 'dropoff') { var D = X.delivery; if (!D) return true; if (!h || h.kind !== D.kind || h.n < D.qty) { toast('They ordered ' + D.qty + ' ' + kindName(D.kind, D.qty) + ' — bring them in your hands', 'bad'); return true; } var q2 = h.qSum / h.n, t2 = h.thcSum / h.n, pay = Math.round(unitPrice(D.kind, q2, t2) * D.qty * 1.6); h.n -= D.qty; h.qSum -= q2 * D.qty; h.thcSum -= t2 * D.qty; if (h.n <= 0) S.held = null; S.pocket += pay; S.rep += 2; S.stats.deliveries = (S.stats.deliveries || 0) + 1; X.delivery = null; sfx('cash'); toast('📦 Delivered — ' + money(pay) + ' cash in your pocket · rep +2', 'good'); logEvent('📦 Delivery done: ' + money(pay), 'good'); world.dirty = true; hud(); save(); return true; }
+    if (d.kind === 'dropoff') return jobHandOver(d.idx);
+    if (d.kind === 'tabletDock') { if (!hasLic('tobacco')) { toast('The tablet is dead — the round needs the tobacco licence, from the laptop', 'bad'); return true; } tabletTake(); return true; }
     return false;
   }
   function drawMapExtras(ctx, mx, mz, W, H) {
-    var X = xs(), D = X.delivery; if (D) { ctx.strokeStyle = '#6fdc8c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(mx(D.x), mz(D.z), 9 + (now() / 200 % 6), 0, 6.29); ctx.stroke(); ctx.fillStyle = '#6fdc8c'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center'; ctx.fillText('DELIVERY', mx(D.x), mz(D.z) - 14); }
+    var X = xs();
+    X.jobs.forEach(function (j, i) { var col = j.via === 'tablet' ? '#ffc857' : '#6fdc8c'; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(mx(j.x), mz(j.z), 9 + (now() / 200 % 6), 0, 6.29); ctx.stroke(); ctx.fillStyle = col; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('#' + (i + 1), mx(j.x), mz(j.z) + 4); });
     if (exp.getaway) { ctx.fillStyle = '#ff5a4a'; ctx.fillRect(mx(exp.getaway.g.position.x) - 5, mz(exp.getaway.g.position.z) - 5, 10, 10); }
     ctx.textAlign = 'left'; ctx.fillStyle = '#8fa89a'; ctx.font = '12px system-ui'; ctx.fillText(season() + ' · day ' + S.day + (weekend() ? ' (weekend)' : '') + ' · ' + X.weather.kind, W + 22, H - 90); ctx.fillStyle = X.heat >= 60 ? '#ff6b6b' : X.heat >= 30 ? '#ffc857' : '#8fa89a'; ctx.fillText('Police heat ' + Math.round(X.heat) + ' / 100', W + 22, H - 68);
   }
@@ -4045,6 +4168,19 @@
     officeChairBuild({ box: function (w, h, d, mat, x, y, z, o) { return c.box(w, h, d, mat, x, y + 0, z + 0.75, o); }, cyl: function (rt, rb, h, mat, x, y, z, s) { return c.cyl(rt, rb, h, mat, x, y, z + 0.75, s); }, solid: function (a, b, d, e) { c.solid(a, b, d + 0.75, e + 0.75); } });
     c.placard(['SUPPLY DESK', 'laptop: shop · seeds · gear'], 0.6, 0.2, 0.55, 1.05, -0.2, { titleColor: '#6fdc8c' });
   } });
+  defProp('tabletDock', { label: 'tablet dock', x: -10.4, z: 3.55, rot: 2, build: function (c) {
+    // a slim stand against the office wall: the delivery tablet sits in it on charge until you take it out
+    c.box(0.44, 0.04, 0.3, MAT.darkwood, 0, 0.9, 0, { cast: false }); [-0.18, 0.18].forEach(function (lx) { c.box(0.05, 0.9, 0.05, MAT.metal, lx, 0.45, 0.1); }); c.box(0.4, 0.03, 0.26, MAT.metal, 0, 0.02, 0.1, { cast: false });
+    c.box(0.34, 0.03, 0.12, colorMat(0x2b2f35, 0.5), 0, 0.92, -0.02, { cast: false });
+    var lit = hasLic('tobacco'), inDock = xs().tablet === 'dock';
+    var tg = new THREE.Group(); tg.position.set(0, 0.94, -0.02); tg.rotation.x = -0.38; tg.userData.tabletBody = true; tg.userData.builtLit = lit; c.add(tg);
+    var shell = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.21, 0.014), colorMat(0x1b1f24, 0.4, 0.5)); shell.castShadow = true; tg.add(shell);
+    var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.27, 0.18), lit ? new THREE.MeshBasicMaterial({ map: textTex(['RF SMOKING', 'delivery round'], 260, 170, { size: 30, bg: '#0d1511', color: '#8fa596', titleColor: '#ffc857' }) }) : MAT.screen);
+    scr.position.z = 0.009; tg.add(scr); tg.visible = inDock;
+    c.box(0.02, 0.012, 0.012, glowMat(lit ? 0x6fdc8c : 0xd0201a, 1.2), 0.19, 0.93, 0.06, { cast: false });
+    c.placard(['DELIVERY ROUND', 'take it · J reads it'], 0.5, 0.18, 0, 1.28, 0.02, { titleColor: '#ffc857' });
+    c.hit(0.5, 0.7, 0.4, 0, 0.9, 0.02, { kind: 'tabletDock' });
+  } });
   defProp('rack', { label: 'supply rack', x: -ROOM.x + 0.45, z: -1.0, rot: 1, build: function (c) {
     var shelfM = colorMat(0x8a8f96, 0.35, 0.8); for (var s = 0; s < 4; s++) { c.box(0.9, 0.03, 0.5, shelfM, 0, 0.25 + s * 0.55, 0); c.box(0.9, 0.04, 0.02, MAT.plastic, 0, 0.245 + s * 0.55, 0.25, { cast: false }); var lbl = c.sign([['SOIL', 'FEED · SPRAY', 'PAPERS · BAGS', 'POTS · JARS'][s]], 0.16, 0.03, -0.34, 0.245 + s * 0.55, 0.262, 0, { size: 13, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,.3)' }); }
     [[-0.44, -0.24], [0.44, -0.24], [-0.44, 0.24], [0.44, 0.24]].forEach(function (p) { c.box(0.035, 2.0, 0.035, shelfM, p[0], 1.0, p[1]); for (var h = 0; h < 12; h++) c.box(0.012, 0.008, 0.036, MAT.black, p[0], 0.1 + h * 0.16, p[1], { cast: false }); c.cyl(0.03, 0.035, 0.02, MAT.plastic, p[0], 0.01, p[1], 10); });
@@ -4484,14 +4620,14 @@
   // ── Hands & carrying ──────────────────────────────────────────────
   // Everything physical goes through the hands: you pick things up, carry
   // them across the room and use them on something. `S.held` persists.
-  var HELD_LABEL = { keys: 'Keyring', crate: 'Crate', cookies: 'Cookies', bat: 'Baseball bat', cigs: 'Cigarettes', pepper: 'Pepper spray', taser: 'Taser', pistol: 'Pistol', shotgun: 'Shotgun', can: 'Watering can', soil: 'Bag of soil', nutrients: 'Nutrients', remedy: 'Pest spray', seed: 'Seed', harvest: 'Fresh harvest', jar: 'Curing jar', joints: 'Joints', bags: 'Eighth bags' };
+  var HELD_LABEL = { keys: 'Keyring', crate: 'Crate', cookies: 'Cookies', bat: 'Baseball bat', cigs: 'Cigarettes', tablet: 'Delivery tablet', pepper: 'Pepper spray', taser: 'Taser', pistol: 'Pistol', shotgun: 'Shotgun', can: 'Watering can', soil: 'Bag of soil', nutrients: 'Nutrients', remedy: 'Pest spray', seed: 'Seed', harvest: 'Fresh harvest', jar: 'Curing jar', joints: 'Joints', bags: 'Eighth bags' };
   // the hotbar: S.held reads and writes the active slot, so every older code path keeps working
   function bindHotbar() { if (!Array.isArray(S.hotbar) || S.hotbar.length !== 6) { var old = S.hotbar; S.hotbar = [null, null, null, null, null, null]; if (Array.isArray(old)) old.slice(0, 6).forEach(function (x, i) { S.hotbar[i] = x || null; }); } if (typeof S.slot !== 'number') S.slot = 0; var legacy = Object.prototype.hasOwnProperty.call(S, 'held') ? S.held : undefined; if (legacy && typeof legacy === 'object') { S.hotbar[S.slot] = legacy; } try { delete S.held; } catch (e) {} Object.defineProperty(S, 'held', { get: function () { return S.hotbar[S.slot] || null; }, set: function (v) { S.hotbar[S.slot] = v || null; }, enumerable: false, configurable: true }); }
   function held() { return S.hotbar && S.hotbar[S.slot] || null; }
   function hotbarFull() { return S.hotbar.every(function (x) { return !!x; }); }
   function freeSlot() { if (!S.hotbar[S.slot]) return S.slot; for (var i = 0; i < 6; i++) if (!S.hotbar[i]) return i; return -1; }
   function selectSlot(i) { S.slot = ((i % 6) + 6) % 6; hud(); if (focus) setFocus(focus); }
-  function slotIcon(it) { if (!it) return ''; if (it.kind === 'seed') return strainById(it.strain).emoji; if (it.kind === 'crate') return itemIcon(it.item); return { can: '💧', soil: '🪴', nutrients: '🧪', remedy: '🧴', harvest: '🌿', jar: '🏺', joints: '🚬', bags: '🛍️', cookies: '🍪', broom: '🧹', snack: '🥪', bat: '🏏', cashbag: '💰', keys: '🔑', pepper: '🌶️', taser: '⚡', pistol: '🔫', shotgun: '💥', cigs: '🚬' }[it.kind] || '📦'; }
+  function slotIcon(it) { if (!it) return ''; if (it.kind === 'seed') return strainById(it.strain).emoji; if (it.kind === 'crate') return itemIcon(it.item); return { can: '💧', soil: '🪴', nutrients: '🧪', remedy: '🧴', harvest: '🌿', jar: '🏺', joints: '🚬', bags: '🛍️', cookies: '🍪', broom: '🧹', snack: '🥪', bat: '🏏', cashbag: '💰', keys: '🔑', pepper: '🌶️', taser: '⚡', pistol: '🔫', shotgun: '💥', cigs: '🚬', tablet: '📋' }[it.kind] || '📦'; }
   function slotLabel(it) { if (!it) return ''; if (it.kind === 'joints' || it.kind === 'bags' || it.kind === 'cookies') return it.n + ' ' + kindName(it.kind, it.n); if (it.kind === 'crate') return it.n + '× ' + itemName(it.item).split(' ')[0]; if (it.kind === 'harvest') return gram(it.grams); if (it.kind === 'jar') return gram(it.grams); if (it.kind === 'seed') return 'seed'; return (HELD_LABEL[it.kind] || it.kind).split(' ')[0].toLowerCase(); }
   // how many a Shift-pickup grabs: what the current customer still needs, else up to five
   function pileLot(item, h, sid) { var have = sid ? lotOf(item, sid).n : S.pkg[item].n; var want = S.customer && S.customer.arrived && S.customer.want === item ? Math.max(1, S.customer.qty - (S.customer.given ? S.customer.given.n : 0) - (h ? h.n : 0)) : 5; return Math.min(have, want); }
@@ -4906,6 +5042,7 @@
       else if (kind === 'register') { title = '💵 Register'; body = paneRegister(); }
       else if (kind === 'desk') { title = '📊 Shop dashboard'; body = paneDesk(); }
       else if (kind === 'controls') { title = '🏪 Shop controls'; body = paneControls(); }
+      else if (kind === 'jobs') { title = '🚚 Deliveries'; tabs = [['phone', '📱 Burner'], ['tablet', '📋 Tablet']]; body = paneJobs(tab === 'tablet' ? 'tablet' : 'phone'); }
       else if (hooks.panel[kind]) { var hp = hooks.panel[kind](tab); title = hp.title; tabs = hp.tabs || []; body = hp.body; if (!tab && tabs.length) { tab = tabs[0][0]; this.panelTab = tab; } }
       else if (kind === 'inventory') { title = '🎒 Inventory & diary'; tabs = [['inv', '🎒 Inventory'], ['log', '📜 Diary'], ['stats', '📊 Stats']]; body = tab === 'log' ? paneLog() : tab === 'stats' ? paneStats() : paneInventory(); }
       $('g3-panel-title').innerHTML = title;
@@ -5160,7 +5297,7 @@
   var DEV = [
     ['money', '💵 +$1,000 bank'], ['pocket', '👛 +$500 pocket'], ['till', '🧾 Till +$120 · tips +$20 · machines +$30'], ['stash', '🌿 +20 g cured of every strain'], ['goods', '🛍️ +5 bags, joints, cookies of every strain'],
     ['supplies', '🧰 +10 of every supply · seeds ×5'], ['storage', '📦 A crate of everything in the back room'], ['machines', '🥤 Fill vending, coffee and the counter display'], ['plants', '🌱 Fill the tent with ready-to-harvest plants'], ['batches', '🌬️ Hang three batches, jar two'],
-    ['customer', '🚪 Spawn a customer'], ['premium', '🎩 Spawn a connoisseur'], ['robbery', '🚨 Start a robbery (by shop level)'], ['robSnatch', '🧤 Snatch thief'], ['robKnife', '🔪 Knife robbery'], ['robGun', '🔫 Armed robbery + vault'], ['robCrew', '👥 Two-man crew'], ['arm', '🧰 Every weapon, ammo, licence, alarm'], ['basement', '🏭 Go to the basement works'], ['toCar', '🚗 Teleport next to your car'], ['vip', '🥂 Send a lounge guest up'], ['roof', '🌿 Go to the roof greenhouse'], ['heat', '🚔 Police heat +40'], ['blackout', '⚡ Power cut now'], ['delivery', '📞 Phone delivery now'], ['tobFill', '🚬 Fill the tobacco line + cabinet'], ['fight', '👊 Start a lobby fight (needs two visitors)'], ['van', '🚚 Van arrives now with the open order'], ['courier', '🏦 Courier arrives now for $100'],
+    ['customer', '🚪 Spawn a customer'], ['premium', '🎩 Spawn a connoisseur'], ['robbery', '🚨 Start a robbery (by shop level)'], ['robSnatch', '🧤 Snatch thief'], ['robKnife', '🔪 Knife robbery'], ['robGun', '🔫 Armed robbery + vault'], ['robCrew', '👥 Two-man crew'], ['arm', '🧰 Every weapon, ammo, licence, alarm'], ['basement', '🏭 Go to the basement works'], ['toCar', '🚗 Teleport next to your car'], ['vip', '🥂 Send a lounge guest up'], ['roof', '🌿 Go to the roof greenhouse'], ['heat', '🚔 Police heat +40'], ['blackout', '⚡ Power cut now'], ['delivery', '📱 Burner job now'], ['round', '📋 Two tablet round jobs'], ['tobFill', '🚬 Fill the tobacco line + cabinet'], ['fight', '👊 Start a lobby fight (needs two visitors)'], ['van', '🚚 Van arrives now with the open order'], ['courier', '🏦 Courier arrives now for $100'],
     ['dust', '🪣 Spawn 6 dirt patches'], ['clean', '🧹 Clear every dirt patch'], ['morning', '🌅 Clock to 06:00'], ['noon', '☀️ Clock to 12:00'], ['evening', '🌆 Clock to 19:00'], ['night', '🌙 Clock to 23:00'], ['day', '⏭ Skip to the next day'],
     ['level', '⭐ Level +1'], ['rep', '🏆 Rep +25'], ['upgrades', '⚙️ Every upgrade'], ['licences', '🪪 Every licence'], ['clear', '🧯 Clear cooldowns, robber, fight, courier'], ['empty', '🫙 Empty every hotbar slot'], ['humid', '💧 Humidity to 80% in both rooms'],
     ['tp_lobby', '📍 Teleport: lobby'], ['tp_office', '📍 Teleport: office'], ['tp_grow', '📍 Teleport: grow room'], ['tp_annex', '📍 Teleport: back room'], ['tp_security', '📍 Teleport: security room'], ['tp_yard', '📍 Teleport: yard']
@@ -5178,7 +5315,8 @@
       case 'plants': S.plants = []; S.potSoil = {}; for (var i = 0; i < slots(); i++) { var st2 = STRAINS[i % STRAINS.length]; S.potSoil[i] = true; S.plants.push({ id: 'p' + now() + i, strain: st2.id, progress: 1, quality: 75, thirst: 0.1, fed: true, hazard: null, slot: i }); } S.supplies.pot = Math.max(S.supplies.pot || 0, slots()); break;
       case 'batches': STRAINS.slice(0, 5).forEach(function (st, i) { S.batches.push({ id: 'b' + now() + i, grams: 18, quality: 70, baseQ: 70, thc: st.thc, startedAt: now(), cured: i >= 3, dry: i >= 3 ? 1 : 0.2, strain: st.id }); }); break;
       case 'customer': case 'premium': closeMenu(); if (S.customer) { S.customer = null; npc.leaveSad(); toast('Sending the current customer away first — the new one walks in after', ''); } else spawnCustomer(id === 'premium'); break;
-      case 'robbery': case 'robSnatch': case 'robKnife': case 'robGun': case 'robCrew': closeMenu(); S.till = Math.max(S.till, 40); startRobbery({ robSnatch: 'snatch', robKnife: 'knife', robGun: 'gun', robCrew: 'crew' }[id]); break; case 'basement': closeMenu(); goBasement(); break; case 'vip': closeMenu(); S.lic.premium = true; shop().open = true; if (!startVip()) toast('A lounge guest is already here', ''); break; case 'roof': closeMenu(); expInteract({ kind: 'roofUp' }, null); break; case 'heat': addHeat(40); break; case 'blackout': xs().blackoutUntil = now() + 60000; break; case 'delivery': closeMenu(); S.pkg.joints.n = Math.max(S.pkg.joints.n, 2); var db = pick(CITY.blds.filter(function (b) { return !b.poi; })); xs().delivery = { kind: 'joints', qty: 2, x: db.x, z: db.z + db.d / 2 + 1.6, until: now() + 300000, born: now() }; toast('📞 Delivery order placed — see the map', ''); break; case 'toCar': closeMenu(); standUp(); player.floor = 0; player.pos.set(drive.g.position.x - 2.4, 1.65, drive.g.position.z); break; case 'tobFill': S.lic.tobacco = true; var TF = tob(); TF.leaf = 8; TF.cured = 2; TF.cut = 1; TF.sticks.normal = 400; TF.sticks.light = 400; TF.mat = 200; CIG_KEYS.forEach(function (k) { TF.packs[k] = 30; S.cigStock[k] = cigStock(k) + 10; }); syncTobRack(); syncCigCab(); break; case 'arm': S.lic.firearm = true; S.upgrades.panic = true; S.armory = { pepper: true, taser: true, pistol: true, shotgun: true, spray: 6, rounds: 64, shells: 32 }; break; case 'fight': closeMenu(); startFight(); if (!fight) toast('Need two visitors in the lobby first', 'bad'); break;
+      case 'robbery': case 'robSnatch': case 'robKnife': case 'robGun': case 'robCrew': closeMenu(); S.till = Math.max(S.till, 40); startRobbery({ robSnatch: 'snatch', robKnife: 'knife', robGun: 'gun', robCrew: 'crew' }[id]); break; case 'basement': closeMenu(); goBasement(); break; case 'vip': closeMenu(); S.lic.premium = true; shop().open = true; if (!startVip()) toast('A lounge guest is already here', ''); break; case 'roof': closeMenu(); expInteract({ kind: 'roofUp' }, null); break; case 'heat': addHeat(40); break; case 'blackout': xs().blackoutUntil = now() + 60000; break; case 'delivery': closeMenu(); S.pkg.joints.n = Math.max(S.pkg.joints.n, 2); jobSpawn('phone'); break;
+      case 'round': closeMenu(); S.lic.tobacco = true; jobSpawn('tablet'); jobSpawn('tablet'); break; case 'toCar': closeMenu(); standUp(); player.floor = 0; player.pos.set(drive.g.position.x - 2.4, 1.65, drive.g.position.z); break; case 'tobFill': S.lic.tobacco = true; var TF = tob(); TF.leaf = 8; TF.cured = 2; TF.cut = 1; TF.sticks.normal = 400; TF.sticks.light = 400; TF.mat = 200; CIG_KEYS.forEach(function (k) { TF.packs[k] = 30; S.cigStock[k] = cigStock(k) + 10; }); syncTobRack(); syncCigCab(); break; case 'arm': S.lic.firearm = true; S.upgrades.panic = true; S.armory = { pepper: true, taser: true, pistol: true, shotgun: true, spray: 6, rounds: 64, shells: 32 }; break; case 'fight': closeMenu(); startFight(); if (!fight) toast('Need two visitors in the lobby first', 'bad'); break;
       case 'van': if (S.order) { S.deliveries.push({ items: S.order.items, due: now() }); S.order = null; } else if (!S.deliveries.length) S.deliveries.push({ items: { drink: 12, cup: 50, lighter: 20 }, due: now() }); else S.deliveries[0].due = now(); closeMenu(); break;
       case 'courier': if (!S.courier) S.courier = { amount: 100, state: 'called', at: now() }; else S.courier.at = now(); S.courierBanUntil = 0; closeMenu(); break;
       case 'dust': spawnDust(6); break; case 'clean': S.dust = []; world.dustDirty = true; break;
@@ -5263,7 +5401,7 @@
     if (drive.on) drawDash();
   }
   function objective() {
-    if (drive.on) return '<b>At the wheel</b>Mouse looks around · wheel zooms · <b class="kk">I</b> ignition · <b class="kk">P</b> handbrake · <b class="kk">L</b> lights · <b class="kk">W</b>/<b class="kk">S</b> drive · <b class="kk">A</b>/<b class="kk">D</b> steer · <b class="kk">Space</b> brake · <b class="kk">T</b> boot · <b class="kk">B</b> bonnet · <b class="kk">C</b> centre the camera · <b class="kk">M</b> map · <b class="kk">E</b> get out';
+    if (drive.on) { var jn = xs().jobs.length; return '<b>At the wheel</b>' + (jn ? '🚚 ' + jn + ' drop' + (jn === 1 ? '' : 's') + ' waiting — <b class="kk">J</b> the board, <b class="kk">M</b> the map.<br>' : '') + 'Mouse looks around · wheel zooms · <b class="kk">I</b> ignition · <b class="kk">P</b> handbrake · <b class="kk">L</b> lights · <b class="kk">W</b>/<b class="kk">S</b> drive · <b class="kk">A</b>/<b class="kk">D</b> steer · <b class="kk">Space</b> brake · <b class="kk">T</b> boot · <b class="kk">B</b> bonnet · <b class="kk">C</b> centre · <b class="kk">E</b> get out'; }
     if (introRunning()) return '';   /* the intro card is the guidance while it runs: two boxes competing is noise */
     var t = '<b>Next up</b>'; var h = held();
     if (h && h.kind === 'broom') return t + '🧹 ' + dustList().length + ' dusty spot' + (dustList().length === 1 ? '' : 's') + ' left — E on the dust to sweep.';
@@ -5335,12 +5473,14 @@
       if (e.code === 'KeyT') { carPartToggle('boot'); e.preventDefault(); return; }
       if (e.code === 'KeyB') { carPartToggle('bonnet'); e.preventDefault(); return; }
       if (e.code === 'KeyC') { drive.look.yaw = 0; drive.look.pitch = 0.12; drive.look.t = 0; drive.dist = 6.2; e.preventDefault(); return; }
+      if (e.code === 'KeyJ') { jobsPanel(); e.preventDefault(); return; }
       if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }
     }
     if (e.code === 'F2') { editToggle(); e.preventDefault(); return; }
     if (edit.on) { if (e.code === 'KeyE') { if (edit.grabbed || edit.grabbedFx) editDrop(); else editGrab(); } else if (e.code === 'KeyR') editRotate(); else if (e.code === 'Backspace') editReset(); if (e.code === 'KeyE' || e.code === 'KeyR' || e.code === 'Backspace') { e.preventDefault(); return; } }
     if (/^Digit[1-6]$/.test(e.code)) { selectSlot(+e.code.charAt(5) - 1); sfx('click'); e.preventDefault(); return; }
     if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }
+    if (e.code === 'KeyJ') { jobsPanel(); e.preventDefault(); return; }
     if (e.code === 'KeyE') { interact(); e.preventDefault(); }
     if (e.code === 'KeyP') { panicButton(); e.preventDefault(); }
     if (e.code === 'Tab') { ui.openPanel('inventory'); e.preventDefault(); }
@@ -5411,5 +5551,5 @@
   }
   frame();
   // debug / automation handle (read-only use; not part of the game loop)
-  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
+  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
 })();

@@ -12,6 +12,7 @@ This page is generated from `game/guide.js`, the same text the game shows in its
 - [The basement: RF Smoking](#the-basement-rf-smoking)
 - [The extraction lab](#the-extraction-lab)
 - [The town, the car and the map](#the-town-the-car-and-the-map)
+- [Deliveries: the burner and the tablet](#deliveries-the-burner-and-the-tablet)
 - [Upstairs and the roof](#upstairs-and-the-roof)
 - [The keyring, doors and locking up](#the-keyring-doors-and-locking-up)
 - [Making the place yours](#making-the-place-yours)
@@ -46,6 +47,7 @@ That is the whole game in miniature. Everything else makes that loop bigger, fas
 | **1 to 6**, mouse wheel | hotbar slot |
 | **Tab** | inventory |
 | **M** | town map |
+| **J** | the delivery boards: the burner phone and the tablet |
 | **P** | silent alarm (needs the upgrade) |
 | **F2** | edit mode: move furniture, signs, screens |
 | **F3** | creative build mode |
@@ -150,7 +152,19 @@ Your car is parked in the owner bay in the yard, behind the gate. The gate opens
 - **Harvest Park**: street deals at 35 percent over shop price, cash in pocket, with a real risk of a bust.
 - **Police precinct**: your heat.
 
-**Phone deliveries** ring in now and then: a green beacon and a map marker show the address. The **garage** (Shift + E on the car in its bay) fits a bigger trunk, a tuned engine and a bull bar.
+**Deliveries** come on two devices, and **J** opens both. See the chapter on them below. The **garage** (Shift + E on the car in its bay) fits a bigger trunk, a tuned engine and a bull bar.
+
+## Deliveries: the burner and the tablet
+
+Two devices, one key. **J** opens the board anywhere, on foot or at the wheel, and it has a tab for each.
+📱 The burner
+Always in your pocket. Somebody rings for **joints, bags or cookies** once you have a couple packed, gives an address across town and five minutes. Carry the goods **in your hands**, drive or walk to the green beacon and press **E**. The money is cash straight into your **pocket** at 60 percent over shop price, and it puts your **heat** up. No receipt, no tax, and a robber can take it off you, so bank it.
+📋 The tablet
+It sits on its dock in the office and wakes up the moment you hold the **tobacco licence**. Press **E** to take it; carry it into the car and it drops into the dash cradle, so it rides the round without eating a hotbar slot. Press **E** on the dock again to put it back.
+
+The tablet lists up to four **RF Smoking** orders at once: an address, how many packs of which cigarette, what it pays and how long is left. Load the packs into the car at your bay (**Shift + E** on the car), drive the round, and press **E** at each amber beacon. The packs come **out of the boot**, so you never carry them. The money is **invoiced to the bank**, no heat, and each drop is a point of reputation. Jobs further out pay more for the drive.
+
+The numbers on the board match the numbers on the **map** (M). Amber rings are tablet drops, green ones the burner. Miss a deadline and you lose a point of reputation. A hired **driver** clears jobs himself after about a minute, taking a cut of the tablet ones.
 
 ## Upstairs and the roof
 

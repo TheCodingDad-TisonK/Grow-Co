@@ -82,6 +82,16 @@ button { font: inherit; cursor: pointer; }
 .g3-dash { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: 440px; height: 139px; filter: drop-shadow(0 10px 26px rgba(0,0,0,.6)); }
 .g3-hud.driving .g3-hotbar, .g3-hud.driving .g3-held { display: none !important; }
 .g3-objective b.kk { display: inline; font-size: inherit; letter-spacing: 0; text-transform: none; margin: 0 1px; font-family: var(--mono); color: var(--ink); }
+/* the delivery boards: the burner's list and the tablet's round */
+.g3-jobs { width: 100%; border-collapse: collapse; font-size: 13px; }
+.g3-jobs th { text-align: left; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 4px 8px; border-bottom: 1px solid var(--panel-line); }
+.g3-jobs td { padding: 9px 8px; border-bottom: 1px solid rgba(120,200,140,.10); vertical-align: top; }
+.g3-jobs td small { color: var(--muted); font-size: 11px; }
+.g3-jobs td.bad { color: var(--red); font-family: var(--mono); }
+.g3-jobs tr td:first-child { color: var(--amber); font-family: var(--mono); }
+.g3-empty { color: var(--muted); font-size: 13px; line-height: 1.6; padding: 14px 2px; }
+.g3-sub2 { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0 0 10px; }
+.g3-sub2 b { color: var(--ink); font-family: var(--mono); }
 @keyframes pop { from { transform: translateX(-50%) scale(.9); opacity: 0; } to { opacity: 1; } }
 @keyframes slidein { from { transform: translateX(20px); opacity: 0; } to { opacity: 1; } }
 

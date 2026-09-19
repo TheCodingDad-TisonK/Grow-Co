@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.6
+
+Two delivery devices, one key. **J** opens the board on foot or at the wheel.
+
+- **📱 The burner phone.** Always on you. Calls come in for joints, bags or cookies with a real street address and five minutes on the clock. Carry the goods in your hands, press **E** at the green beacon, and the cash goes straight in your pocket at 60 percent over shop price, with the heat that comes with it. Replaces the old single phone order: you can now have two on the go at once.
+- **📋 The delivery tablet.** It sits on a dock in the office and wakes up when you hold the tobacco licence. Take it, and carrying it into the car drops it into the dash cradle so it rides the round without using a hotbar slot.
+- **The RF Smoking round.** Up to four cigarette orders at once, each with an address, the packs wanted, the fee and a countdown. Load the car at your bay, drive the round, press **E** at each amber beacon and the packs come out of the boot. Paid into the bank, no heat, a point of reputation each, and the far side of town pays more for the drive.
+- Addresses are real: the nearest street names them, so "47 Back Street" is always the same door.
+- The map on **M** numbers every drop to match the board, amber for the tablet and green for the burner, and the driving card counts what is still waiting.
+- A hired **driver** works the list himself after about a minute, taking a cut of the tablet jobs.
+
 ## v1.5
 
 The car is a car now, not a box that moves. ([#2](https://github.com/TheCodingDad-TisonK/Grow-Co/issues/2))
