@@ -15,4 +15,4 @@
 - [Building and releasing](Building-and-Releasing)
 - [Roadmap and ideas](Roadmap-and-Ideas)
 
-[Discord](https://discord.gg/Th2pnq36) · [Website](https://realisticfarming.com)
+[Discord](https://discord.gg/8FcgxwJ3dM) · [Website](https://realisticfarming.com)

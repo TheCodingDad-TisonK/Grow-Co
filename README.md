@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest"><b>Download for Windows</b></a> ·
   <a href="https://github.com/TheCodingDad-TisonK/RF-Grow-Co/wiki"><b>Wiki</b></a> ·
-  <a href="https://discord.gg/Th2pnq36"><b>Discord</b></a> ·
+  <a href="https://discord.gg/8FcgxwJ3dM"><b>Discord</b></a> ·
   <a href="https://realisticfarming.com"><b>realisticfarming.com</b></a>
 </p>
 

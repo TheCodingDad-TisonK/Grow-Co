@@ -26,4 +26,4 @@ This wiki is a mirror of the [`docs/`](https://github.com/TheCodingDad-TisonK/RF
 
 ## Community
 
-[Discord](https://discord.gg/Th2pnq36) · [realisticfarming.com](https://realisticfarming.com) · [Issues](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/issues)
+[Discord](https://discord.gg/8FcgxwJ3dM) · [realisticfarming.com](https://realisticfarming.com) · [Issues](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/issues)

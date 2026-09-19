@@ -17,7 +17,7 @@ A form opens. Give it a short title, say what happened, and pick from the dropdo
 
 **Why it takes two steps.** A game running on your PC cannot file a GitHub issue on its own without carrying a secret key, and a key shipped inside a game can be taken out and abused. So instead the game copies the report to your clipboard, saves a copy as a `.txt` file, and opens the GitHub bug form with your answers already filled in. You click into the "Report data" box, press **Ctrl + V**, and submit. You need a free GitHub account.
 
-**No GitHub account?** The report was also saved to your Downloads as a `.txt` file. Post it on [Discord](https://discord.gg/Th2pnq36).
+**No GitHub account?** The report was also saved to your Downloads as a `.txt` file. Post it on [Discord](https://discord.gg/8FcgxwJ3dM).
 
 ## For the developer
 

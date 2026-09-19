@@ -127,7 +127,7 @@
     if (open) return; open = true; try { document.exitPointerLock(); } catch (e) {}
     if (!root) { root = document.createElement('div'); root.className = 'rf-front rf-report'; root.innerHTML = '<div class="rf-report-card"><div class="rf-report-body"></div></div>'; document.body.appendChild(root);
       root.addEventListener('click', function (e) { var t = e.target.closest('[data-rfr]'); if (!t) return; e.preventDefault(); var a = t.getAttribute('data-rfr'), c = root._ctx || {};
-        if (a === 'close') hide(); else if (a === 'send') send(false); else if (a === 'preview') send(true); else if (a === 'back') form(); else if (a === 'reopen') window.open(c.url, '_blank', 'noopener'); else if (a === 'recopy') copy(c.clip); else if (a === 'refile') download(c.name, c.text); else if (a === 'discord') window.open('https://discord.gg/Th2pnq36', '_blank', 'noopener'); else if (a === 'openurl') window.open(t.getAttribute('data-url'), '_blank', 'noopener'); }); }
+        if (a === 'close') hide(); else if (a === 'send') send(false); else if (a === 'preview') send(true); else if (a === 'back') form(); else if (a === 'reopen') window.open(c.url, '_blank', 'noopener'); else if (a === 'recopy') copy(c.clip); else if (a === 'refile') download(c.name, c.text); else if (a === 'discord') window.open('https://discord.gg/8FcgxwJ3dM', '_blank', 'noopener'); else if (a === 'openurl') window.open(t.getAttribute('data-url'), '_blank', 'noopener'); }); }
     root.hidden = false; form();
   }
   function hide() { open = false; if (root) root.hidden = true; }

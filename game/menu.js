@@ -38,7 +38,7 @@
     body((urlSave ? '<div class="rf-how">Developer save "' + urlSave + '" is loaded. <button data-rf="play" class="primary" style="margin-top:8px;width:100%">▶ Play it</button></div>' : '') +
       '<div class="rf-slots">' + rows + '</div><div class="rf-menu-btns row"><button data-rf="how">📖 Guide</button><button data-rf="bug">🐞 Report a bug</button></div><div class="rf-menu-btns row"><button data-rf="discord">💬 Discord</button><button data-rf="site">🌐 realisticfarming.com</button><button data-rf="quit">⏏ Quit</button></div>');
   }
-  var LINKS = { discord: 'https://discord.gg/Th2pnq36', site: 'https://realisticfarming.com' };
+  var LINKS = { discord: 'https://discord.gg/8FcgxwJ3dM', site: 'https://realisticfarming.com' };
   var chapter = 0;
   function showHow() {
     var G = window.RF_GUIDE || []; card.classList.add('wide');

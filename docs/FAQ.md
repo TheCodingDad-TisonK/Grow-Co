@@ -46,4 +46,4 @@ It is a game. Nothing in it is advice about anything.
 Yes, it is MIT licensed. Keep the notice. See the [Modding guide](Modding-Guide).
 
 **How do I report a bug or suggest something?**
-[Open an issue](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/issues) or say hello on [Discord](https://discord.gg/Th2pnq36).
+[Open an issue](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/issues) or say hello on [Discord](https://discord.gg/8FcgxwJ3dM).
