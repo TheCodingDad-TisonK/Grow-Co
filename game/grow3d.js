@@ -2412,7 +2412,7 @@
   function dashRound(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
   function drawDash() {
     var cv = $('h-dash'); if (!cv || !drive.g || cv.hidden) return;
-    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height, cs = carState(), on = drive.engineOn;
+    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height, cs = carState(), cs2 = xs(), on = drive.engineOn;
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(10,15,12,.93)'; dashRound(ctx, 2, 2, W - 4, H - 4, 22); ctx.fill(); ctx.strokeStyle = 'rgba(120,200,140,.28)'; ctx.lineWidth = 3; ctx.stroke();
     var cx = 128, cy = 132, R = 92, a0 = Math.PI * 0.78, a1 = Math.PI * 2.22, kmh = Math.abs(drive.v) * 3.6, top = Math.max(1, carVmax() * 3.6), frac = clamp(kmh / top, 0, 1);
@@ -2442,8 +2442,9 @@
       ctx.strokeStyle = L.on ? L.col : 'rgba(255,255,255,.08)'; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = L.on ? L.col : 'rgba(143,165,150,.3)'; ctx.font = 'bold 14px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(L.txt, lx + 54, 142);
     });
-    ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(143,165,150,.9)'; ctx.font = '14px system-ui, sans-serif';
-    ctx.fillText(!on ? 'I starts the engine' : cs.brake ? 'P releases the handbrake' : carAnyOpen() ? 'Something is open — T boot · B bonnet' : carInBay() ? 'In your bay — E gets out, Shift+E loads' : 'L lights · T boot · M map · E gets out', 258, 186);
+    var ja = jobAtCar();
+    ctx.textAlign = 'left'; ctx.fillStyle = ja >= 0 ? '#6fdc8c' : 'rgba(143,165,150,.9)'; ctx.font = (ja >= 0 ? 'bold ' : '') + '14px system-ui, sans-serif';
+    ctx.fillText(ja >= 0 ? 'E hands over drop #' + (ja + 1) + ' · ' + cs2.jobs[ja].qty + ' × ' + jobGoods(cs2.jobs[ja]) : !on ? 'I starts the engine' : cs.brake ? 'P releases the handbrake' : carAnyOpen() ? 'Something is open: T boot · B bonnet' : carInBay() ? 'In your bay: E gets out, Shift+E loads' : 'L lights · T boot · M map · E gets out', 258, 186);
   }
   function updateCity(dt) {
     traffic.forEach(function (c) {
@@ -2674,8 +2675,13 @@
     CITY.pois.push({ id: 'tobac', name: 'Corner Tobacconist', x: 40, z: 8, col: '#e8c27a' }, { id: 'police', name: 'Police precinct', x: 24, z: 8, col: '#5aa0d8' });
     // delivery drop marker and the weather
     /* a pool of drop markers: the round can have several stops out at once, so one beacon and one hit box per open job */
-    exp.beacons = []; exp.dropHits = [];
-    for (var bi = 0; bi < JOB_MAX; bi++) { var bc = cyl(0.5, 0.5, 14, new THREE.MeshBasicMaterial({ color: 0x6fdc8c, transparent: true, opacity: 0.35 }), 0, 7, 0, null, 12); bc.castShadow = false; bc.visible = false; exp.beacons.push(bc); exp.dropHits.push(hit(2.4, 2.4, 2.4, 0, -50, 0, { kind: 'dropoff', idx: bi })); }
+    exp.beacons = []; exp.dropHits = []; exp.rings = [];
+    for (var bi = 0; bi < JOB_MAX; bi++) {
+      var bc = cyl(0.5, 0.5, 14, new THREE.MeshBasicMaterial({ color: 0x6fdc8c, transparent: true, opacity: 0.35 }), 0, 7, 0, null, 12); bc.castShadow = false; bc.visible = false; exp.beacons.push(bc);
+      var rg = new THREE.Mesh(new THREE.RingGeometry(1.5, 2.15, 26), new THREE.MeshBasicMaterial({ color: 0x6fdc8c, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false }));
+      rg.rotation.x = -Math.PI / 2; rg.position.y = 0.07; rg.visible = false; rg.castShadow = rg.receiveShadow = false; world.group.add(rg); exp.rings.push(rg);   /* the column washes out against a pale building in daylight; the ring on the ground does not */
+      exp.dropHits.push(hit(2.4, 2.4, 2.4, 0, -50, 0, { kind: 'dropoff', idx: bi }));
+    }
     var wn = 900, wgeo = new THREE.BufferGeometry(), wpos = new Float32Array(wn * 3); for (var wi = 0; wi < wn; wi++) { wpos[wi * 3] = (Math.random() - 0.5) * 36; wpos[wi * 3 + 1] = Math.random() * 16; wpos[wi * 3 + 2] = (Math.random() - 0.5) * 36; } wgeo.setAttribute('position', new THREE.BufferAttribute(wpos, 3)); exp.wx = new THREE.Points(wgeo, new THREE.PointsMaterial({ color: 0xcfe0f0, size: 0.09, transparent: true, opacity: 0.7, depthWrite: false })); exp.wx.visible = false; exp.wx.frustumCulled = false; scene.add(exp.wx);
   }
   function outdoors() { if (drive.on || player.floor === 2) return true; if (player.floor !== 0) return false; var x = player.pos.x, z = player.pos.z; return Math.abs(x) > ROOM.x + 0.3 || z > ROOM.z + 0.2 || z < -12.6 || (z < -ROOM.z - 0.2 && (x < -0.2 || x > SEC.x2 + 0.2)); }
@@ -2718,14 +2724,28 @@
     ROADS.forEach(function (r) { var d = Math.abs((r[1] === 'z' ? b.z : b.x) - r[2]); if (d < bd) { bd = d; best = r; } });
     var n = Math.abs(Math.round(best[1] === 'z' ? b.x : b.z)); return (n < 2 ? 2 : n) + ' ' + best[0];
   }
+  // a doorway on whichever face of the building can actually be stood on: the north row's front doors fall
+  // outside the world clamp, and a drop you cannot walk to just expires and costs a point of reputation
+  function dropSpot(b) {
+    var M = 2.4, cands = [[b.x, b.z + b.d / 2 + 1.6], [b.x, b.z - b.d / 2 - 1.6], [b.x + b.w / 2 + 1.6, b.z], [b.x - b.w / 2 - 1.6, b.z]];
+    for (var i = 0; i < cands.length; i++) {
+      var x = cands[i][0], z = cands[i][1];
+      if (Math.abs(x) > CITY.x - M || z < CITY.z1 + M || z > CITY.z2 - M) continue;
+      var hit = false;
+      for (var k = 0; k < world.obstacles.length; k++) { var o = world.obstacles[k]; if ((o.floorLevel || 0) !== 0 && o.floorLevel !== 'any') continue; var px = clamp(x, o.x1, o.x2), pz = clamp(z, o.z1, o.z2); if ((x - px) * (x - px) + (z - pz) * (z - pz) < 1.6) { hit = true; break; } }
+      if (!hit) return { x: x, z: z };
+    }
+    return null;
+  }
   function jobsOf(via) { return xs().jobs.filter(function (j) { return j.via === via; }); }
   function jobGoods(j) { return j.via === 'tablet' ? CIG_SKUS[j.sku].name : kindName(j.kind, j.qty); }
   function jobSpawn(via) {
     var X = xs(), bl = CITY.blds.filter(function (b) { return !b.poi; }); if (!bl.length) return;
-    var used = X.jobs.map(function (j) { return j.addr; }), tries = 0, b, addr;
-    do { b = pick(bl); addr = addrFor(b); tries++; } while (used.indexOf(addr) >= 0 && tries < 12);
-    if (used.indexOf(addr) >= 0) return;
-    var j = { id: 'j' + Math.random().toString(36).slice(2, 8), via: via, addr: addr, x: b.x, z: b.z + b.d / 2 + 1.6, born: now() };
+    if (X.jobs.length >= JOB_MAX || jobsOf(via).length >= JOB_CAP[via]) return;   /* the caps are the invariant, not the spawn timer: a job past the beacon pool would have no marker and no drop to press E on */
+    var used = X.jobs.map(function (j) { return j.addr; }), b = null, spot = null, addr = '';
+    for (var t = 0; t < 30 && !spot; t++) { var cand = pick(bl), ca = addrFor(cand); if (used.indexOf(ca) >= 0) continue; var s = dropSpot(cand); if (s) { b = cand; spot = s; addr = ca; } }
+    if (!spot) return;
+    var j = { id: 'j' + Math.random().toString(36).slice(2, 8), via: via, addr: addr, x: spot.x, z: spot.z, born: now() };
     if (via === 'tablet') {
       j.sku = pick(CIG_KEYS); j.qty = randi(4, 12);
       var far = Math.hypot(b.x, b.z) / 40;   /* the far side of town pays a little more for the drive */
@@ -2751,10 +2771,10 @@
     var X = xs(); if (!exp.beacons) return;
     syncTabletDock();
     if (!Array.isArray(X.jobs)) X.jobs = [];
-    if (X.delivery) { var od = X.delivery; X.delivery = null; X.jobs.push({ id: 'jold', via: 'phone', kind: od.kind, qty: od.qty, x: od.x, z: od.z, addr: 'across town', born: od.born, until: od.until }); }   /* a save from before the two devices keeps its open order */
+    if (X.delivery) { var od = X.delivery; X.delivery = null; if (X.jobs.length < JOB_MAX) X.jobs.push({ id: 'jold', via: 'phone', kind: od.kind, qty: od.qty, x: od.x, z: od.z, addr: 'across town', born: od.born, until: od.until }); }   /* a save from before the two devices keeps its open order */
     if (shop().open) {
-      X.jobT.ph -= dt; if (X.jobT.ph <= 0 && jobsOf('phone').length < JOB_CAP.phone) { X.jobT.ph = randi(200, 330); jobSpawn('phone'); }
-      if (hasLic('tobacco')) { X.jobT.tab -= dt; if (X.jobT.tab <= 0 && jobsOf('tablet').length < JOB_CAP.tablet) { X.jobT.tab = randi(120, 220); jobSpawn('tablet'); } }
+      X.jobT.ph -= dt; if (X.jobT.ph <= 0) { X.jobT.ph = randi(200, 330); jobSpawn('phone'); }
+      if (hasLic('tobacco')) { X.jobT.tab -= dt; if (X.jobT.tab <= 0) { X.jobT.tab = randi(120, 220); jobSpawn('tablet'); } }
     }
     for (var i = X.jobs.length - 1; i >= 0; i--) {
       var j = X.jobs[i];
@@ -2763,17 +2783,24 @@
     }
     for (var b = 0; b < exp.beacons.length; b++) {
       var jb = X.jobs[b];
-      if (jb) { exp.beacons[b].visible = true; exp.beacons[b].material.color.setHex(jb.via === 'tablet' ? 0xffc857 : 0x6fdc8c); exp.beacons[b].position.set(jb.x, 7, jb.z); exp.dropHits[b].position.set(jb.x, 1.2, jb.z); }
-      else { exp.beacons[b].visible = false; exp.dropHits[b].position.y = -50; }
+      if (jb) { var col = jb.via === 'tablet' ? 0xffc857 : 0x6fdc8c; exp.beacons[b].visible = true; exp.beacons[b].material.color.setHex(col); exp.beacons[b].position.set(jb.x, 7, jb.z); exp.rings[b].visible = true; exp.rings[b].material.color.setHex(col); exp.rings[b].position.set(jb.x, 0.07, jb.z); exp.dropHits[b].position.set(jb.x, 1.2, jb.z); }
+      else { exp.beacons[b].visible = false; exp.rings[b].visible = false; exp.dropHits[b].position.y = -50; }
     }
   }
   function driverRuns(j) {   // the hired driver clears jobs himself, for a thinner cut
     var X = xs();
-    if (j.via === 'tablet') { var T = tob(), have = T.packs[j.sku] + (S.car.cigs[j.sku] || 0); if (have < j.qty) return false; var fromCar = Math.min(S.car.cigs[j.sku] || 0, j.qty); S.car.cigs[j.sku] -= fromCar; T.packs[j.sku] -= (j.qty - fromCar); syncTobRack(); X.jobs = X.jobs.filter(function (o) { return o !== j; }); var p = Math.round(j.pay * 0.65); S.bank += p; S.stats.deliveries = (S.stats.deliveries || 0) + 1; toast('🚚 Your driver ran ' + j.addr + ' — ' + money(p) + ' banked (his cut taken)', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true; }
+    if (j.via === 'tablet') { var T = tob(), have = T.packs[j.sku] + (S.car.cigs[j.sku] || 0); if (have < j.qty) return false; var fromCar = Math.min(S.car.cigs[j.sku] || 0, j.qty); if (fromCar > 0) S.car.cigs[j.sku] -= fromCar; T.packs[j.sku] -= (j.qty - fromCar); syncTobRack();   /* never touch a key that is not there: undefined -= 0 is NaN, and a NaN pack count poisons the trunk and the wholesale counter */ X.jobs = X.jobs.filter(function (o) { return o !== j; }); var p = Math.round(j.pay * 0.65); S.bank += p; S.stats.deliveries = (S.stats.deliveries || 0) + 1; toast('🚚 Your driver ran ' + j.addr + ' — ' + money(p) + ' banked (his cut taken)', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true; }
     var got = 0, val = 0; Object.keys(S.lots[j.kind]).forEach(function (sid) { if (got >= j.qty) return; var l = S.lots[j.kind][sid]; if (l.n <= 0) return; var dd = lotDraw(j.kind, sid, j.qty - got); got += dd.n; val += unitPrice(j.kind, dd.q, dd.thc) * dd.n; });
     if (got <= 0) return false;
     X.jobs = X.jobs.filter(function (o) { return o !== j; }); var pay = Math.round(val * 1.25); S.bank += pay; S.rep += 1; S.stats.deliveries = (S.stats.deliveries || 0) + 1; syncGoods();
     toast('🚚 Your driver ran ' + j.addr + ' — ' + money(pay) + ' banked', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true;
+  }
+  // the round is a driving loop, so a drop you have pulled up at is reachable without getting out
+  function jobAtCar() {
+    if (!drive.on || Math.abs(drive.v) > 1.5) return -1;
+    var X = xs(), best = -1, bd = 7;
+    X.jobs.forEach(function (j, i) { var d = Math.hypot(j.x - drive.g.position.x, j.z - drive.g.position.z); if (d < bd) { bd = d; best = i; } });
+    return best;
   }
   function jobHandOver(idx) {
     var X = xs(), j = X.jobs[idx], h = held(); if (!j) return true;
@@ -2803,7 +2830,7 @@
   function tabletTake() {
     var X = xs(); if (X.tablet === 'hand') { X.tablet = 'dock'; toast('📋 Tablet back on its dock', ''); sfx('putdown'); save(); return; }
     if (X.tablet === 'car') { X.tablet = 'dock'; toast('📋 Took the tablet out of the car and docked it', ''); sfx('putdown'); save(); return; }
-    if (!take({ kind: 'tablet' })) return; X.tablet = 'hand'; toast('📋 Delivery tablet in hand — J opens the round. Get in the car and it slots into the cradle.', 'good'); save();
+    if (!take({ kind: 'tablet' })) return; X.tablet = 'hand'; X.seenTablet = true; toast('📋 Delivery tablet in hand — J opens the round. Get in the car and it slots into the cradle.', 'good'); save();
   }
   function tabletStow() {   // carrying it into the car drops it in the dash cradle, so it rides the round without eating a slot
     var X = xs(); if (X.tablet !== 'hand') return;
@@ -4169,17 +4196,21 @@
     c.placard(['SUPPLY DESK', 'laptop: shop · seeds · gear'], 0.6, 0.2, 0.55, 1.05, -0.2, { titleColor: '#6fdc8c' });
   } });
   defProp('tabletDock', { label: 'tablet dock', x: -10.4, z: 3.55, rot: 2, build: function (c) {
-    // a slim stand against the office wall: the delivery tablet sits in it on charge until you take it out
-    c.box(0.44, 0.04, 0.3, MAT.darkwood, 0, 0.9, 0, { cast: false }); [-0.18, 0.18].forEach(function (lx) { c.box(0.05, 0.9, 0.05, MAT.metal, lx, 0.45, 0.1); }); c.box(0.4, 0.03, 0.26, MAT.metal, 0, 0.02, 0.1, { cast: false });
-    c.box(0.34, 0.03, 0.12, colorMat(0x2b2f35, 0.5), 0, 0.92, -0.02, { cast: false });
+    // a charging plinth against the office wall: the tablet stands in the cradle, screen out, until you take it
+    var body = colorMat(0x2b2f35, 0.55, 0.3);
+    c.box(0.52, 0.05, 0.36, MAT.darkwood, 0, 0.93, 0, { cast: false }); c.box(0.54, 0.02, 0.38, MAT.darkwood, 0, 0.955, 0, { cast: false });
+    c.box(0.44, 0.9, 0.3, body, 0, 0.47, 0.02, { cast: true }); c.box(0.56, 0.04, 0.4, MAT.metal, 0, 0.03, 0.02, { cast: false });
+    c.box(0.46, 0.5, 0.02, colorMat(0x1b1f24, 0.7), 0, 0.5, -0.16, { cast: false });   /* recessed back so the plinth is not one flat slab */
+    c.box(0.36, 0.035, 0.11, MAT.metal, 0, 0.965, -0.05, { cast: false });   /* the cradle lip the tablet leans in */
     var lit = hasLic('tobacco'), inDock = xs().tablet === 'dock';
-    var tg = new THREE.Group(); tg.position.set(0, 0.94, -0.02); tg.rotation.x = -0.38; tg.userData.tabletBody = true; tg.userData.builtLit = lit; c.add(tg);
-    var shell = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.21, 0.014), colorMat(0x1b1f24, 0.4, 0.5)); shell.castShadow = true; tg.add(shell);
-    var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.27, 0.18), lit ? new THREE.MeshBasicMaterial({ map: textTex(['RF SMOKING', 'delivery round'], 260, 170, { size: 30, bg: '#0d1511', color: '#8fa596', titleColor: '#ffc857' }) }) : MAT.screen);
-    scr.position.z = 0.009; tg.add(scr); tg.visible = inDock;
-    c.box(0.02, 0.012, 0.012, glowMat(lit ? 0x6fdc8c : 0xd0201a, 1.2), 0.19, 0.93, 0.06, { cast: false });
-    c.placard(['DELIVERY ROUND', 'take it · J reads it'], 0.5, 0.18, 0, 1.28, 0.02, { titleColor: '#ffc857' });
-    c.hit(0.5, 0.7, 0.4, 0, 0.9, 0.02, { kind: 'tabletDock' });
+    var tg = new THREE.Group(); tg.position.set(0, 0.975, -0.05); tg.rotation.x = -0.3; tg.userData.tabletBody = true; tg.userData.builtLit = lit; c.add(tg);
+    var shell = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.28, 0.016), colorMat(0x1b1f24, 0.4, 0.5)); shell.position.y = 0.13; shell.castShadow = true; tg.add(shell);
+    var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.345, 0.245), lit ? new THREE.MeshBasicMaterial({ map: textTex(['RF SMOKING', 'delivery round'], 300, 210, { size: 34, bg: '#0d1511', color: '#8fa596', titleColor: '#ffc857' }) }) : MAT.screen);
+    scr.position.set(0, 0.13, 0.01); tg.add(scr);
+    c.cyl(0.016, 0.016, 0.02, glowMat(lit ? 0x6fdc8c : 0xd0201a, 1.4), 0.21, 0.962, 0.1, 10);   /* charge light: green once the licence is in */
+    c.sign(['DELIVERY ROUND'], 0.40, 0.072, 0, 0.74, 0.178, 0, { size: 13, titleColor: '#ffc857', bg: '#141a16' });   /* the plinth front face is at z 0.17, and the plate is only 128 px wide: one short line at 13 px is what fits */
+    c.solid(-0.27, 0.27, -0.2, 0.2);
+    c.hit(0.56, 0.9, 0.44, 0, 0.72, 0.02, { kind: 'tabletDock' });
   } });
   defProp('rack', { label: 'supply rack', x: -ROOM.x + 0.45, z: -1.0, rot: 1, build: function (c) {
     var shelfM = colorMat(0x8a8f96, 0.35, 0.8); for (var s = 0; s < 4; s++) { c.box(0.9, 0.03, 0.5, shelfM, 0, 0.25 + s * 0.55, 0); c.box(0.9, 0.04, 0.02, MAT.plastic, 0, 0.245 + s * 0.55, 0.25, { cast: false }); var lbl = c.sign([['SOIL', 'FEED · SPRAY', 'PAPERS · BAGS', 'POTS · JARS'][s]], 0.16, 0.03, -0.34, 0.245 + s * 0.55, 0.262, 0, { size: 13, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,.3)' }); }
@@ -4899,7 +4930,9 @@
   function dryPct() { var m = 0; S.batches.forEach(function (b) { if (!b.cured) m = Math.max(m, dryProgress(b)); }); return m; }
   function batchById(bid) { for (var i = 0; i < S.batches.length; i++) if (S.batches[i].id === bid) return S.batches[i]; return null; }
   function interact() {
-    if (!focus || sleep.on || player.downT > 0) return; var d = focus.data; var h = held(); sfx('click');
+    if (sleep.on || player.downT > 0) return;
+    var ht = held(); if (ht && ht.kind === 'tablet' && (!focus || focus.data.kind === 'tabletDock')) { if (focus) tabletTake(); else jobsPanel(); return; }   /* the thing in your hands is a screen: E reads it, unless you are putting it back on its dock */
+    if (!focus) return; var d = focus.data; var h = held(); sfx('click');
     if (d.kind === 'plant') {
       var p = plantById(d.pid); if (!p) return;
       if (p.progress >= 1) { if (hotbarFull()) toast('Hands full — G to put things down', 'bad'); else actions.harvest(d.pid); }
@@ -5404,6 +5437,7 @@
     if (drive.on) { var jn = xs().jobs.length; return '<b>At the wheel</b>' + (jn ? '🚚 ' + jn + ' drop' + (jn === 1 ? '' : 's') + ' waiting — <b class="kk">J</b> the board, <b class="kk">M</b> the map.<br>' : '') + 'Mouse looks around · wheel zooms · <b class="kk">I</b> ignition · <b class="kk">P</b> handbrake · <b class="kk">L</b> lights · <b class="kk">W</b>/<b class="kk">S</b> drive · <b class="kk">A</b>/<b class="kk">D</b> steer · <b class="kk">Space</b> brake · <b class="kk">T</b> boot · <b class="kk">B</b> bonnet · <b class="kk">C</b> centre · <b class="kk">E</b> get out'; }
     if (introRunning()) return '';   /* the intro card is the guidance while it runs: two boxes competing is noise */
     var t = '<b>Next up</b>'; var h = held();
+    if (h && h.kind === 'tablet') return t + '📋 The delivery round is in your hands. <b class="kk">E</b> or <b class="kk">J</b> opens it, and carrying it into the car slots it into the cradle.';
     if (h && h.kind === 'broom') return t + '🧹 ' + dustList().length + ' dusty spot' + (dustList().length === 1 ? '' : 's') + ' left — E on the dust to sweep.';
     if (!S.customer && !h && dustList().length >= 8) return t + '🧹 The floors are dusty — grab the broom in the processing room.';
     if (h && h.kind === 'harvest') return t + '🌬️ Hang the fresh harvest on the drying rack in the dry room.';
@@ -5418,6 +5452,9 @@
     if (S.customer && !S.customer.arrived && !S.customer.stage) return t + '🪪 ' + S.customer.who + ' just walked in — security is checking ID. Head to the service window.';
     if (S.customer) { var c = S.customer; var gv = c.given ? c.given.n : 0; if (h && h.kind === c.want) return t + '🤝 Hand the ' + c.want + ' to ' + c.who + ' (' + gv + '/' + c.qty + ' given).'; return t + '🚪 ' + c.who + ' is at the service window — wants ' + wantText(c) + (lotCount(c.want, c.strain) + gv >= c.qty ? '. Grab them from the goods shelf and bring them over.' : c.strain && S.pkg[c.want].n + gv >= c.qty ? '. No ' + strainById(c.strain).name + ' packed — another strain sells at 15% off.' : '. Pack more at the bench first.'); }
     if (h && (h.kind === 'joints' || h.kind === 'bags')) return t + '💵 Ring those up at the service window, or wait for a customer.';
+    var XJ = xs();   /* deliveries sit below anything happening in the shop: a customer at the window beats a drop across town */
+    if (hasLic('tobacco') && XJ.tablet === 'dock' && !XJ.seenTablet) return t + '📋 The delivery tablet on the office dock is live now — take it, and <b class="kk">J</b> brings up the RF Smoking round.';
+    if (XJ.jobs.length) { var soon = XJ.jobs.filter(function (j) { return j.until - now() < 120000; }).length; return t + '🚚 ' + XJ.jobs.length + ' drop' + (XJ.jobs.length === 1 ? '' : 's') + ' waiting' + (soon ? ', ' + soon + ' close to running out' : '') + ' — <b class="kk">J</b> for the board, <b class="kk">M</b> for the map.'; }
     var ready = S.plants.filter(function (p) { return p.progress >= 1; }).length; if (ready) return t + '✂️ ' + ready + ' plant' + (ready > 1 ? 's are' : ' is') + ' ready — empty hands, E on the plant to harvest.';
     var haz = S.plants.filter(function (p) { return p.hazard; }).length; if (haz) return t + '⚠ ' + haz + ' plant' + (haz > 1 ? 's have' : ' has') + ' a problem — ' + (h && h.kind === 'remedy' ? 'spray it.' : (S.supplies.remedy || 0) ? 'grab pest spray from the rack.' : 'buy pest spray at the laptop.');
     var thirsty = !S.upgrades.autowater && S.plants.filter(function (p) { return p.thirst > 0.6; }).length; if (thirsty) return t + '💧 ' + thirsty + ' plant' + (thirsty > 1 ? 's are' : ' is') + ' thirsty — ' + (h && h.kind === 'can' ? 'E on each plant to water.' : 'grab the watering can from the hose reel in the grow room.');
@@ -5466,7 +5503,7 @@
     player.keys[e.code] = true;
     if (runHooks(hooks.keydown, e)) { e.preventDefault(); return; }
     if (drive.on && !e.repeat) {   /* at the wheel the letter keys belong to the car */
-      if (e.code === 'KeyE') { exitCar(); e.preventDefault(); return; }
+      if (e.code === 'KeyE') { var ja = jobAtCar(); if (ja >= 0) jobHandOver(ja); else exitCar(); e.preventDefault(); return; }   /* pulled up at a drop: E hands it over, and only gets you out once the drop is done */
       if (e.code === 'KeyI') { ignition(); e.preventDefault(); return; }
       if (e.code === 'KeyP') { parkBrake(); e.preventDefault(); return; }
       if (e.code === 'KeyL') { carLightStep(); e.preventDefault(); return; }
@@ -5551,5 +5588,5 @@
   }
   frame();
   // debug / automation handle (read-only use; not part of the game loop)
-  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
+  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
 })();

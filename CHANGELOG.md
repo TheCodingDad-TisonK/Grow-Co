@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.7
+
+A test pass over the car and the delivery devices. Three real bugs, and the round is a lot less fiddly to run.
+
+**Fixed**
+
+- **Roughly one job in five could not be delivered.** Nine of the town's buildings put their doorstep outside the world boundary, so you could drive to the beacon but never reach it, and the job expired and cost you a point of reputation. Every job now picks whichever face of the building you can actually stand on, and nothing is generated that cannot be reached. This affected the old phone deliveries too.
+- **A driver running a cigarette job with an empty car corrupted the car's pack count**, which then showed as a broken number in the garage menu and at the wholesale counter.
+- **The job caps were only applied by the spawn timer**, so anything else that raised a job could push past the six markers the town has and create a drop with no beacon and nothing to press E on. The caps are now part of raising a job at all.
+
+**Better**
+
+- **Hand a drop over from the driver's seat.** Stop within a few metres of a marker and the dashboard offers it; **E** hands it over and only gets you out once the drop is done. The round is a driving loop, so it should not need you to get out at every door.
+- Every drop now has a **ring painted on the ground** under its beacon, so you can see it in daylight when the column washes out against a pale building.
+- The **Next up** box counts the drops waiting and warns when one is close to running out, and it points at the tablet the first time the tobacco licence makes it live. It still gives way to anything happening in the shop.
+- **E** on the tablet in your hands opens the board.
+- The tablet dock was rebuilt: a proper charging plinth with the tablet standing in it, a nameplate that fits, a charge light, and it is solid instead of something you walk through.
+
 ## v1.6
 
 Two delivery devices, one key. **J** opens the board on foot or at the wheel.

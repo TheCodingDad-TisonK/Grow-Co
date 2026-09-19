@@ -162,9 +162,9 @@ Always in your pocket. Somebody rings for **joints, bags or cookies** once you h
 📋 The tablet
 It sits on its dock in the office and wakes up the moment you hold the **tobacco licence**. Press **E** to take it; carry it into the car and it drops into the dash cradle, so it rides the round without eating a hotbar slot. Press **E** on the dock again to put it back.
 
-The tablet lists up to four **RF Smoking** orders at once: an address, how many packs of which cigarette, what it pays and how long is left. Load the packs into the car at your bay (**Shift + E** on the car), drive the round, and press **E** at each amber beacon. The packs come **out of the boot**, so you never carry them. The money is **invoiced to the bank**, no heat, and each drop is a point of reputation. Jobs further out pay more for the drive.
+The tablet lists up to four **RF Smoking** orders at once: an address, how many packs of which cigarette, what it pays and how long is left. Load the packs into the car at your bay (**Shift + E** on the car), drive the round, and pull up at the amber marker. **You do not have to get out**: stop within a few metres and the dashboard offers the drop, and **E** hands it over from the driver's seat. The packs come **out of the boot**, so you never carry them. The money is **invoiced to the bank**, no heat, and each drop is a point of reputation. Jobs further out pay more for the drive.
 
-The numbers on the board match the numbers on the **map** (M). Amber rings are tablet drops, green ones the burner. Miss a deadline and you lose a point of reputation. A hired **driver** clears jobs himself after about a minute, taking a cut of the tablet ones.
+Every drop is marked on the ground with a coloured ring under its beacon, and the numbers on the board match the numbers on the **map** (M). Amber is a tablet drop, green a burner one. Miss a deadline and you lose a point of reputation. A hired **driver** clears jobs himself after about a minute, taking a cut of the tablet ones.
 
 ## Upstairs and the roof
 
