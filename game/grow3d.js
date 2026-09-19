@@ -2220,9 +2220,14 @@
   function cigTotal(c) { return c && c.cig && c.cig.given > 0 ? CIG_SKUS[c.cig.sku].price * c.cig.given : 0; }
   // ── The city: a street grid round the shop, places worth visiting, a car to get there and a map on M ──
   var CITY = { x: 122, z1: -64, z2: 96, mainZ: 17.9, backZ: -40, northZ: 78, westX: -64, eastX: 64, laneX: 4.5, blds: [], pois: [], roads: [], parks: [] };
-  var drive = { on: false, v: 0, g: null, wheels: [], cam: new THREE.Vector3(), gateAuto: false, eng: null, bumpT: 0 };
+  var drive = { on: false, v: 0, g: null, wheels: [], cam: new THREE.Vector3(), gateAuto: false, eng: null, bumpT: 0, engineOn: false, braking: false, rpm: 0, dist: 6.2, look: { yaw: 0, pitch: 0.12, t: 0 }, parts: null, lamps: null, shut: null, dashT: 0, warnT: 0 };
   var traffic = [], parkFolk = [], cityMap = { el: null, cv: null, on: false, t: 0 };
-  function carState() { if (!S.car || typeof S.car.x !== 'number') S.car = { x: 7.7, z: -15.3, h: Math.PI / 2, trunk: {} }; if (!S.car.trunk) S.car.trunk = {}; return S.car; }
+  function carState() {
+    if (!S.car || typeof S.car.x !== 'number') S.car = { x: 7.7, z: -15.3, h: Math.PI / 2, trunk: {} }; if (!S.car.trunk) S.car.trunk = {};
+    if (typeof S.car.lights !== 'number') S.car.lights = 0; if (typeof S.car.brake !== 'boolean') S.car.brake = true; if (typeof S.car.odo !== 'number') S.car.odo = 0;
+    if (!S.car.open) S.car.open = { doorL: false, doorR: false, boot: false, bonnet: false };
+    return S.car;
+  }
   var WIN_TEX = null;
   function cityWinMat(hex, rx, ry) {
     if (!WIN_TEX) WIN_TEX = makeTex(128, 128, function (ctx, w, h) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h); for (var y = 0; y < 4; y++) for (var x = 0; x < 4; x++) { ctx.fillStyle = Math.random() < 0.3 ? '#ffe9a8' : Math.random() < 0.5 ? '#3a4652' : '#56687a'; ctx.fillRect(x * 32 + 7, y * 32 + 8, 18, 17); } }, [1, 1]);
@@ -2244,12 +2249,36 @@
     signPlane([title, sub], Math.min(w, 5), 0.9, x, 3.95, z + faceZ * 0.08, faceZ > 0 ? 0 : Math.PI, { size: 44, bg: '#101410', titleColor: '#' + ('000000' + col.toString(16)).slice(-6), color: '#d8e2d8' });
     var hitM = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.6, 1.2), MAT.none); hitM.position.set(x, 1.3, z + faceZ * 0.5); world.group.add(hitM); interactable(hitM, { kind: 'cityDoor', poi: poi });
   }
-  function carBody(g, hex) {
+  function carBody(g, hex, full) {
     var paint = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.3, metalness: 0.6 }), glassM = new THREE.MeshPhysicalMaterial({ color: 0x20303c, transparent: true, opacity: 0.75, roughness: 0.05, metalness: 0.4 }), dk = colorMat(0x15171a, 0.8), wheels = [];
-    function add(w, h, d, m, x, y, z) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; g.add(b); return b; }
-    add(1.7, 0.5, 3.9, paint, 0, 0.55, 0); add(1.6, 0.16, 3.7, dk, 0, 0.26, 0); add(1.5, 0.5, 1.9, glassM, 0, 1.03, 0.2); add(1.52, 0.06, 1.7, paint, 0, 1.3, 0.2); add(1.62, 0.18, 0.9, paint, 0, 0.84, -1.35);
-    [-0.6, 0.6].forEach(function (x) { add(0.32, 0.12, 0.05, glowMat(0xfff3c8, 1.4), x, 0.62, -1.96); add(0.32, 0.1, 0.05, glowMat(0xd0201a, 0.9), x, 0.64, 1.96); }); add(0.5, 0.12, 0.03, MAT.white, 0, 0.45, 1.965); add(1.5, 0.1, 0.06, dk, 0, 0.36, -1.97);
+    function add(w, h, d, m, x, y, z, parent) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; (parent || g).add(b); return b; }
+    /* traffic keeps the cheap one-box shell; the player's car is built in sections so the bonnet and the boot open onto real wells */
+    if (full) { add(1.7, 0.5, 2.0, paint, 0, 0.55, 0.15); [-1.41, 1.55].forEach(function (nz, i) { var len = i ? 0.8 : 1.12; add(1.7, 0.14, len, paint, 0, 0.37, nz); [-1, 1].forEach(function (sx) { add(0.05, 0.3, len, paint, sx * 0.825, 0.59, nz); }); }); add(1.7, 0.3, 0.06, paint, 0, 0.59, -1.94); add(1.7, 0.3, 0.06, paint, 0, 0.59, 1.94); }
+    else { add(1.7, 0.5, 3.9, paint, 0, 0.55, 0); add(1.62, 0.18, 0.9, paint, 0, 0.84, -1.35); }
+    add(1.6, 0.16, 3.7, dk, 0, 0.26, 0); add(1.5, 0.5, 1.9, glassM, 0, 1.03, 0.2); add(1.52, 0.06, 1.7, paint, 0, 1.3, 0.2);
+    var headM = glowMat(0xfff3c8, 1.4), tailM = glowMat(0xd0201a, 0.9), revM = glowMat(0xf4f7ff, 0.06), lamps = { headM: headM, tailM: tailM, revM: revM, beams: [] };
+    [-0.6, 0.6].forEach(function (x) { add(0.32, 0.12, 0.05, headM, x, 0.62, -1.96); add(0.32, 0.1, 0.05, tailM, x, 0.64, 1.96); });
+    [-0.3, 0.3].forEach(function (x) { add(0.2, 0.08, 0.035, revM, x, 0.6, 1.962); });
+    add(0.5, 0.12, 0.03, MAT.white, 0, 0.45, 1.965); add(1.5, 0.1, 0.06, dk, 0, 0.36, -1.97);
     [[-0.85, -1.25], [0.85, -1.25], [-0.85, 1.25], [0.85, 1.25]].forEach(function (p) { var wg = new THREE.Group(); wg.position.set(p[0], 0.32, p[1]); var tire = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.22, 16), dk); tire.rotation.z = Math.PI / 2; tire.castShadow = true; wg.add(tire); var rim = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.23, 8), MAT.chrome); rim.rotation.z = Math.PI / 2; wg.add(rim); g.add(wg); wheels.push(wg); });
+    g.userData.lamps = lamps;
+    if (!full) return wheels;
+    var parts = {};
+    function hinge(x, y, z) { var p = new THREE.Group(); p.position.set(x, y, z); g.add(p); return p; }
+    /* the bonnet lifts from its rear edge, over an engine you can actually look at */
+    var bon = hinge(0, 0.78, -0.85); add(1.6, 0.13, 1.06, paint, 0, 0, -0.53, bon); add(1.48, 0.03, 0.96, dk, 0, -0.08, -0.53, bon); parts.bonnet = { g: bon, axis: 'x', max: 0.95, t: 0 };
+    add(1.15, 0.22, 0.8, colorMat(0x22262b, 0.65, 0.3), 0, 0.56, -1.4); add(0.62, 0.04, 0.46, colorMat(0x6a7078, 0.35, 0.8), 0, 0.69, -1.36); add(0.28, 0.16, 0.22, colorMat(0x2f5f8a, 0.7), -0.52, 0.58, -1.02); cyl(0.05, 0.05, 0.5, colorMat(0x8a8f96, 0.4, 0.7), 0.5, 0.6, -1.5, g, 10).rotation.z = Math.PI / 2;
+    /* the boot lifts from its front edge, over a well that shows what you are carrying */
+    var bt = hinge(0, 0.78, 1.16); add(1.6, 0.13, 0.78, paint, 0, 0, 0.39, bt); add(1.48, 0.03, 0.68, dk, 0, -0.08, 0.39, bt); parts.boot = { g: bt, axis: 'x', max: -0.95, t: 0 };
+    parts.cargo = new THREE.Group(); parts.cargo.position.set(0, 0.44, 1.55); g.add(parts.cargo);
+    [-0.44, 0, 0.44].forEach(function (cx, i) { var cb = add(0.4, 0.16, 0.5, colorMat([0x8a6a3a, 0x6a7a4a, 0x7a5a4a][i], 0.9), cx, 0.08, 0, parts.cargo); cb.visible = false; });
+    /* two doors on front hinges, each with its glass, and a dark sill so an open door shows an interior */
+    [-1, 1].forEach(function (sx) {
+      add(0.006, 0.44, 1.08, colorMat(0x14171a, 0.95), sx * 0.8535, 0.56, -0.06);
+      var d = hinge(sx * 0.88, 0, -0.62); add(0.05, 0.5, 1.12, paint, 0, 0.56, 0.56, d); add(0.05, 0.42, 1.0, glassM, 0, 1.04, 0.56, d); add(0.06, 0.05, 1.12, dk, 0, 0.82, 0.56, d); add(0.1, 0.04, 0.18, MAT.chrome, sx * 0.04, 0.68, 0.94, d);
+      parts[sx < 0 ? 'doorL' : 'doorR'] = { g: d, axis: 'y', max: sx * 0.95, t: 0 };
+    });
+    g.userData.parts = parts;
     return wheels;
   }
   function buildCity() {
@@ -2279,8 +2308,12 @@
     for (var ox = -110; ox <= 110; ox += 22) { if (Math.abs(ox) < 66) { if (ox !== -22) cityBldg(ox, -58, 18, 9, 10 + ((ox * 7) % 13 + 13) % 13, cols[Math.abs(ox) % cols.length]); cityBldg(ox + 3, 90, 17, 9, 12 + ((ox * 5) % 17 + 17) % 17, cols[Math.abs(ox + 3) % cols.length]); } }
     [-98, -80, 80, 98].forEach(function (ox, i) { for (var oz = -56; oz <= 90; oz += 24) { if (Math.abs(oz - C.mainZ) < 9 || Math.abs(oz - C.backZ) < 9 || Math.abs(oz - C.northZ) < 9) continue; cityBldg(ox, oz, 14, 18, 14 + ((oz + ox) % 19 + 19) % 19, cols[(i + Math.abs(oz)) % cols.length]); } });
     // the player's car, where it was left
-    var cs = carState(); drive.g = new THREE.Group(); drive.wheels = carBody(drive.g, 0x1f4f8a); drive.g.position.set(cs.x, 0, cs.z); drive.g.rotation.y = cs.h; world.group.add(drive.g);
+    var cs = carState(); drive.g = new THREE.Group(); drive.wheels = carBody(drive.g, 0x1f4f8a, true); drive.parts = drive.g.userData.parts; drive.lamps = drive.g.userData.lamps; drive.g.position.set(cs.x, 0, cs.z); drive.g.rotation.y = cs.h; world.group.add(drive.g);
+    [-0.6, 0.6].forEach(function (bx) { var sl = new THREE.SpotLight(0xfff3c8, 0, 26, 0.62, 0.5, 1.4); sl.position.set(bx, 0.62, -2.0); sl.castShadow = false; drive.g.add(sl); var tgt = new THREE.Object3D(); tgt.position.set(bx * 2.4, -0.3, -15); drive.g.add(tgt); sl.target = tgt; drive.lamps.beams.push(sl); });
     var chit = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.5, 4.2), MAT.none); chit.position.y = 0.8; drive.g.add(chit); interactable(chit, { kind: 'car' });
+    /* the openable parts get their own hit boxes, each poking out past the car box so the crosshair finds them first */
+    [['doorL', -1.06, 0.7, -0.05, 0.36, 1.0, 1.3], ['doorR', 1.06, 0.7, -0.05, 0.36, 1.0, 1.3], ['boot', 0, 0.92, 1.74, 1.5, 0.8, 0.66], ['bonnet', 0, 0.86, -1.45, 1.5, 0.62, 0.9]].forEach(function (p) { var m = new THREE.Mesh(new THREE.BoxGeometry(p[4], p[5], p[6]), MAT.none); m.position.set(p[1], p[2], p[3]); drive.g.add(m); interactable(m, { kind: 'carPart', part: p[0] }); });
+    carLamps();
     // traffic: a handful of cars that keep to their lane and stop for you
     [[C.mainZ + 2.7, 1], [C.mainZ - 0.3, -1], [C.mainZ + 2.7, 1], [C.backZ + 2.2, 1], [C.backZ - 2.2, -1], [C.northZ + 2.2, 1], [C.northZ - 2.2, -1]].forEach(function (l, i) { var g = new THREE.Group(); carBody(g, [0xb5121b, 0xe9e4d8, 0x2b2f35, 0x2e7d4f, 0xf2c21a, 0x8d949c, 0x5a3a8a][i]); g.position.set(-100 + i * 31, 0, l[0]); g.rotation.y = l[1] > 0 ? -Math.PI / 2 : Math.PI / 2; world.group.add(g); traffic.push({ g: g, z: l[0], dir: l[1], v: 9 + (i % 3) * 2, cur: 0 }); });
   }
@@ -2289,27 +2322,127 @@
     for (var t = 0; t < traffic.length; t++) { var p = traffic[t].g.position; if ((x - p.x) * (x - p.x) + (z - p.z) * (z - p.z) < (r + 1.5) * (r + 1.5)) return true; }
     return Math.abs(x) > CITY.x || z < CITY.z1 || z > CITY.z2;
   }
-  function enterCar() { if (drive.on) return; if (sit.on) standUp(); drive.on = true; drive.v = 0; drive.cam.copy(camera.position); setFocus(null); sfx('click'); toast('🚗 W/S drive · A/D steer · Space brakes · E gets out · M map', ''); }
+  // ── the car's own controls: ignition, handbrake, lights, and the parts that open ──
+  var CAR_PART = { doorL: "driver's door", doorR: 'passenger door', boot: 'boot', bonnet: 'bonnet' };
+  function carAnyOpen() { var o = carState().open; return !!(o.doorL || o.doorR || o.boot || o.bonnet); }
+  function carInBay() { var p = drive.g.position, dh = Math.abs(((drive.g.rotation.y - Math.PI / 2) % Math.PI + Math.PI * 1.5) % Math.PI - Math.PI / 2); return Math.abs(p.x - 7.7) < 1.7 && Math.abs(p.z + 15.3) < 1.7 && dh < 0.5; }
+  function carPartSet(id, open, quiet) { var o = carState().open; if (!drive.parts || !drive.parts[id] || o[id] === open) return; o[id] = open; if (!quiet) { sfx('door'); save(); } }
+  function carPartToggle(id) { var o = carState().open, want = !o[id]; if (drive.shut && drive.shut.id === id) drive.shut = null; carPartSet(id, want); toast((want ? '🔓 Opened the ' : '🔒 Closed the ') + CAR_PART[id] + (want && id === 'boot' ? ' — ' + trunkCount() + ' of ' + trunkCap() + ' inside' : ''), ''); }
+  function carPopBoot() { carPartSet('boot', true); drive.shut = { id: 'boot', t: 3.5 }; }
+  function ignition(on) {
+    if (!drive.on) return;
+    if (on === undefined) on = !drive.engineOn;
+    if (!on && Math.abs(drive.v) > 1.2) { toast('Roll to a stop before you switch it off', 'bad'); return; }
+    drive.engineOn = on;
+    if (on) { drive.rpm = 0.3; sfx('engine'); toast('🔑 Engine running' + (carState().brake ? ' — release the handbrake with P' : ''), 'good'); }
+    else { drive.rpm = 0; engineSound(0); sfx('click'); toast('🔑 Engine off', ''); }
+  }
+  function parkBrake(on) { var cs = carState(); if (on === undefined) on = !cs.brake; if (cs.brake === on) return; cs.brake = on; sfx('click'); toast(on ? '🅿️ Handbrake on' : '🅿️ Handbrake off', on ? '' : 'good'); save(); }
+  function carLightStep() { var cs = carState(); cs.lights = (cs.lights + 1) % 3; sfx('click'); toast(['💡 Lights off', '💡 Dipped headlights', '🔦 Main beam'][cs.lights], cs.lights ? 'good' : ''); carLamps(); save(); }
+  function carLamps() {
+    if (!drive.lamps) return;
+    var cs = carState(), L = cs.lights, braking = drive.on && drive.braking, rev = drive.on && drive.v < -0.3;
+    drive.lamps.headM.emissiveIntensity = L === 2 ? 3.2 : L === 1 ? 1.5 : 0.08;
+    drive.lamps.tailM.emissiveIntensity = braking ? 3.0 : L ? 1.1 : 0.08;
+    drive.lamps.revM.emissiveIntensity = rev ? 2.4 : 0.05;
+    drive.lamps.beams.forEach(function (b) { b.intensity = L === 2 ? 2.6 : L === 1 ? 1.3 : 0; b.angle = L === 2 ? 0.42 : 0.62; b.distance = L === 2 ? 55 : 26; });
+  }
+  function updateCarParts(dt) {
+    if (!drive.parts) return;
+    if (!drive.on) drive.braking = false;
+    if (drive.shut) { drive.shut.t -= dt; if (drive.shut.t <= 0) { var sid = drive.shut.id; drive.shut = null; carPartSet(sid, false); } }
+    var o = carState().open;
+    ['doorL', 'doorR', 'boot', 'bonnet'].forEach(function (id) { var P = drive.parts[id], want = o[id] ? 1 : 0; if (Math.abs(P.t - want) < 0.002) return; P.t = lerp(P.t, want, 1 - Math.pow(0.004, dt)); if (Math.abs(P.t - want) < 0.005) P.t = want; P.g.rotation[P.axis] = P.max * P.t; });
+    var load = trunkCount() + Object.keys(S.car.cigs || {}).reduce(function (a, k) { return a + S.car.cigs[k]; }, 0), step = Math.max(1, Math.round(trunkCap() / 4));
+    drive.parts.cargo.children.forEach(function (c, i) { var v = load > i * step; if (c.visible !== v) c.visible = v; });
+    carLamps();
+  }
+  function enterCar() {
+    if (drive.on) return; if (sit.on) standUp();
+    drive.on = true; drive.v = 0; drive.rpm = 0; drive.engineOn = false; drive.braking = false; drive.warnT = 0; drive.dashT = 0;
+    drive.look.yaw = 0; drive.look.pitch = 0.12; drive.look.t = 0; drive.cam.copy(camera.position);
+    carPartSet('doorL', true, true); drive.shut = { id: 'doorL', t: 1.2 };
+    setFocus(null); dashShow(true); sfx('door'); carLamps();
+    toast('🚗 I starts the engine · P handbrake · L lights · W/S drive · A/D steer · Space brake · mouse looks · E gets out', '');
+  }
   function exitCar() {
     if (!drive.on) return; if (Math.abs(drive.v) > 2.5) { toast('Stop the car first', 'bad'); return; }
     var p = drive.g.position, h = drive.g.rotation.y, rx = Math.cos(h), rz = -Math.sin(h); var side = carBlocked(p.x - rx * 1.7, p.z - rz * 1.7, 0.35) ? 1 : -1;
-    drive.on = false; drive.v = 0; player.pos.set(p.x + rx * 1.7 * side, 1.65, p.z + rz * 1.7 * side); player.vel.set(0, 0, 0); player.yaw = h; player.pitch = 0; player.floor = 0; var cs = carState(); cs.x = p.x; cs.z = p.z; cs.h = h; engineSound(0); sfx('click'); save();
+    var cs = carState(); cs.x = p.x; cs.z = p.z; cs.h = h; cs.brake = true;
+    carPartSet(side > 0 ? 'doorR' : 'doorL', true, true); drive.shut = { id: side > 0 ? 'doorR' : 'doorL', t: 1.4 };
+    var bay = carInBay();
+    drive.on = false; drive.v = 0; drive.engineOn = false; drive.braking = false; engineSound(0); dashShow(false);
+    player.pos.set(p.x + rx * 1.7 * side, 1.65, p.z + rz * 1.7 * side); player.vel.set(0, 0, 0); player.yaw = h + drive.look.yaw; player.pitch = 0; player.floor = 0;
+    carLamps(); sfx('door'); toast('🅿️ Handbrake on, engine off' + (bay ? ' — parked in your bay' : ''), bay ? 'good' : ''); save();
   }
   function engineSound(level) { if (!SET.sound) { if (drive.eng) drive.eng.g.gain.value = 0; return; } if (level <= 0 && !drive.eng) return; try { audio(); if (!drive.eng) { var o = AC.createOscillator(), gn = AC.createGain(), f = AC.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = 55; f.type = 'lowpass'; f.frequency.value = 420; gn.gain.value = 0; o.connect(f); f.connect(gn); gn.connect(sfxBus); o.start(); drive.eng = { o: o, g: gn }; } drive.eng.g.gain.setTargetAtTime(level > 0 ? 0.035 + level * 0.03 : 0, AC.currentTime, 0.15); drive.eng.o.frequency.setTargetAtTime(48 + level * 120, AC.currentTime, 0.1); } catch (e) {} }
   function updateDrive(dt) {
-    var k = player.keys, live = player.locked && !ui.blocked(), g = drive.g, thr = 0, st = 0;
+    var k = player.keys, live = player.locked && !ui.blocked(), g = drive.g, cs = carState(), thr = 0, st = 0;
     if (live) { if (k.KeyW || k.ArrowUp) thr += 1; if (k.KeyS || k.ArrowDown) thr -= 1; if (k.KeyA || k.ArrowLeft) st += 1; if (k.KeyD || k.ArrowRight) st -= 1; }
-    if (thr > 0) drive.v += (drive.v < 0 ? 16 : 8) * dt; else if (thr < 0) drive.v -= (drive.v > 0 ? 18 : 5) * dt; else drive.v -= Math.sign(drive.v) * Math.min(Math.abs(drive.v), 2.2 * dt);
-    if (live && k.Space) drive.v -= Math.sign(drive.v) * Math.min(Math.abs(drive.v), 26 * dt);
-    drive.v = clamp(drive.v, -6, carVmax()); var h = g.rotation.y + st * clamp(drive.v / 3.5, -1, 1) * (Math.abs(drive.v) < 9 ? 2.3 : 1.5) * dt; /* tight lock at parking speed so the yard and its gate are workable */ var fx = -Math.sin(h), fz = -Math.cos(h); var nx = g.position.x + fx * drive.v * dt, nz = g.position.z + fz * drive.v * dt;
+    drive.warnT -= dt;
+    if (thr !== 0 && (!drive.engineOn || cs.brake) && drive.warnT <= 0) { drive.warnT = 2.4; toast(!drive.engineOn ? '🔑 The engine is off — press I to start it' : '🅿️ The handbrake is on — press P to release it', 'bad'); }
+    if (!drive.engineOn || cs.brake) thr = 0;
+    var foot = live && !!k.Space;
+    drive.braking = foot || (thr < 0 && drive.v > 0.5) || (cs.brake && Math.abs(drive.v) > 0.2);
+    if (thr > 0) drive.v += (drive.v < 0 ? 16 : 8) * dt; else if (thr < 0) drive.v -= (drive.v > 0 ? 18 : 5) * dt; else drive.v -= Math.sign(drive.v) * Math.min(Math.abs(drive.v), (drive.engineOn ? 2.2 : 3.4) * dt);
+    if (foot || cs.brake) drive.v -= Math.sign(drive.v) * Math.min(Math.abs(drive.v), (foot ? 26 : 14) * dt);
+    var vmax = carAnyOpen() ? Math.min(8, carVmax()) : carVmax();
+    drive.v = clamp(drive.v, -6, vmax); var h = g.rotation.y + st * clamp(drive.v / 3.5, -1, 1) * (Math.abs(drive.v) < 9 ? 2.3 : 1.5) * dt; /* tight lock at parking speed so the yard and its gate are workable */ var fx = -Math.sin(h), fz = -Math.cos(h); var nx = g.position.x + fx * drive.v * dt, nz = g.position.z + fz * drive.v * dt;
     function fits(x, z, ax, az) { return !carBlocked(x + ax * 1.2, z + az * 1.2, 0.78) && !carBlocked(x - ax * 1.2, z - az * 1.2, 0.78); }
     if (!fits(nx, nz, fx, fz)) { if (Math.abs(drive.v) > 5 && drive.bumpT <= 0) { sfx('hit'); drive.bumpT = 0.5; } drive.v = -drive.v * 0.25; if (fits(g.position.x, g.position.z, fx, fz)) g.rotation.y = h; } /* nose against something: you can still swing the wheel */ else { g.position.x = nx; g.position.z = nz; g.rotation.y = h; }
-    drive.bumpT -= dt; drive.wheels.forEach(function (w, i) { w.rotation.x -= drive.v * dt / 0.32; if (i < 2) w.rotation.y = st * 0.45; });
+    drive.bumpT -= dt; cs.odo += Math.abs(drive.v) * dt; drive.wheels.forEach(function (w, i) { w.rotation.x -= drive.v * dt / 0.32; if (i < 2) w.rotation.y = st * 0.45; });
+    drive.rpm = lerp(drive.rpm, drive.engineOn ? clamp(0.16 + Math.abs(drive.v) / Math.max(1, carVmax()) * 0.72 + (thr > 0 ? 0.12 : 0), 0, 1) : 0, 1 - Math.pow(0.02, dt));
     // the yard gate opens for the owner's car and shuts again behind it
     var gd = Math.hypot(g.position.x - 4.5, g.position.z + 18); if (gd < 8 && !world.gateOpen) { gateSet(true); drive.gateAuto = true; } else if (gd > 13 && drive.gateAuto && world.gateOpen) { gateSet(false); drive.gateAuto = false; }
     player.pos.set(g.position.x, 1.65, g.position.z); player.floor = 0; player.vel.set(0, 0, 0); player.yaw = g.rotation.y;
-    var want = new THREE.Vector3(g.position.x - fx * 6.2, 3.0, g.position.z - fz * 6.2); drive.cam.lerp(want, 1 - Math.pow(0.002, dt)); camera.position.copy(drive.cam); camera.lookAt(g.position.x + fx * 2, 1.1, g.position.z + fz * 2);
-    engineSound(clamp(Math.abs(drive.v) / 24, 0.05, 1));
+    // the chase camera orbits on the mouse and drifts back behind the car once you stop steering it
+    var lk = drive.look;
+    if (lk.t > 0) lk.t -= dt; else if (Math.abs(drive.v) > 1.2) { var rec = 1 - Math.pow(0.22, dt); lk.yaw = lerp(lk.yaw, 0, rec); lk.pitch = lerp(lk.pitch, 0.12, rec); }
+    var ch = h + lk.yaw, flat = Math.cos(lk.pitch), dist = drive.dist;
+    var wx = g.position.x + Math.sin(ch) * dist * flat, wz = g.position.z + Math.cos(ch) * dist * flat;
+    if (carBlocked(wx, wz, 0.3)) { wx = g.position.x + Math.sin(ch) * dist * flat * 0.45; wz = g.position.z + Math.cos(ch) * dist * flat * 0.45; }   /* a wall behind the car pulls the camera in rather than through it */
+    var want = new THREE.Vector3(wx, Math.max(0.65, 1.0 + dist * 0.15 + dist * Math.sin(lk.pitch)), wz);
+    drive.cam.lerp(want, 1 - Math.pow(lk.t > 0 ? 0.0004 : 0.002, dt)); camera.position.copy(drive.cam); camera.lookAt(g.position.x + fx * 0.8, 1.0, g.position.z + fz * 0.8);
+    engineSound(drive.engineOn ? clamp(drive.rpm, 0.05, 1) : 0);
+    drive.dashT -= dt; if (drive.dashT <= 0) { drive.dashT = 0.05; drawDash(); }
+  }
+  // ── the dashboard: speedometer, rev counter, gear and the warning lamps ──
+  function dashShow(on) { var cv = $('h-dash'), hd = $('g3-hud'); if (hd) hd.classList.toggle('driving', !!on); if (cv) { cv.hidden = !on; if (on) drawDash(); } }
+  function dashRound(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function drawDash() {
+    var cv = $('h-dash'); if (!cv || !drive.g || cv.hidden) return;
+    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height, cs = carState(), on = drive.engineOn;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(10,15,12,.93)'; dashRound(ctx, 2, 2, W - 4, H - 4, 22); ctx.fill(); ctx.strokeStyle = 'rgba(120,200,140,.28)'; ctx.lineWidth = 3; ctx.stroke();
+    var cx = 128, cy = 132, R = 92, a0 = Math.PI * 0.78, a1 = Math.PI * 2.22, kmh = Math.abs(drive.v) * 3.6, top = Math.max(1, carVmax() * 3.6), frac = clamp(kmh / top, 0, 1);
+    ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a1); ctx.stroke();
+    ctx.strokeStyle = on ? '#6fdc8c' : 'rgba(143,165,150,.45)'; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a0 + (a1 - a0) * Math.max(frac, 0.001)); ctx.stroke();
+    ctx.lineCap = 'butt'; ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2;
+    for (var i = 0; i <= 8; i++) { var ta = a0 + (a1 - a0) * i / 8; ctx.beginPath(); ctx.moveTo(cx + Math.cos(ta) * (R - 11), cy + Math.sin(ta) * (R - 11)); ctx.lineTo(cx + Math.cos(ta) * (R - 21), cy + Math.sin(ta) * (R - 21)); ctx.stroke(); }
+    var na = a0 + (a1 - a0) * frac; ctx.strokeStyle = '#ffc857'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx - Math.cos(na) * 12, cy - Math.sin(na) * 12); ctx.lineTo(cx + Math.cos(na) * (R - 18), cy + Math.sin(na) * (R - 18)); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.fillStyle = '#e8f1ea'; ctx.font = 'bold 44px ui-monospace, Consolas, monospace'; ctx.fillText(String(Math.round(kmh)), cx, cy + 10);
+    ctx.fillStyle = '#8fa596'; ctx.font = '15px system-ui, sans-serif'; ctx.fillText('km/h', cx, cy + 32);
+    var gear = !on ? 'N' : (cs.brake && Math.abs(drive.v) < 0.5) ? 'P' : drive.v < -0.3 ? 'R' : 'D';
+    ['P', 'R', 'N', 'D'].forEach(function (gn, gi) {
+      var gx = 258 + gi * 58, act = gn === gear;
+      ctx.fillStyle = act ? 'rgba(111,220,140,.16)' : 'rgba(255,255,255,.04)'; dashRound(ctx, gx, 24, 50, 46, 10); ctx.fill();
+      ctx.strokeStyle = act ? 'rgba(111,220,140,.8)' : 'rgba(255,255,255,.10)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = act ? '#6fdc8c' : 'rgba(143,165,150,.6)'; ctx.font = 'bold 25px ui-monospace, Consolas, monospace'; ctx.fillText(gn, gx + 25, 56);
+    });
+    ctx.textAlign = 'right'; ctx.fillStyle = '#8fa596'; ctx.font = '15px system-ui, sans-serif';
+    ctx.fillText('odo ' + (cs.odo / 1000).toFixed(2) + ' km', 726, 42); ctx.fillText('boot ' + trunkCount() + ' / ' + trunkCap(), 726, 64);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#8fa596'; ctx.font = '12px system-ui, sans-serif'; ctx.fillText('RPM', 258, 82);
+    ctx.fillStyle = 'rgba(255,255,255,.07)'; dashRound(ctx, 258, 88, 468, 18, 9); ctx.fill();
+    var rw = 468 * clamp(drive.rpm, 0, 1);
+    if (rw > 6) { var grd = ctx.createLinearGradient(258, 0, 726, 0); grd.addColorStop(0, '#6fdc8c'); grd.addColorStop(0.7, '#ffc857'); grd.addColorStop(1, '#ff6b6b'); ctx.fillStyle = grd; dashRound(ctx, 258, 88, rw, 18, 9); ctx.fill(); }
+    [{ on: cs.brake, txt: 'P BRAKE', col: '#ff6b6b' }, { on: cs.lights > 0, txt: cs.lights === 2 ? 'MAIN BEAM' : 'LIGHTS', col: cs.lights === 2 ? '#7fd4ff' : '#6fdc8c' }, { on: carAnyOpen(), txt: 'OPEN', col: '#ffc857' }, { on: !on, txt: 'IGNITION', col: '#ffc857' }].forEach(function (L, li) {
+      var lx = 258 + li * 118;
+      ctx.fillStyle = L.on ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.02)'; dashRound(ctx, lx, 120, 108, 34, 8); ctx.fill();
+      ctx.strokeStyle = L.on ? L.col : 'rgba(255,255,255,.08)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = L.on ? L.col : 'rgba(143,165,150,.3)'; ctx.font = 'bold 14px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(L.txt, lx + 54, 142);
+    });
+    ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(143,165,150,.9)'; ctx.font = '14px system-ui, sans-serif';
+    ctx.fillText(!on ? 'I starts the engine' : cs.brake ? 'P releases the handbrake' : carAnyOpen() ? 'Something is open — T boot · B bonnet' : carInBay() ? 'In your bay — E gets out, Shift+E loads' : 'L lights · T boot · M map · E gets out', 258, 186);
   }
   function updateCity(dt) {
     traffic.forEach(function (c) {
@@ -2318,6 +2451,7 @@
       c.cur = lerp(c.cur, stop ? 0 : c.v, 1 - Math.pow(0.05, dt)); p.x += c.cur * c.dir * dt; if (p.x * c.dir > CITY.x - 2) p.x = -c.dir * (CITY.x - 2);
     });
     parkFolk.forEach(function (f) { if (f.coolT > 0) f.coolT -= dt; });
+    updateCarParts(dt);
     if (cityMap.on) { cityMap.t -= dt; if (cityMap.t <= 0) { cityMap.t = 0.12; drawCityMap(); } }
   }
   // ── the map on M ──
@@ -2344,7 +2478,7 @@
   // ── doing business in town ──
   function carNear(x, z, r) { return Math.hypot(drive.g.position.x - x, drive.g.position.z - z) < r; }
   function trunkCount() { var tr = carState().trunk; return Object.keys(tr).reduce(function (a, k) { return a + tr[k]; }, 0); }
-  function unloadTrunk() { var tr = carState().trunk, n = trunkCount(); if (!n) { toast('The trunk is empty', ''); return; } storageAdd(tr); S.car.trunk = {}; if (typeof syncStorage === 'function') syncStorage(); sfx('crate'); toast('📦 Unloaded the trunk into the storage room (' + n + ' items) — Jo or you can shelve it from there', 'good'); logEvent('📦 Unloaded a car run from RF Supply Co.', ''); save(); }
+  function unloadTrunk() { var tr = carState().trunk, n = trunkCount(); if (!n) { toast('The trunk is empty', ''); return; } carPopBoot(); storageAdd(tr); S.car.trunk = {}; if (typeof syncStorage === 'function') syncStorage(); sfx('crate'); toast('📦 Unloaded the trunk into the storage room (' + n + ' items) — Jo or you can shelve it from there', 'good'); logEvent('📦 Unloaded a car run from RF Supply Co.', ''); save(); }
   function cityPoiMenu(poi) {
     var h = held(), lines = [];
     if (poi === 'bank') {
@@ -2382,12 +2516,20 @@
   }
   function cityPrompt(d, h) {
     if (d.kind === 'car') return drive.on ? '' : 'Your car <small>E to drive · Shift+E for the trunk and the garage</small>';
+    if (d.kind === 'carPart') {
+      if (drive.on) return ''; var o = carState().open, shut = !o[d.part];
+      if (d.part === 'doorL') return 'Get in behind the wheel <small>' + (carState().brake ? 'handbrake on' : 'handbrake off') + ' · Shift+E for the trunk and the garage</small>';
+      if (d.part === 'boot') return (shut ? 'Open the boot' : 'Close the boot') + ' <small>' + trunkCount() + ' of ' + trunkCap() + ' inside · Shift+E to load or unload</small>';
+      if (d.part === 'bonnet') return (shut ? 'Open the bonnet' : 'Close the bonnet') + ' <small>a look at the engine</small>';
+      return (shut ? 'Open' : 'Close') + ' the passenger door <small>Shift+E for the trunk and the garage</small>';
+    }
     if (d.kind === 'cityDoor') { var p = CITY.pois.filter(function (x) { return x.id === d.poi; })[0]; return (p ? p.name : 'Shop') + ' <small>E to go to the counter</small>'; }
     if (d.kind === 'parkDeal') return h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies') ? 'Offer a street deal <small>35% over shop price, cash in pocket · there is a risk</small>' : 'Someone enjoying the park <small>bring goods in your hands to deal</small>';
     return '';
   }
   function cityInteract(d, h) {
     if (d.kind === 'car') { if (player.keys.ShiftLeft || player.keys.ShiftRight) carMenu(); else enterCar(); return true; }
+    if (d.kind === 'carPart') { if (player.keys.ShiftLeft || player.keys.ShiftRight) carMenu(); else if (d.part === 'doorL') enterCar(); else carPartToggle(d.part); return true; }
     if (d.kind === 'cityDoor') { if (ZONES[d.poi]) enterZone(d.poi); else if (!expPoiMenu(d.poi)) cityPoiMenu(d.poi); return true; }
     if (d.kind === 'parkDeal') { parkDeal(d.idx); return true; }
     return false;
@@ -2579,7 +2721,9 @@
   function carMenu() {
     var X = xs(), T = tob(), inBay = carNear(7.7, -15.3, 6), lines = [], packs = CIG_KEYS.reduce(function (a, k) { return a + T.packs[k]; }, 0), loaded = Object.keys(S.car.cigs).reduce(function (a, k) { return a + S.car.cigs[k]; }, 0);
     lines.push({ label: '📦 Unload supplies into storage <small>' + trunkCount() + ' of ' + trunkCap() + ' items in the trunk</small>', cls: inBay && trunkCount() ? '' : 'muted', act: inBay && trunkCount() ? unloadTrunk : null });
-    lines.push({ label: '🚬 Load every finished carton from the basement rack <small>' + packs + ' packs on the rack · ' + loaded + ' already in the car</small>', cls: inBay && packs ? '' : 'muted', act: inBay && packs ? function () { CIG_KEYS.forEach(function (k) { S.car.cigs[k] = (S.car.cigs[k] || 0) + T.packs[k]; T.packs[k] = 0; }); syncTobRack(); sfx('crate'); toast('🚬 ' + packs + ' packs in the car — the Corner Tobacconist buys wholesale', 'good'); save(); } : null });
+    lines.push({ label: '🚬 Load every finished carton from the basement rack <small>' + packs + ' packs on the rack · ' + loaded + ' already in the car</small>', cls: inBay && packs ? '' : 'muted', act: inBay && packs ? function () { CIG_KEYS.forEach(function (k) { S.car.cigs[k] = (S.car.cigs[k] || 0) + T.packs[k]; T.packs[k] = 0; }); syncTobRack(); carPopBoot(); sfx('crate'); toast('🚬 ' + packs + ' packs in the car — the Corner Tobacconist buys wholesale', 'good'); save(); } : null });
+    lines.push({ label: (carState().open.boot ? '🔒 Close the boot' : '🔓 Open the boot') + ' <small>or press E on the boot lid itself</small>', act: function () { carPartToggle('boot'); } });
+    lines.push({ label: (carState().brake ? '🅿️ Release the handbrake' : '🅿️ Put the handbrake on') + ' <small>' + (carInBay() ? 'parked square in your bay' : 'parked outside the bay') + '</small>', act: function () { parkBrake(); } });
     [['trunk', '🧰 Bigger trunk', 800, 'holds 120 items, up from 40'], ['engine', '🏎️ Tuned engine', 1200, 'a third more top speed'], ['bar', '🛡️ Bull bar', 700, 'stops a getaway car from further off']].forEach(function (u) { var own = X.garage[u[0]]; lines.push({ label: u[1] + ' · ' + money(u[2]) + ' <small>' + (own ? 'fitted' : u[3]) + '</small>', cls: own || !inBay || S.bank < u[2] ? 'muted' : '', act: own || !inBay || S.bank < u[2] ? null : function () { S.bank -= u[2]; X.garage[u[0]] = true; sfx('cash'); toast(u[1] + ' fitted', 'good'); hud(); save(); } }); });
     ctxOpen('🚗 Your car' + (inBay ? ' · in the garage' : ''), inBay ? 'garage work and loading happen here in your bay' : 'park in your bay behind the gate to load, unload or fit upgrades', lines);
   }
@@ -4071,6 +4215,8 @@
     for (var gs = 0; gs < 17; gs++) { var gbar = new THREE.Mesh(new THREE.BoxGeometry(w - 0.12, 0.012, 0.02), gdk); gbar.position.y = -0.9 + gs * 0.113; gsh.add(gbar); }
     var ghd = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.035, 0.035), gdk); ghd.position.set(0, -0.86, 0.02); gsh.add(ghd);
     gsh.position.set(0, 1.02, d / 2 + 0.05);   /* in front of the price cards, which hang off the shelf lips */ gg.userData.shutter = gsh; gg.add(gsh);
+    var fz = d / 2 + 0.05, fd = 0.1;   /* the gate cannot sit flush without clipping the price cards, so an outer frame closes the slot it leaves at the edges */
+    [-1, 1].forEach(function (s) { c.box(0.05, 2.0, fd, wood, s * (w / 2 - 0.025), 1.0, fz); }); c.box(w, 0.2, fd, wood, 0, 1.9, fz); c.box(w, 0.08, fd, wood, 0, 0.04, fz); c.box(w + 0.03, 0.06, fd + 0.04, wood, 0, 2.03, fz);   /* jambs, a head box hiding the rolled-up gate, a sill it lands on, and the shelf top carried over the frame */
     c.hit(w, 2.0, d, 0, 1.0, 0, { kind: 'goodsShelf' });
     function spot(col, inten, dist, x, y, z) { var l = new THREE.PointLight(col, inten, dist); l.position.set(x, y, z); return l; }
   }, after: function () { syncGoods(); } });   // refill after any rebuild: boot order, layout edits, resets
@@ -4329,7 +4475,9 @@
   }
   function onMouseMove(e) {
     if (!player.locked || ui.blocked()) return;
-    var sx = 0.0022 * SET.sens; player.yaw -= e.movementX * sx; player.pitch -= e.movementY * sx * (SET.invertY ? -1 : 1);
+    var sx = 0.0022 * SET.sens;
+    if (drive.on) { var lk = drive.look; lk.yaw = clamp(lk.yaw - e.movementX * sx, -2.6, 2.6); lk.pitch = clamp(lk.pitch - e.movementY * sx * (SET.invertY ? -1 : 1), -0.5, 1.1); lk.t = 1.4; return; }   /* at the wheel the mouse swings the camera round the car instead of the head */
+    player.yaw -= e.movementX * sx; player.pitch -= e.movementY * sx * (SET.invertY ? -1 : 1);
     player.pitch = clamp(player.pitch, -1.45, 1.45);
   }
 
@@ -4519,7 +4667,7 @@
     setFocus({ mesh: best.object, data: data, dist: best.distance });
   }
   // big station boxes (shelf, rack, bench) yield to the small thing inside them the ray also crosses
-  function isContainer(kind) { return kind === 'door' || kind === 'shelf' || kind === 'inventory' || kind === 'bench' || kind === 'line' || kind === 'goodsShelf' || kind === 'storage'; }   // a container yields to a specific target behind it (jar, bag, joint)
+  function isContainer(kind) { return kind === 'door' || kind === 'shelf' || kind === 'inventory' || kind === 'bench' || kind === 'line' || kind === 'goodsShelf' || kind === 'storage' || kind === 'car'; }   // a container yields to a specific target behind it (jar, bag, joint, a car door or the boot)
   function hasAnyBehind(hits, i) { for (var k = i + 1; k < hits.length; k++) { var d = hits[k].object.userData.interact; if (d && d.kind !== 'curtain' && hits[k].distance - hits[i].distance < 3.0) return true; } return false; }
   function hasSpecificBehind(hits, i) { var h = held(); for (var k = i + 1; k < hits.length; k++) { var d = hits[k].object.userData.interact; if (!d || isContainer(d.kind)) continue; if (d.kind === 'jar' && h && h.kind === 'harvest') continue; if (hits[k].distance - hits[i].distance < 1.2) return true; } return false; }
   function setFocus(f) {
@@ -5112,8 +5260,10 @@
     // hotbar
     var key = S.slot + '|' + S.hotbar.map(function (it) { return it ? it.kind + (it.n || '') + (it.strain || '') + (it.item || '') + (it.grams || '') : '-'; }).join('|');
     if (key !== lastHudKey) { lastHudKey = key; $('h-hotbar').innerHTML = S.hotbar.map(function (it, i) { return '<div class="' + (i === S.slot ? 'active' : '') + (it ? '' : ' zero') + '" title="slot ' + (i + 1) + '">' + slotIcon(it) + '<small>' + slotLabel(it) + '</small><span class="n">' + (i + 1) + '</span></div>'; }).join(''); }
+    if (drive.on) drawDash();
   }
   function objective() {
+    if (drive.on) return '<b>At the wheel</b>Mouse looks around · wheel zooms · <b class="kk">I</b> ignition · <b class="kk">P</b> handbrake · <b class="kk">L</b> lights · <b class="kk">W</b>/<b class="kk">S</b> drive · <b class="kk">A</b>/<b class="kk">D</b> steer · <b class="kk">Space</b> brake · <b class="kk">T</b> boot · <b class="kk">B</b> bonnet · <b class="kk">C</b> centre the camera · <b class="kk">M</b> map · <b class="kk">E</b> get out';
     if (introRunning()) return '';   /* the intro card is the guidance while it runs: two boxes competing is noise */
     var t = '<b>Next up</b>'; var h = held();
     if (h && h.kind === 'broom') return t + '🧹 ' + dustList().length + ' dusty spot' + (dustList().length === 1 ? '' : 's') + ' left — E on the dust to sweep.';
@@ -5177,17 +5327,26 @@
     if (ui.panelOpen || ui.menuOpen) { if (e.code === 'Tab' && ui.panelKind === 'inventory') { ui.closePanel(); e.preventDefault(); } return; }
     player.keys[e.code] = true;
     if (runHooks(hooks.keydown, e)) { e.preventDefault(); return; }
+    if (drive.on && !e.repeat) {   /* at the wheel the letter keys belong to the car */
+      if (e.code === 'KeyE') { exitCar(); e.preventDefault(); return; }
+      if (e.code === 'KeyI') { ignition(); e.preventDefault(); return; }
+      if (e.code === 'KeyP') { parkBrake(); e.preventDefault(); return; }
+      if (e.code === 'KeyL') { carLightStep(); e.preventDefault(); return; }
+      if (e.code === 'KeyT') { carPartToggle('boot'); e.preventDefault(); return; }
+      if (e.code === 'KeyB') { carPartToggle('bonnet'); e.preventDefault(); return; }
+      if (e.code === 'KeyC') { drive.look.yaw = 0; drive.look.pitch = 0.12; drive.look.t = 0; drive.dist = 6.2; e.preventDefault(); return; }
+      if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }
+    }
     if (e.code === 'F2') { editToggle(); e.preventDefault(); return; }
     if (edit.on) { if (e.code === 'KeyE') { if (edit.grabbed || edit.grabbedFx) editDrop(); else editGrab(); } else if (e.code === 'KeyR') editRotate(); else if (e.code === 'Backspace') editReset(); if (e.code === 'KeyE' || e.code === 'KeyR' || e.code === 'Backspace') { e.preventDefault(); return; } }
     if (/^Digit[1-6]$/.test(e.code)) { selectSlot(+e.code.charAt(5) - 1); sfx('click'); e.preventDefault(); return; }
     if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }
-    if (drive.on && e.code === 'KeyE') { exitCar(); e.preventDefault(); return; }
     if (e.code === 'KeyE') { interact(); e.preventDefault(); }
     if (e.code === 'KeyP') { panicButton(); e.preventDefault(); }
     if (e.code === 'Tab') { ui.openPanel('inventory'); e.preventDefault(); }
     if (e.code === 'KeyG' || e.code === 'KeyQ') { putBack(); afterAction(); }
   });
-  document.addEventListener('wheel', function (e) { if (!player.locked || ui.blocked() || edit.on || sec.view.on) return; if (window.RFGROW && window.RFGROW.creative && window.RFGROW.creative.state.on) return; selectSlot(S.slot + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
+  document.addEventListener('wheel', function (e) { if (!player.locked || ui.blocked() || edit.on || sec.view.on) return; if (window.RFGROW && window.RFGROW.creative && window.RFGROW.creative.state.on) return; if (drive.on) { drive.dist = clamp(drive.dist + (e.deltaY > 0 ? 0.7 : -0.7), 3.2, 12); drive.look.t = 1.4; return; }   /* the wheel pulls the chase camera in and out at the wheel */ selectSlot(S.slot + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
   document.addEventListener('keyup', function (e) { player.keys[e.code] = false; if (ui.taskOpen && e.code === 'Space') taskPress(false); });
   window.addEventListener('blur', function () { player.keys = {}; });
   document.addEventListener('mousemove', onMouseMove);
@@ -5252,5 +5411,5 @@
   }
   frame();
   // debug / automation handle (read-only use; not part of the game loop)
-  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
+  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
 })();

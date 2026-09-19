@@ -224,6 +224,7 @@
   // ── keys / mouse ──────────────────────────────────────────────────
   R.hooks.keydown.push(function (e) {
     if (e.code === 'F3') { toggle(); return true; }
+    if (R.drive && R.drive.on) return false;   /* at the wheel every letter key belongs to the car, C included */
     if (!cr.on) { if (e.code === 'KeyC' && !R.ui.blocked()) { I.toast('Press F3 for creative mode first, then C opens the catalog', ''); return true; } return false; }
     if (e.code === 'KeyC') { R.ui.openPanel('creative', cr.panelTab); return true; }
     if (e.code === 'KeyE') { if (cr.placing) confirmPlace(); else if (cr.propGrab) propDrop(); else if (cr.propHover) propGrabStart(); else grab(); return true; }

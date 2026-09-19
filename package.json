@@ -1,7 +1,7 @@
 {
   "name": "rf-grow-co",
   "productName": "Grow Co",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Standalone hobby game, NOT a Farming Simulator product. First-person shop simulator: grow, cure, pack and sell, run a basement cigarette works, fight off robbers, and drive around a small open town.",
   "main": "main.js",
   "author": "TheCodingDad-TisonK",

@@ -78,6 +78,10 @@ button { font: inherit; cursor: pointer; }
 .g3-hotbar div small { font-size: 9px; color: var(--muted); font-family: var(--mono); }
 .g3-hotbar div .n { position: absolute; right: 3px; top: 2px; font-size: 10px; font-family: var(--mono); color: var(--ink); }
 .g3-hotbar div.zero { opacity: .45; }
+/* the car dashboard takes the hotbar's place while you are at the wheel */
+.g3-dash { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: 440px; height: 139px; filter: drop-shadow(0 10px 26px rgba(0,0,0,.6)); }
+.g3-hud.driving .g3-hotbar, .g3-hud.driving .g3-held { display: none !important; }
+.g3-objective b.kk { display: inline; font-size: inherit; letter-spacing: 0; text-transform: none; margin: 0 1px; font-family: var(--mono); color: var(--ink); }
 @keyframes pop { from { transform: translateX(-50%) scale(.9); opacity: 0; } to { opacity: 1; } }
 @keyframes slidein { from { transform: translateX(20px); opacity: 0; } to { opacity: 1; } }
 

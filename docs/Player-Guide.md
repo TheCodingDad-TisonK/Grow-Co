@@ -54,7 +54,7 @@ That is the whole game in miniature. Everything else makes that loop bigger, fas
 | **Esc** | pause menu |
 | **F11** | fullscreen (desktop app) |
 
-**In the car:** W and S drive, A and D steer, Space brakes, E gets out once you have stopped.
+**In the car:** **I** turns the key, **P** is the handbrake, **L** cycles the lights, W and S drive, A and D steer, Space is the footbrake, **T** pops the boot, **B** the bonnet, the mouse swings the camera round the car, the wheel zooms, **C** re-centres, **E** gets out once you have stopped.
 
 **With a weapon in hand:** left click swings or fires.
 
@@ -137,6 +137,10 @@ Its door is on the basement's left wall. It takes cured bud of **any quality** f
 ## The town, the car and the map
 
 Your car is parked in the owner bay in the yard, behind the gate. The gate opens for it. Press **M** anywhere for the map.
+
+**Driving it.** Press **E** on the driver door to get in. The car starts dead: **I** turns the key, **P** lets the handbrake off, then W and S drive and A and D steer. Space is the footbrake. **L** cycles dipped headlights and main beam, which you will want after dark. The dashboard at the bottom of the screen gives you speed, revs, the gear, and lamps for the handbrake, the lights, the ignition and anything left open. Moving the mouse swings the camera round the car, the wheel pulls it in and out, and **C** puts it back behind you.
+
+**Doors and the boot.** Outside the car, **E** on the passenger door, the boot lid or the bonnet opens and closes it; inside, **T** is the boot and **B** the bonnet. What is in the boot sits in the boot, so you can see it. Drive off with something open and the dash warns you and the car will not go over 8 km/h. Getting out always puts the handbrake on and stops the engine.
 
 - **First Harvest Bank**: pay in, withdraw.
 - **Iron and Oak Arms**: cheaper ammunition, a Kevlar vest.

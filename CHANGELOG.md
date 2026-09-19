@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.5
+
+The car is a car now, not a box that moves. ([#2](https://github.com/TheCodingDad-TisonK/Grow-Co/issues/2))
+
+- **The mouse works at the wheel.** It swings the chase camera round the car instead of doing nothing; the wheel pulls the camera in and out, and **C** puts it back behind you. The view drifts back on its own once you stop steering it and the car is moving.
+- **A dashboard.** Speedometer, rev counter, the gear you are in, the odometer, what is in the boot, and warning lamps for the handbrake, the lights, the ignition and anything left open. It takes the hotbar's place while you drive.
+- **An ignition.** The car starts dead. **I** turns the key; the engine has to be running before the throttle does anything, and switching it off at speed is refused.
+- **A handbrake.** **P** puts it on and off. It holds the car still, drags it down from speed, and goes on by itself every time you get out, along with the engine going off.
+- **Doors, a bonnet and a boot that open.** **E** on the boot lid, the bonnet or the passenger door from outside; **T** and **B** for the boot and the bonnet from the driver's seat. The bonnet opens onto an engine, the boot onto a well that shows what you are carrying, and loading or unloading at your bay pops the boot itself. Drive off with something open and the dash says so and the car will not pass 8 km/h.
+- **Light controls.** **L** cycles off, dipped and main beam, with headlights that actually light the road after dark. Brake lights come on under braking, and the reversing lamps when you are in reverse.
+- Getting in and out swings the door you use. The lights, the handbrake, what is open and the odometer are all kept in the save.
+
 ## v1.4.1
 
 - The repository moved to github.com/TheCodingDad-TisonK/Grow-Co so the address matches the name. Old links still redirect.
