@@ -1,0 +1,103 @@
+<p align="center"><img src="game/rf-icon.png" width="120" alt="RF"></p>
+
+<h1 align="center">RF Grow Co.</h1>
+
+<p align="center"><b>A first-person shop simulator.</b><br>Grow it, cure it, pack it, sell it through the window. Then build a cigarette works in the basement, fight off robbers, and drive around a small open town.</p>
+
+<p align="center">
+  <a href="https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest"><b>Download for Windows</b></a> ·
+  <a href="https://github.com/TheCodingDad-TisonK/RF-Grow-Co/wiki"><b>Wiki</b></a> ·
+  <a href="https://discord.gg/Th2pnq36"><b>Discord</b></a> ·
+  <a href="https://realisticfarming.com"><b>realisticfarming.com</b></a>
+</p>
+
+![The service window](screenshots/01-service-window.jpg)
+
+## What it is
+
+You run a small dispensary from behind a service window. Everything is physical: you carry soil to the tent, hang the harvest on the line, carry jars to the bench, take goods off the shelf and hand them through the window. The shop grows from one tent and $220 into a business with staff, licences, a basement factory, a lab, a car and a second branch.
+
+It is one HTML page and plain JavaScript on top of [three.js](https://threejs.org). No build step, no framework, no assets to download: every texture and sound is generated in code. The desktop app is the same page inside Electron.
+
+## Features
+
+| | |
+|---|---|
+| **The loop** | Order supplies, grow in tents, water, feed, fight pests and mold, harvest, dry, cure, grind, bag, roll, bake, sell. Quality and strain matter. |
+| **The shop** | Service window with real orders, cash with change or card, tips, a vault, a bank courier, markup, curtains, lights, radio, dust and a broom. |
+| **Staff** | Jo (serves, restocks, sweeps, tends plants), a security guard, a driver, a basement operator and a night guard. |
+| **RF Smoking** | A pre-installed basement line: hydroponic tobacco bays, curing kiln, shredder, cigarette maker (normal or light), packer (10s or 20s). Packs sell from a shuttered cabinet, handed over by you. |
+| **Extraction lab** | Turns bud of any quality into vape carts, pressed hash, gummies and chocolate. |
+| **Robberies** | Four kinds of robber in six stages, from casing the lobby to a getaway car you can ram. Bat, pepper spray, taser, pistol, shotgun, a firearms licence, a silent alarm, lockable doors, and consequences for bad shots. |
+| **The town** | A street grid with traffic, a bank and a gun store you walk into, a supplier, a wholesaler, a rival you can buy out, a park for street deals, a police precinct and a heat system. Press M for the map. |
+| **Your car** | Parked in your bay behind the yard gate. Haul supplies and cartons, run phone deliveries, fit upgrades in the garage. |
+| **Upstairs** | Your own flat, a connoisseur lounge with its own staircase from the lobby, and a roof greenhouse. |
+| **Make it yours** | F2 moves every piece of furniture, every sign and every wall screen. F3 is a full creative build mode. |
+| **Living world** | Day and night, seasons, rain, storms and snow, weekends, a holiday week, power cuts and a generator. |
+
+![The basement works](screenshots/02-basement-works.jpg)
+![Driving through town](screenshots/03-town-drive.jpg)
+
+## Install and play
+
+**Windows, the easy way.** Download `RF-Grow-Co-Setup-x.y.z.exe` from the [latest release](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/releases/latest) and run it. It installs for your user, adds Desktop and Start menu shortcuts and starts the game. Windows may show a SmartScreen notice because the installer is not code signed: choose "More info", then "Run anyway".
+
+**From source, any platform.**
+
+```bash
+git clone https://github.com/TheCodingDad-TisonK/RF-Grow-Co.git
+cd RF-Grow-Co
+npm install
+npm start            # the desktop app
+npm run serve        # or play in a browser at http://127.0.0.1:8420/
+```
+
+The game needs no server logic. Anything that can serve the `game/` folder as static files can host it.
+
+## Controls
+
+`WASD` move · `Shift` run · `E` use, pick up, hand over · `Shift+E` second action · `G` put back · `1 to 6` hotbar · `Tab` inventory · `M` map · `P` silent alarm · `F2` edit mode · `F3` creative mode · right click closes menus · `Esc` pause · `F11` fullscreen
+
+The main menu has a thirteen chapter guide, including an "I am stuck" chapter. The same guide is in the [wiki](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/wiki/Player-Guide).
+
+## Repository layout
+
+```
+game/                 the whole game: static files, playable from any web server
+  index.html          page, HUD and overlays
+  grow3d.js           the simulation and the world (one file, one closure)
+  grow3d-creative.js  creative build mode, plugged in through RFGROW.hooks
+  guide.js            the player guide (main menu, pause menu and wiki share it)
+  menu.js, menu.css   splash screen and main menu
+  vendor/three/       three.js r128 (MIT)
+main.js               Electron shell
+tools/                static server, icon builder, guide exporter, release zip
+docs/                 the wiki source; pushed to the GitHub wiki by a workflow
+screenshots/
+```
+
+## Documentation
+
+Everything lives in [`docs/`](docs) and is mirrored to the [wiki](https://github.com/TheCodingDad-TisonK/RF-Grow-Co/wiki) on every push to `main`.
+
+- [Getting started](docs/Getting-Started.md)
+- [Player guide](docs/Player-Guide.md)
+- [Architecture](docs/Architecture.md): how one file holds a whole game, and how to find your way in it
+- [Systems reference](docs/Systems-Reference.md): every system, its state and its entry points
+- [Modding guide](docs/Modding-Guide.md): add a prop, a machine, a place in town, a product, a robber
+- [Save format](docs/Save-Format.md)
+- [Building and releasing](docs/Building-and-Releasing.md)
+- [Roadmap and ideas](docs/Roadmap-and-Ideas.md)
+- [FAQ](docs/FAQ.md)
+
+## Make it your own
+
+Fork it. The [modding guide](docs/Modding-Guide.md) walks through the patterns the game already uses, so a new machine or a new shop in town is mostly a matter of copying a neighbour. There is a developer menu in the pause screen with teleports, spawners and fillers for testing, and `window.RFGROW` exposes the running game in the console.
+
+## Credits
+
+A game by **TheCodingDad**. Part of the [Realistic Farming](https://realisticfarming.com) family. Built on [three.js](https://threejs.org) (MIT) and [Electron](https://www.electronjs.org) (MIT).
+
+## License
+
+[MIT](LICENSE). Do what you like with it; keep the notice.

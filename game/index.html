@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RF Grow Co.</title>
+<link rel="icon" href="rf-icon.png">
+<link rel="stylesheet" href="grow3d.css">
+<link rel="stylesheet" href="menu.css">
+</head>
+<body>
+<canvas id="g3-canvas"></canvas>
+
+<!-- ── Loading / start screen ────────────────────────────────── -->
+<div id="g3-start" class="g3-overlay show">
+  <div class="g3-start-card">
+    <div class="g3-logo">🌿</div>
+    <h1>RF Grow Co.</h1>
+    <p class="g3-sub">first-person grow simulator</p>
+    <div class="g3-start-stats" id="g3-start-stats"></div>
+    <button class="g3-btn primary big" id="g3-start-btn">▶ Enter the grow house</button>
+    <p class="g3-hint">Click to look around · <b>WASD</b> move · <b>Shift</b> run · <b>E</b> pick up / use · <b>G</b> put down · <b>Tab</b> inventory · <b>F3</b> creative · <b>Esc</b> menu</p>
+    <p class="g3-hint dim" id="g3-start-note"></p>
+  </div>
+</div>
+
+<!-- ── HUD ───────────────────────────────────────────────────── -->
+<div id="g3-hud" class="g3-hud" hidden>
+  <div class="g3-crosshair"><i></i></div>
+  <div class="g3-top">
+    <div class="g3-stat cash"><span class="k">Bank</span><span class="v" id="h-cash">$0</span></div>
+    <div class="g3-stat"><span class="k">Vault</span><span class="v" id="h-vault">$0</span></div>
+    <div class="g3-stat"><span class="k">Cured</span><span class="v" id="h-cured">0g</span></div>
+    <div class="g3-stat"><span class="k">Packed</span><span class="v" id="h-pkg">0 / 0</span></div>
+    <div class="g3-stat"><span class="k">Rep</span><span class="v rep" id="h-rep">0</span></div>
+    <div class="g3-stat"><span class="k">Market</span><span class="v" id="h-market">1.00×</span></div>
+    <div class="g3-stat lvl"><span class="k" id="h-lvl">Level 1</span><span class="v xp" id="h-xp">0 / 60</span><div class="g3-xpbar"><span id="h-xpbar"></span></div></div>
+    <div class="g3-stat clock"><span class="k" id="h-day">Day</span><span class="v" id="h-clock">00:00</span></div>
+  </div>
+  <div class="g3-event" id="h-event" hidden></div>
+  <div class="g3-order" id="h-order" hidden></div>
+  <div class="g3-prompt" id="h-prompt" hidden></div>
+  <div class="g3-held" id="h-held" hidden></div>
+  <div class="g3-editbanner" id="h-edit" hidden>🛠️ EDIT MODE · E grab / drop · R rotate · Backspace reset · F2 done</div>
+  <div class="g3-objective" id="h-objective"></div>
+  <div class="g3-feed" id="h-feed"></div>
+  <div class="g3-toasts" id="h-toasts"></div>
+  <div class="g3-fps" id="h-fps" hidden>0 fps</div>
+  <div class="g3-hotbar" id="h-hotbar"></div>
+</div>
+
+<!-- ── Context action wheel (on an interactable) ─────────────── -->
+<div id="g3-ctx" class="g3-ctx" hidden>
+  <div class="g3-ctx-title" id="g3-ctx-title"></div>
+  <div class="g3-ctx-sub" id="g3-ctx-sub"></div>
+  <div class="g3-ctx-btns" id="g3-ctx-btns"></div>
+  <div class="g3-ctx-hint">Esc / right-click to close</div>
+</div>
+
+<!-- ── Panels (shop, bench, register, laptop, inventory) ─────── -->
+<div id="g3-panel" class="g3-overlay dim" hidden>
+  <div class="g3-panel-card">
+    <div class="g3-panel-head">
+      <h2 id="g3-panel-title">Panel</h2>
+      <div class="g3-panel-tabs" id="g3-panel-tabs"></div>
+      <button class="g3-x" id="g3-panel-close" title="Close (Esc)">✕</button>
+    </div>
+    <div class="g3-panel-body" id="g3-panel-body"></div>
+  </div>
+</div>
+
+<!-- ── Pause menu ────────────────────────────────────────────── -->
+<div id="g3-menu" class="g3-overlay dim" hidden>
+  <div class="g3-menu-card">
+    <h2>Paused</h2>
+    <p class="g3-sub">the plants keep growing while you think</p>
+    <div class="g3-menu-btns">
+      <button class="g3-btn primary" data-menu="resume">▶ Resume</button>
+      <button class="g3-btn" data-menu="settings">⚙ Settings</button>
+      <button class="g3-btn" data-menu="guide">📖 How to play</button>
+      <button class="g3-btn" data-menu="edit">🛠 Edit layout</button>
+      <button class="g3-btn" data-menu="creative">🧱 Creative mode</button>
+      <button class="g3-btn" data-menu="stats">📊 Lifetime stats</button>
+      <button class="g3-btn" data-menu="dev">🛠 Dev tools</button>
+      <button class="g3-btn danger" data-menu="reset">⟲ Reset save</button>
+      <button class="g3-btn" data-menu="quit">⏏ Close game</button>
+    </div>
+    <div class="g3-menu-body" id="g3-menu-body" hidden></div>
+  </div>
+</div>
+
+<script src="guide.js"></script>
+<script src="vendor/three/three.min.js"></script>
+<script src="grow3d.js"></script>
+<script src="grow3d-creative.js"></script>
+<script src="menu.js"></script>
+</body>
+</html>
