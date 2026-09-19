@@ -1432,7 +1432,7 @@
   // the goods shelf contents: cells per strain (2 columns x 3 rows), bags stacked left, joints in a tube right, a price card above
   function syncGoods() {
     var inst = propInst.goodsShelf; if (!inst) return;
-    var gg = inst.ctx.dynGroup(); while (gg.children.length) gg.remove(gg.children[0]);
+    var gg = inst.ctx.dynGroup(); var gate = gg.userData.shutter; while (gg.children.length) gg.remove(gg.children[0]); if (gate) gg.add(gate);   /* restocking must not throw the roll gate away with the goods */
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'goods'; });
     var cellW = 0.8, cellY = [0.185, 0.76, 1.32];
     STRAINS.forEach(function (st, i) {
@@ -2165,7 +2165,7 @@
     if (d.kind === 'tobMaker') return 'Cigarette maker <small>' + T.maker.mode + ' · ' + (T.maker.on ? 'on' : 'off') + ' · ' + kg(T.cut) + ' cut tobacco</small>';
     if (d.kind === 'tobPacker') return 'Packer <small>' + T.packer.type + ' ' + T.packer.size + 's · ' + (T.packer.on ? 'on' : 'off') + ' · ' + T.mat + ' materials</small>';
     if (d.kind === 'tobRack') return h && h.kind === 'cigs' ? 'Put the carton back' : 'Finished goods <small>take a carton up to the counter</small>';
-    if (d.kind === 'cigCab') { if (!S.cigShutter) return 'Cigarette cabinet <small>shutter down · E rolls it up</small>'; if (h && h.kind === 'cigs') return 'Stock ' + h.n + ' × ' + CIG_SKUS[h.sku].name + ' <small>' + cigStock(h.sku) + ' in the cabinet</small>'; return 'Cigarette cabinet <small>' + Object.keys(CIG_SKUS).reduce(function (a, k) { return a + cigStock(k); }, 0) + ' packs · take what the customer asked for</small>'; }
+    if (d.kind === 'cigCab') { if (isLocked('cigCabinet')) return 'Cigarette cabinet <small>🔒 locked · Shift+E with the keyring</small>'; if (!S.cigShutter) return 'Cigarette cabinet <small>shutter down · E rolls it up' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; if (h && h.kind === 'cigs') return 'Stock ' + h.n + ' × ' + CIG_SKUS[h.sku].name + ' <small>' + cigStock(h.sku) + ' in the cabinet</small>'; return 'Cigarette cabinet <small>' + Object.keys(CIG_SKUS).reduce(function (a, k) { return a + cigStock(k); }, 0) + ' packs · take what the customer asked for</small>'; }
     return '';
   }
   function tobInteract(d, h) {
@@ -2187,6 +2187,8 @@
   function anyCigStock() { return Object.keys(CIG_SKUS).filter(function (k) { return cigStock(k) > 0; }); }
   function toggleCigShutter() { S.cigShutter = !S.cigShutter; sfx('curtain'); toast(S.cigShutter ? '🚬 Shutter up — the cabinet is open' : '🚬 Shutter down — cabinet hidden', ''); save(); }
   function cigCabInteract(h) {
+    if (player.keys.ShiftLeft || player.keys.ShiftRight) { toggleLock('cigCabinet'); return; }
+    if (lockedStop('cigCabinet')) return;
     if (!S.cigShutter) { toggleCigShutter(); return; }
     if (h && h.kind === 'cigs') { S.cigStock[h.sku] = cigStock(h.sku) + h.n; S.held = null; syncCigCab(); sfx('putdown'); toast('🚬 ' + h.n + ' × ' + CIG_SKUS[h.sku].name + ' into the cabinet', 'good'); world.dirty = true; save(); return; }
     var c = S.customer, lines = []; var want = c && c.cig && c.cig.given < c.cig.qty ? c.cig : null;
@@ -2201,7 +2203,9 @@
     Object.keys(CIG_SKUS).forEach(function (k, i) { var K = CIG_SKUS[k], n = Math.min(i < 4 ? 8 : 3, cigStock(k)), big = K.size === 20; for (var p = 0; p < n; p++) { var w = big ? 0.075 : 0.06, hh = big ? 0.11 : 0.09; var m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.03), colorMat(K.col, 0.55)); m.position.set((i < 4 ? -0.45 : 0.27) + p * 0.082, [1.62, 1.27, 0.92, 0.57, 1.62, 1.27, 0.92, 0.57][i] + hh / 2, 0.06); m.castShadow = false; g.add(m); var cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.002, hh * 0.3, 0.032), colorMat(K.top, 0.55)); cap.position.copy(m.position); cap.position.y += hh * 0.35; cap.castShadow = false; g.add(cap); } });
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = 'cigCabinet'; });
   }
-  function updateCigShutter(dt) { var inst = propInst.cigCabinet; if (!inst) return; var sh = inst.ctx.dynGroup().userData.shutter; if (!sh) return; var tgt = S.cigShutter ? 0.06 : 1; sh.userData.t = lerp(sh.userData.t === undefined ? tgt : sh.userData.t, tgt, 1 - Math.pow(0.004, dt)); var t = sh.userData.t; sh.scale.y = t; sh.position.y = 1.87 - 1.45 * t / 2; }
+  function updateShutters(dt) { updateOneShutter('goodsShelf', dt, 1.97, 1.9); updateOneShutter('cigCabinet', dt, 1.87, 1.45); }
+  function updateOneShutter(id, dt, top, height) { var inst = propInst[id]; if (!inst) return; var sh = inst.ctx.dynGroup().userData.shutter; if (!sh) return; var tgt = shutterOpen(id) ? 0.06 : 1; sh.userData.t = lerp(sh.userData.t === undefined ? tgt : sh.userData.t, tgt, 1 - Math.pow(0.004, dt)); var t = sh.userData.t; sh.scale.y = t; sh.position.y = top - height * t / 2; }
+  function updateCigShutterUnused(dt) { var inst = propInst.cigCabinet; if (!inst) return; var sh = inst.ctx.dynGroup().userData.shutter; if (!sh) return; var tgt = S.cigShutter ? 0.06 : 1; sh.userData.t = lerp(sh.userData.t === undefined ? tgt : sh.userData.t, tgt, 1 - Math.pow(0.004, dt)); var t = sh.userData.t; sh.scale.y = t; sh.position.y = 1.87 - 1.45 * t / 2; }
   // hand a pack to the customer at the window: their side order, priced at the till with the rest
   function handCigs(c, h) {
     var q = c.cig; if (!q || q.given >= q.qty) { toast(c.who + ' did not ask for cigarettes', 'bad'); npc.say('no smokes for me, thanks', '#ffc857'); return; }
@@ -2508,6 +2512,16 @@
     // owner's garage over the bay, the generator by the back wall, the staff roster in the office
     [[5.5, -14.0], [9.9, -14.0], [5.5, -16.6], [9.9, -16.6]].forEach(function (p) { box(0.1, 2.6, 0.1, dark, p[0], 1.3, p[1]); }); box(4.8, 0.1, 3.0, colorMat(0x5f666e, 0.5, 0.6), 7.7, 2.65, -15.3, { cast: true }); signPlane(['GARAGE'], 1.2, 0.3, 7.7, 2.45, -13.95, 0, { size: 40, titleColor: '#f2c21a', bg: '#101410' });
     box(1.4, 1.0, 0.8, colorMat(0xf2c21a, 0.6, 0.3), 0.2, 0.5, -13.2, { solid: true, tag: 'gen' }); box(1.2, 0.3, 0.6, dark, 0.2, 1.15, -13.2); cyl(0.05, 0.05, 0.9, dark, 0.7, 1.7, -13.2, null, 8); exp.genLed = box(0.08, 0.08, 0.02, glowMat(0xff3030, 0.4), -0.3, 0.8, -12.79, { cast: false }); hit(1.5, 1.5, 1.0, 0.2, 0.75, -13.1, { kind: 'generator' });
+    fixtureFromBuild('keyHook', 'key hook', -Math.PI / 2, function () {
+      var brass = colorMat(0xc9a24a, 0.35, 0.8), board = colorMat(0x6b4a2a, 0.8), hx = -4.13;
+      box(0.03, 0.2, 0.26, board, hx, 1.5, -0.4, { cast: false });
+      [-0.07, 0.07].forEach(function (dz) { var pin = cyl(0.008, 0.008, 0.05, brass, hx - 0.025, 1.48, -0.4 + dz, null, 8); pin.rotation.z = Math.PI / 2; cyl(0.012, 0.012, 0.012, brass, hx - 0.05, 1.465, -0.4 + dz, null, 8).rotation.z = Math.PI / 2; });
+      signPlane(['KEYS'], 0.2, 0.05, hx - 0.016, 1.575, -0.4, -Math.PI / 2, { size: 24, bg: '#6b4a2a', titleColor: '#e8c27a', line: 'rgba(0,0,0,0)' });
+      var ring = new THREE.Group(); ring.position.set(hx - 0.05, 0, -0.47); world.group.add(ring); world.keyRing = ring;
+      var loop = new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.004, 8, 16), brass); loop.position.y = 1.45; loop.rotation.y = Math.PI / 2; ring.add(loop);
+      for (var k = 0; k < 3; k++) { var b = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.045, 0.01), k === 1 ? colorMat(0x9aa0a6, 0.4, 0.7) : brass); b.position.set(0, 1.405, -0.015 + k * 0.015); ring.add(b); }
+      var hit = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.42, 0.42), MAT.none); hit.position.set(hx - 0.1, 1.48, -0.42); world.group.add(hit); interactable(hit, { kind: 'keyHook' });
+    });
     fixtureFromBuild('roster', 'staff roster', -Math.PI / 2, function () { box(0.04, 1.0, 1.2, colorMat(0x8a6a3a, 0.9), -4.13, 1.7, 2.35, { cast: false }); signPlane(['STAFF ROSTER', 'driver · operator · night guard'], 1.1, 0.36, -4.16, 1.95, 2.35, -Math.PI / 2, { size: 24 }); hit(0.4, 1.2, 1.3, -4.25, 1.7, 2.35, { kind: 'roster' }); });   /* on the office side of the hall wall, clear of the dashboard */
     // two more doors in town: the tobacconist who buys your cartons wholesale, and the police
     cityBldg(40, 2, 12, 12, 8, 0x8a6a4a, 'Corner Tobacconist', 'tobac'); cityDoor(40, 8, 1, 6, 'tobac', 'CORNER TOBACCONIST', 'buys cartons wholesale', 0xe8c27a); cityBldg(24, 0, 14, 16, 9, 0x5a6a8a, 'Police', 'police'); cityDoor(24, 8, 1, 7, 'police', 'POLICE', 'precinct 4', 0x5aa0d8);
@@ -2637,7 +2651,31 @@
     var folk = [], robbersNear = 0; if (worker.g) folk.push(worker.g.position); if (guard.h) folk.push(guard.h.position); robbers.forEach(function (r) { if (r.g && r.state !== 'away') { folk.push(r.g.position); robbersNear++; } });   /* robbers sit at the end of the list */
     DOORS.forEach(function (d) { var want = d.open ? 1 : 0; if (!d.open && d.floor === 0) { for (var i = 0; i < folk.length; i++) if (Math.hypot(folk[i].x - d.x, folk[i].z - d.z) < 1.5) { want = 1; if (d.locked && i >= folk.length - robbersNear) { setDoor(d.id, true, false); sfx('hit'); toast('💥 They forced the ' + d.label + ' — the lock is broken open', 'bad'); } break; } } if (Math.abs(d.t - want) < 0.002) return; d.t = lerp(d.t, want, 1 - Math.pow(0.006, dt)); if (Math.abs(d.t - want) < 0.004) d.t = want; doorPose(d); });
   }
-  function doorPrompt(d) { if (d.kind !== 'door') return ''; var o = doorById[d.id]; return o ? (o.locked ? '🔒 ' + o.name + ' <small>locked from the shop control box</small>' : o.open ? 'Slide the ' + o.label + ' shut' : 'Slide the ' + o.label + ' open') : ''; }
+  // three places can be shut and locked: the goods shelf, the cigarette cabinet and the weapon locker.
+  var LOCKABLE = { goodsShelf: { name: 'goods shelf', shutter: 'goods' }, cigCabinet: { name: 'cigarette cabinet', shutter: 'cigs' }, gunLocker: { name: 'weapon locker', shutter: null } };
+  function locks() { if (!S.locks) S.locks = {}; return S.locks; }
+  function isLocked(id) { return !!locks()[id]; }
+  function shutterOpen(id) { if (id === 'cigCabinet') return !!S.cigShutter; if (!S.shutters) S.shutters = {}; var k = LOCKABLE[id].shutter, v = S.shutters[k]; return v === undefined ? true : !!v; }   /* the goods shelf starts open: it is used constantly, and an existing save must not suddenly find it shut */
+  function setShutter(id, open) { if (isLocked(id) && open) return false; if (id === 'cigCabinet') S.cigShutter = open; else { if (!S.shutters) S.shutters = {}; S.shutters[LOCKABLE[id].shutter] = open; } sfx('curtain'); save(); return true; }
+  function toggleLock(id) {
+    var L = LOCKABLE[id]; if (!L) return;
+    if (!hasKeys()) { sfx('bad'); toast('🔑 You need the keyring: it hangs on the hook in the office', 'bad'); return; }
+    var now2 = !isLocked(id); locks()[id] = now2;
+    if (now2 && L.shutter) { if (id === 'cigCabinet') S.cigShutter = false; else { if (!S.shutters) S.shutters = {}; S.shutters[L.shutter] = false; } }   /* locking rolls the gate down */
+    sfx(now2 ? 'click' : 'curtain'); toast((now2 ? '🔒 Locked the ' : '🔓 Unlocked the ') + L.name, now2 ? '' : 'good'); save();
+  }
+  function lockedStop(id) { if (!isLocked(id)) return false; sfx('bad'); toast('🔒 The ' + LOCKABLE[id].name + ' is locked — Shift+E with the keyring', 'bad'); return true; }
+  function lockNote(id) { return isLocked(id) ? '🔒 locked' : hasKeys() ? 'Shift+E locks it' : ''; }
+  function hasKeys() { return (S.hotbar || []).some(function (x) { return x && x.kind === 'keys'; }); }
+  function syncKeyHook() { if (world.keyRing) world.keyRing.visible = !hasKeys(); }   /* the ring is either on the hook or in your hands, never both */
+  function keyHookPrompt(h) { return hasKeys() ? 'Key hook <small>your keyring is in your hands</small>' : 'Take the keyring <small>Shift+E at a door then locks or unlocks it</small>'; }
+  function keyHookInteract() { if (hasKeys()) { toast('You already have the keyring', ''); return; } if (hotbarFull()) { toast('Hands full — G to put something down', 'bad'); return; } take({ kind: 'keys' }); syncKeyHook(); toast('🔑 Got the keyring — Shift+E at any door locks or unlocks it', 'good'); }
+  function keyDoor(id) {
+    var d = doorById[id]; if (!d) return;
+    if (!hasKeys()) { sfx('bad'); toast('🔑 You need the keyring: it hangs on the hook in the office', 'bad'); return; }
+    setDoor(id, d.open, !d.locked); sfx(d.locked ? 'click' : 'curtain'); toast(d.locked ? '🔒 Locked the ' + d.label : '🔓 Unlocked the ' + d.label, d.locked ? '' : 'good'); save();
+  }
+  function doorPrompt(d) { if (d.kind !== 'door') return ''; var o = doorById[d.id]; if (!o) return ''; var k = hasKeys(); if (o.locked) return '🔒 ' + o.name + ' <small>' + (k ? 'Shift+E unlocks it' : 'locked · the keyring hangs in the office') + '</small>'; return (o.open ? 'Slide the ' + o.label + ' shut' : 'Slide the ' + o.label + ' open') + (k ? ' <small>Shift+E locks it</small>' : ''); }
   // ── Fixtures: wall-hung things (every sign, the desk screen, the staff roster) that F2 edit mode can carry. Unlike furniture they move in 3D and snap flat onto whatever surface you look at ──
   var FIXTURES = [], fxById = {}, fxSignCount = {}, fxRay = new THREE.Raycaster(), fxTick = 0;
   function fixtureAdd(id, label, objs, baseYaw) {
@@ -2658,7 +2696,7 @@
     if (pick) { var n = pick.face.normal.clone().transformDirection(pick.object.matrixWorld); fx.root.position.copy(pick.point).add(n.clone().multiplyScalar(0.045)); if (Math.abs(n.y) < 0.5) fxFace(fx, Math.atan2(n.x, n.z)); }
     else fx.root.position.set(o.x + d.x * 2.2, o.y + d.y * 2.2, o.z + d.z * 2.2);
   }
-  function fxHover(meshes) { FIXTURES.forEach(function (fx) { fx.root.traverse(function (o) { if (o.isMesh && o.visible && o.material !== MAT.none) meshes.push(o); }); }); }
+  function fxHover(meshes) { FIXTURES.forEach(function (fx) { fx.root.traverse(function (o) { if (o.isMesh && o.visible) meshes.push(o); }); }); }   /* invisible hit boxes count here: a small sign or hook is easier to grab by the generous box the game already uses for E */
   function fxDrop() { var fx = edit.grabbedFx; if (!fx) return; edit.grabbedFx = null; var r = fx.root; S.fixtures[fx.id] = { x: Math.round(r.position.x * 100) / 100, y: Math.round(r.position.y * 100) / 100, z: Math.round(r.position.z * 100) / 100, ry: r.rotation.y }; save(); sfx('ok'); toast('Hung the ' + fx.label, 'good'); }
   function fxReset(fx) { edit.grabbedFx = null; delete S.fixtures[fx.id]; fx.root.position.set(fx.base.x, fx.base.y, fx.base.z); fx.root.rotation.y = fx.base.ry; save(); toast('Put the ' + fx.label + ' back where it was', ''); }
   // ── Robberies: four kinds of trouble, each running in stages: casing the lobby, masking up, the demand, an escalation, a second target in the back, the getaway ──
@@ -2735,7 +2773,7 @@
   }
   function finishLoot(r, early) {
     if (r.raid === 'vault') { var cut = Math.floor(S.vault * (early ? 0.2 : 0.5)); S.vault -= cut; r.grabbed += cut; S.stats.robbed = (S.stats.robbed || 0) + cut; if (cut > 0) { logEvent('💸 ' + money(cut) + ' taken out of the vault', 'bad'); toast('💸 ' + money(cut) + ' gone from the vault', 'bad'); } }
-    else if (r.raid === 'goods') { var n = 0; ['bags', 'joints', 'cookies'].forEach(function (k) { Object.keys(S.lots[k]).forEach(function (sid) { var have = S.lots[k][sid].n; var take2 = Math.floor(have * (early ? 0.3 : 0.6)); if (take2 <= 0) return; var d = lotDraw(k, sid, take2); if (d.n > 0) { r.goods.push({ kind: k, id: sid, n: d.n, q: d.q, thc: d.thc }); n += d.n; } }); }); if (S.cigShutter) { r.cigs = r.cigs || {}; Object.keys(S.cigStock || {}).forEach(function (ck) { var ct = Math.floor(S.cigStock[ck] * (early ? 0.3 : 0.6)); if (ct > 0) { S.cigStock[ck] -= ct; r.cigs[ck] = (r.cigs[ck] || 0) + ct; n += ct; } }); syncCigCab(); } /* an open shutter is an invitation */ syncGoods(); world.dirty = true; if (n > 0) { logEvent('💸 The bagman swept ' + n + ' packed goods off the shelf', 'bad'); toast('💸 ' + n + ' packed goods swept into a bag', 'bad'); } }
+    else if (r.raid === 'goods') { var n = 0; if (isLocked('goodsShelf') || !shutterOpen('goodsShelf')) { logEvent('🔒 The goods shelf was shut: the bagman got nothing off it', 'good'); toast('🔒 They could not get into the goods shelf', 'good'); r.raid = ''; return; } ['bags', 'joints', 'cookies'].forEach(function (k) { Object.keys(S.lots[k]).forEach(function (sid) { var have = S.lots[k][sid].n; var take2 = Math.floor(have * (early ? 0.3 : 0.6)); if (take2 <= 0) return; var d = lotDraw(k, sid, take2); if (d.n > 0) { r.goods.push({ kind: k, id: sid, n: d.n, q: d.q, thc: d.thc }); n += d.n; } }); }); if (S.cigShutter && !isLocked('cigCabinet')) { r.cigs = r.cigs || {}; Object.keys(S.cigStock || {}).forEach(function (ck) { var ct = Math.floor(S.cigStock[ck] * (early ? 0.3 : 0.6)); if (ct > 0) { S.cigStock[ck] -= ct; r.cigs[ck] = (r.cigs[ck] || 0) + ct; n += ct; } }); syncCigCab(); } /* an open shutter is an invitation */ syncGoods(); world.dirty = true; if (n > 0) { logEvent('💸 The bagman swept ' + n + ' packed goods off the shelf', 'bad'); toast('💸 ' + n + ' packed goods swept into a bag', 'bad'); } }
     r.raid = '';
   }
   function returnLoot(r) {
@@ -3968,6 +4006,11 @@
     c.box(w, 0.06, d + 0.02, wood, 0, 2.03, 0);
     c.sign(['RF GROW CO.', 'house menu · bags & joints'], 1.2, 0.3, 0, 2.2, 0.0, 0, { titleColor: '#6fdc8c', bg: '#0f1a12' });
     for (var i = 0; i < 3; i++) c.add(spot(0xfff1d0, 0.35, 1.2, (i - 1) * 0.55, 1.98, 0.12));   // little downlights
+    var gg = c.dynGroup(); var gsh = new THREE.Group(); var gst = colorMat(0xa7adb4, 0.35, 0.8), gdk = colorMat(0x5b6168, 0.4, 0.7);
+    var gpanel = new THREE.Mesh(new THREE.BoxGeometry(w - 0.12, 1.9, 0.014), gst); gsh.add(gpanel);
+    for (var gs = 0; gs < 17; gs++) { var gbar = new THREE.Mesh(new THREE.BoxGeometry(w - 0.12, 0.012, 0.02), gdk); gbar.position.y = -0.9 + gs * 0.113; gsh.add(gbar); }
+    var ghd = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.035, 0.035), gdk); ghd.position.set(0, -0.86, 0.02); gsh.add(ghd);
+    gsh.position.set(0, 1.02, d / 2 + 0.05);   /* in front of the price cards, which hang off the shelf lips */ gg.userData.shutter = gsh; gg.add(gsh);
     c.hit(w, 2.0, d, 0, 1.0, 0, { kind: 'goodsShelf' });
     function spot(col, inten, dist, x, y, z) { var l = new THREE.PointLight(col, inten, dist); l.position.set(x, y, z); return l; }
   }, after: function () { syncGoods(); } });   // refill after any rebuild: boot order, layout edits, resets
@@ -4233,18 +4276,18 @@
   // ── Hands & carrying ──────────────────────────────────────────────
   // Everything physical goes through the hands: you pick things up, carry
   // them across the room and use them on something. `S.held` persists.
-  var HELD_LABEL = { crate: 'Crate', cookies: 'Cookies', bat: 'Baseball bat', cigs: 'Cigarettes', pepper: 'Pepper spray', taser: 'Taser', pistol: 'Pistol', shotgun: 'Shotgun', can: 'Watering can', soil: 'Bag of soil', nutrients: 'Nutrients', remedy: 'Pest spray', seed: 'Seed', harvest: 'Fresh harvest', jar: 'Curing jar', joints: 'Joints', bags: 'Eighth bags' };
+  var HELD_LABEL = { keys: 'Keyring', crate: 'Crate', cookies: 'Cookies', bat: 'Baseball bat', cigs: 'Cigarettes', pepper: 'Pepper spray', taser: 'Taser', pistol: 'Pistol', shotgun: 'Shotgun', can: 'Watering can', soil: 'Bag of soil', nutrients: 'Nutrients', remedy: 'Pest spray', seed: 'Seed', harvest: 'Fresh harvest', jar: 'Curing jar', joints: 'Joints', bags: 'Eighth bags' };
   // the hotbar: S.held reads and writes the active slot, so every older code path keeps working
   function bindHotbar() { if (!Array.isArray(S.hotbar) || S.hotbar.length !== 6) { var old = S.hotbar; S.hotbar = [null, null, null, null, null, null]; if (Array.isArray(old)) old.slice(0, 6).forEach(function (x, i) { S.hotbar[i] = x || null; }); } if (typeof S.slot !== 'number') S.slot = 0; var legacy = Object.prototype.hasOwnProperty.call(S, 'held') ? S.held : undefined; if (legacy && typeof legacy === 'object') { S.hotbar[S.slot] = legacy; } try { delete S.held; } catch (e) {} Object.defineProperty(S, 'held', { get: function () { return S.hotbar[S.slot] || null; }, set: function (v) { S.hotbar[S.slot] = v || null; }, enumerable: false, configurable: true }); }
   function held() { return S.hotbar && S.hotbar[S.slot] || null; }
   function hotbarFull() { return S.hotbar.every(function (x) { return !!x; }); }
   function freeSlot() { if (!S.hotbar[S.slot]) return S.slot; for (var i = 0; i < 6; i++) if (!S.hotbar[i]) return i; return -1; }
   function selectSlot(i) { S.slot = ((i % 6) + 6) % 6; hud(); if (focus) setFocus(focus); }
-  function slotIcon(it) { if (!it) return ''; if (it.kind === 'seed') return strainById(it.strain).emoji; if (it.kind === 'crate') return itemIcon(it.item); return { can: '💧', soil: '🪴', nutrients: '🧪', remedy: '🧴', harvest: '🌿', jar: '🏺', joints: '🚬', bags: '🛍️', cookies: '🍪', broom: '🧹', snack: '🥪', bat: '🏏', cashbag: '💰', pepper: '🌶️', taser: '⚡', pistol: '🔫', shotgun: '💥', cigs: '🚬' }[it.kind] || '📦'; }
+  function slotIcon(it) { if (!it) return ''; if (it.kind === 'seed') return strainById(it.strain).emoji; if (it.kind === 'crate') return itemIcon(it.item); return { can: '💧', soil: '🪴', nutrients: '🧪', remedy: '🧴', harvest: '🌿', jar: '🏺', joints: '🚬', bags: '🛍️', cookies: '🍪', broom: '🧹', snack: '🥪', bat: '🏏', cashbag: '💰', keys: '🔑', pepper: '🌶️', taser: '⚡', pistol: '🔫', shotgun: '💥', cigs: '🚬' }[it.kind] || '📦'; }
   function slotLabel(it) { if (!it) return ''; if (it.kind === 'joints' || it.kind === 'bags' || it.kind === 'cookies') return it.n + ' ' + kindName(it.kind, it.n); if (it.kind === 'crate') return it.n + '× ' + itemName(it.item).split(' ')[0]; if (it.kind === 'harvest') return gram(it.grams); if (it.kind === 'jar') return gram(it.grams); if (it.kind === 'seed') return 'seed'; return (HELD_LABEL[it.kind] || it.kind).split(' ')[0].toLowerCase(); }
   // how many a Shift-pickup grabs: what the current customer still needs, else up to five
   function pileLot(item, h, sid) { var have = sid ? lotOf(item, sid).n : S.pkg[item].n; var want = S.customer && S.customer.arrived && S.customer.want === item ? Math.max(1, S.customer.qty - (S.customer.given ? S.customer.given.n : 0) - (h ? h.n : 0)) : 5; return Math.min(have, want); }
-  function heldLabel() { var h = held(); if (!h) return ''; if (h.kind === 'seed') return strainById(h.strain).emoji + ' ' + strainById(h.strain).name + ' seed'; if (h.kind === 'joints') return '🚬 ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + 'joint' + (h.n > 1 ? 's' : '') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'bags') return '🛍️ ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + 'bag' + (h.n > 1 ? 's' : '') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'harvest') return '🌿 ' + gram(h.grams) + ' fresh ' + strainById(h.strain).name; if (h.kind === 'crate') return '📦 ' + h.n + ' × ' + itemName(h.item); if (h.kind === 'cookies') return '🍪 ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + (h.n > 1 ? 'cookies' : 'cookie') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'cashbag') return '💰 ' + money(h.amount); if (h.kind === 'bat') return '🏏 Baseball bat · click to swing'; if (WEAPONS[h.kind]) return weaponLabel(h.kind); if (h.kind === 'cigs') return '🚬 ' + h.n + ' × ' + CIG_SKUS[h.sku].name; if (h.kind === 'jar') return '🏺 jar · ' + gram(h.grams) + ' q' + Math.round(h.quality); return { can: '💧 Watering can', soil: '🪴 Bag of soil', nutrients: '🧪 Nutrients', remedy: '🧴 Pest spray', broom: '🧹 Broom', snack: '🥪 Snack' }[h.kind] || h.kind; }
+  function heldLabel() { var h = held(); if (!h) return ''; if (h.kind === 'seed') return strainById(h.strain).emoji + ' ' + strainById(h.strain).name + ' seed'; if (h.kind === 'joints') return '🚬 ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + 'joint' + (h.n > 1 ? 's' : '') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'bags') return '🛍️ ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + 'bag' + (h.n > 1 ? 's' : '') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'harvest') return '🌿 ' + gram(h.grams) + ' fresh ' + strainById(h.strain).name; if (h.kind === 'crate') return '📦 ' + h.n + ' × ' + itemName(h.item); if (h.kind === 'cookies') return '🍪 ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + (h.n > 1 ? 'cookies' : 'cookie') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'cashbag') return '💰 ' + money(h.amount); if (h.kind === 'keys') return '🔑 Keyring · Shift+E at a door to lock or unlock it'; if (h.kind === 'bat') return '🏏 Baseball bat · click to swing'; if (WEAPONS[h.kind]) return weaponLabel(h.kind); if (h.kind === 'cigs') return '🚬 ' + h.n + ' × ' + CIG_SKUS[h.sku].name; if (h.kind === 'jar') return '🏺 jar · ' + gram(h.grams) + ' q' + Math.round(h.quality); return { can: '💧 Watering can', soil: '🪴 Bag of soil', nutrients: '🧪 Nutrients', remedy: '🧴 Pest spray', broom: '🧹 Broom', snack: '🥪 Snack' }[h.kind] || h.kind; }
   var hands = new THREE.Group(); camera.add(hands); scene.add(camera); buildSmokeRig();
   var muzzle = new THREE.PointLight(0xffc36b, 0, 7); muzzle.position.set(0.25, -0.15, -0.9); camera.add(muzzle);
   var handSkin = new THREE.MeshStandardMaterial({ color: 0xe8b894, roughness: 0.9 });
@@ -4256,6 +4299,7 @@
     function add(geo, mat, x, y, z, rx, ry, rz) { var m = new THREE.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); m.rotation.set(rx || 0, ry || 0, rz || 0); g.add(m); return m; }
     if (h.kind === 'bat') { var bw = new THREE.MeshStandardMaterial({ color: 0xb98a4a, roughness: 0.6 }); add(new THREE.CylinderGeometry(0.034, 0.022, 0.72, 10), bw, 0, 0.44, 0); add(new THREE.CylinderGeometry(0.024, 0.024, 0.16, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }), 0, 0.08, 0); add(new THREE.CylinderGeometry(0.032, 0.032, 0.02, 10), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), 0, 0.0, 0); add(new THREE.SphereGeometry(0.036, 10, 8), bw, 0, 0.81, 0); }
     if (h.kind === 'cigs') { var CK = CIG_SKUS[h.sku], ctn = h.n > 2; add(new THREE.BoxGeometry(ctn ? 0.3 : 0.06, ctn ? 0.1 : 0.09, ctn ? 0.16 : 0.025), new THREE.MeshStandardMaterial({ color: CK.col, roughness: 0.6 }), 0, 0.05, 0); add(new THREE.BoxGeometry(ctn ? 0.302 : 0.062, 0.03, ctn ? 0.162 : 0.027), new THREE.MeshStandardMaterial({ color: CK.top, roughness: 0.6 }), 0, ctn ? 0.07 : 0.08, 0); }
+    if (h.kind === 'keys') { var brassM = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.35, metalness: 0.8 }); var ring = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.005, 8, 18), brassM); ring.rotation.x = Math.PI / 2; ring.position.set(0, 0.04, 0); g.add(ring); for (var ky = 0; ky < 3; ky++) { var ang = -0.5 + ky * 0.5; var blade = add(new THREE.BoxGeometry(0.012, 0.055, 0.004), ky === 1 ? new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.4, metalness: 0.7 }) : brassM, Math.sin(ang) * 0.03, -0.012, Math.cos(ang) * 0.03); blade.rotation.y = ang; add(new THREE.BoxGeometry(0.02, 0.018, 0.004), brassM, Math.sin(ang) * 0.03, -0.042, Math.cos(ang) * 0.03).rotation.y = ang; } }
     if (WEAPONS[h.kind]) {   // built with the muzzle along -z, straight out from the camera
       var gBlk = new THREE.MeshStandardMaterial({ color: 0x17181b, roughness: 0.45, metalness: 0.5 }), gWood = new THREE.MeshStandardMaterial({ color: 0x5a3a1e, roughness: 0.7 });
       if (h.kind === 'pistol') { add(new THREE.BoxGeometry(0.035, 0.045, 0.2), gBlk, 0, 0.05, -0.06); add(new THREE.BoxGeometry(0.032, 0.11, 0.045), gBlk, 0, -0.02, 0.02, 0.25); add(new THREE.BoxGeometry(0.01, 0.012, 0.01), gBlk, 0, 0.078, -0.15); }
@@ -4303,6 +4347,7 @@
     else if (h.kind === 'broom') { toast('Broom back on the hook', ''); }
     else if (h.kind === 'snack') { toast('Left the snack for later', ''); }
     else if (h.kind === 'crate') { S.storage[h.item] = (S.storage[h.item] || 0) + h.n; toast('Crate back in storage', ''); }
+    else if (h.kind === 'keys') { toast('🔑 Keyring back on its hook in the office', ''); setTimeout(syncKeyHook, 0); world.dirty = true; }   /* the hotbar slot clears just after this, so re-read it on the next tick */
     else if (h.kind === 'bat') { toast('Bat back by the counter', ''); if (world.batMesh) world.batMesh.visible = true; }
     else if (WEAPONS[h.kind]) { toast('The ' + WEAPONS[h.kind].name + ' is back in the weapon locker', ''); }
     else if (h.kind === 'cigs') { S.cigStock[h.sku] = cigStock(h.sku) + h.n; syncCigCab(); toast('Packs back in the cigarette cabinet', ''); }
@@ -4445,8 +4490,9 @@
     if (d.kind === 'inventory') return 'Supply rack <small>' + (S.supplies.soil || 0) + ' soil · ' + (S.supplies.nutrients || 0) + ' nutrients · ' + (S.supplies.remedy || 0) + ' spray · ' + ((S.supplies.pot || 0) - S.plants.length) + ' pots</small>';
     if (d.kind === 'laptop') return 'Use laptop <small>shop · seeds · upgrades</small>';
     if (d.kind === 'bench') { if (h && h.kind === 'jar') return 'Empty jar into the ' + strainById(h.strain || 'sunflower').name + ' stash <small>' + gram(h.grams) + '</small>'; if (h && h.kind === 'harvest') return 'Hang it on the drying line first'; return 'Workbench <small>' + gram(S.cured.g) + ' cured · ' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints</small>'; }
+    if (d.kind === 'lot' && !shutterOpen('goodsShelf')) return 'Goods shelf <small>' + (isLocked('goodsShelf') ? '🔒 locked' : 'gate down') + '</small>';
     if (d.kind === 'lot') { var lot0 = lotOf(d.item, d.strain), sn = strainById(d.strain).name; if (h && (h.kind !== d.item || (h.strain && h.strain !== d.strain)) && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; var lot = pileLot(d.item, h, d.strain); return 'Take 1 ' + sn + ' ' + kindName(d.item, 1) + ' <small>' + lot0.n + ' on the shelf · q' + Math.round(lot0.n ? lot0.qSum / lot0.n : 0) + ' · Shift+E takes ' + lot + (S.customer && S.customer.arrived && S.customer.want === d.item ? ' · ' + S.customer.who + ' wants ' + wantText(S.customer) : '') + '</small>'; }
-    if (d.kind === 'goodsShelf') return 'Goods shelf <small>' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints · aim at a strain to pick up</small>';
+    if (d.kind === 'goodsShelf') { if (isLocked('goodsShelf')) return 'Goods shelf <small>🔒 locked · Shift+E with the keyring</small>'; if (!shutterOpen('goodsShelf')) return 'Goods shelf <small>gate down · E rolls it up' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; return 'Goods shelf <small>' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints · aim at a strain' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; }
     if (d.kind === 'register' && heistDemander()) return 'Hand over the till <small>' + money(S.till + S.tips) + ' · nobody gets hurt</small>';
     if (d.kind === 'register' && h && h.kind === 'crate') return (supplyById(h.item) && supplyById(h.item).stock === 'display') ? 'Stock the counter display with ' + h.n + ' × ' + itemName(h.item) + ' <small>' + (S.display[h.item] || 0) + ' there now</small>' : 'That does not go on the counter';
     if (d.kind === 'register') { if (S.customer && S.customer.stage) return 'Take payment from ' + S.customer.who + ' <small>' + money(S.customer.due) + ' by ' + S.customer.pay + '</small>'; if (!h && S.till > 0) return 'Empty the till <small>' + money(S.till) + ' · Shift+E opens the register</small>'; if (h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies')) return 'Ring up ' + h.n + ' ' + h.kind + ' <small>' + money(unitPrice(h.kind, h.qSum / h.n, h.thcSum / h.n) * h.n) + '</small>'; return 'Register <small>prices & diary · bring goods to sell</small>'; }
@@ -4485,11 +4531,12 @@
     if (d.kind === 'gate') return (world.gateOpen ? 'Close' : 'Open') + ' the yard gate';
     if (d.kind === 'bat') return h && h.kind === 'bat' ? 'Put the bat back' : h ? 'Hands full <small>G to put things down</small>' : 'Take the baseball bat <small>click to swing · for robbers, not customers</small>';
     if (d.kind === 'robber') return robberPrompt(d, h);
-    if (d.kind === 'locker') return 'Weapon locker <small>pepper spray · taser · firearms with a licence</small>';
+    if (d.kind === 'locker') return isLocked('gunLocker') ? 'Weapon locker <small>🔒 locked · Shift+E with the keyring</small>' : 'Weapon locker <small>pepper spray · taser · firearms' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>';
     var tobP = tobPrompt(d, h); if (tobP) return tobP;
     var cityP = cityPrompt(d, h); if (cityP) return cityP;
     var vipP = vipPrompt(d, h); if (vipP) return vipP;
     var expP = expPrompt(d, h); if (expP) return expP;
+    if (d.kind === 'keyHook') return keyHookPrompt(h);
     var doorP = doorPrompt(d); if (doorP) return doorP;
     if (d.kind === 'lounger') { var lg = loungers.filter(function (l) { return l.id === d.lid; })[0]; if (!lg) return ''; if (fight && (fight.a === lg || fight.b === lg)) return h && h.kind === 'bat' ? 'SWING <small>or press E to break it up</small>' : 'Break it up <small>' + fight.a.who + ' and ' + fight.b.who + '</small>'; return (h && h.kind === 'bat' ? 'Swing at ' : '') + lg.who + ' <small>' + (lg.state === 'smoke' ? 'having a smoke' : lg.state === 'use' ? 'at the ' + lg.useKind : lg.state === 'down' ? 'on the floor' : 'in the lobby') + '</small>'; }
     if (d.kind === 'stock') return isGoods(h) ? 'Lock ' + h.n + ' ' + kindName(h.kind, h.n) + ' in the cabinet <small>' + stockCount() + ' stored · Shift+E opens it</small>' : 'Stock cabinet <small>' + stockCount() + ' packed goods stored · E opens</small>';
@@ -4533,6 +4580,7 @@
     else if (d.kind === 'inventory') { if (h && h.kind === 'crate') { var okRack = h.item.indexOf('seed_') === 0 || (supplyById(h.item) && !supplyById(h.item).stock); if (!okRack) { toast('That goes in a machine, not on the rack', 'bad'); return; } S.supplies[h.item] = (S.supplies[h.item] || 0) + h.n; sfx('putdown'); toast('🧰 Stocked the rack: ' + h.n + ' × ' + itemName(h.item), 'good'); logEvent('🧰 Rack stocked: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; } else ui.openPanel('inventory'); }
     else if (d.kind === 'laptop') ui.openPanel('laptop');
     else if (d.kind === 'bench') { if (h && h.kind === 'jar') actions.collectHeld(); else if (h && h.kind === 'harvest') toast('Hang it on the drying line first (back-right)', 'bad'); else ui.openPanel('bench'); }
+    else if (d.kind === 'lot' && !shutterOpen('goodsShelf')) { if (player.keys.ShiftLeft || player.keys.ShiftRight) toggleLock('goodsShelf'); else if (!lockedStop('goodsShelf')) setShutter('goodsShelf', true); }
     else if (d.kind === 'lot') {
       var lotX = lotOf(d.item, d.strain); if (lotX.n < 1) { toast('Nothing there', 'bad'); return; }
       if (h && (h.kind !== d.item || (h.strain && h.strain !== d.strain))) { var other = S.hotbar.map(function (x, i2) { return x && x.kind === d.item && (!x.strain || x.strain === d.strain) ? i2 : -1; }).filter(function (i2) { return i2 >= 0; })[0]; if (other !== undefined) { S.slot = other; h = held(); } else if (hotbarFull()) { toast('Hands full — G to put things down first', 'bad'); return; } else h = null; }
@@ -4540,7 +4588,7 @@
       if (h) { h.n += dr.n; h.qSum += dr.q * dr.n; h.thcSum += dr.thc * dr.n; h.strain = d.strain; } else take({ kind: d.item, n: dr.n, qSum: dr.q * dr.n, thcSum: dr.thc * dr.n, strain: d.strain });
       world.dirty = true; toast('Took ' + dr.n + ' ' + strainById(d.strain).name + ' ' + d.item, 'good');
     }
-    else if (d.kind === 'goodsShelf') { toast('Aim at a strain\'s bags or joints to pick them up', ''); }
+    else if (d.kind === 'goodsShelf') { if (player.keys.ShiftLeft || player.keys.ShiftRight) toggleLock('goodsShelf'); else if (lockedStop('goodsShelf')) { } else if (!shutterOpen('goodsShelf')) setShutter('goodsShelf', true); else { setShutter('goodsShelf', false); toast('Gate rolled down over the goods shelf', ''); } }
     else if (d.kind === 'switch') { toggleRoomLight(d.room); }
     else if (d.kind === 'dehum') { dehumCycle(d.zone); }
     else if (d.kind === 'register' && heistDemander()) complyHeist();
@@ -4583,12 +4631,13 @@
     else if (d.kind === 'gate') { gateSet(!world.gateOpen); }
     else if (d.kind === 'bat') { if (h && h.kind === 'bat') { S.held = null; if (world.batMesh) world.batMesh.visible = true; toast('Bat back by the counter', ''); } else if (hotbarFull()) toast('Hands full — G to put things down', 'bad'); else { take({ kind: 'bat' }); if (world.batMesh) world.batMesh.visible = false; toast('🏏 Got the bat — click to swing. Hitting customers costs you dearly.', ''); } }
     else if (d.kind === 'robber') robberInteract(d, h);
-    else if (d.kind === 'locker') lockerMenu();
+    else if (d.kind === 'locker') { if (player.keys.ShiftLeft || player.keys.ShiftRight) toggleLock('gunLocker'); else if (!lockedStop('gunLocker')) lockerMenu(); }
     else if (tobInteract(d, h)) { }
     else if (cityInteract(d, h)) { }
     else if (vipInteract(d, h)) { }
     else if (expInteract(d, h)) { }
-    else if (d.kind === 'door') toggleDoor(d.id);
+    else if (d.kind === 'door') { if (player.keys.ShiftLeft || player.keys.ShiftRight) keyDoor(d.id); else toggleDoor(d.id); }
+    else if (d.kind === 'keyHook') keyHookInteract();
     else if (d.kind === 'lounger') { var lg2 = loungers.filter(function (l) { return l.id === d.lid; })[0]; if (!lg2) return; if (h && h.kind === 'bat') { swingBat(); return; } if (fight && (fight.a === lg2 || fight.b === lg2)) { endFight('player'); return; } loungerSay(lg2, pick(['all good, boss', 'nice place', '🙏', 'top shelf, this']), '#e8f1ea'); }
     else if (d.kind === 'stock') { if (isGoods(h) && !(player.keys.ShiftLeft || player.keys.ShiftRight)) stockStore(h); else ui.openPanel('stock'); }
     else if (d.kind === 'worker') { if (player.keys.ShiftLeft || player.keys.ShiftRight) workerMenu(); else workerSay(pick(['on it, boss', workerTaskLabel(), 'all good here', 'need me somewhere?']), '#e8f1ea'); }
@@ -5101,7 +5150,7 @@
   if (elapsed > 2) step(elapsed, true);
   S.lastTick = now();
   shop(); dustList(); var offlineDust = Math.min(4, Math.floor((now() - (S.lastDust || now())) / 300000)); if (offlineDust > 0) { spawnDust(offlineDust); S.lastDust = now(); }
-  buildStatic(); buildProps(); buildDecor(); fixtureFromBuild('deskBoard', 'desk screen', 0, buildDeskBoard); buildShopControls(); buildBroom(); buildUpstairs(); buildVipWing(); buildBasement(); buildAllProps(); buildSwitches(); buildStreet(); buildCity(); buildExpansion(); buildNpc(); buildGuard(); buildWorker(); applyFixtures(); applyShopState(); syncDust(); applySettings(); resize(); updateDayNight();
+  buildStatic(); buildProps(); buildDecor(); fixtureFromBuild('deskBoard', 'desk screen', 0, buildDeskBoard); buildShopControls(); buildBroom(); buildUpstairs(); buildVipWing(); buildBasement(); buildAllProps(); buildSwitches(); buildStreet(); buildCity(); buildExpansion(); buildNpc(); buildGuard(); buildWorker(); syncKeyHook(); applyFixtures(); applyShopState(); syncDust(); applySettings(); resize(); updateDayNight();
   runHooks(hooks.boot);
   camera.position.copy(player.pos); camera.rotation.set(0, player.yaw, 0);
 
@@ -5134,7 +5183,7 @@
     var dt = Math.min(clock.getDelta(), 0.1);
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
-    updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateCigShutter(dt); updateCity(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus();
+    updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateCity(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus();
     updateDayNight(); updateSecurity(dt);
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); renderer.render(scene, vc); } else renderer.render(scene, camera);
     if (SET.fps) { fpsAcc += dt; fpsN++; fpsT += dt; if (fpsT > 0.5) { $('h-fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; fpsT = 0; } }

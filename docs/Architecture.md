@@ -64,6 +64,15 @@ See the [Modding guide](Modding-Guide.md) for worked examples.
 
 `main.js` is a small Electron shell: one window, no menu bar, `contextIsolation` on, no Node access from the page, external links opened in the real browser, a single-instance lock so two windows never fight over one save. Saves live in the app's own `localStorage` under the user profile.
 
+## The two builds
+
+The game ships as two builds from the same code:
+
+- **This one, the standalone**: no network at all, a main menu with three save slots, and the F7 bug report form. The office wall screen is a shop dashboard drawn from the save.
+- **A desk-hosted build** the author plays, which keeps a live screen fed by a private development dashboard, uses one save, and has no bug report form.
+
+`game/menu.js` is shared between them: the page configures it with `window.RF_MENU = { slots, saveKey, bug, quitLabel }`. Gameplay changes are applied to both.
+
 ## Origins
 
 The game was first built as a panel inside a private development dashboard. `tools/make-standalone.js` and `tools/standalone-polish.js` are the one-time scripts that cut that connection out. They are kept as a record of what changed; they are not part of the game and are not meant to be run again.

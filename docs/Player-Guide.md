@@ -13,6 +13,7 @@ This page is generated from `game/guide.js`, the same text the game shows in its
 - [The extraction lab](#the-extraction-lab)
 - [The town, the car and the map](#the-town-the-car-and-the-map)
 - [Upstairs and the roof](#upstairs-and-the-roof)
+- [The keyring, doors and locking up](#the-keyring-doors-and-locking-up)
 - [Making the place yours](#making-the-place-yours)
 - [I am stuck](#i-am-stuck)
 
@@ -38,7 +39,7 @@ That is the whole game in miniature. Everything else makes that loop bigger, fas
 | **W A S D** | move |
 | **Shift** | run |
 | **E** or left click | use, pick up, talk, hand over |
-| **Shift + E** | the second action of a thing (the car trunk, a staff menu, the register drawer) |
+| **Shift + E** | the second action: lock or unlock a door or a cabinet with the keyring, the car trunk, a staff menu |
 | **G** or **Q** | put back what you hold |
 | **1 to 6**, mouse wheel | hotbar slot |
 | **Tab** | inventory |
@@ -105,7 +106,8 @@ Robberies run in stages: someone **cases** the lobby, the **mask** comes down, t
 - Shooting an armed, masked robber is self defence. Shooting a fleeing or unarmed man is a fine. Shooting a bystander costs the licence and the guns.
 - A robber who escapes with loot jumps into a **black car** on Main Street. Ram it with yours and everything comes back.
 - **Silent alarm** upgrade: press P, police arrive in about 20 seconds.
-- **Doors** can be shut and locked from the control box. Staff carry keys; a robber forces a locked door and breaks its lock.
+- **Doors** can be shut and locked from the control box, or at the door itself with the keyring. Staff carry keys; a robber forces a locked door and breaks its lock.
+- **Lock your stock away.** The goods shelf, the cigarette cabinet and the weapon locker all have a roll gate and a lock. A robber who reaches a locked one gets nothing from it, so locking up before closing, or the moment a mask comes down, is the cheapest insurance in the game.
 - **Police heat** rises with park deals, fines and shootings and cools with time. At 60 and over you get inspections. The precinct in town shows your heat and takes donations.
 
 ## The basement: RF Smoking
@@ -150,9 +152,19 @@ Your car is parked in the owner bay in the yard, behind the gate. The gate opens
 - The **lobby stairs** lead to the **connoisseur lounge**. With the connoisseur permit, guests book it, walk up on their own and wait to be served quality 70 or better. They pay triple and tip.
 - A ladder in the flat climbs to the **roof greenhouse**: six free beds that grow in daylight only.
 
+## The keyring, doors and locking up
+
+A keyring hangs on a hook in the **office**, by the door to the hall. Press E to take it; G puts it back on the hook. It is yours alone, so keep hold of it when trouble starts.
+
+- **Shift + E on a door** locks or unlocks it, wherever you are standing. Plain **E** slides a door open or shut as usual, and a locked door will not budge.
+- **Shift + E on the goods shelf, the cigarette cabinet or the weapon locker** locks it. Locking rolls the gate down; unlocking lets you roll it up again with E.
+- Without the keyring you can still open and shut anything that is unlocked. You simply cannot lock or unlock.
+- The shop control box lists every door with its own shut and lock buttons, plus lock all and unlock all, if you would rather do it from one place.
+- Jo and the guard carry their own keys and walk through locked doors. A robber has to force one, which costs him time.
+
 ## Making the place yours
 
-- **F2 edit mode**: look at furniture, E grabs, R turns, E drops, Backspace resets. It also carries **signs, the dashboard screen, the staff roster and the control box**: those stick flat to whatever surface you look at, at any height.
+- **F2 edit mode**: look at furniture, E grabs, R turns, E drops, Backspace resets. It also carries **signs, the dashboard screen, the staff roster, the key hook and the control box**: those stick flat to whatever surface you look at, at any height.
 - **F3 creative mode**: a catalogue of furniture and building pieces with finishes and colours. C opens the catalogue, R rotates, the wheel raises, P paints, X copies, Del removes.
 - Every door slides with E and can be locked from the control box.
 
