@@ -11,6 +11,11 @@
   <a href="https://realisticfarming.com"><b>realisticfarming.com</b></a>
 </p>
 
+> [!IMPORTANT]
+> **This is NOT a Farming Simulator product.**
+> RF Grow Co. has nothing to do with Farming Simulator, GIANTS Software, or any Farming Simulator mod, including the Realistic Farming mods by the same author. It is not a mod, not an add-on, not part of that suite, and it is not affiliated with or endorsed by GIANTS Software.
+> It is a separate, standalone hobby project that came alive for one reason: its author enjoyed building it.
+
 ![The service window](screenshots/01-service-window.jpg)
 
 ## What it is
@@ -96,7 +101,7 @@ Fork it. The [modding guide](docs/Modding-Guide.md) walks through the patterns t
 
 ## Credits
 
-A game by **TheCodingDad**. Part of the [Realistic Farming](https://realisticfarming.com) family. Built on [three.js](https://threejs.org) (MIT) and [Electron](https://www.electronjs.org) (MIT).
+A game by **TheCodingDad**, who also makes the Realistic Farming mods for Farming Simulator. This game is a separate hobby project and has nothing to do with those mods or with Farming Simulator; the website and Discord links are simply where to find the author. Built on [three.js](https://threejs.org) (MIT) and [Electron](https://www.electronjs.org) (MIT).
 
 ## License
 

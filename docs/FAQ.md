@@ -1,5 +1,8 @@
 # FAQ
 
+**Is this a Farming Simulator mod, or part of Realistic Farming?**
+No. It has nothing to do with Farming Simulator, GIANTS Software, or any Farming Simulator mod. The author also makes the Realistic Farming mods, which is why the website and Discord links point there, but this game is a separate, standalone hobby project that exists only because its author enjoyed making it. It is not affiliated with or endorsed by GIANTS Software.
+
 **Windows says it protected my PC.**
 The installer is not code signed. Choose "More info", then "Run anyway". The source is all here if you would rather build it yourself.
 

@@ -37,3 +37,9 @@
 /* the main menu replaces the game's own start card; its button is still pressed by the menu, it is just never shown */
 #g3-start { display: none !important; }
 #rf-splash { z-index: 210; }
+/* the disclaimer: deliberately loud, on the splash and on the main menu */
+.rf-disclaimer { margin: 26px auto 0; max-width: 680px; padding: 18px 22px; border: 2px solid rgba(255,200,87,.7); border-radius: 12px; background: rgba(255,200,87,.08); color: #e9dcb8; font-size: 16px; font-weight: 400; line-height: 1.5; letter-spacing: 0; text-align: center; }
+.rf-disclaimer b { display: block; color: #ffc857; font-size: 24px; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; }
+.rf-menu-card .rf-disclaimer { margin-top: 16px; font-size: 12.5px; padding: 12px 14px; }
+.rf-menu-card .rf-disclaimer b { font-size: 15px; margin-bottom: 4px; }
+.rf-menu-card.wide .rf-disclaimer { display: none; }

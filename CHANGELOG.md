@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+- A clear notice on the splash screen and the main menu: this game is not a Farming Simulator product and has nothing to do with that suite. It is a standalone hobby project. The same notice now leads the README, the wiki and the FAQ.
+- The splash stays up for five seconds so the notice can be read; a click or a key still skips it.
+
 ## 1.0.1
 
 - The splash screen is now part of the page itself, so it is on screen from the first frame. The old start card no longer flashes up while the game loads.
