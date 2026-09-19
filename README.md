@@ -38,6 +38,7 @@ It is one HTML page and plain JavaScript on top of [three.js](https://threejs.or
 | **Your car** | Parked in your bay behind the yard gate. Haul supplies and cartons, run phone deliveries, fit upgrades in the garage. |
 | **Upstairs** | Your own flat, a connoisseur lounge with its own staircase from the lobby, and a roof greenhouse. |
 | **Make it yours** | F2 moves every piece of furniture, every sign and every wall screen. F3 is a full creative build mode. |
+| **Guided intro** | A new shop is walked from its first order to its first sale in nine steps. Finish them for a $2,500 bonus, or switch it off in the pause menu. |
 | **Keys and locks** | A keyring in the office. Shift+E locks any door, the goods shelf, the cigarette cabinet or the weapon locker. Locked stock survives a robbery. |
 | **Three save slots** | Three shops, side by side, each deleted on its own. |
 | **Bug reports** | F7 opens a form that gathers your version, system and savegame and files a labelled GitHub issue. |

@@ -69,3 +69,16 @@
 .rfr-err { color: #ff8a8a; font-size: 13px; margin-top: 10px; min-height: 16px; } .rfr-preview { font: 12px Consolas, monospace !important; white-space: pre; }
 .rfr-steps { margin: 0 0 14px; padding-left: 22px; font-size: 14.5px; line-height: 1.6; color: #c9dccd; } .rfr-steps li { margin-bottom: 8px; } .rfr-steps b { color: #6fdc8c; }
 @media (max-width: 640px) { .rfr-grid { grid-template-columns: 1fr; } }
+/* guided intro card: sits on the left so it never fights the Next up box on the right */
+#rf-intro { position: fixed; left: 18px; top: 50%; transform: translateY(-50%); width: 320px; max-width: 34vw; z-index: 18; padding: 16px 18px; border: 1px solid rgba(111,220,140,.35); border-left: 3px solid #6fdc8c; border-radius: 14px; background: rgba(10,18,13,.9); color: #e8f1ea; font-family: "Segoe UI", system-ui, sans-serif; box-shadow: 0 18px 50px rgba(0,0,0,.55); pointer-events: none; }
+#rf-intro[hidden] { display: none; }
+.rf-intro-head { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #6fdc8c; display: flex; justify-content: space-between; }
+.rf-intro-head span { color: #8fa596; letter-spacing: 0; text-transform: none; }
+.rf-intro-dots { display: flex; gap: 4px; margin: 8px 0 10px; }
+.rf-intro-dots i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.12); }
+.rf-intro-dots i.on { background: #6fdc8c; } .rf-intro-dots i.now { background: #ffc857; }
+#rf-intro h3 { margin: 0 0 6px; font-size: 17px; line-height: 1.25; }
+#rf-intro p { margin: 0; font-size: 13px; line-height: 1.55; color: #c9dccd; }
+#rf-intro p b { color: #6fdc8c; font-weight: 600; }
+.rf-intro-foot { margin-top: 12px; padding-top: 9px; border-top: 1px solid rgba(255,255,255,.08); font-size: 11px; color: #6f8577; }
+@media (max-width: 1100px) { #rf-intro { width: 260px; font-size: 12px; } #rf-intro h3 { font-size: 15px; } }

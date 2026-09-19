@@ -173,6 +173,7 @@
       market: 1.0, event: null, customer: null,
       log: [], stats: { harvested: 0, sold: 0, earned: 0, plants: 0 },
       lastTick: now(), lastEvent: now(), lastCustomer: now(), created: now(), steps3d: 0,
+      intro: { i: 0, done: false, skipped: false },   // the guided intro, only for a brand new shop
       potSoil: {}, held: null,
       vip: null, car: null, flyerDay: 0,   // where the car was left and what is in its trunk
       tob: null, cigStock: {}, cigShutter: false,   // the basement line, the cabinet behind the counter and its roller shutter
@@ -193,6 +194,8 @@
     if (!Object.keys(S.stash).length && S.cured && S.cured.g > 0) S.stash.sunflower = { g: S.cured.g, qSum: S.cured.qSum, thcSum: S.cured.thcSum };
     ['bags', 'joints', 'cookies'].forEach(function (k) { if (!Object.keys(S.lots[k]).length && S.pkg && S.pkg[k] && S.pkg[k].n > 0) S.lots[k].sunflower = { n: S.pkg[k].n, qSum: S.pkg[k].qSum, thcSum: S.pkg[k].thcSum }; });
     syncTotals(); bindHotbar();
+    if (!S.intro) S.intro = { i: 0, done: false, skipped: false };
+    if (!S.intro.done && !S.intro.skipped && S.intro.i === 0 && ((S.stats && S.stats.earned > 0) || S.day > 1 || S.plants.length || S.xp > 0)) S.intro.skipped = true;   /* a shop that is already running never gets handed a tutorial */
     // plants keep a fixed pot (slot); older saves get the first free ones
     var used = {}; S.plants.forEach(function (p) { if (typeof p.slot === 'number') used[p.slot] = true; });
     S.plants.forEach(function (p) { if (typeof p.slot !== 'number') { var k = 0; while (used[k]) k++; p.slot = k; used[k] = true; } });
@@ -2699,6 +2702,63 @@
   function fxHover(meshes) { FIXTURES.forEach(function (fx) { fx.root.traverse(function (o) { if (o.isMesh && o.visible) meshes.push(o); }); }); }   /* invisible hit boxes count here: a small sign or hook is easier to grab by the generous box the game already uses for E */
   function fxDrop() { var fx = edit.grabbedFx; if (!fx) return; edit.grabbedFx = null; var r = fx.root; S.fixtures[fx.id] = { x: Math.round(r.position.x * 100) / 100, y: Math.round(r.position.y * 100) / 100, z: Math.round(r.position.z * 100) / 100, ry: r.rotation.y }; save(); sfx('ok'); toast('Hung the ' + fx.label, 'good'); }
   function fxReset(fx) { edit.grabbedFx = null; delete S.fixtures[fx.id]; fx.root.position.set(fx.base.x, fx.base.y, fx.base.z); fx.root.rotation.y = fx.base.ry; save(); toast('Put the ' + fx.label + ' back where it was', ''); }
+  // ── Guided intro ─────────────────────────────────────────────────
+  // Nine steps that walk a new shop from its first order to its first sale. Each step watches the save
+  // for the thing it asked for, so the player can wander off, do it their own way, and still tick it off.
+  var INTRO_BONUS = 2500;
+  function anySeed() { return Object.keys(S.supplies || {}).some(function (k) { return k.indexOf('seed_') === 0 && S.supplies[k] > 0; }); }
+  function anyPotSoil() { return Object.keys(S.potSoil || {}).some(function (k) { return S.potSoil[k]; }); }
+  var INTRO_STEPS = [
+    { t: 'Order your first supplies', d: 'Go to the <b>office</b> (left of the hall) and use the <b>laptop</b>. Order a <b>bag of soil</b> and one <b>seed</b>. A van brings them round the back; what arrives lands on the <b>supply rack</b> beside the laptop, or as crates in the back room.', ok: function () { return S.supplies.soil > 0 && anySeed(); } },
+    { t: 'Fill a pot with soil', d: 'Pick up the <b>bag of soil</b> from the rack with <b>E</b>, carry it into the <b>grow tent</b>, and press <b>E</b> on an empty pot.', ok: anyPotSoil },
+    { t: 'Plant the seed', d: 'Fetch the <b>seed</b> from the rack and press <b>E</b> on the pot you just filled.', ok: function () { return S.plants.length > 0; } },
+    { t: 'Water it, and feed it once', d: 'The <b>watering can</b> stands beside the tent. Water the plant whenever it says it is thirsty, and give it <b>nutrients</b> once: fed plants are worth far more. Spray any pest or mold the moment you see one.', ok: function () { return S.plants.some(function (p) { return p.fed || p.progress > 0.35; }) || S.batches.length > 0 || S.cured.g > 0; } },
+    { t: 'Harvest, then hang it up to dry', d: 'When the plant glows <b>READY</b>, harvest it with <b>empty hands</b>, carry the bunch to the <b>drying line</b> in the dry room and press <b>E</b> to hang it. It jars itself on the curing shelf when it is done.', ok: function () { return S.batches.length > 0 || S.cured.g > 0; } },
+    { t: 'Empty a cured jar into your stash', d: 'Once a jar appears on the <b>curing shelf</b>, carry it to the <b>workbench</b> in the processing room and press <b>E</b> to empty it. Jars keep gaining quality while they sit, so there is no rush.', ok: function () { return S.cured.g > 0; } },
+    { t: 'Pack something to sell', d: 'At the <b>workbench</b>, bag an eighth or roll a few joints. You need <b>baggies</b> for bags, and <b>papers</b> and <b>tips</b> for joints, all from the laptop. What you pack appears on the <b>goods shelf</b>.', ok: function () { return S.pkg.bags.n > 0 || S.pkg.joints.n > 0 || S.pkg.cookies.n > 0; } },
+    { t: 'Open the shop', d: 'Find the <b>shop control box</b> (it starts in the security room, and F2 lets you hang it anywhere) and switch the shop to <b>OPEN</b>. Customers only come in while you are open.', ok: function () { return shop().open; } },
+    { t: 'Serve your first customer', d: 'Someone will walk in and wait at the <b>service window</b>. Take what they asked for off the <b>goods shelf</b>, press <b>E</b> on them to hand it over, then take the money at the <b>register</b>.', ok: function () { return (S.stats.sold || 0) > 0 || (S.stats.earned || 0) > 0; } }
+  ];
+  function intro() { if (!S.intro) S.intro = { i: 0, done: false, skipped: false }; return S.intro; }
+  function introRunning() { var I = intro(); return !I.done && !I.skipped && ui.started; }
+  function introSkip(quiet) { var I = intro(); if (I.done || I.skipped) return; I.skipped = true; introDraw(); save(); if (!quiet) { sfx('click'); toast('Intro skipped — the guide in the pause menu has everything if you want it later', ''); } }
+  function introRestart() { var paid = intro().paid; S.intro = { i: 0, done: false, skipped: false, paid: paid }; introDraw(); save(); sfx('ok'); toast('Intro restarted', 'good'); }
+  function introFinish() {
+    var I = intro(); I.done = true; I.i = INTRO_STEPS.length;
+    var pay = !I.paid; if (pay) { I.paid = true; S.bank += INTRO_BONUS; }   /* the bonus is paid once per shop, however many times the intro is run again */
+    sfx('levelup'); toast(pay ? '🎓 Intro complete — ' + money(INTRO_BONUS) + ' bonus paid into the bank. The shop is yours now.' : '🎓 Intro complete. The bonus was already paid for this shop.', 'rare');
+    logEvent('🎓 Finished the guided intro' + (pay ? ': ' + money(INTRO_BONUS) + ' bonus' : ' again'), 'rare'); introDraw(); hud(); save();
+  }
+  var introT = 0;
+  function updateIntro(dt) {
+    if (!introRunning()) return;
+    var I = intro(), step = INTRO_STEPS[I.i]; if (!step) { introFinish(); return; }
+    introT -= dt; if (introT > 0) return; introT = 0.4;   /* the checks read the save, so twice a second is plenty */
+    var ok = false; try { ok = !!step.ok(); } catch (e) { ok = false; }
+    if (!ok) { introDraw(); return; }
+    I.i++; save();
+    if (I.i >= INTRO_STEPS.length) { introFinish(); return; }
+    sfx('ok'); toast('✅ ' + step.t, 'good'); introDraw();
+  }
+  var introEl = null;
+  function introDraw() {
+    var I = intro(), on = introRunning();
+    if (!introEl) { if (!on) return; introEl = document.createElement('div'); introEl.id = 'rf-intro'; document.body.appendChild(introEl); }
+    if (!on) { introEl.hidden = true; return; }
+    var step = INTRO_STEPS[I.i]; if (!step) { introEl.hidden = true; return; }
+    introEl.hidden = false;
+    var dots = INTRO_STEPS.map(function (_, k) { return '<i class="' + (k < I.i ? 'on' : k === I.i ? 'now' : '') + '"></i>'; }).join('');
+    introEl.innerHTML = '<div class="rf-intro-head">Getting started <span>' + (I.i + 1) + ' of ' + INTRO_STEPS.length + '</span></div>' +
+      '<div class="rf-intro-dots">' + dots + '</div>' +
+      '<h3>' + step.t + '</h3><p>' + step.d + '</p>' +
+      '<div class="rf-intro-foot">Finish every step for a ' + money(INTRO_BONUS) + ' bonus · skip it in the pause menu</div>';
+  }
+  function introMenuHtml() {
+    var I = intro();
+    if (I.done) return '<p>You finished the guided intro and collected the ' + money(INTRO_BONUS) + ' bonus.</p><div class="g3-chips"><button class="g3-btn" data-act="introRestart">Run it again (no second bonus)</button></div>';
+    if (I.skipped) return '<p>The intro is switched off. The <b>How to play</b> guide has everything it would have shown you.</p><div class="g3-chips"><button class="g3-btn" data-act="introRestart">Turn it back on</button></div>';
+    return '<p>Step <b>' + (I.i + 1) + ' of ' + INTRO_STEPS.length + '</b>: ' + INTRO_STEPS[I.i].t + '</p><p class="desc">Finish every step and ' + money(INTRO_BONUS) + ' goes into the bank. Skipping costs you the bonus; the guide stays available either way.</p><div class="g3-chips"><button class="g3-btn danger" data-act="introSkip">Skip the intro</button></div>';
+  }
   // ── Robberies: four kinds of trouble, each running in stages: casing the lobby, masking up, the demand, an escalation, a second target in the back, the getaway ──
   var ROB_KINDS = {
     snatch: { label: 'snatch thief', armed: false, weapon: null,      speed: 2.7, demandT: 0,  bat: 1,    pepper: 1,    taser: 1,    guard: 0.25 },
@@ -4941,6 +5001,7 @@
     if (m === 'resume') closeMenu();
     else if (m === 'settings') { body.hidden = false; body.innerHTML = settingsHtml(); }
     else if (m === 'guide') { body.hidden = false; body.innerHTML = guideHtml(); }
+    else if (m === 'intro') { body.hidden = false; body.innerHTML = introMenuHtml(); }
     else if (m === 'stats') { body.hidden = false; body.innerHTML = '<h4>Lifetime</h4>' + paneStatsInner(); }
     else if (m === 'reset') { if (confirm('Reset RF Grow Co.? All progress is lost.')) { S = fresh(); bindHotbar(); save(); world.dirty = true; rebuildDynamic(); hud(); closeMenu(); toast('Fresh start', ''); } }
     else if (m === 'edit') { closeMenu(); if (!edit.on) editToggle(); }
@@ -4983,7 +5044,7 @@
     }
     world.dirty = true; rebuildDynamic(); syncRack(); syncDust(); hud(); save(); applyShopState(); updateDayNight(); sfx('rare'); toast('🛠 ' + (DEV.filter(function (d) { return d[0] === id; })[0] || [id, id])[1], 'good');
   }
-  $('g3-menu-body').addEventListener('click', function (e) { var b = e.target.closest('[data-dev]'); if (!b) return; devAction(b.getAttribute('data-dev')); });
+  $('g3-menu-body').addEventListener('click', function (e) { var ia = e.target.closest('[data-act]'); if (ia) { var act = ia.getAttribute('data-act'); if (act === 'introSkip') introSkip(); else if (act === 'introRestart') introRestart(); else return; $('g3-menu-body').innerHTML = introMenuHtml(); return; } var b = e.target.closest('[data-dev]'); if (!b) return; devAction(b.getAttribute('data-dev')); });   /* the pause menu carries its own actions as well as the dev buttons */
   function settingsHtml() {
     return '<h4>Settings</h4><div id="g3-settings">' +
       slider('Field of view', 'fov', 60, 110, 1, SET.fov, '°') +
@@ -5053,6 +5114,7 @@
     if (key !== lastHudKey) { lastHudKey = key; $('h-hotbar').innerHTML = S.hotbar.map(function (it, i) { return '<div class="' + (i === S.slot ? 'active' : '') + (it ? '' : ' zero') + '" title="slot ' + (i + 1) + '">' + slotIcon(it) + '<small>' + slotLabel(it) + '</small><span class="n">' + (i + 1) + '</span></div>'; }).join(''); }
   }
   function objective() {
+    if (introRunning()) return '';   /* the intro card is the guidance while it runs: two boxes competing is noise */
     var t = '<b>Next up</b>'; var h = held();
     if (h && h.kind === 'broom') return t + '🧹 ' + dustList().length + ' dusty spot' + (dustList().length === 1 ? '' : 's') + ' left — E on the dust to sweep.';
     if (!S.customer && !h && dustList().length >= 8) return t + '🧹 The floors are dusty — grab the broom in the processing room.';
@@ -5150,7 +5212,7 @@
   if (elapsed > 2) step(elapsed, true);
   S.lastTick = now();
   shop(); dustList(); var offlineDust = Math.min(4, Math.floor((now() - (S.lastDust || now())) / 300000)); if (offlineDust > 0) { spawnDust(offlineDust); S.lastDust = now(); }
-  buildStatic(); buildProps(); buildDecor(); fixtureFromBuild('deskBoard', 'desk screen', 0, buildDeskBoard); buildShopControls(); buildBroom(); buildUpstairs(); buildVipWing(); buildBasement(); buildAllProps(); buildSwitches(); buildStreet(); buildCity(); buildExpansion(); buildNpc(); buildGuard(); buildWorker(); syncKeyHook(); applyFixtures(); applyShopState(); syncDust(); applySettings(); resize(); updateDayNight();
+  buildStatic(); buildProps(); buildDecor(); fixtureFromBuild('deskBoard', 'desk screen', 0, buildDeskBoard); buildShopControls(); buildBroom(); buildUpstairs(); buildVipWing(); buildBasement(); buildAllProps(); buildSwitches(); buildStreet(); buildCity(); buildExpansion(); buildNpc(); buildGuard(); buildWorker(); syncKeyHook(); applyFixtures(); introDraw(); applyShopState(); syncDust(); applySettings(); resize(); updateDayNight();
   runHooks(hooks.boot);
   camera.position.copy(player.pos); camera.rotation.set(0, player.yaw, 0);
 
@@ -5183,7 +5245,7 @@
     var dt = Math.min(clock.getDelta(), 0.1);
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
-    updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateCity(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus();
+    updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus();
     updateDayNight(); updateSecurity(dt);
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); renderer.render(scene, vc); } else renderer.render(scene, camera);
     if (SET.fps) { fpsAcc += dt; fpsN++; fpsT += dt; if (fpsT > 0.5) { $('h-fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; fpsT = 0; } }

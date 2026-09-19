@@ -21,6 +21,8 @@ This page is generated from `game/guide.js`, the same text the game shows in its
 
 You start with **$220**, a small tent, one pot and an empty shop. The goal of the first session is one full loop: seed to sale.
 
+A brand new shop is walked through exactly that by the **guided intro**, a card on the left of the screen that ticks off nine steps as you do them. Finish all nine and **$2,500** goes into the bank. You can switch it off any time under **Guided intro** in the pause menu, though skipping costs you the bonus.
+
 1. Walk to the **office laptop** (the room left of the hall). Order **soil**, a **seed**, **baggies** and, when you can afford it, a **grinder**.
 2. Orders come by van to the back. What arrives ends up on the **supply rack** beside the laptop or as crates in the back room storage; carry crates to the rack yourself, or hire Jo later to do it.
 3. Take a bag of soil to the **grow tent**, fill the pot, fetch the seed from the rack, plant it.

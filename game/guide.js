@@ -2,7 +2,7 @@
 // Each chapter is { id, icon, title, html }. Keep it practical: what to press, where to go, what to do when stuck.
 window.RF_GUIDE = [
   { id: 'start', icon: '🌱', title: 'Your first ten minutes', html:
-    '<p>You start with <b>$220</b>, a small tent, one pot and an empty shop. The goal of the first session is one full loop: seed to sale.</p>' +
+    '<p>You start with <b>$220</b>, a small tent, one pot and an empty shop. The goal of the first session is one full loop: seed to sale.</p><p>A brand new shop is walked through exactly that by the <b>guided intro</b>, a card on the left of the screen that ticks off nine steps as you do them. Finish all nine and <b>$2,500</b> goes into the bank. You can switch it off any time under <b>Guided intro</b> in the pause menu, though skipping costs you the bonus.</p>' +
     '<ol><li>Walk to the <b>office laptop</b> (the room left of the hall). Order <b>soil</b>, a <b>seed</b>, <b>baggies</b> and, when you can afford it, a <b>grinder</b>.</li>' +
     '<li>Orders come by van to the back. What arrives ends up on the <b>supply rack</b> beside the laptop or as crates in the back room storage; carry crates to the rack yourself, or hire Jo later to do it.</li>' +
     '<li>Take a bag of soil to the <b>grow tent</b>, fill the pot, fetch the seed from the rack, plant it.</li>' +
