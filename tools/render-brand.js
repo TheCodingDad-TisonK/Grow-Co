@@ -20,6 +20,11 @@ async function shoot(win, address, w, h, outPath) {
 }
 
 app.disableHardwareAcceleration();
+// Destroying the render window leaves Electron with no windows, and its default
+// window-all-closed handler quits the app on the spot. That killed the process before
+// the .ico was written, so CI shipped installers with the stock Electron icon while a
+// stale build/icon.ico on the author's disk hid it locally. Nothing quits but us.
+app.on('window-all-closed', function () {});
 app.whenReady().then(async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const win = new BrowserWindow({ width: 512, height: 512, show: false, frame: false, transparent: true, backgroundColor: '#00000000', useContentSize: true, webPreferences: { offscreen: false } });
@@ -41,8 +46,6 @@ app.whenReady().then(async () => {
     fs.writeFileSync(path.join(outDir, name + '.png'), img.toPNG());
     console.log(name + '.png  ' + mw + 'x' + mh);
   }
-  win.destroy();
-
   // what the game and the packager actually use
   fs.copyFileSync(path.join(outDir, 'icon-512.png'), path.join(root, 'game', 'logo.png'));
   fs.copyFileSync(path.join(outDir, 'icon-256.png'), path.join(root, 'game', 'logo-256.png'));
@@ -53,6 +56,7 @@ app.whenReady().then(async () => {
   const buf = await pngToIco(icoFrom);
   fs.mkdirSync(path.join(root, 'build'), { recursive: true });
   fs.writeFileSync(path.join(root, 'build', 'icon.ico'), buf);
-  console.log('build/icon.ico  (' + icoFrom.length + ' sizes)');
+  console.log('build/icon.ico  (' + icoFrom.length + ' sizes, ' + buf.length + ' bytes)');
+  win.destroy();
   app.quit();
 }).catch(e => { console.error(e); app.exit(1); });

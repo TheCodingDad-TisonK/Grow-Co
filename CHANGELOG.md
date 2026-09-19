@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.9
+
+**The app icon is fixed.** Every installer from v1.3 to v1.8 shipped with the stock Electron icon instead of the Grow Co. badge. The brand renderer destroyed its window before writing `build/icon.ico`, which made Electron quit the process early; the file never appeared, and electron-builder quietly fell back to its default rather than failing. It only looked right on the author's machine because an old `build/icon.ico` was sitting on disk, and `build/` is not in the repo. The renderer now holds the app open until the icon is written, and the build refuses to package at all if the icon is missing or malformed.
+
+**Things look like things.** A first pass over what you carry:
+
+- **Weed is weed now.** Buds are built as a proper cola: calyxes clustered in tapering rings, darker ones mixed through, pistils curling off the sides in the strain's own colour, a dusting of trichomes and a stem. The same bud shows up loose in a curing jar and inside a baggie.
+- **Baggies** are zip-locks with bud visible inside, a white zip strip and the strain printed on the label, rather than flat green rectangles.
+- **Curing jars** hold loose nugs that fill as the jar does, and carry a strain label.
+- **Joints** are tapered cones of paper with a card roach, a twisted tail and a scorched tip.
+- **Cookies** sit on a greaseproof sheet with chocolate chips.
+- **Soil** is a heat-sealed compost sack with a printed front; **nutrients** is a moulded bottle with a shoulder, a ribbed cap and a wrapped label; **pest spray** is a trigger sprayer with a fill line you can see through the tank; **snacks** are flow-wrapped bars with crimped ends.
+
 ## v1.8
 
 **The Workshop.** A content pack manager on the main menu. Turn a pack on and the shop reloads with more in it. Your save is not touched: a pack only adds things you can then go and buy.

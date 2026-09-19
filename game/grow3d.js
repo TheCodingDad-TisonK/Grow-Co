@@ -4737,6 +4737,39 @@
   var handL = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), handSkin); handL.scale.set(1, 0.7, 1.3); handL.position.set(-0.28, -0.36, -0.55); hands.add(handL);
   var handR = handL.clone(); handR.position.set(0.3, -0.36, -0.55); hands.add(handR);
   var heldMesh = null, heldKey = '';
+  function mixHex(a, b, t) { var ar = a >> 16 & 255, ag = a >> 8 & 255, ab = a & 255, br = b >> 16 & 255, bg = b >> 8 & 255, bb = b & 255; return (Math.round(ar + (br - ar) * t) << 16) | (Math.round(ag + (bg - ag) * t) << 8) | Math.round(ab + (bb - ab) * t); }
+  // A cola, not a pile of blobs: calyxes clustered in tapering rings, darker ones mixed through,
+  // pistils curling off the sides and a dusting of trichomes. Deterministic, so it does not
+  // reshuffle itself every time the mesh is rebuilt.
+  function budCola(st, scale) {
+    var G = new THREE.Group(), s = scale || 1;
+    var budM = new THREE.MeshStandardMaterial({ color: st.bud, roughness: 0.82 });
+    var darkM = new THREE.MeshStandardMaterial({ color: mixHex(st.bud, 0x2c3f1e, 0.45), roughness: 0.92 });
+    var hairM = new THREE.MeshStandardMaterial({ color: st.hair, roughness: 0.6 });
+    var frostM = new THREE.MeshStandardMaterial({ color: 0xf2f6e8, roughness: 0.25, emissive: 0x2a3320, emissiveIntensity: 0.35 });
+    var rings = 6;
+    for (var r = 0; r < rings; r++) {
+      var t = r / (rings - 1);                                  /* 0 at the base, 1 at the tip */
+      var rad = (0.036 - t * t * 0.026) * s, y = (-0.052 + r * 0.023) * s;
+      var per = r < 4 ? 5 : 3;
+      for (var i = 0; i < per; i++) {
+        var a = (i / per) * 6.283 + r * 0.82;
+        var cal = new THREE.Mesh(new THREE.IcosahedronGeometry((0.019 - t * 0.008) * s, 0), (i + r) % 3 === 0 ? darkM : budM);
+        cal.position.set(Math.cos(a) * rad, y, Math.sin(a) * rad);
+        cal.scale.set(1, 1.35, 1); cal.rotation.set(a * 0.6, a, 0.2);
+        cal.castShadow = true; G.add(cal);
+        if ((i + r) % 2 === 0) {   /* a pistil curling out of this calyx */
+          var hair = new THREE.Mesh(new THREE.CylinderGeometry(0.0009 * s, 0.0016 * s, 0.017 * s, 4), hairM);
+          hair.position.set(Math.cos(a) * (rad + 0.011 * s), y + 0.006 * s, Math.sin(a) * (rad + 0.011 * s));
+          hair.rotation.set(0.9, -a, 0.5); G.add(hair);
+        }
+        if ((i * 3 + r) % 5 === 0) { var fr = new THREE.Mesh(new THREE.SphereGeometry(0.0022 * s, 5, 4), frostM); fr.position.set(Math.cos(a) * (rad + 0.004 * s), y + 0.009 * s, Math.sin(a) * (rad + 0.004 * s)); G.add(fr); }
+      }
+    }
+    var tip = new THREE.Mesh(new THREE.ConeGeometry(0.013 * s, 0.03 * s, 7), budM); tip.position.y = 0.09 * s; tip.castShadow = true; G.add(tip);
+    var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0035 * s, 0.005 * s, 0.03 * s, 6), new THREE.MeshStandardMaterial({ color: 0x6b7a42, roughness: 1 })); stem.position.y = -0.068 * s; G.add(stem);
+    return G;
+  }
   function buildHeldMesh(h) {
     var g = new THREE.Group();
     if (WS) { var wm = WS.model('item:' + h.kind); if (wm) { g.add(wm); return g; } }   /* a pack's Blender model stands in for the whole hand-built item */
@@ -4753,15 +4786,62 @@
     }
     else if (h.kind === 'crate') { add(new THREE.BoxGeometry(0.34, 0.24, 0.3), new THREE.MeshStandardMaterial({ color: 0xc9a96a, roughness: 0.9 })); add(new THREE.BoxGeometry(0.35, 0.03, 0.31), new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.9 })); var cl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.08), new THREE.MeshBasicMaterial({ map: textTex([itemIcon(h.item) + ' ' + itemName(h.item)], 200, 80, { size: 30, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); cl.position.set(0, 0, 0.151); g.add(cl); }
     else if (h.kind === 'can') { var cm = new THREE.MeshStandardMaterial({ color: 0x3a8fd6, roughness: 0.45, metalness: 0.35 }); add(new THREE.CylinderGeometry(0.075, 0.085, 0.17, 16), cm); add(new THREE.CylinderGeometry(0.01, 0.016, 0.2, 8), cm, 0.11, 0.08, 0, 0, 0, -0.95); add(new THREE.CylinderGeometry(0.03, 0.02, 0.03, 10), cm, 0.19, 0.145, 0, 0, 0, -0.95); add(new THREE.TorusGeometry(0.065, 0.009, 8, 16, Math.PI), cm, 0, 0.085, 0); }
-    else if (h.kind === 'snack') { add(new THREE.BoxGeometry(0.14, 0.03, 0.1), new THREE.MeshStandardMaterial({ color: 0xe8c890 })); add(new THREE.BoxGeometry(0.13, 0.02, 0.09), new THREE.MeshStandardMaterial({ color: 0x6fdc3a }), 0, 0.025, 0); add(new THREE.BoxGeometry(0.13, 0.02, 0.09), new THREE.MeshStandardMaterial({ color: 0xd63a2a }), 0, 0.045, 0); add(new THREE.BoxGeometry(0.14, 0.03, 0.1), new THREE.MeshStandardMaterial({ color: 0xe8c890 }), 0, 0.07, 0); }
+    else if (h.kind === 'snack') {
+      // a wrapped bar: flow-wrap film, crimped ends, a printed face
+      var wrapM = new THREE.MeshStandardMaterial({ color: 0x6b2f8a, roughness: 0.45, metalness: 0.25 });
+      add(new THREE.BoxGeometry(0.135, 0.022, 0.058), wrapM);
+      [-1, 1].forEach(function (e) { var cr = add(new THREE.BoxGeometry(0.022, 0.026, 0.062), wrapM, e * 0.077, 0, 0); cr.scale.y = 0.5; for (var f = 0; f < 3; f++) add(new THREE.BoxGeometry(0.02, 0.002, 0.062), new THREE.MeshStandardMaterial({ color: 0x4e2166, roughness: 0.6 }), e * 0.077, -0.004 + f * 0.005, 0); });
+      add(new THREE.PlaneGeometry(0.115, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['GROW BAR', 'milk chocolate'], 280, 120, { size: 40, bg: '#6b2f8a', color: '#e8d6f2', titleColor: '#ffd166', line: 'rgba(0,0,0,0)' }), transparent: true }), 0, 0.0121, 0, -Math.PI / 2, 0, 0);
+    }
     else if (h.kind === 'broom') { var bg2 = new THREE.Group(); bg2.rotation.z = 0.35; bg2.position.set(0.05, -0.05, 0); g.add(bg2); function badd(geo, mat, x, y, z) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); bg2.add(m); return m; } badd(new THREE.CylinderGeometry(0.014, 0.016, 1.1, 10), MAT.wood, 0, 0.1, 0); badd(new THREE.CylinderGeometry(0.018, 0.018, 0.14, 10), colorMat(0xc94a3a, 0.8), 0, 0.6, 0); badd(new THREE.CylinderGeometry(0.022, 0.018, 0.05, 10), MAT.chrome, 0, -0.44, 0); badd(new THREE.BoxGeometry(0.07, 0.05, 0.32), MAT.darkwood, 0, -0.48, 0); for (var bk = 0; bk < 14; bk++) badd(new THREE.BoxGeometry(0.012, 0.2, 0.012), colorMat(bk % 2 ? 0xb8925a : 0xa8843f, 1), 0, -0.6, -0.145 + bk * 0.0225); }
-    else if (h.kind === 'soil') { add(new THREE.BoxGeometry(0.16, 0.2, 0.11), new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 1 })); }
-    else if (h.kind === 'nutrients') { add(new THREE.CylinderGeometry(0.03, 0.03, 0.14, 10), new THREE.MeshStandardMaterial({ color: 0xd9ff5a, roughness: 0.5 })); add(new THREE.CylinderGeometry(0.02, 0.02, 0.03, 8), MAT.black, 0, 0.085, 0); }
-    else if (h.kind === 'remedy') { add(new THREE.CylinderGeometry(0.03, 0.035, 0.16, 10), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 })); add(new THREE.BoxGeometry(0.03, 0.04, 0.06), MAT.black, 0, 0.1, -0.01); }
+    else if (h.kind === 'soil') {
+      // a compost sack: heat-sealed folds top and bottom, a printed front and a bulging middle
+      var sackM = new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 1 });
+      add(new THREE.BoxGeometry(0.15, 0.17, 0.095), sackM);
+      add(new THREE.BoxGeometry(0.155, 0.022, 0.03), new THREE.MeshStandardMaterial({ color: 0x3a291b, roughness: 1 }), 0, 0.093, 0);
+      add(new THREE.BoxGeometry(0.155, 0.022, 0.03), new THREE.MeshStandardMaterial({ color: 0x3a291b, roughness: 1 }), 0, -0.093, 0);
+      add(new THREE.PlaneGeometry(0.125, 0.105), new THREE.MeshBasicMaterial({ map: textTex(['RF GROW', 'potting soil', '20 L'], 250, 210, { size: 40, bg: '#6d4f30', color: '#e9dcc2', titleColor: '#9ff0b5', line: 'rgba(0,0,0,0)' }), transparent: true }), 0, 0.006, 0.0481);
+    }
+    else if (h.kind === 'nutrients') {
+      // a feed bottle: shoulder, neck, ribbed cap and a wrapped label
+      var botM = new THREE.MeshStandardMaterial({ color: 0xcdea55, roughness: 0.35, transparent: true, opacity: 0.94 });
+      add(new THREE.CylinderGeometry(0.029, 0.031, 0.105, 14), botM, 0, -0.005, 0);
+      add(new THREE.CylinderGeometry(0.014, 0.029, 0.026, 14), botM, 0, 0.061, 0);
+      add(new THREE.CylinderGeometry(0.013, 0.013, 0.016, 12), new THREE.MeshStandardMaterial({ color: 0x2a2f26, roughness: 0.6 }), 0, 0.082, 0);
+      add(new THREE.CylinderGeometry(0.0155, 0.0155, 0.011, 16), new THREE.MeshStandardMaterial({ color: 0x1d211a, roughness: 0.85 }), 0, 0.094, 0);
+      var nlab = add(new THREE.CylinderGeometry(0.0305, 0.0305, 0.05, 16, 1, true), new THREE.MeshBasicMaterial({ map: textTex(['BLOOM', 'nutrients'], 300, 120, { size: 44, bg: '#1f3a14', color: '#cdea55', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }), 0, -0.006, 0);
+    }
+    else if (h.kind === 'remedy') {
+      // a trigger spray: clear tank, a fill line of fluid, a moulded head and a trigger
+      var tankM = new THREE.MeshStandardMaterial({ color: 0xe8f2ee, roughness: 0.18, transparent: true, opacity: 0.55 });
+      add(new THREE.CylinderGeometry(0.029, 0.032, 0.115, 14), tankM, 0, -0.012, 0);
+      add(new THREE.CylinderGeometry(0.026, 0.029, 0.055, 12), new THREE.MeshStandardMaterial({ color: 0x8fd6b0, roughness: 0.3, transparent: true, opacity: 0.85 }), 0, -0.04, 0);
+      add(new THREE.CylinderGeometry(0.016, 0.016, 0.02, 12), new THREE.MeshStandardMaterial({ color: 0x2f3a36, roughness: 0.7 }), 0, 0.055, 0);
+      add(new THREE.BoxGeometry(0.03, 0.036, 0.048), new THREE.MeshStandardMaterial({ color: 0x2f3a36, roughness: 0.7 }), 0, 0.082, -0.012);
+      add(new THREE.BoxGeometry(0.012, 0.01, 0.03), new THREE.MeshStandardMaterial({ color: 0x2f3a36, roughness: 0.7 }), 0, 0.095, -0.04);
+      add(new THREE.BoxGeometry(0.016, 0.026, 0.008), new THREE.MeshStandardMaterial({ color: 0x59d08a, roughness: 0.6 }), 0, 0.068, 0.016);
+      add(new THREE.CylinderGeometry(0.0325, 0.0325, 0.05, 16, 1, true), new THREE.MeshBasicMaterial({ map: textTex(['PEST OFF', 'ready to use'], 300, 120, { size: 40, bg: '#123a2a', color: '#bfeed6', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }), 0, 0.006, 0);
+    }
     else if (h.kind === 'seed') { add(new THREE.BoxGeometry(0.08, 0.11, 0.01), new THREE.MeshStandardMaterial({ map: textTex([strainById(h.strain).emoji, 'seed'], 128, 176, { size: 44, bg: '#f3e9cf', color: '#2a2a2a', line: 'rgba(0,0,0,.3)' }), roughness: 0.8 }), 0, 0, 0, -0.3, 0, 0); }
-    else if (h.kind === 'harvest') { var st = strainById(h.strain); for (var k = 0; k < 6; k++) add(new THREE.IcosahedronGeometry(0.035 + Math.random() * 0.02, 1), new THREE.MeshStandardMaterial({ color: st.bud, roughness: 1 }), (Math.random() - 0.5) * 0.08, k * 0.035 - 0.08, (Math.random() - 0.5) * 0.06); add(new THREE.PlaneGeometry(0.14, 0.26), MAT.leaf, 0.04, -0.02, 0.02, -0.5, 0.4, 0); add(new THREE.PlaneGeometry(0.14, 0.26), MAT.leaf, -0.05, 0.0, -0.02, -0.4, -0.6, 0); }
-    else if (h.kind === 'jar') { add(new THREE.CylinderGeometry(0.06, 0.06, 0.14, 14), MAT.jar); add(new THREE.CylinderGeometry(0.065, 0.065, 0.02, 14), MAT.jarLid, 0, 0.08, 0); add(new THREE.CylinderGeometry(0.05, 0.05, 0.1 * clamp(h.grams / 24, 0.3, 1), 10), new THREE.MeshStandardMaterial({ color: strainById(h.strain || 'sunflower').bud, roughness: 1 }), 0, -0.06 + 0.05 * clamp(h.grams / 24, 0.3, 1), 0); }
-    else if (h.kind === 'cookies') { for (var ck = 0; ck < Math.min(h.n, 6); ck++) add(new THREE.CylinderGeometry(0.045, 0.045, 0.012, 12), new THREE.MeshStandardMaterial({ color: 0xb5763a, roughness: 0.9 }), (ck % 3) * 0.06 - 0.06, Math.floor(ck / 3) * 0.015, 0, 0, ck * 0.4, 0); add(new THREE.BoxGeometry(0.2, 0.01, 0.1), new THREE.MeshStandardMaterial({ color: 0xf5f5f0 }), 0, -0.012, 0); }
+    else if (h.kind === 'harvest') { var st = strainById(h.strain); var cola = budCola(st, 1); cola.position.y = -0.01; g.add(cola); [[0.045, -0.055, 0.02, -0.5, 0.4], [-0.052, -0.04, -0.02, -0.4, -0.6], [0.01, -0.07, -0.04, -0.7, 1.4]].forEach(function (L) { add(new THREE.PlaneGeometry(0.11, 0.2), MAT.leaf, L[0], L[1], L[2], L[3], L[4], 0); }); }
+    else if (h.kind === 'jar') {
+      var jst = strainById(h.strain || 'sunflower'), fill = clamp(h.grams / 24, 0.25, 1);
+      add(new THREE.CylinderGeometry(0.06, 0.06, 0.14, 16), MAT.jar);
+      add(new THREE.CylinderGeometry(0.062, 0.062, 0.012, 16), MAT.jarLid, 0, 0.066, 0);   /* screw collar under the lid */
+      add(new THREE.CylinderGeometry(0.065, 0.065, 0.022, 16), MAT.jarLid, 0, 0.081, 0);
+      for (var jb = 0; jb < Math.round(3 + fill * 6); jb++) { var ja = jb * 2.399, jr = 0.026 * Math.sqrt((jb % 5) / 5 + 0.2); var nug = add(new THREE.IcosahedronGeometry(0.016 + (jb % 3) * 0.004, 0), new THREE.MeshStandardMaterial({ color: jb % 4 === 0 ? mixHex(jst.bud, 0x30401f, 0.35) : jst.bud, roughness: 0.9 }), Math.cos(ja) * jr, -0.062 + (jb % 4) * 0.016 * fill + 0.01, Math.sin(ja) * jr); nug.scale.set(1, 0.82, 1); nug.rotation.set(ja, ja * 1.7, 0.3); }
+      add(new THREE.PlaneGeometry(0.075, 0.032), new THREE.MeshBasicMaterial({ map: textTex([jst.name], 220, 94, { size: 30, bg: '#f4efdf', color: '#2a2a2a', titleColor: '#2a2a2a', line: 'rgba(0,0,0,0)' }), transparent: true }), 0, -0.012, 0.0605);
+    }
+    else if (h.kind === 'cookies') {
+      // a greaseproof sheet with cookies on it, chocolate chips and all
+      var doughM = new THREE.MeshStandardMaterial({ color: 0xc08a4a, roughness: 0.95 }), chipM = new THREE.MeshStandardMaterial({ color: 0x4a2c1a, roughness: 0.8 });
+      add(new THREE.BoxGeometry(0.21, 0.006, 0.115), new THREE.MeshStandardMaterial({ color: 0xf2ece0, roughness: 1 }), 0, -0.014, 0);
+      for (var ck = 0; ck < Math.min(h.n, 6); ck++) {
+        var cx2 = (ck % 3) * 0.062 - 0.062, cz2 = Math.floor(ck / 3) * 0.05 - 0.025;
+        var ckm = add(new THREE.CylinderGeometry(0.027, 0.024, 0.011, 14), doughM, cx2, -0.004, cz2, 0, ck * 0.5, 0); ckm.scale.y = 1;
+        for (var ch = 0; ch < 4; ch++) { var cang = ch * 1.9 + ck; add(new THREE.SphereGeometry(0.004, 6, 5), chipM, cx2 + Math.cos(cang) * 0.014, 0.002, cz2 + Math.sin(cang) * 0.014); }
+      }
+    }
     else if (h.kind === 'joints') {
       // a joint is a tapered cone of paper, not a stick: card roach, a body that widens, a twisted tail and a scorched tip
       var paperM = new THREE.MeshStandardMaterial({ color: 0xf7f3e6, roughness: 0.95 }), roachM = new THREE.MeshStandardMaterial({ color: 0xc19a63, roughness: 0.9 }), ashM = new THREE.MeshStandardMaterial({ color: 0x3a3330, roughness: 1 });
@@ -4775,7 +4855,22 @@
       }
       if (h.n > 5) { add(new THREE.BoxGeometry(0.098, 0.032, 0.056), new THREE.MeshStandardMaterial({ color: 0x1f2a22, roughness: 0.8 }), 0, -0.052, 0); add(new THREE.BoxGeometry(0.1, 0.009, 0.058), new THREE.MeshStandardMaterial({ color: 0x6fdc8c, roughness: 0.55 }), 0, -0.037, 0); }
     }
-    else if (h.kind === 'bags') { for (var b = 0; b < Math.min(h.n, 3); b++) add(new THREE.BoxGeometry(0.08, 0.06, 0.02), new THREE.MeshStandardMaterial({ color: 0x9ff0b5, transparent: true, opacity: 0.85 }), 0, b * 0.025, -b * 0.01); }
+    else if (h.kind === 'bags') {
+      // a zip-lock with bud actually inside it, a white zip strip and a printed strain label
+      var bst = strainById(h.strain || 'sunflower');
+      var filmM = new THREE.MeshStandardMaterial({ color: 0xeef7f0, roughness: 0.12, transparent: true, opacity: 0.4 });
+      var zipM = new THREE.MeshStandardMaterial({ color: 0xf7fbf8, roughness: 0.5 });
+      var nugM = new THREE.MeshStandardMaterial({ color: bst.bud, roughness: 0.9 });
+      for (var b = 0; b < Math.min(h.n, 3); b++) {
+        var bg3 = new THREE.Group(); bg3.position.set(b * 0.006, b * 0.021, -b * 0.012); bg3.rotation.set(-0.12, b * 0.14 - 0.14, b * 0.05); g.add(bg3);
+        var pouch = new THREE.Mesh(new THREE.BoxGeometry(0.076, 0.062, 0.017), filmM); bg3.add(pouch);
+        for (var q = 0; q < 5; q++) { var nug2 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.0105 + (q % 3) * 0.0022, 0), nugM); nug2.position.set(-0.021 + (q % 3) * 0.021, -0.014 + Math.floor(q / 3) * 0.015, 0); nug2.scale.set(1, 0.85, 0.7); nug2.rotation.set(q, q * 1.4, 0.4); bg3.add(nug2); }
+        var zip = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.006, 0.019), zipM); zip.position.y = 0.027; bg3.add(zip);
+        var lip = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.008, 0.013), filmM); lip.position.y = 0.035; bg3.add(lip);
+        var lab = new THREE.Mesh(new THREE.PlaneGeometry(0.056, 0.019), new THREE.MeshBasicMaterial({ map: textTex([bst.name], 260, 88, { size: 34, bg: '#f4efdf', color: '#2a2a2a', titleColor: '#2a2a2a', line: 'rgba(0,0,0,0)' }), transparent: true }));
+        lab.position.set(0, 0.0125, 0.0091); bg3.add(lab);
+      }
+    }
     return g;
   }
   function syncHands(dt) {
