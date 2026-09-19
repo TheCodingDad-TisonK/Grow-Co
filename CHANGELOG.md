@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.10
+
+The rest of the packaging pass. What the shop sells is now built once and used everywhere, so the thing on the shelf is the thing in your hand is the thing the customer is given.
+
+- **Cigarette packs** are proper hinge-lid packs: a lid section with a foil seam, the brand printed on the face, and a health band along the bottom. The cabinet behind the counter shows the same pack you hand over, and a carton is a printed sleeve rather than two stacked slabs.
+- **The goods shelf** was still selling flat green rectangles and white sticks. It now puts out the same zip-lock baggies and the same tapered joints you carry, so the display case actually looks stocked.
+- **Seed packets** are foil sachets with a heat-sealed top, a tear notch and the strain printed on the front, instead of a flat card.
+- Product models live in one place now: a joint, a baggie, a cigarette pack and a bud are each built by a single function that the hand, the shelf and the cabinet all call, with the materials cached rather than rebuilt per item.
+
 ## v1.9
 
 **The app icon is fixed.** Every installer from v1.3 to v1.8 shipped with the stock Electron icon instead of the Grow Co. badge. The brand renderer destroyed its window before writing `build/icon.ico`, which made Electron quit the process early; the file never appeared, and electron-builder quietly fell back to its default rather than failing. It only looked right on the author's machine because an old `build/icon.ico` was sitting on disk, and `build/` is not in the repo. The renderer now holds the app open until the icon is written, and the build refuses to package at all if the icon is missing or malformed.

@@ -1466,14 +1466,14 @@
       var lines = [st.emoji + ' ' + st.name, any ? ('bags ' + bags.n + (bags.n ? ' · ' + money(bagPrice(bq, bags.thcSum / bags.n)) : '') + '   joints ' + joints.n + (joints.n ? ' · ' + money(jointPrice(jq, joints.thcSum / joints.n)) : '') + (cookies.n ? '   cookies ' + cookies.n + ' · ' + money(cookiePrice(cookies.qSum / cookies.n, cookies.thcSum / cookies.n)) : '')) : 'sold out'];
       var card = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.12), new THREE.MeshBasicMaterial({ map: textTex(lines, 448, 78, { size: 26, bg: any ? '#f3e9cf' : '#d9d2c2', color: '#222', titleColor: any ? '#1a6a2a' : '#666', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide })); card.position.set(cx, cy - 0.075, 0.222); card.rotation.x = -0.35; gg.add(card);   // price tag hangs off the front lip of each shelf, tilted up so the low rows read from standing height
       // bags: stacked flat, three per layer
-      for (var b = 0; b < Math.min(bags.n, 9); b++) { var bm = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.045, 0.07), colorMat(0x9ff0b5, 0.5, 0, { transparent: true, opacity: 0.85 })); bm.position.set(cx - 0.26 + (b % 3) * 0.11, cy + 0.045 + Math.floor(b / 3) * 0.05, 0.02 + (b % 2) * 0.03); bm.rotation.y = (b % 3 - 1) * 0.12; gg.add(bm); var bud = new THREE.Mesh(new THREE.IcosahedronGeometry(0.02, 0), new THREE.MeshStandardMaterial({ color: st.bud, roughness: 1 })); bud.position.copy(bm.position); gg.add(bud); }
+      for (var b = 0; b < Math.min(bags.n, 9); b++) { var bm = productBaggie(st, 1.15); bm.position.set(cx - 0.26 + (b % 3) * 0.11, cy + 0.05 + Math.floor(b / 3) * 0.05, 0.02 + (b % 2) * 0.03); bm.rotation.set(-1.35, (b % 3 - 1) * 0.12, 0); gg.add(bm); }   /* the same baggie the customer is handed */
       if (bags.n > 0) { var bh = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.28, 0.3), MAT.none); bh.position.set(cx - 0.16, cy + 0.14, 0.02); gg.add(bh); interactable(bh, { kind: 'lot', item: 'bags', strain: st.id }); bh.userData.dynGroup = 'goods'; bh.userData.propId = 'goodsShelf'; }
       // cookies: a small jar in the middle of the cell
       if (cookies.n > 0) { var cj = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.14, 14, 1, true), MAT.jar); cj.position.set(cx + 0.02, cy + 0.07, 0.06); gg.add(cj); var cjl = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.015, 14), MAT.jarLid); cjl.position.set(cx + 0.02, cy + 0.145, 0.06); gg.add(cjl); for (var ck2 = 0; ck2 < Math.min(cookies.n, 6); ck2++) { var cm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.012, 10), colorMat(0xb5763a, 0.9)); cm.position.set(cx + 0.02, cy + 0.012 + ck2 * 0.018, 0.06); cm.rotation.y = ck2 * 0.5; gg.add(cm); } var ch = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.16), MAT.none); ch.position.set(cx + 0.02, cy + 0.1, 0.06); gg.add(ch); interactable(ch, { kind: 'lot', item: 'cookies', strain: st.id }); ch.userData.dynGroup = 'goods'; ch.userData.propId = 'goodsShelf'; }
       // joints: standing in a glass tube
       var tube = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.2, 14, 1, true), MAT.jar); tube.position.set(cx + 0.2, cy + 0.1, 0.03); gg.add(tube);
       var tbase = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.015, 14), MAT.darkwood); tbase.position.set(cx + 0.2, cy + 0.008, 0.03); gg.add(tbase);
-      for (var j = 0; j < Math.min(joints.n, 12); j++) { var ja = j / 12 * Math.PI * 2, jr = j < 6 ? 0.02 : 0.04; var jm = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.0045, 0.17, 6), colorMat(0xf5f0e0, 0.9)); jm.position.set(cx + 0.2 + Math.cos(ja) * jr, cy + 0.1, 0.03 + Math.sin(ja) * jr); jm.rotation.z = (j % 2 ? 1 : -1) * 0.08; gg.add(jm); }
+      for (var j = 0; j < Math.min(joints.n, 12); j++) { var ja = j / 12 * Math.PI * 2, jr = j < 6 ? 0.02 : 0.04; var jm = productJoint(1.7); jm.position.set(cx + 0.2 + Math.cos(ja) * jr, cy + 0.1, 0.03 + Math.sin(ja) * jr); jm.rotation.z = (j % 2 ? 1 : -1) * 0.08; gg.add(jm); }
       if (joints.n > 0) { var jh = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.28, 0.3), MAT.none); jh.position.set(cx + 0.2, cy + 0.14, 0.02); gg.add(jh); interactable(jh, { kind: 'lot', item: 'joints', strain: st.id }); jh.userData.dynGroup = 'goods'; jh.userData.propId = 'goodsShelf'; }
     });
     gg.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'goodsShelf'; });
@@ -2222,7 +2222,7 @@
   }
   function syncCigCab() {
     var inst = propInst.cigCabinet; if (!inst) return; var g = inst.ctx.dynGroup(); var keep = g.userData.shutter; while (g.children.length) g.remove(g.children[0]); if (keep) g.add(keep);
-    Object.keys(CIG_SKUS).forEach(function (k, i) { var K = CIG_SKUS[k], n = Math.min(i < 4 ? 8 : 3, cigStock(k)), big = K.size === 20; for (var p = 0; p < n; p++) { var w = big ? 0.075 : 0.06, hh = big ? 0.11 : 0.09; var m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.03), colorMat(K.col, 0.55)); m.position.set((i < 4 ? -0.45 : 0.27) + p * 0.082, [1.62, 1.27, 0.92, 0.57, 1.62, 1.27, 0.92, 0.57][i] + hh / 2, 0.06); m.castShadow = false; g.add(m); var cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.002, hh * 0.3, 0.032), colorMat(K.top, 0.55)); cap.position.copy(m.position); cap.position.y += hh * 0.35; cap.castShadow = false; g.add(cap); } });
+    Object.keys(CIG_SKUS).forEach(function (k, i) { var K = CIG_SKUS[k], n = Math.min(i < 4 ? 8 : 3, cigStock(k)), big = K.size === 20; for (var p = 0; p < n; p++) { var w = big ? 0.075 : 0.06, hh = big ? 0.11 : 0.09; var m = productCigPack(K, big ? 1.3 : 1.25); m.position.set((i < 4 ? -0.45 : 0.27) + p * 0.082, [1.62, 1.27, 0.92, 0.57, 1.62, 1.27, 0.92, 0.57][i] + hh / 2, 0.06); m.traverse(function (o) { if (o.isMesh) o.castShadow = false; }); g.add(m); } });   /* the cabinet shows the same pack you hand over */
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = 'cigCabinet'; });
   }
   function updateShutters(dt) { updateOneShutter('goodsShelf', dt, 1.97, 1.9); updateOneShutter('cigCabinet', dt, 1.87, 1.45); }
@@ -4770,12 +4770,61 @@
     var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0035 * s, 0.005 * s, 0.03 * s, 6), new THREE.MeshStandardMaterial({ color: 0x6b7a42, roughness: 1 })); stem.position.y = -0.068 * s; G.add(stem);
     return G;
   }
+  // ── Product models, shared by the hand and the shelves so the shop sells what you carry ──
+  var PROD_M = {};
+  function prodMat(key, make) { return PROD_M[key] || (PROD_M[key] = make()); }
+  function productJoint(s) {   // a tapered cone of paper: card roach, twisted tail, scorched tip
+    var G = new THREE.Group();
+    var paperM = prodMat('paper', function () { return new THREE.MeshStandardMaterial({ color: 0xf7f3e6, roughness: 0.95 }); });
+    var roachM = prodMat('roach', function () { return new THREE.MeshStandardMaterial({ color: 0xc19a63, roughness: 0.9 }); });
+    var ashM = prodMat('ash', function () { return new THREE.MeshStandardMaterial({ color: 0x3a3330, roughness: 1 }); });
+    var b = new THREE.Mesh(new THREE.CylinderGeometry(0.0074 * s, 0.005 * s, 0.084 * s, 8), paperM); b.position.y = 0.012 * s; G.add(b);
+    var r = new THREE.Mesh(new THREE.CylinderGeometry(0.0051 * s, 0.0051 * s, 0.02 * s, 8), roachM); r.position.y = -0.04 * s; G.add(r);
+    var t = new THREE.Mesh(new THREE.ConeGeometry(0.0074 * s, 0.017 * s, 8), paperM); t.position.y = 0.0625 * s; G.add(t);
+    var a = new THREE.Mesh(new THREE.CylinderGeometry(0.0076 * s, 0.0076 * s, 0.004 * s, 8), ashM); a.position.y = 0.0535 * s; G.add(a);
+    return G;
+  }
+  function productBaggie(st, s) {   // a zip-lock you can see the bud through, with the strain on the label
+    var G = new THREE.Group();
+    var filmM = prodMat('film', function () { return new THREE.MeshStandardMaterial({ color: 0xeef7f0, roughness: 0.12, transparent: true, opacity: 0.4 }); });
+    var zipM = prodMat('zip', function () { return new THREE.MeshStandardMaterial({ color: 0xf7fbf8, roughness: 0.5 }); });
+    var nugM = prodMat('nug' + st.id, function () { return new THREE.MeshStandardMaterial({ color: st.bud, roughness: 0.9 }); });
+    G.add(new THREE.Mesh(new THREE.BoxGeometry(0.076 * s, 0.062 * s, 0.017 * s), filmM));
+    for (var q = 0; q < 5; q++) { var n = new THREE.Mesh(new THREE.IcosahedronGeometry((0.0105 + (q % 3) * 0.0022) * s, 0), nugM); n.position.set((-0.021 + (q % 3) * 0.021) * s, (-0.014 + Math.floor(q / 3) * 0.015) * s, 0); n.scale.set(1, 0.85, 0.7); n.rotation.set(q, q * 1.4, 0.4); G.add(n); }
+    var zip = new THREE.Mesh(new THREE.BoxGeometry(0.078 * s, 0.006 * s, 0.019 * s), zipM); zip.position.y = 0.027 * s; G.add(zip);
+    var lip = new THREE.Mesh(new THREE.BoxGeometry(0.078 * s, 0.008 * s, 0.013 * s), filmM); lip.position.y = 0.035 * s; G.add(lip);
+    var lab = new THREE.Mesh(new THREE.PlaneGeometry(0.056 * s, 0.019 * s), prodMat('lab' + st.id, function () { return new THREE.MeshBasicMaterial({ map: textTex([st.name], 260, 88, { size: 34, bg: '#f4efdf', color: '#2a2a2a', titleColor: '#2a2a2a', line: 'rgba(0,0,0,0)' }), transparent: true }); }));
+    lab.position.set(0, 0.0125 * s, 0.0091 * s); G.add(lab);
+    return G;
+  }
+  function productCigPack(K, s) {   // a hinge-lid pack: foil collar, lid seam, printed face and a health band
+    var G = new THREE.Group(), big = K.size === 20;
+    var w = (big ? 0.056 : 0.046) * s, ht = (big ? 0.088 : 0.074) * s, d = (big ? 0.023 : 0.019) * s;
+    var bodyM = prodMat('cig' + K.name, function () { return new THREE.MeshStandardMaterial({ color: K.col, roughness: 0.55 }); });
+    var lidM = prodMat('cigl' + K.name, function () { return new THREE.MeshStandardMaterial({ color: mixHex(K.col, 0x000000, 0.25), roughness: 0.55 }); });
+    var foilM = prodMat('foil', function () { return new THREE.MeshStandardMaterial({ color: 0xd8dde2, roughness: 0.25, metalness: 0.8 }); });
+    G.add(new THREE.Mesh(new THREE.BoxGeometry(w, ht * 0.72, d), bodyM));
+    var lid = new THREE.Mesh(new THREE.BoxGeometry(w * 1.008, ht * 0.28, d * 1.008), lidM); lid.position.y = ht * 0.5; G.add(lid);
+    var seam = new THREE.Mesh(new THREE.BoxGeometry(w * 1.012, 0.0015 * s, d * 1.012), foilM); seam.position.y = ht * 0.36; G.add(seam);
+    var face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.9, ht * 0.5), prodMat('cigf' + K.name, function () { return new THREE.MeshBasicMaterial({ map: textTex(['RF', K.type === 'light' ? 'LIGHT' : 'SMOKING', K.size + 's'], 200, 260, { size: 44, bg: '#' + ('000000' + K.col.toString(16)).slice(-6), color: '#' + ('000000' + K.top.toString(16)).slice(-6), titleColor: '#' + ('000000' + K.top.toString(16)).slice(-6), line: 'rgba(0,0,0,0)' }), transparent: true }); }));
+    face.position.set(0, -ht * 0.03, d / 2 + 0.0004 * s); G.add(face);
+    var band = new THREE.Mesh(new THREE.BoxGeometry(w * 0.94, ht * 0.16, 0.0008 * s), prodMat('cigb', function () { return new THREE.MeshStandardMaterial({ color: 0x14181b, roughness: 0.9 }); }));
+    band.position.set(0, -ht * 0.27, d / 2 + 0.0006 * s); G.add(band);
+    return G;
+  }
   function buildHeldMesh(h) {
     var g = new THREE.Group();
     if (WS) { var wm = WS.model('item:' + h.kind); if (wm) { g.add(wm); return g; } }   /* a pack's Blender model stands in for the whole hand-built item */
     function add(geo, mat, x, y, z, rx, ry, rz) { var m = new THREE.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); m.rotation.set(rx || 0, ry || 0, rz || 0); g.add(m); return m; }
     if (h.kind === 'bat') { var bw = new THREE.MeshStandardMaterial({ color: 0xb98a4a, roughness: 0.6 }); add(new THREE.CylinderGeometry(0.034, 0.022, 0.72, 10), bw, 0, 0.44, 0); add(new THREE.CylinderGeometry(0.024, 0.024, 0.16, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }), 0, 0.08, 0); add(new THREE.CylinderGeometry(0.032, 0.032, 0.02, 10), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), 0, 0.0, 0); add(new THREE.SphereGeometry(0.036, 10, 8), bw, 0, 0.81, 0); }
-    if (h.kind === 'cigs') { var CK = CIG_SKUS[h.sku], ctn = h.n > 2; add(new THREE.BoxGeometry(ctn ? 0.3 : 0.06, ctn ? 0.1 : 0.09, ctn ? 0.16 : 0.025), new THREE.MeshStandardMaterial({ color: CK.col, roughness: 0.6 }), 0, 0.05, 0); add(new THREE.BoxGeometry(ctn ? 0.302 : 0.062, 0.03, ctn ? 0.162 : 0.027), new THREE.MeshStandardMaterial({ color: CK.top, roughness: 0.6 }), 0, ctn ? 0.07 : 0.08, 0); }
+    if (h.kind === 'cigs') {
+      var CK = CIG_SKUS[h.sku];
+      if (h.n > 2) {   /* a carton: a printed sleeve with the packs stacked inside the open end */
+        add(new THREE.BoxGeometry(0.3, 0.1, 0.16), new THREE.MeshStandardMaterial({ color: CK.col, roughness: 0.6 }), 0, 0.05, 0);
+        add(new THREE.BoxGeometry(0.302, 0.026, 0.162), new THREE.MeshStandardMaterial({ color: mixHex(CK.col, 0x000000, 0.3), roughness: 0.6 }), 0, 0.088, 0);
+        add(new THREE.PlaneGeometry(0.24, 0.07), new THREE.MeshBasicMaterial({ map: textTex(['RF ' + (CK.type === 'light' ? 'LIGHT' : 'SMOKING'), '10 x ' + CK.size], 340, 100, { size: 34, bg: '#' + ('000000' + CK.col.toString(16)).slice(-6), color: '#' + ('000000' + CK.top.toString(16)).slice(-6), titleColor: '#' + ('000000' + CK.top.toString(16)).slice(-6), line: 'rgba(0,0,0,0)' }), transparent: true }), 0, 0.05, 0.0805);
+      } else { var pk = productCigPack(CK, 1); pk.position.y = 0.045; g.add(pk); if (h.n > 1) { var pk2 = productCigPack(CK, 1); pk2.position.set(0.012, 0.04, -0.02); pk2.rotation.y = 0.24; g.add(pk2); } }
+    }
     if (h.kind === 'keys') { var brassM = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.35, metalness: 0.8 }); var ring = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.005, 8, 18), brassM); ring.rotation.x = Math.PI / 2; ring.position.set(0, 0.04, 0); g.add(ring); for (var ky = 0; ky < 3; ky++) { var ang = -0.5 + ky * 0.5; var blade = add(new THREE.BoxGeometry(0.012, 0.055, 0.004), ky === 1 ? new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.4, metalness: 0.7 }) : brassM, Math.sin(ang) * 0.03, -0.012, Math.cos(ang) * 0.03); blade.rotation.y = ang; add(new THREE.BoxGeometry(0.02, 0.018, 0.004), brassM, Math.sin(ang) * 0.03, -0.042, Math.cos(ang) * 0.03).rotation.y = ang; } }
     if (WEAPONS[h.kind]) {   // built with the muzzle along -z, straight out from the camera
       var gBlk = new THREE.MeshStandardMaterial({ color: 0x17181b, roughness: 0.45, metalness: 0.5 }), gWood = new THREE.MeshStandardMaterial({ color: 0x5a3a1e, roughness: 0.7 });
@@ -4822,7 +4871,16 @@
       add(new THREE.BoxGeometry(0.016, 0.026, 0.008), new THREE.MeshStandardMaterial({ color: 0x59d08a, roughness: 0.6 }), 0, 0.068, 0.016);
       add(new THREE.CylinderGeometry(0.0325, 0.0325, 0.05, 16, 1, true), new THREE.MeshBasicMaterial({ map: textTex(['PEST OFF', 'ready to use'], 300, 120, { size: 40, bg: '#123a2a', color: '#bfeed6', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }), 0, 0.006, 0);
     }
-    else if (h.kind === 'seed') { add(new THREE.BoxGeometry(0.08, 0.11, 0.01), new THREE.MeshStandardMaterial({ map: textTex([strainById(h.strain).emoji, 'seed'], 128, 176, { size: 44, bg: '#f3e9cf', color: '#2a2a2a', line: 'rgba(0,0,0,.3)' }), roughness: 0.8 }), 0, 0, 0, -0.3, 0, 0); }
+    else if (h.kind === 'seed') {
+      var sst = strainById(h.strain);
+      var pkt = new THREE.Group(); pkt.rotation.x = -0.3; g.add(pkt);
+      var foilM = new THREE.MeshStandardMaterial({ color: 0xc9cdd2, roughness: 0.3, metalness: 0.55 });
+      var body = new THREE.Mesh(new THREE.BoxGeometry(0.072, 0.098, 0.009), foilM); pkt.add(body);
+      var seal = new THREE.Mesh(new THREE.BoxGeometry(0.074, 0.014, 0.004), new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.5, metalness: 0.4 })); seal.position.y = 0.054; pkt.add(seal);
+      var notch = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.008, 0.005), new THREE.MeshStandardMaterial({ color: 0x6a7076 })); notch.position.set(0.033, 0.05, 0); pkt.add(notch);
+      var face = new THREE.Mesh(new THREE.PlaneGeometry(0.064, 0.086), new THREE.MeshBasicMaterial({ map: textTex([sst.emoji, sst.name, 'feminised · 1 seed'], 210, 285, { size: 30, bg: '#f4efdf', color: '#3a4a36', titleColor: '#1a6a2a', line: 'rgba(0,0,0,.18)' }), transparent: true }));
+      face.position.z = 0.0047; pkt.add(face);
+    }
     else if (h.kind === 'harvest') { var st = strainById(h.strain); var cola = budCola(st, 1); cola.position.y = -0.01; g.add(cola); [[0.045, -0.055, 0.02, -0.5, 0.4], [-0.052, -0.04, -0.02, -0.4, -0.6], [0.01, -0.07, -0.04, -0.7, 1.4]].forEach(function (L) { add(new THREE.PlaneGeometry(0.11, 0.2), MAT.leaf, L[0], L[1], L[2], L[3], L[4], 0); }); }
     else if (h.kind === 'jar') {
       var jst = strainById(h.strain || 'sunflower'), fill = clamp(h.grams / 24, 0.25, 1);
@@ -4846,13 +4904,7 @@
       // a joint is a tapered cone of paper, not a stick: card roach, a body that widens, a twisted tail and a scorched tip
       var paperM = new THREE.MeshStandardMaterial({ color: 0xf7f3e6, roughness: 0.95 }), roachM = new THREE.MeshStandardMaterial({ color: 0xc19a63, roughness: 0.9 }), ashM = new THREE.MeshStandardMaterial({ color: 0x3a3330, roughness: 1 });
       var jn = Math.min(h.n, 5);
-      for (var j = 0; j < jn; j++) {
-        var jg = new THREE.Group(); jg.position.set((j - (jn - 1) / 2) * 0.017, (j % 2) * 0.005, (j % 3) * 0.005); jg.rotation.set(0.16, (j - 2) * 0.06, 0.09 + (j % 2) * 0.04); g.add(jg);
-        var jb = new THREE.Mesh(new THREE.CylinderGeometry(0.0074, 0.005, 0.084, 8), paperM); jb.position.y = 0.012; jg.add(jb);
-        var jr = new THREE.Mesh(new THREE.CylinderGeometry(0.0051, 0.0051, 0.02, 8), roachM); jr.position.y = -0.04; jg.add(jr);
-        var jt = new THREE.Mesh(new THREE.ConeGeometry(0.0074, 0.017, 8), paperM); jt.position.y = 0.0625; jg.add(jt);
-        var ja = new THREE.Mesh(new THREE.CylinderGeometry(0.0076, 0.0076, 0.004, 8), ashM); ja.position.y = 0.0535; jg.add(ja);
-      }
+      for (var j = 0; j < jn; j++) { var jg = productJoint(1); jg.position.set((j - (jn - 1) / 2) * 0.017, (j % 2) * 0.005, (j % 3) * 0.005); jg.rotation.set(0.16, (j - 2) * 0.06, 0.09 + (j % 2) * 0.04); g.add(jg); }
       if (h.n > 5) { add(new THREE.BoxGeometry(0.098, 0.032, 0.056), new THREE.MeshStandardMaterial({ color: 0x1f2a22, roughness: 0.8 }), 0, -0.052, 0); add(new THREE.BoxGeometry(0.1, 0.009, 0.058), new THREE.MeshStandardMaterial({ color: 0x6fdc8c, roughness: 0.55 }), 0, -0.037, 0); }
     }
     else if (h.kind === 'bags') {
@@ -4861,15 +4913,7 @@
       var filmM = new THREE.MeshStandardMaterial({ color: 0xeef7f0, roughness: 0.12, transparent: true, opacity: 0.4 });
       var zipM = new THREE.MeshStandardMaterial({ color: 0xf7fbf8, roughness: 0.5 });
       var nugM = new THREE.MeshStandardMaterial({ color: bst.bud, roughness: 0.9 });
-      for (var b = 0; b < Math.min(h.n, 3); b++) {
-        var bg3 = new THREE.Group(); bg3.position.set(b * 0.006, b * 0.021, -b * 0.012); bg3.rotation.set(-0.12, b * 0.14 - 0.14, b * 0.05); g.add(bg3);
-        var pouch = new THREE.Mesh(new THREE.BoxGeometry(0.076, 0.062, 0.017), filmM); bg3.add(pouch);
-        for (var q = 0; q < 5; q++) { var nug2 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.0105 + (q % 3) * 0.0022, 0), nugM); nug2.position.set(-0.021 + (q % 3) * 0.021, -0.014 + Math.floor(q / 3) * 0.015, 0); nug2.scale.set(1, 0.85, 0.7); nug2.rotation.set(q, q * 1.4, 0.4); bg3.add(nug2); }
-        var zip = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.006, 0.019), zipM); zip.position.y = 0.027; bg3.add(zip);
-        var lip = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.008, 0.013), filmM); lip.position.y = 0.035; bg3.add(lip);
-        var lab = new THREE.Mesh(new THREE.PlaneGeometry(0.056, 0.019), new THREE.MeshBasicMaterial({ map: textTex([bst.name], 260, 88, { size: 34, bg: '#f4efdf', color: '#2a2a2a', titleColor: '#2a2a2a', line: 'rgba(0,0,0,0)' }), transparent: true }));
-        lab.position.set(0, 0.0125, 0.0091); bg3.add(lab);
-      }
+      for (var b = 0; b < Math.min(h.n, 3); b++) { var bg3 = productBaggie(bst, 1); bg3.position.set(b * 0.006, b * 0.021, -b * 0.012); bg3.rotation.set(-0.12, b * 0.14 - 0.14, b * 0.05); g.add(bg3); }
     }
     return g;
   }
