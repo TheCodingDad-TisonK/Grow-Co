@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+- The "not a Farming Simulator product" notice moved off the splash and is now large, at the top of the main menu. The splash is back to three seconds.
+
 ## 1.0.2
 
 - A clear notice on the splash screen and the main menu: this game is not a Farming Simulator product and has nothing to do with that suite. It is a standalone hobby project. The same notice now leads the README, the wiki and the FAQ.
