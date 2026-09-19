@@ -50,7 +50,7 @@
   }
   function buildText(f) {
     var g = G(), S = g && g.S, L = [];
-    L.push('===== RF GROW CO. BUG REPORT ====='); L.push('Title: ' + f.title); L.push('Category: ' + f.category); L.push('Severity: ' + f.severity); L.push('How often: ' + f.frequency); L.push('Where: ' + f.where); if (f.contact) L.push('Contact: ' + f.contact);
+    L.push('===== GROW CO. BUG REPORT ====='); L.push('Title: ' + f.title); L.push('Category: ' + f.category); L.push('Severity: ' + f.severity); L.push('How often: ' + f.frequency); L.push('Where: ' + f.where); if (f.contact) L.push('Contact: ' + f.contact);
     L.push(''); L.push('--- What happened ---'); L.push(f.what || '(not filled in)'); L.push(''); L.push('--- What I expected ---'); L.push(f.expected || '(not filled in)'); L.push(''); L.push('--- Steps to make it happen again ---'); L.push(f.steps || '(not filled in)');
     L.push(''); L.push('--- The game says ---'); facts().forEach(function (x) { L.push(x); });
     L.push(''); L.push('--- Recent script errors ---'); L.push(errors.length ? errors.join('\n') : 'none recorded');

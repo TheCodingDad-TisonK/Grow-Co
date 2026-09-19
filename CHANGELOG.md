@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.11
+
+**The shop is called Grow Co. everywhere now.** The v1.4 rename changed the window, the menu and the installer but never touched the world, so the shop front, the back gate, the delivery van, the register screen, the menu board, the shop dashboard, the creative-mode sign preset and the bug report header all still said the old name. All swept. The RF marks that are meant to be there are untouched: RF Smoking on the cigarettes, RF Supply Co. across town, and the RF lab products.
+
+**The supply rack and the dry room caught up with everything else.** The rack was still stacking plain brown boxes and blank bottles while your hands held the branded versions:
+
+- **Soil** on the rack is the same printed compost sack you carry, **nutrients** the same labelled feed bottle, **pest spray** the same trigger sprayer.
+- **Seed packets** on the rack are the foil sachets, not flat cards.
+- **Baggies, papers and filter tips** are printed cartons instead of blank boxes.
+- **The curing jars in the dry room** were filled with a solid cylinder of flat colour, which read as paint. They hold loose nugs now, more of them the fuller the jar, in the strain's own colour.
+
+Every product model in the game is now built by one function that the hand, the shelf, the cabinet and the rack all call.
+
 ## v1.10
 
 The rest of the packaging pass. What the shop sells is now built once and used everywhere, so the thing on the shelf is the thing in your hand is the thing the customer is given.

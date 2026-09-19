@@ -714,7 +714,7 @@
     }),
     bud: makeTex(128, 128, function (ctx, w, h) { noiseFill(ctx, w, h, '#7fc96b', 40, 2500); ctx.fillStyle = 'rgba(255,255,255,.5)'; for (var i = 0; i < 160; i++) ctx.fillRect(Math.random() * w, Math.random() * h, 1, 1); ctx.fillStyle = 'rgba(255,150,60,.55)'; for (var j = 0; j < 30; j++) { ctx.beginPath(); var x = Math.random() * w, y = Math.random() * h; ctx.moveTo(x, y); ctx.lineTo(x + randf(-6, 6), y + randf(-6, 6)); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,150,60,.6)'; ctx.stroke(); } }, [2, 2]),
     poster1: makeTex(256, 384, function (ctx, w, h) { ctx.fillStyle = '#12261a'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#6fdc8c'; ctx.font = '600 44px "Segoe UI",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('GROW', w / 2, 90); ctx.fillText('LOCAL', w / 2, 140); ctx.font = '22px "Segoe UI",sans-serif'; ctx.fillStyle = '#c9e8d0'; ctx.fillText('small batch · hand cured', w / 2, 200); ctx.fillStyle = '#6fdc8c'; for (var i = 0; i < 7; i++) { ctx.save(); ctx.translate(w / 2, 300); ctx.rotate((i - 3) * 0.4); ctx.fillRect(-4, -70, 8, 70); ctx.restore(); } }),
-    poster2: makeTex(256, 384, function (ctx, w, h) { ctx.fillStyle = '#3a2a1e'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#ffc857'; ctx.font = '600 40px "Segoe UI",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('RF GROW CO.', w / 2, 80); ctx.font = '600 92px "Segoe UI",sans-serif'; ctx.fillText('420', w / 2, 210); ctx.font = '20px "Segoe UI",sans-serif'; ctx.fillStyle = '#f0e0c0'; ctx.fillText('prices drop every rush', w / 2, 260); ctx.fillText('ask the counter', w / 2, 290); ctx.strokeStyle = '#ffc857'; ctx.lineWidth = 4; ctx.strokeRect(14, 14, w - 28, h - 28); }),
+    poster2: makeTex(256, 384, function (ctx, w, h) { ctx.fillStyle = '#3a2a1e'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#ffc857'; ctx.font = '600 40px "Segoe UI",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('GROW CO.', w / 2, 80); ctx.font = '600 92px "Segoe UI",sans-serif'; ctx.fillText('420', w / 2, 210); ctx.font = '20px "Segoe UI",sans-serif'; ctx.fillStyle = '#f0e0c0'; ctx.fillText('prices drop every rush', w / 2, 260); ctx.fillText('ask the counter', w / 2, 290); ctx.strokeStyle = '#ffc857'; ctx.lineWidth = 4; ctx.strokeRect(14, 14, w - 28, h - 28); }),
     poster3: makeTex(256, 384, function (ctx, w, h) { ctx.fillStyle = '#1a1c2e'; ctx.fillRect(0, 0, w, h); var g = ctx.createRadialGradient(w / 2, h * 0.4, 10, w / 2, h * 0.4, 150); g.addColorStop(0, '#ff69b4'); g.addColorStop(0.5, '#7a4aa8'); g.addColorStop(1, '#1a1c2e'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#ffffff'; ctx.font = '600 34px "Segoe UI",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('RAINBOW', w / 2, 300); ctx.fillText('RUNTZ', w / 2, 340); ctx.font = '18px "Segoe UI",sans-serif'; ctx.fillText('level 9 unlock', w / 2, 370); })
   };
   TEX.leaf.wrapS = TEX.leaf.wrapT = THREE.ClampToEdgeWrapping;
@@ -998,7 +998,7 @@
     // front: brick pilasters, a fascia band with the shop sign, awning over the door
     [-sx, sx].forEach(function (x) { box(0.5, ROOM.h + 0.2, 0.5, MAT.brickDark, x + (x < 0 ? 0.2 : -0.2), (ROOM.h + 0.2) / 2, sz + 0.1, { cast: true }); });
     box(sx * 2 + 0.6, 0.7, 0.3, MAT.brickDark, 0, ROOM.h + 0.2, sz + 0.05, { cast: true });
-    var fascia = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 0.6), new THREE.MeshBasicMaterial({ map: textTex(['RF GROW CO.'], 1400, 190, { size: 120, bold: true, bg: '#101812', titleColor: '#6fdc8c', line: 'rgba(111,220,140,.8)' }) })); fascia.position.set(0, ROOM.h + 0.2, sz + 0.21); world.group.add(fascia);
+    var fascia = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 0.6), new THREE.MeshBasicMaterial({ map: textTex(['GROW CO.'], 1400, 190, { size: 120, bold: true, bg: '#101812', titleColor: '#6fdc8c', line: 'rgba(111,220,140,.8)' }) })); fascia.position.set(0, ROOM.h + 0.2, sz + 0.21); world.group.add(fascia);
     var fl = new THREE.PointLight(0x6fdc8c, 0.6, 6); fl.position.set(0, ROOM.h + 0.3, sz + 1.0); scene.add(fl); world.streetLights = world.streetLights || []; world.streetLights.push(fl);
     var awn = new THREE.Group(); awn.position.set(0, 2.55, sz); world.group.add(awn);
     var awnTex = makeTex(128, 128, function (ctx, w, h) { for (var i = 0; i < 8; i++) { ctx.fillStyle = i % 2 ? '#2f6b45' : '#e8ecd8'; ctx.fillRect(i * 16, 0, 16, h); } }, [4, 1]);
@@ -1131,7 +1131,7 @@
     [[1.5, 0.15], [1.5, 1.85]].forEach(function (r) { var rr = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.05, 0.05), fenceM); rr.position.set(r[0], r[1], 0); gate.add(rr); }); [0.05, 2.95].forEach(function (x) { var pp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.9, 0.06), fenceM); pp.position.set(x, 1.0, 0); gate.add(pp); });
     var gHit = new THREE.Mesh(new THREE.BoxGeometry(3.0, 2.0, 0.4), MAT.none); gHit.position.set(1.5, 1.0, 0); gate.add(gHit); interactable(gHit, { kind: 'gate' });
     gateSet(false);
-    signPlane(['RF GROW CO.', 'deliveries & collections · back gate'], 1.6, 0.4, 4.5, 2.2, YZ1 - 0.1, Math.PI, { titleColor: '#6fdc8c', bg: '#101410' });
+    signPlane(['GROW CO.', 'deliveries & collections · back gate'], 1.6, 0.4, 4.5, 2.2, YZ1 - 0.1, Math.PI, { titleColor: '#6fdc8c', bg: '#101410' });
     // access lane out to the world
     var lane = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 16), MAT.asphalt); lane.rotation.x = -Math.PI / 2; lane.position.set(4.5, 0.004, YZ1 - 8); lane.receiveShadow = true; world.group.add(lane);
     // the supply van, parked out of sight until a delivery is due
@@ -1515,7 +1515,7 @@
       var jar = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.2, 14), MAT.jar); jar.position.set(x, y + 0.1, z); g.add(jar);
       if (filled) { var jh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.3, 0.24), MAT.none); jh.position.set(x, y + 0.12, z); g.add(jh); interactable(jh, { kind: 'jar', bid: cured[i].id }); jh.userData.dynGroup = 'shelf'; jh.userData.propId = 'cureShelf'; }
       var lid = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.025, 14), MAT.jarLid); lid.position.set(x, y + 0.21, z); g.add(lid);
-      if (filled) { var b = cured[i]; var bm = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.14 * clamp(b.grams / 24, 0.3, 1), 10), new THREE.MeshStandardMaterial({ color: strainById(b.strain || 'sunflower').bud, roughness: 1 })); bm.position.set(x, y + 0.02 + 0.07 * clamp(b.grams / 24, 0.3, 1), z); g.add(bm); var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: textTex([gram(b.grams) + ' q' + Math.round(b.quality)], 160, 60, { size: 30, bg: '#f3e9cf', color: '#222', line: 'rgba(0,0,0,0)' }) })); lbl.position.set(x, y + 0.1, z + 0.095); g.add(lbl); }
+      if (filled) { var b = cured[i]; var bst2 = strainById(b.strain || 'sunflower'), fl2 = clamp(b.grams / 24, 0.3, 1); var nugM2 = prodMat('jarnug' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: bst2.bud, roughness: 0.9 }); }); var nugD2 = prodMat('jarnugd' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: mixHex(bst2.bud, 0x30401f, 0.38), roughness: 0.95 }); }); for (var nz2 = 0; nz2 < Math.round(5 + fl2 * 13); nz2++) { var na2 = nz2 * 2.399, nr2 = 0.05 * Math.sqrt(((nz2 % 7) / 7) + 0.14); var nm2 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.019 + (nz2 % 3) * 0.005, 0), nz2 % 4 === 0 ? nugD2 : nugM2); nm2.position.set(x + Math.cos(na2) * nr2, y + 0.025 + (nz2 % 5) * 0.026 * fl2, z + Math.sin(na2) * nr2); nm2.scale.set(1, 0.8, 1); nm2.rotation.set(na2, na2 * 1.7, 0.3); nm2.castShadow = false; g.add(nm2); } var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: textTex([gram(b.grams) + ' q' + Math.round(b.quality)], 160, 60, { size: 30, bg: '#f3e9cf', color: '#222', line: 'rgba(0,0,0,0)' }) })); lbl.position.set(x, y + 0.1, z + 0.095); g.add(lbl); }
     }
     if (S.upgrades.rack) { var rack = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.02, 0.45), MAT.metal); rack.position.set(0, 2.75, 0); g.add(rack); }
     var hw = 3.25, ly = 2.1; var n = drying.length;
@@ -3604,7 +3604,7 @@
     [-7, 7].forEach(function (x) { cyl(0.05, 0.08, 3.8, colorMat(0x2a2d33, 0.5, 0.6), x, 1.9, SW + 1.5, null, 10); cyl(0.14, 0.16, 0.08, colorMat(0x2a2d33, 0.5, 0.6), x, 0.04, SW + 1.5, null, 12); var arm = box(0.06, 0.06, 0.8, colorMat(0x2a2d33, 0.5, 0.6), x, 3.75, SW + 1.15); var head = box(0.5, 0.14, 0.32, colorMat(0x2a2d33, 0.5, 0.6), x, 3.72, SW + 0.75); var lens = box(0.44, 0.02, 0.26, glowMat(0xfff2c0, 1.4), x, 3.64, SW + 0.75, { cast: false }); (world.lampFixtures = world.lampFixtures || []).push(lens); var l = new THREE.PointLight(0xfff2c0, 0.6, 10, 1.5); l.position.set(x, 3.4, SW + 0.9); scene.add(l); world.streetLights.push(l); });
     // delivery van parked along the kerb (long axis along x): body, cab, glass, lights, mirrors, wheels with rims, roof rack, side logo
     var van = new THREE.Group(); van.position.set(-9.5, 0, SW + 3.1); world.group.add(van); world.van = van;
-    vanBody(van, ['RF GROW CO.', 'supply run · 24h']);
+    vanBody(van, ['GROW CO.', 'supply run · 24h']);
     var glassM = new THREE.MeshPhysicalMaterial({ color: 0x8fb8d8, transparent: true, opacity: 0.55, roughness: 0.05, metalness: 0.3 });   // street furniture glass (the van keeps its own)
     // street furniture: bench, bin, hydrant, bike rack with a bike, a newspaper box, a young tree in a grate
     box(1.6, 0.06, 0.45, MAT.wood, 4.5, 0.55, SW - 1.1, { cast: true }); for (var sl = 0; sl < 3; sl++) box(1.6, 0.08, 0.05, MAT.wood, 4.5, 0.72 + sl * 0.1, SW - 1.32 - sl * 0.01); [3.9, 5.1].forEach(function (x) { box(0.06, 0.5, 0.45, colorMat(0x2a2d33, 0.4, 0.6), x, 0.3, SW - 1.1); box(0.06, 0.45, 0.06, colorMat(0x2a2d33, 0.4, 0.6), x, 0.75, SW - 1.3); });
@@ -3648,17 +3648,17 @@
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'rack'; });
     var rx = 0, rz = 0;
     var soil = Math.min(S.supplies.soil || 0, 6);
-    for (var i = 0; i < soil; i++) { var sack = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.28, 0.16), new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 1 })); sack.position.set(rx - 0.32 + (i % 3) * 0.3, 0.41, rz - 0.1 + Math.floor(i / 3) * 0.2); sack.rotation.y = (i % 2) * 0.2; sack.castShadow = true; g.add(sack); }
+    for (var i = 0; i < soil; i++) { var sack = productSoilSack(1.5); sack.position.set(rx - 0.32 + (i % 3) * 0.3, 0.41, rz - 0.1 + Math.floor(i / 3) * 0.2); sack.rotation.y = ((i % 3) - 1) * 0.08; sack.rotation.y = (i % 2) * 0.2; sack.castShadow = true; g.add(sack); }
     var nut = Math.min(S.supplies.nutrients || 0, 5), spr = Math.min(S.supplies.remedy || 0, 4);
-    for (var n = 0; n < nut; n++) { var bt = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.16, 10), new THREE.MeshStandardMaterial({ color: 0xd9ff5a, roughness: 0.5 })); bt.position.set(rx - 0.36 + n * 0.1, 0.9, rz - 0.1); g.add(bt); }
-    for (var sI = 0; sI < spr; sI++) { var sb = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.2, 10), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 })); sb.position.set(rx + 0.1 + sI * 0.1, 0.92, rz + 0.1); g.add(sb); var nozzle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.06), MAT.black); nozzle.position.set(rx + 0.1 + sI * 0.1, 1.04, rz + 0.12); g.add(nozzle); }
-    if ((S.supplies.bag || 0) > 0) { var bx = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.16), new THREE.MeshStandardMaterial({ color: 0xe8e8ee })); bx.position.set(rx - 0.3, 1.44, rz + 0.1); g.add(bx); }
-    if ((S.supplies.paper || 0) > 0) { var px = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.12), new THREE.MeshStandardMaterial({ color: 0xf5e6c8 })); px.position.set(rx, 1.41, rz + 0.12); g.add(px); }
-    if ((S.supplies.tip || 0) > 0) { var tx = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.12), new THREE.MeshStandardMaterial({ color: 0xc8b48a })); tx.position.set(rx + 0.25, 1.41, rz + 0.12); g.add(tx); }
+    for (var n = 0; n < nut; n++) { var bt = productNutrientBottle(1.35); bt.position.set(rx - 0.36 + n * 0.1, 0.88, rz - 0.1); bt.rotation.y = n * 0.5; g.add(bt); }
+    for (var sI = 0; sI < spr; sI++) { var sb = productSprayBottle(1.3); sb.position.set(rx + 0.1 + sI * 0.1, 0.9, rz + 0.1); sb.rotation.y = Math.PI + sI * 0.3; g.add(sb); }
+    if ((S.supplies.bag || 0) > 0) { var bx = cartonBox(0.22, 0.14, 0.16, ['BAGGIES', 'x100'], 0xe8e8ee, '#3a4a42'); bx.position.set(rx - 0.3, 1.44, rz + 0.1); g.add(bx); }
+    if ((S.supplies.paper || 0) > 0) { var px = cartonBox(0.16, 0.08, 0.12, ['PAPERS', 'king size'], 0xf5e6c8, '#5a4a2a'); px.position.set(rx, 1.41, rz + 0.12); g.add(px); }
+    if ((S.supplies.tip || 0) > 0) { var tx = cartonBox(0.12, 0.08, 0.12, ['TIPS', 'filter'], 0xc8b48a, '#4a3a22'); tx.position.set(rx + 0.25, 1.41, rz + 0.12); g.add(tx); }
     var spare = Math.min(Math.max(0, (S.supplies.pot || 0) - S.plants.length), 4);
     for (var pI = 0; pI < spare; pI++) { var pt = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.14, 14), MAT.pot); pt.position.set(rx - 0.3 + pI * 0.2, 1.93, rz); g.add(pt); }
     var jars = Math.min(S.supplies.jar || 0, 3); for (var jI = 0; jI < jars; jI++) { var jr = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.14, 12), MAT.jar); jr.position.set(rx + 0.2 + jI * 0.14, 1.93, rz + 0.12); g.add(jr); }
-    var sx2 = 0; STRAINS.forEach(function (st) { var n = S.supplies['seed_' + st.id] || 0; if (!n) return; var pk = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.13, 0.02), new THREE.MeshStandardMaterial({ map: textTex([st.emoji, st.name.split(' ')[0]], 128, 176, { size: 36, bg: '#f3e9cf', color: '#2a2a2a', line: 'rgba(0,0,0,.3)' }), roughness: 0.8 })); pk.position.set(rx - 0.36 + sx2 * 0.16, 1.48, rz - 0.15); pk.rotation.x = -0.35; g.add(pk); var ph = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.16, 0.12), MAT.none); ph.position.copy(pk.position); g.add(ph); interactable(ph, { kind: 'rackItem', item: 'seed_' + st.id, label: st.name + ' seed' }); ph.userData.dynGroup = 'rack'; ph.userData.propId = 'rack'; sx2++; });
+    var sx2 = 0; STRAINS.forEach(function (st) { var n = S.supplies['seed_' + st.id] || 0; if (!n) return; var pk = productSeedPacket(st, 1.35); pk.position.set(rx - 0.36 + sx2 * 0.16, 1.48, rz - 0.15); pk.rotation.x = -0.35; g.add(pk); var ph = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.16, 0.12), MAT.none); ph.position.copy(pk.position); g.add(ph); interactable(ph, { kind: 'rackItem', item: 'seed_' + st.id, label: st.name + ' seed' }); ph.userData.dynGroup = 'rack'; ph.userData.propId = 'rack'; sx2++; });
     if (soil > 0) { var sh = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.3, 0.44), MAT.none); sh.position.set(rx, 0.42, rz); g.add(sh); interactable(sh, { kind: 'rackItem', item: 'soil', label: 'bag of soil' }); sh.userData.dynGroup = 'rack'; sh.userData.propId = 'rack'; }
     if (nut > 0) { var nh = new THREE.Mesh(new THREE.BoxGeometry(0.1 * nut + 0.04, 0.18, 0.1), MAT.none); nh.position.set(rx - 0.36 + (nut - 1) * 0.05, 0.9, rz - 0.1); g.add(nh); interactable(nh, { kind: 'rackItem', item: 'nutrients', label: 'nutrients' }); nh.userData.dynGroup = 'rack'; nh.userData.propId = 'rack'; }
     if (spr > 0) { var rh = new THREE.Mesh(new THREE.BoxGeometry(0.1 * spr + 0.04, 0.22, 0.1), MAT.none); rh.position.set(rx + 0.1 + (spr - 1) * 0.05, 0.94, rz + 0.1); g.add(rh); interactable(rh, { kind: 'rackItem', item: 'remedy', label: 'pest spray' }); rh.userData.dynGroup = 'rack'; rh.userData.propId = 'rack'; }
@@ -3667,7 +3667,7 @@
   function drawRegister() {
     if (!world.reg) return; var c = world.reg.canvas, ctx = c.getContext('2d'), W = c.width, H = c.height;
     ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, W, H); ctx.strokeStyle = 'rgba(111,220,140,.4)'; ctx.lineWidth = 2; ctx.strokeRect(3, 3, W - 6, H - 6);
-    ctx.font = '600 16px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#6fdc8c'; ctx.textBaseline = 'top'; ctx.fillText('RF GROW CO.', 12, 10); ctx.fillStyle = '#9fb8a6'; ctx.textAlign = 'right'; ctx.fillText(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), W - 12, 10); ctx.textAlign = 'left';
+    ctx.font = '600 16px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#6fdc8c'; ctx.textBaseline = 'top'; ctx.fillText('GROW CO.', 12, 10); ctx.fillStyle = '#9fb8a6'; ctx.textAlign = 'right'; ctx.fillText(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), W - 12, 10); ctx.textAlign = 'left';
     ctx.fillStyle = 'rgba(111,220,140,.15)'; ctx.fillRect(8, 32, W - 16, 2);
     var y = 42; ctx.font = '15px "Cascadia Mono",Consolas,monospace';
     var h = held(); var c2 = S.customer;
@@ -3742,7 +3742,7 @@
   function drawDeskBoard() {
     var c = deskBoard.canvas; if (!c) return; var ctx = c.getContext('2d'), W = c.width, H = c.height, page = DESK_PAGES[deskBoard.page], rows = dashRows()[page] || [];
     ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, W, H); ctx.textBaseline = 'top'; ctx.textAlign = 'left';
-    ctx.fillStyle = DESK_OK; ctx.font = '800 40px "Segoe UI",system-ui,sans-serif'; ctx.fillText('RF GROW CO.', 40, 26);
+    ctx.fillStyle = DESK_OK; ctx.font = '800 40px "Segoe UI",system-ui,sans-serif'; ctx.fillText('GROW CO.', 40, 26);
     ctx.fillStyle = DESK_DIM; ctx.font = '26px "Segoe UI",system-ui,sans-serif'; ctx.textAlign = 'right'; ctx.fillText(DESK_PAGE_LABEL[page], W - 40, 34); ctx.textAlign = 'left';
     DESK_PAGES.forEach(function (p, i) { deskDot(ctx, W / 2 - (DESK_PAGES.length - 1) * 14 + i * 28, 52, i === deskBoard.page ? DESK_OK : 'rgba(255,255,255,.18)', 6); });
     rows.forEach(function (r, i) { deskTile(ctx, 40 + (i % 2) * 770, 120 + Math.floor(i / 2) * 330, 740, 300, r[0], r[1], r[2], DESK_OK); });
@@ -4443,7 +4443,7 @@
     c.box(w, 2.0, 0.03, colorMat(0x2b2119, 0.9), 0, 1.0, -d / 2 + 0.015, { cast: false });   // back panel
     [-1, 1].forEach(function (s) { c.box(0.05, 2.0, d, wood, s * (w / 2 - 0.025), 1.0, 0); }); c.box(0.05, 1.8, d, wood, 0, 1.06, 0);   // uprights and a centre divider
     c.box(w, 0.06, d + 0.02, wood, 0, 2.03, 0);
-    c.sign(['RF GROW CO.', 'house menu · bags & joints'], 1.2, 0.3, 0, 2.2, 0.0, 0, { titleColor: '#6fdc8c', bg: '#0f1a12' });
+    c.sign(['GROW CO.', 'house menu · bags & joints'], 1.2, 0.3, 0, 2.2, 0.0, 0, { titleColor: '#6fdc8c', bg: '#0f1a12' });
     for (var i = 0; i < 3; i++) c.add(spot(0xfff1d0, 0.35, 1.2, (i - 1) * 0.55, 1.98, 0.12));   // little downlights
     var gg = c.dynGroup(); var gsh = new THREE.Group(); var gst = colorMat(0xa7adb4, 0.35, 0.8), gdk = colorMat(0x5b6168, 0.4, 0.7);
     var gpanel = new THREE.Mesh(new THREE.BoxGeometry(w - 0.12, 1.9, 0.014), gst); gsh.add(gpanel);
@@ -4812,6 +4812,57 @@
     band.position.set(0, -ht * 0.27, d / 2 + 0.0006 * s); G.add(band);
     return G;
   }
+  function productSoilSack(s) {   /* heat-sealed compost sack with a printed front */
+    var G = new THREE.Group();
+    var sackM = prodMat('sack', function () { return new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 1 }); });
+    var foldM = prodMat('sackfold', function () { return new THREE.MeshStandardMaterial({ color: 0x3a291b, roughness: 1 }); });
+    G.add(new THREE.Mesh(new THREE.BoxGeometry(0.15 * s, 0.17 * s, 0.095 * s), sackM));
+    [1, -1].forEach(function (e) { var fo = new THREE.Mesh(new THREE.BoxGeometry(0.155 * s, 0.022 * s, 0.03 * s), foldM); fo.position.y = e * 0.093 * s; G.add(fo); });
+    var fc = new THREE.Mesh(new THREE.PlaneGeometry(0.125 * s, 0.105 * s), prodMat('sacklab', function () { return new THREE.MeshBasicMaterial({ map: textTex(['GROW CO.', 'potting soil', '20 L'], 250, 210, { size: 40, bg: '#6d4f30', color: '#e9dcc2', titleColor: '#9ff0b5', line: 'rgba(0,0,0,0)' }), transparent: true }); }));
+    fc.position.set(0, 0.006 * s, 0.0481 * s); G.add(fc); return G;
+  }
+  function productNutrientBottle(s) {   /* shoulder, neck, ribbed cap, wrapped label */
+    var G = new THREE.Group();
+    var botM = prodMat('nutbot', function () { return new THREE.MeshStandardMaterial({ color: 0xcdea55, roughness: 0.35, transparent: true, opacity: 0.94 }); });
+    var capM = prodMat('nutcap', function () { return new THREE.MeshStandardMaterial({ color: 0x2a2f26, roughness: 0.6 }); });
+    var b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.029 * s, 0.031 * s, 0.105 * s, 14), botM); b1.position.y = -0.005 * s; G.add(b1);
+    var sh = new THREE.Mesh(new THREE.CylinderGeometry(0.014 * s, 0.029 * s, 0.026 * s, 14), botM); sh.position.y = 0.061 * s; G.add(sh);
+    var nk = new THREE.Mesh(new THREE.CylinderGeometry(0.013 * s, 0.013 * s, 0.016 * s, 12), capM); nk.position.y = 0.082 * s; G.add(nk);
+    var cp = new THREE.Mesh(new THREE.CylinderGeometry(0.0155 * s, 0.0155 * s, 0.011 * s, 16), capM); cp.position.y = 0.094 * s; G.add(cp);
+    var lb = new THREE.Mesh(new THREE.CylinderGeometry(0.0305 * s, 0.0305 * s, 0.05 * s, 16, 1, true), prodMat('nutlab', function () { return new THREE.MeshBasicMaterial({ map: textTex(['BLOOM', 'nutrients'], 300, 120, { size: 44, bg: '#1f3a14', color: '#cdea55', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }); }));
+    lb.position.y = -0.006 * s; G.add(lb); return G;
+  }
+  function productSprayBottle(s) {   /* trigger sprayer with the fluid line showing through the tank */
+    var G = new THREE.Group();
+    var tankM = prodMat('spraytank', function () { return new THREE.MeshStandardMaterial({ color: 0xe8f2ee, roughness: 0.18, transparent: true, opacity: 0.55 }); });
+    var fluidM = prodMat('sprayfluid', function () { return new THREE.MeshStandardMaterial({ color: 0x8fd6b0, roughness: 0.3, transparent: true, opacity: 0.85 }); });
+    var headM = prodMat('sprayhead', function () { return new THREE.MeshStandardMaterial({ color: 0x2f3a36, roughness: 0.7 }); });
+    var t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.029 * s, 0.032 * s, 0.115 * s, 14), tankM); t1.position.y = -0.012 * s; G.add(t1);
+    var fl = new THREE.Mesh(new THREE.CylinderGeometry(0.026 * s, 0.029 * s, 0.055 * s, 12), fluidM); fl.position.y = -0.04 * s; G.add(fl);
+    var nk2 = new THREE.Mesh(new THREE.CylinderGeometry(0.016 * s, 0.016 * s, 0.02 * s, 12), headM); nk2.position.y = 0.055 * s; G.add(nk2);
+    var hd = new THREE.Mesh(new THREE.BoxGeometry(0.03 * s, 0.036 * s, 0.048 * s), headM); hd.position.set(0, 0.082 * s, -0.012 * s); G.add(hd);
+    var nz = new THREE.Mesh(new THREE.BoxGeometry(0.012 * s, 0.01 * s, 0.03 * s), headM); nz.position.set(0, 0.095 * s, -0.04 * s); G.add(nz);
+    var tg = new THREE.Mesh(new THREE.BoxGeometry(0.016 * s, 0.026 * s, 0.008 * s), prodMat('spraytrig', function () { return new THREE.MeshStandardMaterial({ color: 0x59d08a, roughness: 0.6 }); })); tg.position.set(0, 0.068 * s, 0.016 * s); G.add(tg);
+    var lb2 = new THREE.Mesh(new THREE.CylinderGeometry(0.0325 * s, 0.0325 * s, 0.05 * s, 16, 1, true), prodMat('spraylab', function () { return new THREE.MeshBasicMaterial({ map: textTex(['PEST OFF', 'ready to use'], 300, 120, { size: 40, bg: '#123a2a', color: '#bfeed6', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }); }));
+    lb2.position.y = 0.006 * s; G.add(lb2); return G;
+  }
+  function productSeedPacket(st, s) {   /* foil sachet, heat-sealed top, tear notch, printed front */
+    var G = new THREE.Group();
+    var foilM = prodMat('seedfoil', function () { return new THREE.MeshStandardMaterial({ color: 0xc9cdd2, roughness: 0.3, metalness: 0.55 }); });
+    var sealM = prodMat('seedseal', function () { return new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.5, metalness: 0.4 }); });
+    G.add(new THREE.Mesh(new THREE.BoxGeometry(0.072 * s, 0.098 * s, 0.009 * s), foilM));
+    var sl = new THREE.Mesh(new THREE.BoxGeometry(0.074 * s, 0.014 * s, 0.004 * s), sealM); sl.position.y = 0.054 * s; G.add(sl);
+    var nt = new THREE.Mesh(new THREE.BoxGeometry(0.006 * s, 0.008 * s, 0.005 * s), sealM); nt.position.set(0.033 * s, 0.05 * s, 0); G.add(nt);
+    var fa = new THREE.Mesh(new THREE.PlaneGeometry(0.064 * s, 0.086 * s), prodMat('seedlab' + st.id, function () { return new THREE.MeshBasicMaterial({ map: textTex([st.emoji, st.name, 'feminised'], 210, 285, { size: 30, bg: '#f4efdf', color: '#3a4a36', titleColor: '#1a6a2a', line: 'rgba(0,0,0,.18)' }), transparent: true }); }));
+    fa.position.z = 0.0047 * s; G.add(fa); return G;
+  }
+  function cartonBox(w, h2, d, lines, hex, ink) {   /* a plain box with its front printed, for the small consumables */
+    var G = new THREE.Group();
+    G.add(new THREE.Mesh(new THREE.BoxGeometry(w, h2, d), new THREE.MeshStandardMaterial({ color: hex, roughness: 0.85 })));
+    var key = 'carton' + lines.join('|');
+    var face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.86, h2 * 0.74), prodMat(key, function () { return new THREE.MeshBasicMaterial({ map: textTex(lines, 260, 150, { size: 46, bg: 'rgba(0,0,0,0)', color: ink, titleColor: ink, line: 'rgba(0,0,0,0)' }), transparent: true }); }));
+    face.position.z = d / 2 + 0.001; G.add(face); return G;
+  }
   function buildHeldMesh(h) {
     var g = new THREE.Group();
     if (WS) { var wm = WS.model('item:' + h.kind); if (wm) { g.add(wm); return g; } }   /* a pack's Blender model stands in for the whole hand-built item */
@@ -4843,44 +4894,10 @@
       add(new THREE.PlaneGeometry(0.115, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['GROW BAR', 'milk chocolate'], 280, 120, { size: 40, bg: '#6b2f8a', color: '#e8d6f2', titleColor: '#ffd166', line: 'rgba(0,0,0,0)' }), transparent: true }), 0, 0.0121, 0, -Math.PI / 2, 0, 0);
     }
     else if (h.kind === 'broom') { var bg2 = new THREE.Group(); bg2.rotation.z = 0.35; bg2.position.set(0.05, -0.05, 0); g.add(bg2); function badd(geo, mat, x, y, z) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); bg2.add(m); return m; } badd(new THREE.CylinderGeometry(0.014, 0.016, 1.1, 10), MAT.wood, 0, 0.1, 0); badd(new THREE.CylinderGeometry(0.018, 0.018, 0.14, 10), colorMat(0xc94a3a, 0.8), 0, 0.6, 0); badd(new THREE.CylinderGeometry(0.022, 0.018, 0.05, 10), MAT.chrome, 0, -0.44, 0); badd(new THREE.BoxGeometry(0.07, 0.05, 0.32), MAT.darkwood, 0, -0.48, 0); for (var bk = 0; bk < 14; bk++) badd(new THREE.BoxGeometry(0.012, 0.2, 0.012), colorMat(bk % 2 ? 0xb8925a : 0xa8843f, 1), 0, -0.6, -0.145 + bk * 0.0225); }
-    else if (h.kind === 'soil') {
-      // a compost sack: heat-sealed folds top and bottom, a printed front and a bulging middle
-      var sackM = new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 1 });
-      add(new THREE.BoxGeometry(0.15, 0.17, 0.095), sackM);
-      add(new THREE.BoxGeometry(0.155, 0.022, 0.03), new THREE.MeshStandardMaterial({ color: 0x3a291b, roughness: 1 }), 0, 0.093, 0);
-      add(new THREE.BoxGeometry(0.155, 0.022, 0.03), new THREE.MeshStandardMaterial({ color: 0x3a291b, roughness: 1 }), 0, -0.093, 0);
-      add(new THREE.PlaneGeometry(0.125, 0.105), new THREE.MeshBasicMaterial({ map: textTex(['RF GROW', 'potting soil', '20 L'], 250, 210, { size: 40, bg: '#6d4f30', color: '#e9dcc2', titleColor: '#9ff0b5', line: 'rgba(0,0,0,0)' }), transparent: true }), 0, 0.006, 0.0481);
-    }
-    else if (h.kind === 'nutrients') {
-      // a feed bottle: shoulder, neck, ribbed cap and a wrapped label
-      var botM = new THREE.MeshStandardMaterial({ color: 0xcdea55, roughness: 0.35, transparent: true, opacity: 0.94 });
-      add(new THREE.CylinderGeometry(0.029, 0.031, 0.105, 14), botM, 0, -0.005, 0);
-      add(new THREE.CylinderGeometry(0.014, 0.029, 0.026, 14), botM, 0, 0.061, 0);
-      add(new THREE.CylinderGeometry(0.013, 0.013, 0.016, 12), new THREE.MeshStandardMaterial({ color: 0x2a2f26, roughness: 0.6 }), 0, 0.082, 0);
-      add(new THREE.CylinderGeometry(0.0155, 0.0155, 0.011, 16), new THREE.MeshStandardMaterial({ color: 0x1d211a, roughness: 0.85 }), 0, 0.094, 0);
-      var nlab = add(new THREE.CylinderGeometry(0.0305, 0.0305, 0.05, 16, 1, true), new THREE.MeshBasicMaterial({ map: textTex(['BLOOM', 'nutrients'], 300, 120, { size: 44, bg: '#1f3a14', color: '#cdea55', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }), 0, -0.006, 0);
-    }
-    else if (h.kind === 'remedy') {
-      // a trigger spray: clear tank, a fill line of fluid, a moulded head and a trigger
-      var tankM = new THREE.MeshStandardMaterial({ color: 0xe8f2ee, roughness: 0.18, transparent: true, opacity: 0.55 });
-      add(new THREE.CylinderGeometry(0.029, 0.032, 0.115, 14), tankM, 0, -0.012, 0);
-      add(new THREE.CylinderGeometry(0.026, 0.029, 0.055, 12), new THREE.MeshStandardMaterial({ color: 0x8fd6b0, roughness: 0.3, transparent: true, opacity: 0.85 }), 0, -0.04, 0);
-      add(new THREE.CylinderGeometry(0.016, 0.016, 0.02, 12), new THREE.MeshStandardMaterial({ color: 0x2f3a36, roughness: 0.7 }), 0, 0.055, 0);
-      add(new THREE.BoxGeometry(0.03, 0.036, 0.048), new THREE.MeshStandardMaterial({ color: 0x2f3a36, roughness: 0.7 }), 0, 0.082, -0.012);
-      add(new THREE.BoxGeometry(0.012, 0.01, 0.03), new THREE.MeshStandardMaterial({ color: 0x2f3a36, roughness: 0.7 }), 0, 0.095, -0.04);
-      add(new THREE.BoxGeometry(0.016, 0.026, 0.008), new THREE.MeshStandardMaterial({ color: 0x59d08a, roughness: 0.6 }), 0, 0.068, 0.016);
-      add(new THREE.CylinderGeometry(0.0325, 0.0325, 0.05, 16, 1, true), new THREE.MeshBasicMaterial({ map: textTex(['PEST OFF', 'ready to use'], 300, 120, { size: 40, bg: '#123a2a', color: '#bfeed6', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }), 0, 0.006, 0);
-    }
-    else if (h.kind === 'seed') {
-      var sst = strainById(h.strain);
-      var pkt = new THREE.Group(); pkt.rotation.x = -0.3; g.add(pkt);
-      var foilM = new THREE.MeshStandardMaterial({ color: 0xc9cdd2, roughness: 0.3, metalness: 0.55 });
-      var body = new THREE.Mesh(new THREE.BoxGeometry(0.072, 0.098, 0.009), foilM); pkt.add(body);
-      var seal = new THREE.Mesh(new THREE.BoxGeometry(0.074, 0.014, 0.004), new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.5, metalness: 0.4 })); seal.position.y = 0.054; pkt.add(seal);
-      var notch = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.008, 0.005), new THREE.MeshStandardMaterial({ color: 0x6a7076 })); notch.position.set(0.033, 0.05, 0); pkt.add(notch);
-      var face = new THREE.Mesh(new THREE.PlaneGeometry(0.064, 0.086), new THREE.MeshBasicMaterial({ map: textTex([sst.emoji, sst.name, 'feminised · 1 seed'], 210, 285, { size: 30, bg: '#f4efdf', color: '#3a4a36', titleColor: '#1a6a2a', line: 'rgba(0,0,0,.18)' }), transparent: true }));
-      face.position.z = 0.0047; pkt.add(face);
-    }
+    else if (h.kind === 'soil') { g.add(productSoilSack(1)); }
+    else if (h.kind === 'nutrients') { g.add(productNutrientBottle(1)); }
+    else if (h.kind === 'remedy') { g.add(productSprayBottle(1)); }
+    else if (h.kind === 'seed') { var sp2 = productSeedPacket(strainById(h.strain), 1); sp2.rotation.x = -0.3; g.add(sp2); }
     else if (h.kind === 'harvest') { var st = strainById(h.strain); var cola = budCola(st, 1); cola.position.y = -0.01; g.add(cola); [[0.045, -0.055, 0.02, -0.5, 0.4], [-0.052, -0.04, -0.02, -0.4, -0.6], [0.01, -0.07, -0.04, -0.7, 1.4]].forEach(function (L) { add(new THREE.PlaneGeometry(0.11, 0.2), MAT.leaf, L[0], L[1], L[2], L[3], L[4], 0); }); }
     else if (h.kind === 'jar') {
       var jst = strainById(h.strain || 'sunflower'), fill = clamp(h.grams / 24, 0.25, 1);
