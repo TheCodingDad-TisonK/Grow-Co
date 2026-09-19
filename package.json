@@ -1,7 +1,7 @@
 {
   "name": "rf-grow-co",
   "productName": "RF Grow Co",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "First-person shop simulator: grow, cure, pack and sell, run a basement cigarette works, fight off robbers, and drive around a small open town.",
   "main": "main.js",
   "author": "TheCodingDad-TisonK",

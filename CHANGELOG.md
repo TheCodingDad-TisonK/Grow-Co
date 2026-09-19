@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- The splash screen is now part of the page itself, so it is on screen from the first frame. The old start card no longer flashes up while the game loads.
+
 ## 1.0.0
 
 First standalone release.

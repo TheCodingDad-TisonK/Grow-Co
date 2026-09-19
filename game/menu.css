@@ -34,3 +34,6 @@
 .rf-guide-page li { margin-bottom: 6px; }
 .rf-guide-page table { border-collapse: collapse; width: 100%; } .rf-guide-page td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,.06); vertical-align: top; } .rf-guide-page td:first-child { white-space: nowrap; width: 190px; }
 @media (max-width: 760px) { .rf-guide { grid-template-columns: 1fr; height: auto; } }
+/* the main menu replaces the game's own start card; its button is still pressed by the menu, it is just never shown */
+#g3-start { display: none !important; }
+#rf-splash { z-index: 210; }

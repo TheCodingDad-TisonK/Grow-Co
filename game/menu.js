@@ -8,9 +8,9 @@
   function readSave() { try { var raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
   function money(n) { return '$' + Math.round(n || 0).toLocaleString('en-US'); }
 
-  var splash = el('<div class="rf-front" id="rf-splash"><div class="rf-splash-inner"><img src="rf-icon.png" alt="RF"><div class="rf-splash-by">a game by <b>TheCodingDad</b></div></div><div class="rf-splash-skip">click or press any key</div></div>');
+  var splash = document.getElementById('rf-splash') || el('<div class="rf-front" id="rf-splash"><div class="rf-splash-inner"><img src="rf-icon.png" alt="RF"><div class="rf-splash-by">a game by <b>TheCodingDad</b></div></div><div class="rf-splash-skip">click or press any key</div></div>');
   var menu = el('<div class="rf-front" id="rf-mainmenu" hidden><div class="rf-menu-card"><img src="rf-icon.png" alt="RF"><h1>RF Grow Co.</h1><div class="rf-menu-sub">first-person shop simulator</div><div id="rf-menu-body"></div><div class="rf-menu-foot">a game by TheCodingDad</div></div></div>');
-  document.body.appendChild(menu); document.body.appendChild(splash);
+  document.body.appendChild(menu); if (!splash.parentNode) document.body.appendChild(splash);
 
   var skipSplash = false; try { skipSplash = sessionStorage.getItem('rfgc-skip-splash') === '1'; sessionStorage.removeItem('rfgc-skip-splash'); } catch (e) {}
   var splashDone = false;
