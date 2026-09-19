@@ -1,0 +1,66 @@
+<!-- Horizontal lockup: the RF badge beside the GROW CO. wordmark. ?w= sets the width, ?dark=0 for a light background.
+     Rendered by tools/render-brand.js. -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; }
+  #stage { display: inline-flex; align-items: center; gap: 0; }   /* shrink-wraps so the capture has no dead space */
+  .mark { position: relative; flex: none; }
+  .badge { position: absolute; inset: 0; border-radius: 22.3%; background: radial-gradient(120% 110% at 28% 18%, #1c3326 0%, #112318 42%, #08140d 74%, #050c08 100%); }
+  .rim { position: absolute; inset: 0; border-radius: 22.3%; box-shadow: inset 0 0 0 2px rgba(111,220,140,.38); }
+  .rf { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); }
+  .rf img { display: block; width: 100%; height: 100%; }
+  .sprout { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); }
+  .type { display: flex; flex-direction: column; justify-content: center; font-family: "Segoe UI", system-ui, sans-serif; }
+  .type .name { font-weight: 800; letter-spacing: -0.5px; line-height: .95; color: var(--ink); }
+  .type .name em { font-style: normal; color: #6fdc8c; }
+  .type .sub { font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--sub); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="mark" id="mark">
+    <div class="badge"></div>
+    <div class="sprout" id="sprout"></div>
+    <div class="rf" id="rf"><img src="../game/rf-icon.png" alt=""></div>
+    <div class="rim"></div>
+  </div>
+  <div class="type" id="type">
+    <div class="name" id="name">Grow <em>Co.</em></div>
+    <div class="sub" id="sub">an RF game</div>
+  </div>
+</div>
+<script>
+  var q = new URLSearchParams(location.search);
+  var W = +q.get('w') || 1200, dark = q.get('dark') !== '0';
+  var u = W / 1200;   // everything is drawn against a 1200 px reference and scaled
+  document.documentElement.style.setProperty('--ink', dark ? '#f2f7f3' : '#0d1a12');
+  document.documentElement.style.setProperty('--sub', dark ? '#8fa596' : '#5a6f61');
+  var badge = Math.round(300 * u);
+  var mark = document.getElementById('mark');
+  mark.style.width = badge + 'px'; mark.style.height = badge + 'px';
+  var rf = document.getElementById('rf'); var rfs = Math.round(badge * 0.58);
+  rf.style.width = rfs + 'px'; rf.style.height = rfs + 'px';
+  var sw = Math.round(badge * 0.42), sh = Math.round(badge * 0.30);
+  document.getElementById('sprout').innerHTML =
+    '<svg width="' + sw + '" height="' + sh + '" viewBox="0 0 120 86">' +
+    '<path d="M60 86 V34" stroke="#3fbf68" stroke-width="7" stroke-linecap="round" fill="none"/>' +
+    '<path d="M60 52 C42 52 28 42 22 26 C42 22 56 30 60 48 Z" fill="#6fdc8c"/>' +
+    '<path d="M60 44 C78 44 92 34 98 18 C78 14 64 22 60 40 Z" fill="#8ce8a4"/>' +
+    '</svg>';
+  var type = document.getElementById('type');
+  type.style.marginLeft = Math.round(46 * u) + 'px';
+  document.getElementById('name').style.fontSize = Math.round(150 * u) + 'px';
+  var sub = document.getElementById('sub');
+  sub.style.fontSize = Math.round(37 * u) + 'px';
+  sub.style.marginTop = Math.round(14 * u) + 'px';
+  // the canvas is trimmed to whatever the lockup actually measures
+  requestAnimationFrame(function () {
+    var r = document.getElementById('stage').getBoundingClientRect();
+    document.title = Math.ceil(r.width) + 'x' + Math.ceil(r.height);
+  });
+</script>
+</body>
+</html>

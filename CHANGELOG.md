@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3
+
+- **A proper logo.** The RF monogram now sits on a dark badge with a sprout, paired with a Grow Co. wordmark. One source renders every size that is used anywhere: the splash, the main menu, the favicon, the README and the Windows icon, from 16 px up to 1024 px.
+- Tiny sizes drop the sprout so the monogram stays readable at 16 px.
+- `npm run brand` regenerates the whole set from `brand/icon.html` and `brand/wordmark.html`.
+
 ## v1.2
 
 - **A guided intro for a new shop.** Nine steps from the first order at the laptop to the first sale at the window, shown on a card beside the screen that ticks itself off as you play. It never blocks anything, and finishing every step pays a **$2,500 bonus**.

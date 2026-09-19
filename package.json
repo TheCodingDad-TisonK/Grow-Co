@@ -1,7 +1,7 @@
 {
   "name": "rf-grow-co",
   "productName": "RF Grow Co",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Standalone hobby game, NOT a Farming Simulator product. First-person shop simulator: grow, cure, pack and sell, run a basement cigarette works, fight off robbers, and drive around a small open town.",
   "main": "main.js",
   "author": "TheCodingDad-TisonK",
@@ -11,12 +11,13 @@
     "start": "electron .",
     "serve": "node tools/serve.js",
     "check": "node tools/sync-version.js && node --check game/grow3d.js && node --check game/grow3d-creative.js && node --check game/menu.js && node --check game/guide.js && node --check game/report.js && node --check main.js",
-    "icon": "node tools/make-icon.js",
+    "icon": "electron tools/render-brand.js",
     "dist": "npm run check && npm run icon && electron-packager . \"RF Grow Co\" --platform=win32 --arch=x64 --out=dist --overwrite --icon=build/icon.ico --app-copyright=\"TheCodingDad-TisonK\" --ignore=\"^/dist\" --ignore=\"^/docs\" --ignore=\"^/screenshots\" --ignore=\"^/tools\" --ignore=\"^/build\" --ignore=\"^/\\.github\" --ignore=\"^/\\.git\" --prune=true",
     "zip": "node tools/zip-dist.js",
     "installer": "npm run check && npm run icon && electron-builder --win nsis --x64 --publish never",
     "guide": "node tools/guide-to-md.js",
-    "version": "node tools/sync-version.js"
+    "version": "node tools/sync-version.js",
+    "brand": "electron tools/render-brand.js"
   },
   "devDependencies": {
     "@electron/packager": "^18.3.6",

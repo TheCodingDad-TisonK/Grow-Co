@@ -1,6 +1,4 @@
-<p align="center"><img src="game/rf-icon.png" width="120" alt="RF"></p>
-
-<h1 align="center">RF Grow Co.</h1>
+<p align="center"><img src="brand/png/wordmark.png" width="520" alt="Grow Co. — an RF game"></p>
 
 <p align="center"><b>A first-person shop simulator.</b><br>Grow it, cure it, pack it, sell it through the window. Then build a cigarette works in the basement, fight off robbers, and drive around a small open town.</p>
 

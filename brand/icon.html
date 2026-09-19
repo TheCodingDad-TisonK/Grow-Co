@@ -1,0 +1,52 @@
+<!-- App icon: the RF monogram on a dark badge with a sprout, rendered by tools/render-brand.js.
+     ?size=256 sets the canvas; ?simple=1 drops the sprout and enlarges the monogram for 32px and below. -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; }
+  #stage { position: relative; overflow: hidden; }
+  .badge { position: absolute; inset: 0; border-radius: 22.3%; background:
+      radial-gradient(120% 110% at 28% 18%, #1c3326 0%, #112318 42%, #08140d 74%, #050c08 100%); }
+  .rim { position: absolute; inset: 0; border-radius: 22.3%; box-shadow: inset 0 0 0 var(--rim) rgba(111, 220, 140, .38); }
+  .gloss { position: absolute; left: 0; right: 0; top: 0; height: 46%; border-radius: 22.3% 22.3% 50% 50% / 30% 30% 100% 100%;
+      background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,0)); }
+  .rf { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  .rf img { display: block; width: 100%; height: 100%; }
+  /* a sprout rising behind the monogram: the "grow" half of the name */
+  .sprout { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="badge"></div>
+  <div class="gloss"></div>
+  <div class="sprout" id="sprout"></div>
+  <div class="rf" id="rf"><img src="../game/rf-icon.png" alt=""></div>
+  <div class="rim" id="rim"></div>
+</div>
+<script>
+  var q = new URLSearchParams(location.search);
+  var S = +q.get('size') || 256, simple = q.get('simple') === '1';
+  var stage = document.getElementById('stage');
+  stage.style.width = S + 'px'; stage.style.height = S + 'px';
+  document.documentElement.style.setProperty('--rim', Math.max(1, Math.round(S * 0.012)) + 'px');
+  // the monogram sits larger when the sprout is dropped, so tiny sizes stay readable
+  var rfSize = Math.round(S * (simple ? 0.68 : 0.58));
+  var rf = document.getElementById('rf');
+  rf.style.width = rfSize + 'px'; rf.style.height = rfSize + 'px';
+  rf.style.marginTop = simple ? '0' : Math.round(-S * 0.045) + 'px';
+  rf.style.filter = 'drop-shadow(0 ' + (S * 0.012) + 'px ' + (S * 0.02) + 'px rgba(0,0,0,.55))';
+  if (!simple) {
+    var w = Math.round(S * 0.42), h = Math.round(S * 0.30);
+    document.getElementById('sprout').innerHTML =
+      '<svg width="' + w + '" height="' + h + '" viewBox="0 0 120 86">' +
+      '<path d="M60 86 V34" stroke="#3fbf68" stroke-width="7" stroke-linecap="round" fill="none"/>' +
+      '<path d="M60 52 C42 52 28 42 22 26 C42 22 56 30 60 48 Z" fill="#6fdc8c"/>' +
+      '<path d="M60 44 C78 44 92 34 98 18 C78 14 64 22 60 40 Z" fill="#8ce8a4"/>' +
+      '</svg>';
+  }
+</script>
+</body>
+</html>
