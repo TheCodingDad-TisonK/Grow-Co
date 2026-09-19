@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.8
+
+**The Workshop.** A content pack manager on the main menu. Turn a pack on and the shop reloads with more in it. Your save is not touched: a pack only adds things you can then go and buy.
+
+**Packs that ship with it**
+
+- **Heritage Genetics** and **Exotic Cultivars**: seven more strains, from an early Old Skunk to a Midnight Cake that takes half an hour and pays for it.
+- **Pro Lighting Rack**: two more lamps and a 24 slot tent.
+- **Counter Culture** and **Baggies & Boxes**: eight more things to order, sell off the display and load into the machines.
+- **Bigger City**: the map grows by half again, with blocks filling the new ground.
+- **City Life**: Halloway's Grocery wholesales your machine stock, and the Roxy sells you a couple of hours away from the shop that cools the police off.
+- **Christmas** and **New Year**: snow that does not let up, or fireworks over the town after dark, each with a strain and something for the counter.
+- **Motor Pool** and **The Old Van**: a faster estate or a slow van that swallows an enormous load.
+- **Hustle Mode** and **Easy Street**: what seeds and gear cost, and how busy the shop is.
+- Three **bundles** that switch several on at once.
+
+**Make your own, including in Blender**
+
+A pack is one .json file. It can add strains, lamps, tents, things to sell, a whole place in town with a counter or a paid service behind it, a bigger map, a different car, and economy tuning. Export an object from Blender as .glb, name the slot it replaces, import the .json and the .glb together, and your model stands in for whatever the game would have built by hand. There is a starter file and a full explanation in the Workshop itself and in the guide.
+
+**Also in this one**
+
+- **A better town map**: street names on the roads, the shop outlined, your car as a heading arrow instead of a blind square, a north marker, and a scale bar that keeps up when a city pack makes the map bigger.
+- **Joints look like joints**: a tapered cone of paper with a card roach, a twisted tail and a scorched tip, instead of five white sticks.
+
 ## v1.7
 
 A test pass over the car and the delivery devices. Three real bugs, and the round is a lot less fiddly to run.

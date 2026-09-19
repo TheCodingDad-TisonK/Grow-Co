@@ -73,6 +73,24 @@
     { slots: 16, price: 3800, cols: 4, rows: 4, lic: 'cult3' },
     { slots: 20, price: 7500, cols: 5, rows: 4, lic: 'cult3' }
   ];
+  // ── Workshop: content packs fold into the tables above before anything reads them ──
+  var WS = window.RF_WORKSHOP || null, WSTUNE = { footfall: 1, seedCost: 1, upgradeCost: 1 }, WSCITY = { grow: 0, rows: 0 }, WSFEST = { snow: false, fireworks: false }, WSCAR = null, WSPLACES = [];
+  function wsMerge(list, adds, key) {   // a pack entry with an id already in the table replaces it, otherwise it is appended
+    (adds || []).forEach(function (a) {
+      if (key) { for (var i = 0; i < list.length; i++) if (list[i][key] === a[key]) { list[i] = a; return; } }
+      list.push(a);
+    });
+  }
+  if (WS) {
+    try {
+      WSTUNE = WS.tune(); WSCITY = WS.city(); WSFEST = WS.festive(); WSCAR = WS.vehicle(); WSPLACES = WS.places();
+      wsMerge(STRAINS, WS.strains(), 'id'); wsMerge(LIGHTS, WS.lights(), 'id'); wsMerge(SUPPLIES, WS.supplies(), 'id');
+      wsMerge(TENTS, WS.tents()); TENTS.sort(function (a, b) { return a.slots - b.slots; });
+      SUPPLIES.forEach(function (s) { if (s.stock === 'display' && s.sell && !ACC[s.id]) ACC[s.id] = { name: s.name.replace(/ \(.*\)$/, '').toLowerCase(), price: s.sell }; });
+      if (WSTUNE.seedCost !== 1) STRAINS.forEach(function (s) { s.seed = Math.max(1, Math.round(s.seed * WSTUNE.seedCost)); });
+      if (WSTUNE.upgradeCost !== 1) { LIGHTS.forEach(function (l) { l.price = Math.round(l.price * WSTUNE.upgradeCost); }); TENTS.forEach(function (t) { t.price = Math.round(t.price * WSTUNE.upgradeCost); }); }
+    } catch (e) { console.warn('[workshop] a pack could not be applied:', e); }
+  }
   var UPGRADES = [
     { id: 'autowater', ico: '💧', name: 'Auto-waterer',      price: 300, d: 'Plants never go thirsty again.' },
     { id: 'roller',    ico: '🤖', name: 'Rolling machine',   price: 360, d: 'Roll 5 joints at once, no paper/tip waste.' },
@@ -107,6 +125,7 @@
     { id: 'bagger',    ico: '🏭', name: 'Auto-bagging line', price: 2200, req: 'scale', d: 'Bags weigh and seal themselves; bag a whole stash in one go.' },
     { id: 'oven',      ico: '🔥', name: 'Convection oven',   price: 600,  d: 'Cookies bake themselves to the second; bake a whole stash in one go.' }
   ];
+  if (WSTUNE.upgradeCost !== 1) UPGRADES.forEach(function (u) { u.price = Math.round(u.price * WSTUNE.upgradeCost); });
   var LICENCES = [
     { id: 'retail',    ico: '🪪', name: 'Retail licence',       price: 800,  lvl: 2,  d: 'Customers may pay by card. Without it everyone pays cash.' },
     { id: 'catering',  ico: '☕', name: 'Vending & catering permit', price: 450, d: 'The vending machine and coffee machine may sell.' },
@@ -2220,6 +2239,7 @@
   function cigTotal(c) { return c && c.cig && c.cig.given > 0 ? CIG_SKUS[c.cig.sku].price * c.cig.given : 0; }
   // ── The city: a street grid round the shop, places worth visiting, a car to get there and a map on M ──
   var CITY = { x: 122, z1: -64, z2: 96, mainZ: 17.9, backZ: -40, northZ: 78, westX: -64, eastX: 64, laneX: 4.5, blds: [], pois: [], roads: [], parks: [] };
+  if (WSCITY.grow > 0) { CITY.x += WSCITY.grow; CITY.z1 -= Math.round(WSCITY.grow * 0.5); CITY.z2 += Math.round(WSCITY.grow * 0.5); }   /* a city pack widens the world: the player clamp, the traffic wrap, the drop finder and the map all read these */
   var drive = { on: false, v: 0, g: null, wheels: [], cam: new THREE.Vector3(), gateAuto: false, eng: null, bumpT: 0, engineOn: false, braking: false, rpm: 0, dist: 6.2, look: { yaw: 0, pitch: 0.12, t: 0 }, parts: null, lamps: null, shut: null, dashT: 0, warnT: 0 };
   var traffic = [], parkFolk = [], cityMap = { el: null, cv: null, on: false, t: 0 };
   function carState() {
@@ -2294,8 +2314,14 @@
     cityBldg(-30, 35, 18, 15, 10, 0xcfc8b8, 'First Harvest Bank', 'bank'); cityDoor(-30, 27.5, -1, 8, 'bank', 'FIRST HARVEST BANK', 'deposits · withdrawals', 0x2f6b9a); [-36, -24].forEach(function (cx) { cyl(0.35, 0.4, 5, colorMat(0xe9e4d8, 0.8), cx, 2.5, 27.0, null, 14); });
     cityBldg(-8, 33, 11, 11, 5.5, 0x6b5a48, 'Iron & Oak Arms', 'gun'); cityDoor(-8, 27.5, -1, 6, 'gun', 'IRON & OAK', 'arms · ammunition · armour', 0xb5121b);
     cityBldg(-38, 0, 14, 14, 6.5, 0x7b8f6a, 'Green Leaf (rival)', 'rival'); cityDoor(-38, 7, 1, 7, 'rival', 'GREEN LEAF', 'dispensary · est. last year', 0x39d353);
-    cityBldg(-22, -57, 26, 15, 7.5, 0x8d949c, 'RF Supply Co.', 'supply'); cityDoor(-22, -49.5, 1, 9, 'supply', 'RF SUPPLY CO.', 'trade counter · load your own car', 0xf2c21a); box(6, 3.2, 0.1, colorMat(0x5f666e, 0.5, 0.6), -12, 1.6, -49.45, { cast: false });
+    cityBldg(-22, -57, 26, 15, 7.5, 0x8d949c, 'RF Supply Co.', 'supply');
+    WSPLACES.forEach(function (q) {   /* a Workshop pack can put its own place on the map: a shopfront, a door and either a counter that sells or a service you pay for */
+      cityBldg(q.x, q.z, q.w, q.d, q.h, q.colour, q.name, q.id);
+      var fc = q.face === -1 ? -1 : 1, dz = q.z + fc * (q.d / 2 + 1.6);   /* a built-in pack skips the import validator, so every optional field needs a default here too */
+      cityDoor(q.x, dz, fc, Math.min(q.w - 2, 9), q.id, q.name.toUpperCase(), q.sub, q.doorColour);
+    }); cityDoor(-22, -49.5, 1, 9, 'supply', 'RF SUPPLY CO.', 'trade counter · load your own car', 0xf2c21a); box(6, 3.2, 0.1, colorMat(0x5f666e, 0.5, 0.6), -12, 1.6, -49.45, { cast: false });
     C.pois = [{ id: 'shop', name: 'Grow Co. (you)', x: 0, z: 0, col: '#6fdc8c' }, { id: 'bank', name: 'First Harvest Bank', x: -30, z: 27.5, col: '#5aa0d8' }, { id: 'gun', name: 'Iron & Oak Arms', x: -8, z: 27.5, col: '#e0564a' }, { id: 'rival', name: 'Green Leaf (rival)', x: -38, z: 7, col: '#39d353' }, { id: 'supply', name: 'RF Supply Co.', x: -22, z: -49.5, col: '#f2c21a' }, { id: 'park', name: 'Harvest Park', x: 28, z: 44, col: '#8fd17a' }];
+    WSPLACES.forEach(function (q) { C.pois.push({ id: q.id, name: q.name, x: q.x, z: q.z + (q.face === -1 ? -1 : 1) * (q.d / 2 + 1.6), col: q.pin || '#6fdc8c' }); });   /* after the list is assigned, or it would be thrown away */
     // Harvest Park: lawn, a crossing of paths, trees, benches, and people who might buy off you
     var PK = { x1: 10, x2: 48, z1: 27, z2: 62 }; C.parks.push(PK); var lawn = new THREE.Mesh(new THREE.PlaneGeometry(PK.x2 - PK.x1, PK.z2 - PK.z1), colorMat(0x5c9a48, 1)); lawn.rotation.x = -Math.PI / 2; lawn.position.set(29, 0.03, 44.5); lawn.receiveShadow = true; world.group.add(lawn);
     [[38, 2.2, 29, 44.5], [2.2, 35, 29, 44.5]].forEach(function (p) { var path = new THREE.Mesh(new THREE.PlaneGeometry(p[0], p[1]), colorMat(0xc9b78f, 1)); path.rotation.x = -Math.PI / 2; path.position.set(p[2], 0.04, p[3]); world.group.add(path); }); cyl(2.2, 2.4, 0.5, colorMat(0x9aa0a6, 0.8), 29, 0.25, 44.5, null, 20); cyl(1.9, 1.9, 0.06, colorMat(0x4a90c8, 0.2, 0.3), 29, 0.5, 44.5, null, 20); world.obstacles.push({ x1: 26.7, x2: 31.3, z1: 42.2, z2: 46.8, tag: 'city', floorLevel: 0 });
@@ -2307,8 +2333,17 @@
     [[-52, 2, 9, 14, 8], [-22, -2, 12, 16, 9],  [52, -2, 8, 16, 7], [26, -24, 18, 14, 10], [47, -25, 14, 14, 14], [-16, -25, 14, 12, 8], [-34, -24, 16, 14, 11], [-52, -24, 10, 14, 7], [-52, 36, 9, 18, 12], [4, 66, 14, 10, 9], [-14, 52, 18, 14, 13], [-40, 60, 22, 14, 16], [-52, 58, 0, 0, 0], [53, 38, 7, 22, 9], [52, 64, 10, 12, 8]].forEach(function (b, i) { if (b[2] > 0) cityBldg(b[0], b[1], b[2], b[3], b[4], cols[i % cols.length]); });
     for (var ox = -110; ox <= 110; ox += 22) { if (Math.abs(ox) < 66) { if (ox !== -22) cityBldg(ox, -58, 18, 9, 10 + ((ox * 7) % 13 + 13) % 13, cols[Math.abs(ox) % cols.length]); cityBldg(ox + 3, 90, 17, 9, 12 + ((ox * 5) % 17 + 17) % 17, cols[Math.abs(ox + 3) % cols.length]); } }
     [-98, -80, 80, 98].forEach(function (ox, i) { for (var oz = -56; oz <= 90; oz += 24) { if (Math.abs(oz - C.mainZ) < 9 || Math.abs(oz - C.backZ) < 9 || Math.abs(oz - C.northZ) < 9) continue; cityBldg(ox, oz, 14, 18, 14 + ((oz + ox) % 19 + 19) % 19, cols[(i + Math.abs(oz)) % cols.length]); } });
+    // a city pack fills the ground it just added: more outer avenues of blocks, and the streets run out to meet them
+    if (WSCITY.grow > 0) {
+      [[-C.x, C.mainZ, C.x, C.mainZ], [-C.x, C.backZ, C.x, C.backZ], [-C.x, C.northZ, C.x, C.northZ]].forEach(function (r) { var len = r[2] - r[0], rd = new THREE.Mesh(new THREE.PlaneGeometry(len, 9), MAT.asphalt); rd.rotation.x = -Math.PI / 2; rd.position.set(0, 0.005, r[1]); rd.receiveShadow = true; world.group.add(rd); });
+      for (var ring = 0; ring < Math.max(1, WSCITY.rows); ring++) {
+        var ax = 120 + ring * 20;
+        [-ax, ax].forEach(function (bx, bi) { for (var bz = C.z1 + 14; bz <= C.z2 - 14; bz += 26) { if (Math.abs(bz - C.mainZ) < 10 || Math.abs(bz - C.backZ) < 10 || Math.abs(bz - C.northZ) < 10) continue; cityBldg(bx, bz, 15, 19, 12 + ((bz + bx) % 21 + 21) % 21, cols[(bi + ring + Math.abs(Math.round(bz))) % cols.length]); } });
+        [C.z1 + 9 - ring * 22, C.z2 - 9 + ring * 22].forEach(function (bz2, bj) { for (var bx2 = -108; bx2 <= 108; bx2 += 24) cityBldg(bx2, bz2, 18, 12, 11 + ((bx2 * 3 + ring) % 15 + 15) % 15, cols[(bj + Math.abs(bx2)) % cols.length]); });
+      }
+    }
     // the player's car, where it was left
-    var cs = carState(); drive.g = new THREE.Group(); drive.wheels = carBody(drive.g, 0x1f4f8a, true); drive.parts = drive.g.userData.parts; drive.lamps = drive.g.userData.lamps; drive.g.position.set(cs.x, 0, cs.z); drive.g.rotation.y = cs.h; world.group.add(drive.g);
+    var cs = carState(); drive.g = new THREE.Group(); drive.wheels = carBody(drive.g, WSCAR && WSCAR.colour !== undefined ? WSCAR.colour : 0x1f4f8a, true); drive.parts = drive.g.userData.parts; drive.lamps = drive.g.userData.lamps; drive.g.position.set(cs.x, 0, cs.z); drive.g.rotation.y = cs.h; world.group.add(drive.g);
     [-0.6, 0.6].forEach(function (bx) { var sl = new THREE.SpotLight(0xfff3c8, 0, 26, 0.62, 0.5, 1.4); sl.position.set(bx, 0.62, -2.0); sl.castShadow = false; drive.g.add(sl); var tgt = new THREE.Object3D(); tgt.position.set(bx * 2.4, -0.3, -15); drive.g.add(tgt); sl.target = tgt; drive.lamps.beams.push(sl); });
     var chit = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.5, 4.2), MAT.none); chit.position.y = 0.8; drive.g.add(chit); interactable(chit, { kind: 'car' });
     /* the openable parts get their own hit boxes, each poking out past the car box so the crosshair finds them first */
@@ -2468,13 +2503,23 @@
     ctx.fillStyle = '#3c4148'; C.roads.forEach(function (r) { ctx.fillRect(mx(r.x1), mz(r.z1), (r.x2 - r.x1) * sc, (r.z2 - r.z1) * sc); });
     C.blds.forEach(function (b) { ctx.fillStyle = b.poi ? '#6a7f96' : '#2a3038'; ctx.fillRect(mx(b.x - b.w / 2), mz(b.z - b.d / 2), b.w * sc, b.d * sc); });
     ctx.fillStyle = '#2e7d4f'; ctx.fillRect(mx(-ROOM.x), mz(-ROOM.z), ROOM.x * 2 * sc, ROOM.z * 2 * sc); ctx.fillStyle = '#25603d'; ctx.fillRect(mx(-1), mz(-18), 11 * sc, 9 * sc);
+    ctx.strokeStyle = 'rgba(111,220,140,.9)'; ctx.lineWidth = 2; ctx.strokeRect(mx(-ROOM.x), mz(-ROOM.z), ROOM.x * 2 * sc, ROOM.z * 2 * sc);
+    ctx.save(); ctx.font = 'bold 10px system-ui, sans-serif'; ctx.fillStyle = 'rgba(200,220,208,.5)'; ctx.textAlign = 'center';
+    [['MAIN ST', C.mainZ], ['BACK ST', C.backZ], ['NORTH ST', C.northZ]].forEach(function (r) { ctx.fillText(r[0], mx(-C.x * 0.62), mz(r[1]) + 3); ctx.fillText(r[0], mx(C.x * 0.62), mz(r[1]) + 3); });
+    ctx.translate(mx(C.westX), mz((C.z1 + C.z2) / 2)); ctx.rotate(-Math.PI / 2); ctx.fillText('WEST AVE', 0, 3); ctx.restore();
+    ctx.save(); ctx.translate(mx(C.eastX), mz((C.z1 + C.z2) / 2)); ctx.rotate(-Math.PI / 2); ctx.font = 'bold 10px system-ui, sans-serif'; ctx.fillStyle = 'rgba(200,220,208,.5)'; ctx.textAlign = 'center'; ctx.fillText('EAST AVE', 0, 3); ctx.restore();
     ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
     C.pois.forEach(function (p, i) { ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(mx(p.x), mz(p.z), 7, 0, 6.29); ctx.fill(); ctx.fillStyle = '#0d1511'; ctx.fillText(String(i + 1), mx(p.x), mz(p.z) + 4.5); });
-    var cp = drive.g.position; ctx.fillStyle = '#5aa0d8'; ctx.fillRect(mx(cp.x) - 5, mz(cp.z) - 5, 10, 10); ctx.fillStyle = '#fff'; ctx.font = 'bold 9px system-ui'; ctx.fillText('CAR', mx(cp.x), mz(cp.z) - 8);
+    var cp = drive.g.position; ctx.save(); ctx.translate(mx(cp.x), mz(cp.z)); ctx.rotate(-drive.g.rotation.y); ctx.fillStyle = '#5aa0d8'; ctx.strokeStyle = '#0d1511'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(5.5, 7); ctx.lineTo(0, 4); ctx.lineTo(-5.5, 7); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = '#9ec9ea'; ctx.font = 'bold 9px system-ui'; ctx.textAlign = 'center'; ctx.fillText('CAR', mx(cp.x), mz(cp.z) - 12);
     drawMapExtras(ctx, mx, mz, W, H);
     ctx.save(); ctx.translate(mx(player.pos.x), mz(player.pos.z)); ctx.rotate(-player.yaw); ctx.fillStyle = '#ffd166'; ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(7, 8); ctx.lineTo(0, 4); ctx.lineTo(-7, 8); ctx.closePath(); ctx.fill(); ctx.restore();
-    ctx.textAlign = 'left'; ctx.fillStyle = '#6fdc8c'; ctx.font = 'bold 20px system-ui'; ctx.fillText('TOWN MAP', W + 22, 40); ctx.fillStyle = '#8fa89a'; ctx.font = '12px system-ui'; ctx.fillText('M closes · arrow: you · blue square: your car', W + 22, 60);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#6fdc8c'; ctx.font = 'bold 20px system-ui'; ctx.fillText('TOWN MAP', W + 22, 40); ctx.fillStyle = '#8fa89a'; ctx.font = '12px system-ui'; ctx.fillText('M closes · gold arrow: you · blue arrow: your car', W + 22, 60);
     C.pois.forEach(function (p, i) { var d = Math.round(Math.hypot(p.x - player.pos.x, p.z - player.pos.z)); var y = 100 + i * 46; ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(W + 32, y - 5, 9, 0, 6.29); ctx.fill(); ctx.fillStyle = '#0d1511'; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText(String(i + 1), W + 32, y - 1); ctx.textAlign = 'left'; ctx.fillStyle = '#e8f1ea'; ctx.font = 'bold 15px system-ui'; ctx.fillText(p.name, W + 50, y - 2); ctx.fillStyle = '#8fa89a'; ctx.font = '12px system-ui'; ctx.fillText(d + ' m away', W + 50, y + 15); });
+    var barM = CITY.x > 150 ? 100 : 50, barPx = barM * sc;   /* a scale bar, because a Workshop city pack changes how much ground the map covers */
+    ctx.strokeStyle = 'rgba(200,220,208,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(22, H - 26); ctx.lineTo(22 + barPx, H - 26); ctx.moveTo(22, H - 30); ctx.lineTo(22, H - 22); ctx.moveTo(22 + barPx, H - 30); ctx.lineTo(22 + barPx, H - 22); ctx.stroke();
+    ctx.fillStyle = 'rgba(200,220,208,.8)'; ctx.font = '11px system-ui'; ctx.textAlign = 'left'; ctx.fillText(barM + ' m', 26 + barPx, H - 22);
+    ctx.save(); ctx.translate(W - 34, 34); ctx.fillStyle = '#8fa89a'; ctx.beginPath(); ctx.moveTo(0, -13); ctx.lineTo(6, 8); ctx.lineTo(0, 4); ctx.lineTo(-6, 8); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#e8f1ea'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('N', 0, -16); ctx.restore();
     var tr = carState().trunk, tk = Object.keys(tr).filter(function (k2) { return tr[k2] > 0; }); ctx.fillStyle = '#8fa89a'; ctx.font = '12px system-ui'; ctx.fillText('Trunk: ' + (tk.length ? tk.map(function (k2) { return tr[k2] + ' ' + itemName(k2); }).join(', ').slice(0, 44) : 'empty'), W + 22, H - 46); ctx.fillText('Pocket ' + money(S.pocket) + ' · bank ' + money(S.bank), W + 22, H - 24);
   }
   // ── doing business in town ──
@@ -2621,10 +2666,10 @@
   function powerOn() { return !!S.upgrades.generator || now() > (xs().blackoutUntil || 0); }
   function season() { return ['Spring', 'Summer', 'Autumn', 'Winter'][Math.floor(((S.day || 1) - 1) / 7) % 4]; }
   function weekend() { var d = (S.day || 1) % 7; return d === 6 || d === 0; }
-  function footfall() { var w = xs().weather.kind, f = w === 'storm' ? 0.6 : w === 'rain' ? 0.8 : w === 'snow' ? 0.75 : 1; if (weekend()) f *= 1.3; if ((S.day || 1) % 28 >= 25) f *= 1.5; return f; }
+  function footfall() { var w = xs().weather.kind, f = WSTUNE.footfall * (w === 'storm' ? 0.6 : w === 'rain' ? 0.8 : w === 'snow' ? 0.75 : 1); if (weekend()) f *= 1.3; if ((S.day || 1) % 28 >= 25) f *= 1.5; return f; }
   function addHeat(n, why) { var X = xs(); X.heat = clamp(X.heat + n, 0, 100); var band = X.heat >= 90 ? 3 : X.heat >= 60 ? 2 : X.heat >= 30 ? 1 : 0; if (band > exp.heatBand) toast(['', '🚔 The police have started to notice you', '🚔 You are being watched — expect an inspection', '🚔 You are the talk of the precinct'][band] + ' (heat ' + Math.round(X.heat) + ')', 'bad'); exp.heatBand = band; }
-  function trunkCap() { return xs().garage.trunk ? 120 : 40; }
-  function carVmax() { return xs().garage.engine ? 32 : 24; }
+  function trunkCap() { var b = WSCAR && WSCAR.trunk ? WSCAR.trunk : 40; return xs().garage.trunk ? Math.round(b * 3) : b; }
+  function carVmax() { var b = WSCAR && WSCAR.vmax ? WSCAR.vmax : 24; return xs().garage.engine ? Math.round(b * 4 / 3) : b; }
   // walk-in rooms sit on the basement level, far apart, and share one lamp that follows you
   function enterZone(id) { var Z = ZONES[id]; if (!Z) return; if (sit.on) standUp(); tobFade(function () { player.floor = -1; player.pos.set(Z.spawn[0], BASE.y + 1.65, Z.z2 - Z.spawn[1] - 0.6); player.vel.set(0, 0, 0); player.yaw = Z.spawn[2] === Math.PI ? 0 : 0; player.pitch = 0; exp.zone = id; exp.zoneLight.position.set((Z.x1 + Z.x2) / 2, BASE.y + 2.7, (Z.z1 + Z.z2) / 2); exp.zoneLight.intensity = 1.1; toast('🚪 ' + Z.name, ''); }); }
   function leaveZone(id) { var Z = ZONES[id]; tobFade(function () { player.floor = Z.exit.floor; player.pos.set(Z.exit.x, (Z.exit.floor === -1 ? BASE.y : 0) + 1.65, Z.exit.z); player.vel.set(0, 0, 0); player.yaw = Z.exit.yaw; exp.zone = ''; exp.zoneLight.intensity = 0; }); }
@@ -2688,9 +2733,12 @@
   function updateExpansion(dt) {
     var X = xs(), W = X.weather;
     // weather and season
+    if (WSFEST.snow && W.kind !== 'snow') { W.kind = 'snow'; W.until = now() + 3600000; exp.wxKind = 'snow'; }   /* a seasonal pack keeps the snow falling */
     if (now() > W.until) { var se = season(), r = Math.random(); W.kind = se === 'Winter' ? (r < 0.45 ? 'snow' : r < 0.6 ? 'clear' : 'clear') : r < (se === 'Autumn' ? 0.4 : 0.22) ? 'rain' : r < (se === 'Summer' ? 0.3 : 0.45) && se !== 'Spring' ? 'storm' : 'clear'; W.until = now() + randi(150, 320) * 1000; if (exp.wxKind && exp.wxKind !== W.kind) toast({ clear: '🌤️ It is clearing up', rain: '🌧️ It has started to rain — fewer people out', storm: '⛈️ A storm is rolling in — the street is emptying', snow: '❄️ It is snowing' }[W.kind], ''); exp.wxKind = W.kind; }
     var wet = W.kind !== 'clear', show = wet && outdoors(); exp.wx.visible = show; scene.fog.near = lerp(scene.fog.near, wet ? 14 : 30, 0.02); scene.fog.far = lerp(scene.fog.far, W.kind === 'storm' ? 55 : wet ? 75 : 110, 0.02);
     if (show) { var fall = W.kind === 'snow' ? 1.6 : 15, arr = exp.wx.geometry.attributes.position; for (var i = 0; i < arr.count; i++) { var y = arr.getY(i) - fall * dt; if (y < 0) y += 16; arr.setY(i, y); if (W.kind === 'snow') arr.setX(i, arr.getX(i) + Math.sin(y * 2 + i) * dt * 0.4); } arr.needsUpdate = true; exp.wx.position.set(camera.position.x, camera.position.y - 6, camera.position.z); exp.wx.material.size = W.kind === 'snow' ? 0.14 : 0.07; exp.wx.material.opacity = W.kind === 'snow' ? 0.9 : 0.55; }
+    // fireworks over the town after dark, from a seasonal pack
+    if (WSFEST.fireworks) { exp.fwT = (exp.fwT || 0) - dt; if (exp.fwT <= 0) { exp.fwT = randf(2.4, 6.5); if (nightNow() && outdoors()) { var fx2 = camera.position.x + randf(-55, 55), fz2 = camera.position.z + randf(-55, 55); burst(fx2, randf(16, 30), fz2, [0xff6b6b, 0xffc857, 0x6fdc8c, 0x7fd4ff, 0xff9ad2][randi(0, 4)], 46, 'up'); sfx('gunshot'); } } }
     // blackouts
     var wasOn = exp.powerWas !== false, on = powerOn(); if (on !== wasOn) { exp.powerWas = on; applyShopState(); if (!on) { sfx('bad'); toast('⚡ POWER CUT — lights and every machine are down' + (S.upgrades.generator ? '' : ' · a generator would have covered this'), 'bad'); logEvent('⚡ Power cut across the block', 'bad'); } else toast('⚡ Power is back', 'good'); }
     if (on && !S.upgrades.generator && Math.random() < dt / (W.kind === 'storm' ? 240 : 1500)) X.blackoutUntil = now() + randi(60, 110) * 1000;
@@ -2885,8 +2933,28 @@
     var X = xs(), lines = []; [['driver', '🚚 Driver', 90, 'wholesales every finished carton each morning (65%) and runs phone deliveries for you'], ['operator', '🏭 Basement operator', 80, 'sows and cuts the bays, keeps the machines on, reorders materials'], ['night', '🌙 Night guard', 70, 'nobody breaks into the basement or strips the roof beds']].forEach(function (s) { var on = X.staff[s[0]]; lines.push({ label: s[1] + ' · ' + money(s[2]) + ' a day <small>' + s[3] + '</small>', cls: on ? 'on' : '', act: function () { X.staff[s[0]] = !on; sfx('click'); toast(s[1] + (on ? ' let go' : ' hired'), on ? '' : 'good'); save(); } }); });
     ctxOpen('💼 Staff roster', 'wages come out of the bank at the start of each day', lines);
   }
+  function wsPlaceMenu(poi) {   // the generic counter behind a pack place: a discount shop list, a paid service, or both
+    var q = null; WSPLACES.forEach(function (p) { if (p.id === poi) q = p; }); if (!q) return false;
+    var X = xs(), lines = [];
+    (q.sells || []).forEach(function (r) {
+      var it = supplyById(r.item); if (!it) return;
+      var price = Math.max(1, Math.round(it.price * (1 - r.off)));
+      lines.push({ label: it.ico + ' ' + it.name + ' · ' + money(price) + ' <small>' + Math.round(r.off * 100) + '% under the laptop price' + (it.qty ? ' · ' + it.qty + ' per box' : '') + '</small>', cls: S.bank >= price ? '' : 'muted',
+        act: S.bank >= price ? function () { S.bank -= price; S.supplies[it.id] = (S.supplies[it.id] || 0) + (it.qty || 1); sfx('cash'); toast('🛒 ' + it.name + ' · ' + money(price), 'good'); syncRack(); hud(); save(); } : null });
+    });
+    if (q.service) {
+      var sv = q.service, day = S.day || 1, usedToday = sv.daily && X.svcDay && X.svcDay[q.id] === day;
+      var can = !usedToday && S.bank >= sv.cost;
+      lines.push({ label: sv.label + ' · ' + money(sv.cost) + ' <small>' + (usedToday ? 'you have already been today' : sv.note) + '</small>', cls: can ? '' : 'muted',
+        act: can ? function () { S.bank -= sv.cost; if (sv.heat) addHeat(sv.heat); if (sv.rep) S.rep = Math.max(0, S.rep + sv.rep); if (!X.svcDay) X.svcDay = {}; X.svcDay[q.id] = day; sfx('cash');
+          toast('🎟️ ' + q.name + (sv.heat < 0 ? ' · heat down to ' + Math.round(X.heat) : '') + (sv.rep ? ' · rep +' + sv.rep : ''), 'good'); logEvent('🎟️ A few hours at ' + q.name, ''); hud(); save(); } : null });
+    }
+    if (!lines.length) lines.push({ label: 'Nothing doing today.', cls: 'muted' });
+    ctxOpen(q.name, q.sub || '', lines); return true;
+  }
   function expPoiMenu(poi) {
     var X = xs(), lines = [];
+    if (wsPlaceMenu(poi)) return true;
     if (poi === 'tobac') { var near = carNear(40, 14, 30), n = 0, val = 0; Object.keys(S.car.cigs).forEach(function (k) { n += S.car.cigs[k]; val += S.car.cigs[k] * CIG_SKUS[k].price * 0.7; }); val = Math.round(val);
       lines.push({ label: '🚬 Sell the ' + n + ' packs in your car · ' + money(val) + ' <small>70% of shop price, paid straight to the bank' + (near ? '' : ' · bring the car round') + '</small>', cls: n && near ? '' : 'muted', act: n && near ? function () { S.bank += val; S.car.cigs = {}; S.stats.wholesale = (S.stats.wholesale || 0) + val; sfx('cash'); toast('🚬 Wholesaled ' + n + ' packs for ' + money(val), 'good'); logEvent('🚬 Wholesaled ' + n + ' packs to the Corner Tobacconist for ' + money(val), 'good'); hud(); save(); } : null });
       lines.push({ label: 'Load cartons at your garage bay: E with Shift on the car.', cls: 'muted' }); ctxOpen('🚬 Corner Tobacconist', 'he takes as many RF Smoking cartons as you can bring', lines); return true; }
@@ -4671,6 +4739,7 @@
   var heldMesh = null, heldKey = '';
   function buildHeldMesh(h) {
     var g = new THREE.Group();
+    if (WS) { var wm = WS.model('item:' + h.kind); if (wm) { g.add(wm); return g; } }   /* a pack's Blender model stands in for the whole hand-built item */
     function add(geo, mat, x, y, z, rx, ry, rz) { var m = new THREE.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); m.rotation.set(rx || 0, ry || 0, rz || 0); g.add(m); return m; }
     if (h.kind === 'bat') { var bw = new THREE.MeshStandardMaterial({ color: 0xb98a4a, roughness: 0.6 }); add(new THREE.CylinderGeometry(0.034, 0.022, 0.72, 10), bw, 0, 0.44, 0); add(new THREE.CylinderGeometry(0.024, 0.024, 0.16, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }), 0, 0.08, 0); add(new THREE.CylinderGeometry(0.032, 0.032, 0.02, 10), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), 0, 0.0, 0); add(new THREE.SphereGeometry(0.036, 10, 8), bw, 0, 0.81, 0); }
     if (h.kind === 'cigs') { var CK = CIG_SKUS[h.sku], ctn = h.n > 2; add(new THREE.BoxGeometry(ctn ? 0.3 : 0.06, ctn ? 0.1 : 0.09, ctn ? 0.16 : 0.025), new THREE.MeshStandardMaterial({ color: CK.col, roughness: 0.6 }), 0, 0.05, 0); add(new THREE.BoxGeometry(ctn ? 0.302 : 0.062, 0.03, ctn ? 0.162 : 0.027), new THREE.MeshStandardMaterial({ color: CK.top, roughness: 0.6 }), 0, ctn ? 0.07 : 0.08, 0); }
@@ -4693,7 +4762,19 @@
     else if (h.kind === 'harvest') { var st = strainById(h.strain); for (var k = 0; k < 6; k++) add(new THREE.IcosahedronGeometry(0.035 + Math.random() * 0.02, 1), new THREE.MeshStandardMaterial({ color: st.bud, roughness: 1 }), (Math.random() - 0.5) * 0.08, k * 0.035 - 0.08, (Math.random() - 0.5) * 0.06); add(new THREE.PlaneGeometry(0.14, 0.26), MAT.leaf, 0.04, -0.02, 0.02, -0.5, 0.4, 0); add(new THREE.PlaneGeometry(0.14, 0.26), MAT.leaf, -0.05, 0.0, -0.02, -0.4, -0.6, 0); }
     else if (h.kind === 'jar') { add(new THREE.CylinderGeometry(0.06, 0.06, 0.14, 14), MAT.jar); add(new THREE.CylinderGeometry(0.065, 0.065, 0.02, 14), MAT.jarLid, 0, 0.08, 0); add(new THREE.CylinderGeometry(0.05, 0.05, 0.1 * clamp(h.grams / 24, 0.3, 1), 10), new THREE.MeshStandardMaterial({ color: strainById(h.strain || 'sunflower').bud, roughness: 1 }), 0, -0.06 + 0.05 * clamp(h.grams / 24, 0.3, 1), 0); }
     else if (h.kind === 'cookies') { for (var ck = 0; ck < Math.min(h.n, 6); ck++) add(new THREE.CylinderGeometry(0.045, 0.045, 0.012, 12), new THREE.MeshStandardMaterial({ color: 0xb5763a, roughness: 0.9 }), (ck % 3) * 0.06 - 0.06, Math.floor(ck / 3) * 0.015, 0, 0, ck * 0.4, 0); add(new THREE.BoxGeometry(0.2, 0.01, 0.1), new THREE.MeshStandardMaterial({ color: 0xf5f5f0 }), 0, -0.012, 0); }
-    else if (h.kind === 'joints') { for (var j = 0; j < Math.min(h.n, 5); j++) add(new THREE.CylinderGeometry(0.006, 0.0045, 0.1, 6), new THREE.MeshStandardMaterial({ color: 0xf5f0e0 }), (j - 2) * 0.014, 0, 0, 0.2, 0, 0.1); if (h.n > 5) add(new THREE.BoxGeometry(0.09, 0.03, 0.05), new THREE.MeshStandardMaterial({ color: 0x2a2a2a }), 0, -0.04, 0); }
+    else if (h.kind === 'joints') {
+      // a joint is a tapered cone of paper, not a stick: card roach, a body that widens, a twisted tail and a scorched tip
+      var paperM = new THREE.MeshStandardMaterial({ color: 0xf7f3e6, roughness: 0.95 }), roachM = new THREE.MeshStandardMaterial({ color: 0xc19a63, roughness: 0.9 }), ashM = new THREE.MeshStandardMaterial({ color: 0x3a3330, roughness: 1 });
+      var jn = Math.min(h.n, 5);
+      for (var j = 0; j < jn; j++) {
+        var jg = new THREE.Group(); jg.position.set((j - (jn - 1) / 2) * 0.017, (j % 2) * 0.005, (j % 3) * 0.005); jg.rotation.set(0.16, (j - 2) * 0.06, 0.09 + (j % 2) * 0.04); g.add(jg);
+        var jb = new THREE.Mesh(new THREE.CylinderGeometry(0.0074, 0.005, 0.084, 8), paperM); jb.position.y = 0.012; jg.add(jb);
+        var jr = new THREE.Mesh(new THREE.CylinderGeometry(0.0051, 0.0051, 0.02, 8), roachM); jr.position.y = -0.04; jg.add(jr);
+        var jt = new THREE.Mesh(new THREE.ConeGeometry(0.0074, 0.017, 8), paperM); jt.position.y = 0.0625; jg.add(jt);
+        var ja = new THREE.Mesh(new THREE.CylinderGeometry(0.0076, 0.0076, 0.004, 8), ashM); ja.position.y = 0.0535; jg.add(ja);
+      }
+      if (h.n > 5) { add(new THREE.BoxGeometry(0.098, 0.032, 0.056), new THREE.MeshStandardMaterial({ color: 0x1f2a22, roughness: 0.8 }), 0, -0.052, 0); add(new THREE.BoxGeometry(0.1, 0.009, 0.058), new THREE.MeshStandardMaterial({ color: 0x6fdc8c, roughness: 0.55 }), 0, -0.037, 0); }
+    }
     else if (h.kind === 'bags') { for (var b = 0; b < Math.min(h.n, 3); b++) add(new THREE.BoxGeometry(0.08, 0.06, 0.02), new THREE.MeshStandardMaterial({ color: 0x9ff0b5, transparent: true, opacity: 0.85 }), 0, b * 0.025, -b * 0.01); }
     return g;
   }
@@ -5550,6 +5631,8 @@
   shop(); dustList(); var offlineDust = Math.min(4, Math.floor((now() - (S.lastDust || now())) / 300000)); if (offlineDust > 0) { spawnDust(offlineDust); S.lastDust = now(); }
   buildStatic(); buildProps(); buildDecor(); fixtureFromBuild('deskBoard', 'desk screen', 0, buildDeskBoard); buildShopControls(); buildBroom(); buildUpstairs(); buildVipWing(); buildBasement(); buildAllProps(); buildSwitches(); buildStreet(); buildCity(); buildExpansion(); buildNpc(); buildGuard(); buildWorker(); syncKeyHook(); applyFixtures(); introDraw(); applyShopState(); syncDust(); applySettings(); resize(); updateDayNight();
   runHooks(hooks.boot);
+  // Blender models come out of IndexedDB after boot, so whatever is in hand is rebuilt once they land
+  if (WS) { WS.onModelsReady(function () { if (WS.hasModels()) { heldKey = ' '; world.dirty = true; } }); WS.loadModels(); }
   camera.position.copy(player.pos); camera.rotation.set(0, player.yaw, 0);
 
   // start screen

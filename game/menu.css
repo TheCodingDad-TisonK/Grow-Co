@@ -85,3 +85,24 @@
 /* brand lockup on the splash: the wordmark is wide, so it does not take the badge treatment */
 .rf-splash-inner img.rf-splash-logo { width: min(520px, 72vw); height: auto; border-radius: 0; box-shadow: none; }
 .rf-menu-card img { box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+
+/* ── Workshop: content packs ─────────────────────────────────── */
+.rf-pill { background: var(--green, #6fdc8c); color: #07120b; border-radius: 999px; padding: 0 6px; font-size: 11px; font-family: var(--mono, monospace); margin-left: 4px; }
+.rf-ws { text-align: left; max-height: 62vh; overflow-y: auto; padding-right: 6px; }
+.rf-ws-lead { color: #8fa596; font-size: 12.5px; line-height: 1.6; margin: 0 0 12px; }
+.rf-ws-msg { background: rgba(111,220,140,.1); border: 1px solid rgba(111,220,140,.4); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; }
+.rf-ws-head { font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: #8fa596; margin: 16px 0 8px; font-weight: 600; }
+.rf-ws-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 8px; }
+.rf-ws-card { display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,.03); border: 1px solid rgba(120,200,140,.16); border-radius: 10px; padding: 10px; }
+.rf-ws-card.on { border-color: rgba(111,220,140,.55); background: rgba(111,220,140,.07); }
+.rf-ws-ico { font-size: 24px; line-height: 1; flex: none; width: 30px; text-align: center; }
+.rf-ws-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rf-ws-body b { font-size: 13.5px; }
+.rf-ws-body small { color: #9fb4a6; font-size: 11.5px; line-height: 1.45; }
+.rf-ws-meta { color: #6f8578; font-size: 10.5px; font-family: var(--mono, monospace); margin-top: 2px; }
+.rf-ws-act { flex: none; display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+.rf-ws-act button { min-width: 62px; }
+.rf-ws-import { background: rgba(255,255,255,.03); border: 1px solid rgba(120,200,140,.16); border-radius: 10px; padding: 12px; }
+.rf-ws-import p { color: #9fb4a6; font-size: 12.5px; line-height: 1.65; margin: 0 0 10px; }
+.rf-ws-import b { color: #e8f1ea; }
+.rf-ws-code { background: #0b120e; border: 1px solid rgba(120,200,140,.2); border-radius: 8px; padding: 10px 12px; font-family: var(--mono, monospace); font-size: 11px; line-height: 1.5; color: #b9d3c2; overflow-x: auto; max-height: 260px; }

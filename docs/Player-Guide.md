@@ -13,6 +13,7 @@ This page is generated from `game/guide.js`, the same text the game shows in its
 - [The extraction lab](#the-extraction-lab)
 - [The town, the car and the map](#the-town-the-car-and-the-map)
 - [Deliveries: the burner and the tablet](#deliveries-the-burner-and-the-tablet)
+- [The Workshop: content packs](#the-workshop-content-packs)
 - [Upstairs and the roof](#upstairs-and-the-roof)
 - [The keyring, doors and locking up](#the-keyring-doors-and-locking-up)
 - [Making the place yours](#making-the-place-yours)
@@ -165,6 +166,27 @@ It sits on its dock in the office and wakes up the moment you hold the **tobacco
 The tablet lists up to four **RF Smoking** orders at once: an address, how many packs of which cigarette, what it pays and how long is left. Load the packs into the car at your bay (**Shift + E** on the car), drive the round, and pull up at the amber marker. **You do not have to get out**: stop within a few metres and the dashboard offers the drop, and **E** hands it over from the driver's seat. The packs come **out of the boot**, so you never carry them. The money is **invoiced to the bank**, no heat, and each drop is a point of reputation. Jobs further out pay more for the drive.
 
 Every drop is marked on the ground with a coloured ring under its beacon, and the numbers on the board match the numbers on the **map** (M). Amber is a tablet drop, green a burner one. Miss a deadline and you lose a point of reputation. A hired **driver** clears jobs himself after about a minute, taking a cut of the tablet ones.
+
+## The Workshop: content packs
+
+The **Workshop** is on the main menu. Content packs change what the game has in it: more strains to grow, more lamps and tents, more to sell off the counter, more town, a different car, snow at Christmas or fireworks at New Year. Turn one on and the shop reloads. Your save is not touched, because a pack only adds things you can then go and buy.
+
+**Bundles** switch several packs on at once. Packs marked one at a time (the balance, seasonal and vehicle ones) replace each other, so you always have exactly one of each.
+Making your own
+A pack is a single **.json** file. Use **Save a starter .json** in the Workshop to get one to edit, then **Import a pack** to bring it in. It can add:
+
+- **strains**: a whole new plant, with its cost, grow time, yield, strength, unlock level and colours.
+- **lights** and **tents** for the grow room.
+- **supplies**: anything you order at the laptop, including things for the counter display or the vending machine.
+- **places**: a building and a shopfront anywhere in town, with either a counter that sells supplies at a discount, or a service you pay for that moves your heat and reputation. The grocery and the cinema in City Life are nothing more than that.
+- **city**: how much bigger the map is, and how many extra blocks fill it.
+- **vehicle**: the paint, top speed and boot size of the car in your bay.
+- **tune**: what seeds and upgrades cost, and how busy the shop is.
+
+Models from Blender
+Make the object in Blender, then **File, Export, glTF 2.0** and choose **glTF Binary (.glb)**. One metre in Blender is one metre in the game, +Y is up, and the object should sit on the origin. Name the slot it replaces in the pack's **models** section, for example **item:joints** or **item:can**, and select the .json and the .glb files together when you import. The model then stands in for whatever the game would have built by hand.
+
+Packs that ship with the game cannot be overwritten, so give yours your own id.
 
 ## Upstairs and the roof
 

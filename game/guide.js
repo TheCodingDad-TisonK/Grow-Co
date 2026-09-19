@@ -59,6 +59,21 @@ window.RF_GUIDE = [
     '<h4>📋 The tablet</h4><p>It sits on its dock in the office and wakes up the moment you hold the <b>tobacco licence</b>. Press <b>E</b> to take it; carry it into the car and it drops into the dash cradle, so it rides the round without eating a hotbar slot. Press <b>E</b> on the dock again to put it back.</p>' +
     '<p>The tablet lists up to four <b>RF Smoking</b> orders at once: an address, how many packs of which cigarette, what it pays and how long is left. Load the packs into the car at your bay (<b>Shift + E</b> on the car), drive the round, and pull up at the amber marker. <b>You do not have to get out</b>: stop within a few metres and the dashboard offers the drop, and <b>E</b> hands it over from the driver\'s seat. The packs come <b>out of the boot</b>, so you never carry them. The money is <b>invoiced to the bank</b>, no heat, and each drop is a point of reputation. Jobs further out pay more for the drive.</p>' +
     '<p>Every drop is marked on the ground with a coloured ring under its beacon, and the numbers on the board match the numbers on the <b>map</b> (M). Amber is a tablet drop, green a burner one. Miss a deadline and you lose a point of reputation. A hired <b>driver</b> clears jobs himself after about a minute, taking a cut of the tablet ones.</p>' },
+  { id: 'workshop', icon: '🧩', title: 'The Workshop: content packs', html:
+    '<p>The <b>Workshop</b> is on the main menu. Content packs change what the game has in it: more strains to grow, more lamps and tents, more to sell off the counter, more town, a different car, snow at Christmas or fireworks at New Year. Turn one on and the shop reloads. Your save is not touched, because a pack only adds things you can then go and buy.</p>' +
+    '<p><b>Bundles</b> switch several packs on at once. Packs marked <i>one at a time</i> (the balance, seasonal and vehicle ones) replace each other, so you always have exactly one of each.</p>' +
+    '<h4>Making your own</h4>' +
+    '<p>A pack is a single <b>.json</b> file. Use <b>Save a starter .json</b> in the Workshop to get one to edit, then <b>Import a pack</b> to bring it in. It can add:</p>' +
+    '<ul><li><b>strains</b>: a whole new plant, with its cost, grow time, yield, strength, unlock level and colours.</li>' +
+    '<li><b>lights</b> and <b>tents</b> for the grow room.</li>' +
+    '<li><b>supplies</b>: anything you order at the laptop, including things for the counter display or the vending machine.</li>' +
+    '<li><b>places</b>: a building and a shopfront anywhere in town, with either a counter that sells supplies at a discount, or a service you pay for that moves your heat and reputation. The grocery and the cinema in City Life are nothing more than that.</li>' +
+    '<li><b>city</b>: how much bigger the map is, and how many extra blocks fill it.</li>' +
+    '<li><b>vehicle</b>: the paint, top speed and boot size of the car in your bay.</li>' +
+    '<li><b>tune</b>: what seeds and upgrades cost, and how busy the shop is.</li></ul>' +
+    '<h4>Models from Blender</h4>' +
+    '<p>Make the object in Blender, then <b>File, Export, glTF 2.0</b> and choose <b>glTF Binary (.glb)</b>. One metre in Blender is one metre in the game, +Y is up, and the object should sit on the origin. Name the slot it replaces in the pack\'s <b>models</b> section, for example <b>item:joints</b> or <b>item:can</b>, and select the .json and the .glb files together when you import. The model then stands in for whatever the game would have built by hand.</p>' +
+    '<p>Packs that ship with the game cannot be overwritten, so give yours your own id.</p>' },
   { id: 'upstairs', icon: '🏠', title: 'Upstairs and the roof', html:
     '<ul><li>The <b>office stairs</b> lead to your flat: kitchen, table, couch and TV, bed. Eating gives a speed buff; the bed passes the night.</li><li>The <b>lobby stairs</b> lead to the <b>connoisseur lounge</b>. With the connoisseur permit, guests book it, walk up on their own and wait to be served quality 70 or better. They pay triple and tip.</li><li>A ladder in the flat climbs to the <b>roof greenhouse</b>: six free beds that grow in daylight only.</li></ul>' },
   { id: 'keys', icon: '🔑', title: 'The keyring, doors and locking up', html:
