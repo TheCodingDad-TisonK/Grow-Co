@@ -2662,7 +2662,7 @@
     gun:  { x1: 48, x2: 58, z1: -6, z2: 2, spawn: [53, 0.8, 0], exit: { x: -8, z: 25.4, floor: 0, yaw: 0 }, name: 'Iron & Oak Arms' }
   };
   var exp = { zoneLight: null, zone: '', wx: null, wxKind: '', beacon: null, dropHit: null, getaway: null, opT: 0, heatBand: 0, roofBeds: [], roofSigns: [], genLed: null };
-  function xs() { if (!S.x || typeof S.x !== 'object') S.x = {}; var X = S.x; if (typeof X.heat !== 'number') X.heat = 0; if (!X.staff) X.staff = { driver: false, operator: false, night: false }; if (!X.lab) X.lab = { job: null, out: { cart: 0, hash: 0, gummy: 0, choc: 0 } }; if (typeof X.lab.out.hash !== 'number') X.lab.out.hash = 0; if (!X.roof) X.roof = [0, 1, 2, 3, 4, 5].map(function () { return { stage: 'empty', t: 0 }; }); if (!X.garage) X.garage = {}; if (!X.weather) X.weather = { kind: 'clear', until: 0 }; if (!X.bagline) X.bagline = { on: false, t: 0 }; if (!Array.isArray(X.jobs)) X.jobs = []; if (!X.mach) X.mach = { vendDoor: false, coffDoor: false, tray: [], cup: 0 }; if (!X.jobT) X.jobT = { ph: 120, tab: 60 }; if (!X.tablet) X.tablet = 'dock'; if (!S.car) carState(); if (!S.car.cigs) S.car.cigs = {}; return X; }
+  function xs() { if (!S.x || typeof S.x !== 'object') S.x = {}; var X = S.x; if (typeof X.heat !== 'number') X.heat = 0; if (!X.staff) X.staff = { driver: false, operator: false, night: false }; if (!X.lab) X.lab = { job: null, out: { cart: 0, hash: 0, gummy: 0, choc: 0 } }; if (typeof X.lab.out.hash !== 'number') X.lab.out.hash = 0; if (!X.roof) X.roof = [0, 1, 2, 3, 4, 5].map(function () { return { stage: 'empty', t: 0 }; }); if (!X.garage) X.garage = {}; if (!X.weather) X.weather = { kind: 'clear', until: 0 }; if (!X.bagline) X.bagline = { on: false, t: 0 }; if (!Array.isArray(X.jobs)) X.jobs = []; if (!X.mach) X.mach = { vendDoor: false, coffDoor: false, tray: [], cup: 0 }; if (typeof X.mach.fridge !== 'number') X.mach.fridge = 6; if (typeof X.mach.fridgeDoor !== 'boolean') X.mach.fridgeDoor = false; if (typeof X.mach.brew !== 'number') X.mach.brew = 0; if (!X.jobT) X.jobT = { ph: 120, tab: 60 }; if (!X.tablet) X.tablet = 'dock'; if (!S.car) carState(); if (!S.car.cigs) S.car.cigs = {}; return X; }
   function powerOn() { return !!S.upgrades.generator || now() > (xs().blackoutUntil || 0); }
   function season() { return ['Spring', 'Summer', 'Autumn', 'Winter'][Math.floor(((S.day || 1) - 1) / 7) % 4]; }
   function weekend() { var d = (S.day || 1) % 7; return d === 6 || d === 0; }
@@ -4320,13 +4320,29 @@
     c.hit(2.0, 1.2, 1.0, 0, 0.6, 0, { kind: 'couch', seat: 'sofa' });
   }, after: function (c, P) { var v = propWorld('sofa', 0, 0.1); world.sofaSeat = { x: v.x, z: v.z, yaw: P.rot * Math.PI / 2 - Math.PI }; } });
   defProp('fridge', { label: 'drinks fridge', x: 3.3, z: -1.5, rot: 0, build: function (c) {
-    var shellM = colorMat(0xe8e8ee, 0.4, 0.2); c.box(0.8, 1.9, 0.7, shellM, 0, 0.95, 0, { solid: true }); c.box(0.8, 0.2, 0.7, MAT.black, 0, 0.1, 0);
-    c.box(0.7, 0.16, 0.02, MAT.black, 0, 1.78, 0.36, { cast: false }); c.sign(['ICE COLD'], 0.5, 0.12, 0, 1.78, 0.372, 0, { size: 44, bold: true, bg: 'rgba(0,0,0,0)', titleColor: '#3ad0ff', line: 'rgba(0,0,0,0)' });
-    var fdoor = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 1.42), new THREE.MeshPhysicalMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.3, roughness: 0.05 })); fdoor.position.set(0, 0.96, 0.36); c.add(fdoor);
-    c.box(0.66, 0.03, 0.03, MAT.chrome, 0, 1.68, 0.36); c.box(0.66, 0.03, 0.03, MAT.chrome, 0, 0.24, 0.36); c.box(0.03, 1.46, 0.03, MAT.chrome, -0.33, 0.96, 0.36); c.box(0.03, 1.46, 0.03, MAT.chrome, 0.33, 0.96, 0.36); c.box(0.025, 0.5, 0.05, MAT.chrome, 0.28, 0.96, 0.4);
-    for (var r = 0; r < 4; r++) { c.box(0.6, 0.02, 0.55, colorMat(0xc8ccd2, 0.5, 0.4), 0, 0.36 + r * 0.36, 0, { cast: false }); for (var cI = 0; cI < 4; cI++) { var col = [0xff6b35, 0x3ad0ff, 0x6fdc8c, 0xffd166][(r + cI) % 4]; c.cyl(0.035, 0.035, 0.13, colorMat(col, 0.35, 0.3), -0.22 + cI * 0.145, 0.44 + r * 0.36, 0.08, 10); c.cyl(0.03, 0.03, 0.005, MAT.chrome, -0.22 + cI * 0.145, 0.51 + r * 0.36, 0.08, 10); if (r < 2) c.cyl(0.035, 0.035, 0.13, colorMat(col, 0.35, 0.3), -0.22 + cI * 0.145, 0.44 + r * 0.36, -0.12, 10); } }
-    c.light(new THREE.PointLight(0xbfe8ff, 0.5, 3), 0, 1.4, 0.5); c.box(0.5, 0.02, 0.02, glowMat(0xdff4ff, 1.2), 0, 1.62, 0.3, { cast: false });
-  } });
+    // a shell with the front open, a hinged glass door, and shelves holding what is actually in it
+    var shellM = colorMat(0xe8e8ee, 0.4, 0.2), inner = colorMat(0xdfe6ea, 0.8), chrome = MAT.chrome;
+    c.box(0.8, 1.9, 0.06, inner, 0, 0.95, -0.32, { cast: false });
+    c.box(0.06, 1.9, 0.7, shellM, -0.37, 0.95, 0);
+    c.box(0.06, 1.9, 0.7, shellM, 0.37, 0.95, 0);
+    c.box(0.8, 0.06, 0.7, shellM, 0, 1.87, 0, { cast: false });
+    c.box(0.8, 0.22, 0.7, MAT.black, 0, 0.11, 0);
+    c.solid(-0.42, 0.42, -0.36, 0.36);
+    c.box(0.7, 0.16, 0.02, MAT.black, 0, 1.78, 0.35, { cast: false });
+    c.sign(['ICE COLD'], 0.46, 0.11, 0, 1.78, 0.366, 0, { size: 34, bold: true, bg: 'rgba(0,0,0,0)', titleColor: '#3ad0ff', line: 'rgba(0,0,0,0)' });
+    c.box(0.5, 0.02, 0.02, glowMat(0xdff4ff, 1.2), 0, 1.66, 0.28, { cast: false });
+    var door = new THREE.Group(); door.position.set(-0.35, 0.96, 0.33); c.add(door); door.userData.fridgeDoor = true;
+    function fb(w, h2, d2, m, x, y, z, noCast) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h2, d2), m); b.position.set(x, y, z); b.castShadow = !noCast; door.add(b); return b; }
+    fb(0.035, 1.5, 0.05, chrome, 0, 0, 0); fb(0.035, 1.5, 0.05, chrome, 0.7, 0, 0);
+    fb(0.74, 0.035, 0.05, chrome, 0.35, 0.735, 0, true); fb(0.74, 0.035, 0.05, chrome, 0.35, -0.735, 0, true);
+    var gl = new THREE.Mesh(new THREE.PlaneGeometry(0.67, 1.44), new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.2, roughness: 0.02, side: THREE.DoubleSide }));
+    gl.position.set(0.35, 0, 0.004); gl.castShadow = false; door.add(gl);
+    var hdl = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.42, 0.05), chrome); hdl.position.set(0.66, 0, 0.05); door.add(hdl);
+    var shelves = new THREE.Group(); c.add(shelves); shelves.userData.fridgeShelves = true; shelves.userData.slots = [];
+    for (var r = 0; r < 4; r++) { var sh = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.018, 0.55), colorMat(0xc8ccd2, 0.5, 0.4)); sh.position.set(0, 0.38 + r * 0.36, 0); sh.castShadow = false; shelves.add(sh); }
+    c.light(new THREE.PointLight(0xbfe8ff, 0.55, 2.6), 0, 1.45, 0.15);
+    c.hit(0.82, 1.9, 0.72, 0, 0.95, 0, { kind: 'fridge' });
+  }, after: function () { syncFridge(); } });
   defProp('coffeeBar', { label: 'coffee bar', x: 1.2, z: -1.7, rot: 0, build: function (c) {
     c.box(1.2, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(1.26, 0.04, 0.56, MAT.counterTop, 0, 0.92, 0, { cast: false }); c.box(1.2, 0.06, 0.02, MAT.chrome, 0, 0.03, 0.25, { cast: false });
     drawer(c, 0.5, 0.2, 0.02, -0.3, 0.7, 0.24); drawer(c, 0.5, 0.2, 0.02, 0.3, 0.7, 0.24);
@@ -4416,12 +4432,27 @@
   defProp('lobbyCoffee', { label: 'lobby coffee machine', x: ROOM.x - 0.4, z: 8.1, rot: 3, build: function (c) {
     if (!S.upgrades.lobby) return;   // stand + machine appear with the upgrade
     c.box(0.6, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(0.66, 0.04, 0.56, MAT.counterTop, 0, 0.92, 0, { cast: false });
-    var mach = colorMat(0x1c1c22, 0.4, 0.3); c.box(0.3, 0.38, 0.32, mach, 0, 1.13, -0.05); c.box(0.26, 0.06, 0.1, MAT.chrome, 0, 1.0, 0.13); c.box(0.2, 0.02, 0.14, MAT.chrome, 0, 0.95, 0.1, { cast: false }); c.cyl(0.02, 0.02, 0.05, MAT.chrome, -0.03, 1.05, 0.18, 8);
-    c.box(0.08, 0.04, 0.02, glowMat(0xff3030, 1.2), -0.06, 1.3, 0.12, { cast: false }); c.box(0.12, 0.06, 0.02, MAT.screen, 0.07, 1.24, 0.12, { cast: false });
-    for (var k = 0; k < 3; k++) c.cyl(0.035, 0.028, 0.09, colorMat(0xf5f5f0, 0.5), 0.2, 0.965 + k * 0.03, -0.1, 10);   // stack of cups
-    c.box(0.5, 0.02, 0.3, MAT.wood, 0, 0.5, 0, { cast: false });
-    c.hit(0.7, 1.5, 0.6, 0, 0.75, 0, { kind: 'lobbyCoffee' });
-  } });
+    var body = colorMat(0x1c1c22, 0.4, 0.3), chrome = MAT.chrome;
+    c.box(0.34, 0.46, 0.34, body, 0, 1.17, -0.04);
+    c.box(0.3, 0.05, 0.12, chrome, 0, 1.0, 0.13, { cast: false });                 /* the group head */
+    c.box(0.22, 0.015, 0.16, chrome, 0, 0.955, 0.1, { cast: false });              /* drip tray */
+    c.box(0.2, 0.012, 0.14, colorMat(0x3a3f46, 0.5), 0, 0.963, 0.1, { cast: false });
+    c.box(0.09, 0.05, 0.02, glowMat(0x6fdc8c, 1.3), -0.09, 1.34, 0.135, { cast: false });
+    c.box(0.14, 0.07, 0.02, MAT.screen, 0.06, 1.3, 0.135, { cast: false });
+    // the bean hopper on top: a clear cone you can see the level in, with a lid that lifts
+    var hop = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.07, 0.17, 14, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.28, roughness: 0.05, side: THREE.DoubleSide }));
+    hop.position.set(0, 1.49, -0.04); hop.castShadow = false; c.add(hop);
+    var lid = new THREE.Group(); lid.position.set(0, 1.575, -0.15); c.add(lid); lid.userData.coffLid = true;
+    var lm = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.018, 14), body); lm.position.set(0, 0, 0.11); lid.add(lm);
+    var beans = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.065, 0.12, 12), colorMat(0x4a2a12, 1));
+    beans.position.set(0, 1.46, -0.04); beans.castShadow = false; c.add(beans); beans.userData.coffBeans = true;
+    // the cup stack beside it, and the cup that lands under the spout
+    var cups = new THREE.Group(); cups.position.set(0.21, 0.96, -0.08); c.add(cups); cups.userData.coffCups = true; cups.userData.slots = [];
+    var brewG = new THREE.Group(); brewG.position.set(0, 0.97, 0.1); c.add(brewG); brewG.userData.coffBrew = true;
+    c.hit(0.72, 1.6, 0.62, 0, 0.8, 0, { kind: 'lobbyCoffee' });
+    var cupHit = c.hit(0.24, 0.2, 0.22, 0, 1.02, 0.12, { kind: 'coffeeCup' }); cupHit.userData.coffCupHit = true;   /* parked out of the world while there is no cup, so it never steals the machine's own prompt */
+    c.placard(['COFFEE', 'help yourself'], 0.42, 0.15, 0, 1.62, 0.22, { titleColor: '#ffc857' });
+  }, after: function () { syncCoffee(); } });
   defProp('vending', { label: 'vending machine', x: ROOM.x - 0.5, z: 6.8, rot: 3, build: function (c) {
     var shell = colorMat(0x8f1f1a, 0.45, 0.25), dark = colorMat(0x1a1d21, 0.6), steel = colorMat(0x9aa0a6, 0.35, 0.7), inner = colorMat(0x23272c, 0.8);
     // a shell, not a block: the front-left is left open so you can see the stock behind the glass
@@ -4768,18 +4799,18 @@
   // ── Hands & carrying ──────────────────────────────────────────────
   // Everything physical goes through the hands: you pick things up, carry
   // them across the room and use them on something. `S.held` persists.
-  var HELD_LABEL = { keys: 'Keyring', crate: 'Crate', cookies: 'Cookies', bat: 'Baseball bat', cigs: 'Cigarettes', tablet: 'Delivery tablet', can2: 'Cold drink', pepper: 'Pepper spray', taser: 'Taser', pistol: 'Pistol', shotgun: 'Shotgun', can: 'Watering can', soil: 'Bag of soil', nutrients: 'Nutrients', remedy: 'Pest spray', seed: 'Seed', harvest: 'Fresh harvest', jar: 'Curing jar', joints: 'Joints', bags: 'Eighth bags' };
+  var HELD_LABEL = { keys: 'Keyring', crate: 'Crate', cookies: 'Cookies', bat: 'Baseball bat', cigs: 'Cigarettes', tablet: 'Delivery tablet', can2: 'Cold drink', cup2: 'Coffee', pepper: 'Pepper spray', taser: 'Taser', pistol: 'Pistol', shotgun: 'Shotgun', can: 'Watering can', soil: 'Bag of soil', nutrients: 'Nutrients', remedy: 'Pest spray', seed: 'Seed', harvest: 'Fresh harvest', jar: 'Curing jar', joints: 'Joints', bags: 'Eighth bags' };
   // the hotbar: S.held reads and writes the active slot, so every older code path keeps working
   function bindHotbar() { if (!Array.isArray(S.hotbar) || S.hotbar.length !== 6) { var old = S.hotbar; S.hotbar = [null, null, null, null, null, null]; if (Array.isArray(old)) old.slice(0, 6).forEach(function (x, i) { S.hotbar[i] = x || null; }); } if (typeof S.slot !== 'number') S.slot = 0; var legacy = Object.prototype.hasOwnProperty.call(S, 'held') ? S.held : undefined; if (legacy && typeof legacy === 'object') { S.hotbar[S.slot] = legacy; } try { delete S.held; } catch (e) {} Object.defineProperty(S, 'held', { get: function () { return S.hotbar[S.slot] || null; }, set: function (v) { S.hotbar[S.slot] = v || null; }, enumerable: false, configurable: true }); }
   function held() { return S.hotbar && S.hotbar[S.slot] || null; }
   function hotbarFull() { return S.hotbar.every(function (x) { return !!x; }); }
   function freeSlot() { if (!S.hotbar[S.slot]) return S.slot; for (var i = 0; i < 6; i++) if (!S.hotbar[i]) return i; return -1; }
   function selectSlot(i) { S.slot = ((i % 6) + 6) % 6; hud(); if (focus) setFocus(focus); }
-  function slotIcon(it) { if (!it) return ''; if (it.kind === 'seed') return strainById(it.strain).emoji; if (it.kind === 'crate') return itemIcon(it.item); return { can: '💧', soil: '🪴', nutrients: '🧪', remedy: '🧴', harvest: '🌿', jar: '🏺', joints: '🚬', bags: '🛍️', cookies: '🍪', broom: '🧹', snack: '🥪', bat: '🏏', cashbag: '💰', keys: '🔑', pepper: '🌶️', taser: '⚡', pistol: '🔫', shotgun: '💥', cigs: '🚬', tablet: '📋', can2: '🥤' }[it.kind] || '📦'; }
+  function slotIcon(it) { if (!it) return ''; if (it.kind === 'seed') return strainById(it.strain).emoji; if (it.kind === 'crate') return itemIcon(it.item); return { can: '💧', soil: '🪴', nutrients: '🧪', remedy: '🧴', harvest: '🌿', jar: '🏺', joints: '🚬', bags: '🛍️', cookies: '🍪', broom: '🧹', snack: '🥪', bat: '🏏', cashbag: '💰', keys: '🔑', pepper: '🌶️', taser: '⚡', pistol: '🔫', shotgun: '💥', cigs: '🚬', tablet: '📋', can2: '🥤', cup2: '☕' }[it.kind] || '📦'; }
   function slotLabel(it) { if (!it) return ''; if (it.kind === 'joints' || it.kind === 'bags' || it.kind === 'cookies') return it.n + ' ' + kindName(it.kind, it.n); if (it.kind === 'crate') return it.n + '× ' + itemName(it.item).split(' ')[0]; if (it.kind === 'harvest') return gram(it.grams); if (it.kind === 'jar') return gram(it.grams); if (it.kind === 'seed') return 'seed'; return (HELD_LABEL[it.kind] || it.kind).split(' ')[0].toLowerCase(); }
   // how many a Shift-pickup grabs: what the current customer still needs, else up to five
   function pileLot(item, h, sid) { var have = sid ? lotOf(item, sid).n : S.pkg[item].n; var want = S.customer && S.customer.arrived && S.customer.want === item ? Math.max(1, S.customer.qty - (S.customer.given ? S.customer.given.n : 0) - (h ? h.n : 0)) : 5; return Math.min(have, want); }
-  function heldLabel() { var h = held(); if (!h) return ''; if (h.kind === 'seed') return strainById(h.strain).emoji + ' ' + strainById(h.strain).name + ' seed'; if (h.kind === 'joints') return '🚬 ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + 'joint' + (h.n > 1 ? 's' : '') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'bags') return '🛍️ ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + 'bag' + (h.n > 1 ? 's' : '') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'harvest') return '🌿 ' + gram(h.grams) + ' fresh ' + strainById(h.strain).name; if (h.kind === 'crate') return '📦 ' + h.n + ' × ' + itemName(h.item); if (h.kind === 'cookies') return '🍪 ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + (h.n > 1 ? 'cookies' : 'cookie') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'cashbag') return '💰 ' + money(h.amount); if (h.kind === 'keys') return '🔑 Keyring · Shift+E at a door to lock or unlock it'; if (h.kind === 'bat') return '🏏 Baseball bat · click to swing'; if (WEAPONS[h.kind]) return weaponLabel(h.kind); if (h.kind === 'cigs') return '🚬 ' + h.n + ' × ' + CIG_SKUS[h.sku].name; if (h.kind === 'jar') return '🏺 jar · ' + gram(h.grams) + ' q' + Math.round(h.quality); return { can: '💧 Watering can', soil: '🪴 Bag of soil', nutrients: '🧪 Nutrients', remedy: '🧴 Pest spray', broom: '🧹 Broom', snack: '🥪 Snack', can2: '🥤 Cold drink' }[h.kind] || h.kind; }
+  function heldLabel() { var h = held(); if (!h) return ''; if (h.kind === 'seed') return strainById(h.strain).emoji + ' ' + strainById(h.strain).name + ' seed'; if (h.kind === 'joints') return '🚬 ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + 'joint' + (h.n > 1 ? 's' : '') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'bags') return '🛍️ ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + 'bag' + (h.n > 1 ? 's' : '') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'harvest') return '🌿 ' + gram(h.grams) + ' fresh ' + strainById(h.strain).name; if (h.kind === 'crate') return '📦 ' + h.n + ' × ' + itemName(h.item); if (h.kind === 'cookies') return '🍪 ' + h.n + ' ' + (h.strain ? strainById(h.strain).name + ' ' : '') + (h.n > 1 ? 'cookies' : 'cookie') + ' · q' + Math.round(h.qSum / h.n); if (h.kind === 'cashbag') return '💰 ' + money(h.amount); if (h.kind === 'keys') return '🔑 Keyring · Shift+E at a door to lock or unlock it'; if (h.kind === 'bat') return '🏏 Baseball bat · click to swing'; if (WEAPONS[h.kind]) return weaponLabel(h.kind); if (h.kind === 'cigs') return '🚬 ' + h.n + ' × ' + CIG_SKUS[h.sku].name; if (h.kind === 'jar') return '🏺 jar · ' + gram(h.grams) + ' q' + Math.round(h.quality); return { can: '💧 Watering can', soil: '🪴 Bag of soil', nutrients: '🧪 Nutrients', remedy: '🧴 Pest spray', broom: '🧹 Broom', snack: '🥪 Snack', can2: '🥤 Cold drink', cup2: '☕ Fresh coffee' }[h.kind] || h.kind; }
   var hands = new THREE.Group(); camera.add(hands); scene.add(camera); buildSmokeRig();
   var muzzle = new THREE.PointLight(0xffc36b, 0, 7); muzzle.position.set(0.25, -0.15, -0.9); camera.add(muzzle);
   var handSkin = new THREE.MeshStandardMaterial({ color: 0xe8b894, roughness: 0.9 });
@@ -4913,8 +4944,78 @@
     face.position.z = d / 2 + 0.001; G.add(face); return G;
   }
   // ── The machines: what is on the coils, the door that opens to refill, and the tray you reach into ──
-  var mach = { vendDoorT: 0, coffDoorT: 0, drops: [] };
+  var mach = { vendDoorT: 0, coffDoorT: 0, frDoorT: 0, brewT: 0, drops: [] };
   function machState() { var X = xs(); if (!X.mach) X.mach = { vendDoor: false, coffDoor: false, tray: [], cup: 0 }; if (!Array.isArray(X.mach.tray)) X.mach.tray = []; return X.mach; }
+  function fridgeParts() {
+    var inst = propInst.fridge; if (!inst) return null; var p = inst.g.userData.frParts;
+    if (!p || !p.door || !p.door.parent) { p = {}; inst.g.traverse(function (o) { if (o.userData.fridgeDoor) p.door = o; if (o.userData.fridgeShelves) p.shelves = o; }); inst.g.userData.frParts = p; }
+    return p.door ? p : null;
+  }
+  function coffParts() {
+    var inst = propInst.lobbyCoffee; if (!inst) return null; var p = inst.g.userData.cfParts;
+    if (!p || !p.cups || !p.cups.parent) { p = {}; inst.g.traverse(function (o) { if (o.userData.coffCups) p.cups = o; if (o.userData.coffBrew) p.brew = o; if (o.userData.coffLid) p.lid = o; if (o.userData.coffBeans) p.beans = o; if (o.userData.coffCupHit) p.cupHit = o; }); inst.g.userData.cfParts = p; }
+    return p.cups ? p : null;
+  }
+  function cupMesh(s2, full) {   // a paper cup, with a lid and a sleeve once it is poured
+    var G = new THREE.Group();
+    var paper = prodMat('cuppaper', function () { return new THREE.MeshStandardMaterial({ color: 0xf7f7f2, roughness: 0.85 }); });
+    G.add(new THREE.Mesh(new THREE.CylinderGeometry(0.035 * s2, 0.027 * s2, 0.095 * s2, 14), paper));
+    if (full) {
+      var lidM = prodMat('cuplid', function () { return new THREE.MeshStandardMaterial({ color: 0x3a3f46, roughness: 0.6 }); });
+      var l = new THREE.Mesh(new THREE.CylinderGeometry(0.037 * s2, 0.037 * s2, 0.012 * s2, 14), lidM); l.position.y = 0.052 * s2; G.add(l);
+      var sip = new THREE.Mesh(new THREE.CylinderGeometry(0.008 * s2, 0.008 * s2, 0.012 * s2, 8), lidM); sip.position.set(0.022 * s2, 0.06 * s2, 0); G.add(sip);
+      var slv = new THREE.Mesh(new THREE.CylinderGeometry(0.0365 * s2, 0.031 * s2, 0.04 * s2, 14, 1, true), prodMat('cupslv', function () { return new THREE.MeshBasicMaterial({ map: textTex(['GROW CO.'], 300, 110, { size: 44, bg: '#6d4f30', color: '#f4e8d2', titleColor: '#f4e8d2', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }); }));
+      slv.position.y = -0.006 * s2; G.add(slv);
+    }
+    return G;
+  }
+  function syncFridge() {
+    var p = fridgeParts(); if (!p || !p.shelves) return;
+    (p.shelves.userData.slots || []).forEach(function (m) { p.shelves.remove(m); });
+    p.shelves.userData.slots = [];
+    var n = Math.min(machState().fridge || 0, 16);
+    for (var i = 0; i < n; i++) {
+      var col = i % 4, row = Math.floor(i / 4);
+      var d = drinkMesh(1); d.position.set(-0.24 + col * 0.16, 0.445 + row * 0.36, -0.02 + (i % 2) * 0.12);
+      p.shelves.add(d); p.shelves.userData.slots.push(d);
+    }
+    p.shelves.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = 'fridge'; } });
+  }
+  function syncCoffee() {
+    var p = coffParts(); if (!p) return;
+    (p.cups.userData.slots || []).forEach(function (m) { p.cups.remove(m); });
+    p.cups.userData.slots = [];
+    var stack = Math.min(Math.ceil((S.coffeeStock.cup || 0) / 6), 7);
+    for (var i = 0; i < stack; i++) { var cu = cupMesh(1, false); cu.position.y = i * 0.022; p.cups.add(cu); p.cups.userData.slots.push(cu); }
+    if (p.beans) { var lvl = clamp((S.coffeeStock.beans || 0) / 40, 0.05, 1); p.beans.scale.y = lvl; p.beans.position.y = 1.40 + 0.06 * lvl; p.beans.visible = (S.coffeeStock.beans || 0) > 0; }
+    while (p.brew.children.length) p.brew.remove(p.brew.children[0]);
+    if (machState().cup > 0) { var c2 = cupMesh(1, true); p.brew.add(c2); }
+    if (p.cupHit) p.cupHit.position.y = machState().cup > 0 ? 1.02 : -50;
+    p.cups.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = 'lobbyCoffee'; } });
+    p.brew.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = 'lobbyCoffee'; } });
+  }
+  function fridgeDoorToggle() { var M = machState(); M.fridgeDoor = !M.fridgeDoor; sfx(M.fridgeDoor ? 'drawer' : 'close'); toast(M.fridgeDoor ? '🧊 Fridge open' : '🧊 Fridge shut', ''); save(); }
+  function fridgeTake() {
+    var M = machState();
+    if ((M.fridge || 0) <= 0) { toast('The fridge is empty — load a case of drinks', 'bad'); return; }
+    if (hotbarFull()) { toast('Hands full — G to put something down', 'bad'); return; }
+    M.fridge--; take({ kind: 'can2' }); sfx('pickup'); toast('🥤 Took a cold one — ' + M.fridge + ' left', 'good'); syncFridge(); save();
+  }
+  function coffBrew() {
+    var M = machState();
+    if (M.cup > 0) { toast('There is already a cup under the spout', ''); return; }
+    if ((S.coffeeStock.cup || 0) <= 0) { toast('Out of cups', 'bad'); return; }
+    if ((S.coffeeStock.beans || 0) <= 0) { toast('Out of beans', 'bad'); return; }
+    S.coffeeStock.cup--; S.coffeeStock.beans--; S.box.coffee += 2; M.cup = 1; mach.brewT = 1.5;
+    sfx('coffee'); toast('☕ Pouring…', ''); syncCoffee(); save();
+  }
+  function coffTake() {
+    var M = machState();
+    if (M.cup <= 0) { toast('Nothing under the spout — E on the machine to pour one', ''); return; }
+    if (mach.brewT > 0) { toast('Still pouring', ''); return; }
+    if (hotbarFull()) { toast('Hands full — G to put something down', 'bad'); return; }
+    M.cup = 0; take({ kind: 'cup2' }); sfx('pickup'); toast('☕ Took the coffee', 'good'); syncCoffee(); save();
+  }
   function vendParts() {
     var inst = propInst.vending; if (!inst) return null;
     var p = inst.g.userData.vendParts;
@@ -4975,6 +5076,8 @@
       p.tray.add(m);
     });
     p.tray.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = 'vending'; } });
+    if (!p.trayHit) { var inst2 = propInst.vending; if (inst2) inst2.g.traverse(function (o) { if (o.userData.interact && o.userData.interact.kind === 'vendTray') p.trayHit = o; }); }
+    if (p.trayHit) p.trayHit.position.y = M.tray.length ? 0.42 : -50;   /* an empty tray must not swallow the machine's prompt */
   }
   function vendDisplay(txt) {
     var p = vendParts(); if (!p || !p.disp) return;
@@ -5008,6 +5111,13 @@
     syncTray(); save();
   }
   function updateMachines(dt) {
+    if (mach.brewT > 0) { mach.brewT -= dt; if (mach.brewT <= 0) { sfx('ok'); toast('☕ Ready', 'good'); } }
+    var fp = fridgeParts();
+    if (fp) { var FM = machState(), fw = FM.fridgeDoor ? 1 : 0;
+      if (Math.abs(mach.frDoorT - fw) > 0.002) { mach.frDoorT = lerp(mach.frDoorT, fw, 1 - Math.pow(0.004, dt)); if (Math.abs(mach.frDoorT - fw) < 0.005) mach.frDoorT = fw; fp.door.rotation.y = -1.3 * mach.frDoorT; } }
+    var cp = coffParts();
+    if (cp && cp.lid) { var CM = machState(), cw = CM.coffDoor ? 1 : 0;
+      if (Math.abs(mach.coffDoorT - cw) > 0.002) { mach.coffDoorT = lerp(mach.coffDoorT, cw, 1 - Math.pow(0.004, dt)); if (Math.abs(mach.coffDoorT - cw) < 0.005) mach.coffDoorT = cw; cp.lid.rotation.x = -1.6 * mach.coffDoorT; } }
     var p = vendParts(); if (!p) return;
     var M = machState(), want = M.vendDoor ? 1 : 0;
     if (Math.abs(mach.vendDoorT - want) > 0.002) {
@@ -5046,6 +5156,7 @@
     }
     else if (h.kind === 'crate') { add(new THREE.BoxGeometry(0.34, 0.24, 0.3), new THREE.MeshStandardMaterial({ color: 0xc9a96a, roughness: 0.9 })); add(new THREE.BoxGeometry(0.35, 0.03, 0.31), new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.9 })); var cl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.08), new THREE.MeshBasicMaterial({ map: textTex([itemIcon(h.item) + ' ' + itemName(h.item)], 200, 80, { size: 30, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); cl.position.set(0, 0, 0.151); g.add(cl); }
     else if (h.kind === 'can') { var cm = new THREE.MeshStandardMaterial({ color: 0x3a8fd6, roughness: 0.45, metalness: 0.35 }); add(new THREE.CylinderGeometry(0.075, 0.085, 0.17, 16), cm); add(new THREE.CylinderGeometry(0.01, 0.016, 0.2, 8), cm, 0.11, 0.08, 0, 0, 0, -0.95); add(new THREE.CylinderGeometry(0.03, 0.02, 0.03, 10), cm, 0.19, 0.145, 0, 0, 0, -0.95); add(new THREE.TorusGeometry(0.065, 0.009, 8, 16, Math.PI), cm, 0, 0.085, 0); }
+    else if (h.kind === 'cup2') { var cc = cupMesh(1.4, true); cc.position.y = 0.02; g.add(cc); }
     else if (h.kind === 'can2') { var cm2 = drinkMesh(1.5); cm2.position.y = 0.02; g.add(cm2); }
     else if (h.kind === 'snack') {
       // a wrapped bar: flow-wrap film, crimped ends, a printed face
@@ -5232,7 +5343,7 @@
     setFocus({ mesh: best.object, data: data, dist: best.distance });
   }
   // big station boxes (shelf, rack, bench) yield to the small thing inside them the ray also crosses
-  function isContainer(kind) { return kind === 'door' || kind === 'shelf' || kind === 'inventory' || kind === 'bench' || kind === 'line' || kind === 'goodsShelf' || kind === 'storage' || kind === 'car' || kind === 'vending'; }   // a container yields to a specific target behind it (jar, bag, joint, a car door or the boot)
+  function isContainer(kind) { return kind === 'door' || kind === 'shelf' || kind === 'inventory' || kind === 'bench' || kind === 'line' || kind === 'goodsShelf' || kind === 'storage' || kind === 'car' || kind === 'vending' || kind === 'lobbyCoffee'; }   // a container yields to a specific target behind it (jar, bag, joint, a car door or the boot)
   function hasAnyBehind(hits, i) { for (var k = i + 1; k < hits.length; k++) { var d = hits[k].object.userData.interact; if (d && d.kind !== 'curtain' && hits[k].distance - hits[i].distance < 3.0) return true; } return false; }
   function hasSpecificBehind(hits, i) { var h = held(); for (var k = i + 1; k < hits.length; k++) { var d = hits[k].object.userData.interact; if (!d || isContainer(d.kind)) continue; if (d.kind === 'jar' && h && h.kind === 'harvest') continue; if (hits[k].distance - hits[i].distance < 1.2) return true; } return false; }
   function setFocus(f) {
@@ -5296,8 +5407,10 @@
     if (d.kind === 'vault') return S.pocket > 0 ? 'Put ' + money(S.pocket) + ' in the vault <small>holds ' + money(S.vault) + ' · Shift+E opens it</small>' : 'Open the vault <small>holds ' + money(S.vault) + '</small>';
     if (d.kind === 'tips') return S.tips > 0 ? 'Empty the tip jar <small>' + money(S.tips) + '</small>' : 'Tip jar <small>empty</small>';
     if (d.kind === 'vending') { var MM = machState(); if (h && h.kind === 'crate') return (h.item === 'drink' || h.item === 'snack') ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That does not go in here'; if (MM.vendDoor) return 'Machine open <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks · E buys one for $2' + (S.box.vend > 0 ? ' · Shift+E opens it, the box holds ' + money(S.box.vend) : ' · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'fridge') { var FM2 = machState(); if (h && h.kind === 'crate') return h.item === 'drink' ? (FM2.fridgeDoor ? 'Load ' + h.n + ' drinks into the fridge' : 'Open the fridge first <small>Shift+E</small>') : 'Only drinks go in the fridge'; return 'Drinks fridge <small>' + (FM2.fridge || 0) + ' cold' + (FM2.fridgeDoor ? ' · E takes one · Shift+E shuts it' : ' · E takes one · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'coffeeCup') { var CM2 = machState(); return CM2.cup > 0 ? (mach.brewT > 0 ? 'Pouring… <small>give it a second</small>' : 'Fresh coffee <small>E takes the cup</small>') : ''; }
     if (d.kind === 'vendTray') { var MT = machState(); return MT.tray.length ? 'Delivery tray <small>' + MT.tray.length + ' waiting · E takes one</small>' : ''; }
-    if (d.kind === 'lobbyCoffee') { if (h && h.kind === 'crate') return (h.item === 'cup' || h.item === 'beans') ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' into the machine' : 'That does not go in here'; return (S.box.coffee > 0 ? 'Empty the cash box <small>' + money(S.box.coffee) + ' · ' : 'Coffee machine <small>') + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' servings of beans</small>'; }
+    if (d.kind === 'lobbyCoffee') { var CD = machState(); if (h && h.kind === 'crate') return (h.item === 'cup' || h.item === 'beans') ? (CD.coffDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' into the hopper' : 'Lift the hopper lid first <small>Shift+E</small>') : 'That does not go in here'; return (S.box.coffee > 0 ? 'Empty the cash box <small>' + money(S.box.coffee) + ' · ' : 'Coffee machine <small>') + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' servings of beans</small>'; }
     if (d.kind === 'atm') return 'Use the ATM <small>bank ' + money(S.bank) + ' · pocket ' + money(S.pocket) + ' · deposits clear at once, 2% fee</small>';
     if (d.kind === 'arcade') return S.box.arcade > 0 ? 'Empty the coin box <small>' + money(S.box.arcade) + '</small>' : 'Arcade cabinet <small>coin box empty</small>';
     if (d.kind === 'courier') return 'Hand the courier ' + money(S.courier ? S.courier.amount : 0) + ' <small>pocket ' + money(S.pocket) + '</small>';
@@ -5410,7 +5523,28 @@
       else { var pickV = (S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'; vendDispense(pickV); }
     }
     else if (d.kind === 'vendTray') { vendTakeTray(); }
-    else if (d.kind === 'lobbyCoffee') { if (h && h.kind === 'crate') { if (h.item === 'cup' || h.item === 'beans') { S.coffeeStock[h.item] += h.n; sfx('putdown'); toast('☕ Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' servings', 'good'); logEvent('☕ Restocked the coffee machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; } else toast('That does not go in the coffee machine', 'bad'); } else { var cb = S.box.coffee; if (takeCash(cb, 'coffee machine')) S.box.coffee = 0; } }
+    else if (d.kind === 'fridge') {
+      var FI = machState(), shf = player.keys.ShiftLeft || player.keys.ShiftRight;
+      if (shf) fridgeDoorToggle();
+      else if (h && h.kind === 'crate') {
+        if (h.item !== 'drink') toast('Only drinks go in the fridge', 'bad');
+        else if (!FI.fridgeDoor) toast('Open the fridge first — Shift+E', 'bad');
+        else { FI.fridge = (FI.fridge || 0) + h.n; sfx('putdown'); toast('🧊 ' + h.n + ' drinks chilling — ' + FI.fridge + ' in the fridge', 'good'); S.held = null; world.dirty = true; syncFridge(); save(); }
+      }
+      else fridgeTake();
+    }
+    else if (d.kind === 'coffeeCup') { coffTake(); }
+    else if (d.kind === 'lobbyCoffee') {
+      var CI = machState(), shc = player.keys.ShiftLeft || player.keys.ShiftRight;
+      if (shc) { CI.coffDoor = !CI.coffDoor; sfx(CI.coffDoor ? 'drawer' : 'close'); toast(CI.coffDoor ? '☕ Hopper open — load cups or beans' : '☕ Hopper closed', ''); save(); }
+      else if (h && h.kind === 'crate') {
+        if (h.item !== 'cup' && h.item !== 'beans') toast('That does not go in the coffee machine', 'bad');
+        else if (!CI.coffDoor) toast('Lift the hopper lid first — Shift+E', 'bad');
+        else { S.coffeeStock[h.item] += h.n; sfx('putdown'); toast('☕ Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' beans', 'good'); logEvent('☕ Restocked the coffee machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; syncCoffee(); save(); }
+      }
+      else if (CI.coffDoor) { var cb2 = S.box.coffee; if (cb2 > 0 && takeCash(cb2, 'coffee machine')) S.box.coffee = 0; else toast('Load cups or beans, or Shift+E to close the hopper', ''); }
+      else coffBrew();
+    }
     else if (d.kind === 'atm') { ui.openPanel('atm'); }
     else if (d.kind === 'arcade') { var ab = S.box.arcade; if (takeCash(ab, 'arcade coin box')) S.box.arcade = 0; }
     else if (d.kind === 'courier') { courierHandOver(); }

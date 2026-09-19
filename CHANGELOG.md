@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.13
+
+**The drinks fridge and the coffee machine got what the vending machine got.**
+
+**The fridge** was pure scenery: a sealed block with four rows of coloured cans painted inside that never changed. It is a real fridge now. A shell with a hinged glass door that swings open, shelves holding the cans you actually have, and a light inside. **E** takes a cold one and you carry it. **Shift+E** opens the door, and it only takes a case of drinks once it is open.
+
+**The coffee machine** shows its stock: the cup stack grows and shrinks with how many cups you own, and the bean hopper on top is a clear cone whose level drops as the beans go, emptying out completely when you run dry. **E** pours one, a cup appears under the spout and fills, and a couple of seconds later **E** on the cup hands you a lidded takeaway with a Grow Co. sleeve. **Shift+E** lifts the hopper lid, and cups and beans only load while it is up.
+
+Both keep taking the cash out of their boxes the same way, by opening them up.
+
 ## v1.12
 
 **The vending machine is a real machine now.** The old one was a solid block with its stock sealed inside where nobody could ever see it, and a fixed set of coloured squares that had nothing to do with what you had loaded.
