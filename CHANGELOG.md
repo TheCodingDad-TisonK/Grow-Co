@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.17
+
+**The economy was not an economy.** A gram of top shelf could reach $99 once reputation, the market, the brand registration, late hours and your own markup had all multiplied together. Meanwhile the shop cost nothing at all to run: no rent, no power, no water, no tax, and the only money ever leaving the building was $60 a day in wages. Everything buyable in the game, every upgrade, licence, tent and lamp, came to $73,160, which a mature shop earned back in about thirteen minutes. This release rebuilds the money from the ground up.
+
+**Prices sit where real ones do.** Plain flower is about $5.70 a gram and top shelf about $16.50. An eighth runs from $21 to $57 and a joint from $7.66 to $18. Everything that lifts a price is now added into one premium instead of multiplied together: reputation is worth at most 10% and mostly buys footfall rather than margin, brand registration 4%, late hours 5%. The market swings between 0.85 and 1.20 rather than 0.7 to 2.0, and the 420 rush and the Cannabis Cup were rescaled to match so they still feel different from each other.
+
+**The digital scale and the pre-rolled cones were printing money.** An eighth was priced as 3.5 g no matter what it actually weighed, so the scale sold 3.2 g at the 3.5 g price, forever. A joint was priced flat, so the cones took a fifth of the bud out of every one at no drop in price. Both now price on the weight that really left the stash. They trade price for volume, which is what they were always described as doing.
+
+**The shop has bills.** Rent on the unit and its floor space, power that depends on which lamp is running over how many slots, water for the plants in the tent, and payroll. They fall every morning whether or not there is anything ready to sell. There is a fit-out period to start you off: no rent until day 11, long enough for two harvests to get on your feet.
+
+**Power is a reason to choose one lamp over another.** The HPS rig is cheap to buy and expensive to run. The quantum board costs more and draws less. The solar roof takes a third off the bill, which is what makes it worth its price. Lamps now buy yield and quality rather than speed, because how long a plant takes to flower is mostly the plant's business.
+
+**Tax.** 15% excise sits inside every sale and is held back rather than banked, and 10% of the month's takings is settled on the first of each month. The money in your bank is not all yours, which is rather the point.
+
+**A plant takes days, not minutes.** Sunflower Kush is three days and Rainbow Runtz five and a half, with drying on top. Bills fall while the tent is still full, so a grow has to be financed rather than simply waited out. That is the tension the shop never had.
+
+**Nobody runs a commercial grow on their own.** Up to eight slots is a one-person job. Past that the place needs staff whether or not you have hired anyone by name, and the crew you do hire are drawn from that same payroll rather than charged on top of it.
+
+**A profit and loss page**, in the bank tab on the office laptop: every line of the morning bill, what you took today and this month, the tax owed and the day it falls, and any arrears. A bill you cannot cover comes out of the vault and then the till, and whatever is still short goes into arrears and costs you reputation every day it stands.
+
+**Everything worth buying now costs what it is worth.** The upgrade and licence tree comes to $160,780, and buying out the rival shop is $180,000 rather than $25,000.
+
 ## v1.16.2
 
 **The shop was built for six strains.** A seed pack takes you to twelve, and three places had the number six baked into their geometry. The worst was the goods shelf: a fixed two by three grid that silently dropped everything past the sixth strain. With both seed packs on, six of your twelve strains could be grown, cured and packed and then never put out for sale at all. The shelf sizes itself to the list now, three shelves high and as many bays wide as it needs, with a divider and a downlight over each one. At six strains it is exactly the shelf it always was.

@@ -25,11 +25,11 @@
 
   // ── Config (identical numbers to the 2D game) ─────────────────────
   var STRAINS = [
-    { id: 'sunflower', name: 'Sunflower Kush', emoji: '🌻', seed: 10,  growMs: 540000, yield: 12, thc: 1.0, lvl: 1, bud: 0x7fc96b, hair: 0xffb347, leaf: 0x4caf50 },
-    { id: 'amber',     name: 'Amber Haze',     emoji: '🍯', seed: 18,  growMs: 720000, yield: 16, thc: 1.3, lvl: 2, bud: 0xa8c95a, hair: 0xff8c1a, leaf: 0x5cb85c },
-    { id: 'widow',     name: 'Green Widow',    emoji: '🕸️', seed: 32,  growMs: 900000, yield: 24, thc: 1.5, lvl: 4, bud: 0xd8e6c8, hair: 0xffd27f, leaf: 0x3d9a4a },
-    { id: 'diesel',    name: 'Diesel Drift',   emoji: '⛽', seed: 48,  growMs: 1080000, yield: 18, thc: 1.9, lvl: 6, bud: 0x6fa85a, hair: 0xff5722, leaf: 0x2e7d32 },
-    { id: 'runtz',     name: 'Rainbow Runtz',  emoji: '🌈', seed: 85,  growMs: 1260000, yield: 22, thc: 2.4, lvl: 9, bud: 0x9b6fd6, hair: 0xff69b4, leaf: 0x5a3f9e }
+    { id: 'sunflower', name: 'Sunflower Kush', emoji: '🌻', seed: 10,  growMs: 3600000, yield: 12, thc: 1.0, lvl: 1, bud: 0x7fc96b, hair: 0xffb347, leaf: 0x4caf50 },
+    { id: 'amber',     name: 'Amber Haze',     emoji: '🍯', seed: 18,  growMs: 4320000, yield: 16, thc: 1.3, lvl: 2, bud: 0xa8c95a, hair: 0xff8c1a, leaf: 0x5cb85c },
+    { id: 'widow',     name: 'Green Widow',    emoji: '🕸️', seed: 32,  growMs: 5040000, yield: 24, thc: 1.5, lvl: 4, bud: 0xd8e6c8, hair: 0xffd27f, leaf: 0x3d9a4a },
+    { id: 'diesel',    name: 'Diesel Drift',   emoji: '⛽', seed: 48,  growMs: 5760000, yield: 18, thc: 1.9, lvl: 6, bud: 0x6fa85a, hair: 0xff5722, leaf: 0x2e7d32 },
+    { id: 'runtz',     name: 'Rainbow Runtz',  emoji: '🌈', seed: 85,  growMs: 6480000, yield: 22, thc: 2.4, lvl: 9, bud: 0x9b6fd6, hair: 0xff69b4, leaf: 0x5a3f9e }
   ];
   var strainById = function (id) { for (var i = 0; i < STRAINS.length; i++) if (STRAINS[i].id === id) return STRAINS[i]; return STRAINS[0]; };
 
@@ -58,20 +58,20 @@
   var ACC = { lighter: { name: 'lighter', price: 3 }, rpaper: { name: 'pack of papers', price: 4 }, rgrinder: { name: 'grinder', price: 15 } };
   function itemPack(id) { if (id.indexOf('seed_') === 0) return 5; var it = supplyById(id); return it && it.qty ? it.qty : 10; }
   var LIGHTS = [
-    { id: 'none', name: 'Windowsill', spd: 1.0, qual: 0,  price: 0,   color: 0xfff1d0, intensity: 0.0 },
-    { id: 'cfl',  name: 'CFL lamp',   spd: 1.2, qual: 6,  price: 60,  color: 0xfff4c8, intensity: 2.5 },
-    { id: 'led',  name: 'LED panel',  spd: 1.5, qual: 12, price: 220, color: 0xd070ff, intensity: 4.5 },
-    { id: 'hps',  name: 'HPS rig',    spd: 1.9, qual: 18, price: 520, color: 0xffb060, intensity: 6.0 },
-    { id: 'qb',   name: 'Quantum board', spd: 2.3, qual: 26, price: 1400, color: 0xffe6ff, intensity: 7.5 },
-    { id: 'array', name: 'Full-spectrum array', spd: 2.8, qual: 34, price: 3200, color: 0xfff8f0, intensity: 9.0 }
+    { id: 'none', name: 'Windowsill', spd: 1.0,  qual: 0,  yld: 0.85, draw: 0,  price: 0,   color: 0xfff1d0, intensity: 0.0 },
+    { id: 'cfl',  name: 'CFL lamp',   spd: 1.05, qual: 6,  yld: 0.95, draw: 0.8,  price: 60,  color: 0xfff4c8, intensity: 2.5 },
+    { id: 'led',  name: 'LED panel',  spd: 1.12, qual: 12, yld: 1.15, draw: 1.8, price: 260, color: 0xd070ff, intensity: 4.5 },
+    { id: 'hps',  name: 'HPS rig',    spd: 1.18, qual: 18, yld: 1.35, draw: 5.0, price: 800, color: 0xffb060, intensity: 6.0 },
+    { id: 'qb',   name: 'Quantum board', spd: 1.26, qual: 26, yld: 1.55, draw: 3.6, price: 2600, color: 0xffe6ff, intensity: 7.5 },
+    { id: 'array', name: 'Full-spectrum array', spd: 1.35, qual: 34, yld: 1.80, draw: 6.0, price: 7000, color: 0xfff8f0, intensity: 9.0 }
   ];
   var TENTS = [
     { slots: 4,  price: 0,    cols: 2, rows: 2 },
     { slots: 6,  price: 240,  cols: 3, rows: 2 },
-    { slots: 9,  price: 700,  cols: 3, rows: 3, lic: 'cult2' },
-    { slots: 12, price: 1700, cols: 4, rows: 3, lic: 'cult2' },
-    { slots: 16, price: 3800, cols: 4, rows: 4, lic: 'cult3' },
-    { slots: 20, price: 7500, cols: 5, rows: 4, lic: 'cult3' }
+    { slots: 9,  price: 900,  cols: 3, rows: 3, lic: 'cult2' },
+    { slots: 12, price: 2600, cols: 4, rows: 3, lic: 'cult2' },
+    { slots: 16, price: 7000, cols: 4, rows: 4, lic: 'cult3' },
+    { slots: 20, price: 16000, cols: 5, rows: 4, lic: 'cult3' }
   ];
   // ── Workshop: content packs fold into the tables above before anything reads them ──
   var WS = window.RF_WORKSHOP || null, WSTUNE = { footfall: 1, seedCost: 1, upgradeCost: 1 }, WSCITY = { grow: 0, rows: 0 }, WSFEST = { snow: false, fireworks: false }, WSCAR = null, WSPLACES = [];
@@ -102,27 +102,27 @@
     { id: 'sign',      ico: '🪧', name: 'Neon sign & flyers', price: 380, d: 'Word gets round: customers turn up 35% more often.' },
     { id: 'lobby',     ico: '☕', name: 'Lobby coffee machine', price: 300, d: 'Customers wait 50% longer and tip a little rep.' },
     { id: 'robovac',   ico: '🤖', name: 'Robot vacuum',      price: 480, d: 'Dust builds up half as fast.' },
-    { id: 'rack2',     ico: '🧊', name: 'Climate cure cabinet', price: 900, req: 'rack', d: 'Curing 2.4× faster and +20 quality cap.' },
-    { id: 'hydro',     ico: '💦', name: 'Hydroponic loop',   price: 1500, req: 'autowater', d: 'Plants grow 12% faster.' },
-    { id: 'security2', ico: '📹', name: 'CCTV & alarms',     price: 1300, req: 'security', d: 'Outbreaks cut to a quarter.' },
+    { id: 'rack2',     ico: '🧊', name: 'Climate cure cabinet', price: 1800, req: 'rack', d: 'Curing 2.4× faster and +20 quality cap.' },
+    { id: 'hydro',     ico: '💦', name: 'Hydroponic loop',   price: 4000, req: 'autowater', d: 'Plants grow 12% faster.' },
+    { id: 'security2', ico: '📹', name: 'CCTV & alarms',     price: 2600, req: 'security', d: 'Outbreaks cut to a quarter.' },
     { id: 'panic',     ico: '🚨', name: 'Silent alarm',      price: 450, d: 'Press P during a robbery: police arrive in about 20 seconds and arrest whoever is still inside.' },
-    { id: 'guardgun',  ico: '🦺', name: 'Armed security',    price: 1200, d: 'Your guard carries a sidearm and stands up to armed robbers far more often. Only counts while you hold the firearms licence.' },
-    { id: 'roller2',   ico: '🏭', name: 'Industrial roller', price: 900, req: 'roller', d: 'Rolls 10 joints at a time.' },
-    { id: 'hvac',      ico: '❄️', name: 'Climate control HVAC', price: 2500, req: 'dehumid', d: 'Humidity locks to target almost instantly and rooms run drier.' },
-    { id: 'trimmer2',  ico: '🔪', name: 'Precision trimmer', price: 1500, req: 'trimmer', d: '+30% yield in total.' },
-    { id: 'billboard', ico: '🛣️', name: 'Billboard & socials', price: 1600, req: 'sign', d: 'Customers turn up 60% more often in total.' },
-    { id: 'lounge2',   ico: '🛋️', name: 'Lobby refit',       price: 1200, req: 'lobby', d: 'Customers wait twice as long and tip 2 rep.' },
-    { id: 'genetics',  ico: '🧬', name: 'Genetics lab',      price: 4000, lvl: 8, d: 'Every new plant starts with +10 quality.' },
-    { id: 'ownvan',    ico: '🚐', name: 'Own delivery van',  price: 6000, lvl: 6, d: 'Orders land in the back room within 20 seconds.' },
-    { id: 'solar',     ico: '☀️', name: 'Solar roof',        price: 3000, d: 'Supplies cost 10% less (stacks with a wholesale account).' },
+    { id: 'guardgun',  ico: '🦺', name: 'Armed security',    price: 2400, d: 'Your guard carries a sidearm and stands up to armed robbers far more often. Only counts while you hold the firearms licence.' },
+    { id: 'roller2',   ico: '🏭', name: 'Industrial roller', price: 1800, req: 'roller', d: 'Rolls 10 joints at a time.' },
+    { id: 'hvac',      ico: '❄️', name: 'Climate control HVAC', price: 7000, req: 'dehumid', d: 'Humidity locks to target almost instantly and rooms run drier.' },
+    { id: 'trimmer2',  ico: '🔪', name: 'Precision trimmer', price: 4200, req: 'trimmer', d: '+30% yield in total.' },
+    { id: 'billboard', ico: '🛣️', name: 'Billboard & socials', price: 3600, req: 'sign', d: 'Customers turn up 60% more often in total.' },
+    { id: 'lounge2',   ico: '🛋️', name: 'Lobby refit',       price: 2400, req: 'lobby', d: 'Customers wait twice as long and tip 2 rep.' },
+    { id: 'genetics',  ico: '🧬', name: 'Genetics lab',      price: 12000, lvl: 8, d: 'Every new plant starts with +10 quality.' },
+    { id: 'ownvan',    ico: '🚐', name: 'Own delivery van',  price: 16000, lvl: 6, d: 'Orders land in the back room within 20 seconds.' },
+    { id: 'solar',     ico: '☀️', name: 'Solar roof',        price: 9000, d: 'Supplies cost 10% less (stacks with a wholesale account).' },
     { id: 'scale',     ico: '⚖️', name: 'Digital scale',     price: 260,  d: 'Eighths weigh out at 3.2 g instead of 3.5 g.' },
     { id: 'cones',     ico: '🍦', name: 'Pre-rolled cones',  price: 700,  d: 'Joints take 0.8 g instead of 1 g.' },
-    { id: 'skylight',  ico: '🌤️', name: 'Skylight',          price: 1100, d: 'Plants grow 6% faster.' },
-    { id: 'fintech',   ico: '💳', name: 'Payment terminal',  price: 900,  d: 'Card sales pay 3% more and the ATM waives its fee.' },
+    { id: 'skylight',  ico: '🌤️', name: 'Skylight',          price: 2200, d: 'Plants grow 6% faster.' },
+    { id: 'fintech',   ico: '💳', name: 'Payment terminal',  price: 1800,  d: 'Card sales pay 3% more and the ATM waives its fee.' },
     { id: 'ozone',     ico: '🫧', name: 'Ozone air scrubber', price: 700, d: 'Mold never takes hold, only pests.' },
     { id: 'tipjar',    ico: '🫙', name: 'Vintage tip jar',   price: 350,  d: 'Tips are doubled.' },
     { id: 'grinder2',  ico: '⚡', name: 'Electric grinder',  price: 400,  d: 'No more hand grinding before bagging or rolling.' },
-    { id: 'bagger',    ico: '🏭', name: 'Auto-bagging line', price: 2200, req: 'scale', d: 'Bags weigh and seal themselves; bag a whole stash in one go.' },
+    { id: 'bagger',    ico: '🏭', name: 'Auto-bagging line', price: 6000, req: 'scale', d: 'Bags weigh and seal themselves; bag a whole stash in one go.' },
     { id: 'oven',      ico: '🔥', name: 'Convection oven',   price: 600,  d: 'Cookies bake themselves to the second; bake a whole stash in one go.' }
   ];
   if (WSTUNE.upgradeCost !== 1) UPGRADES.forEach(function (u) { u.price = Math.round(u.price * WSTUNE.upgradeCost); });
@@ -132,14 +132,14 @@
     { id: 'amusement', ico: '🕹️', name: 'Amusement permit',     price: 400,  d: 'The arcade cabinet may take coins.' },
     { id: 'lounge',    ico: '🛋️', name: 'Lounge licence',       price: 700,  rep: 25, d: 'Customers may sit and smoke in the lobby.' },
     { id: 'cult2',     ico: '🌱', name: 'Cultivation permit II', price: 900, lvl: 3, d: 'Unlocks the 9 and 12-slot tents. Plants grow 5% faster.' },
-    { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 2200, lvl: 6, req: 'cult2', d: 'Unlocks the 16 and 20-slot tents.' },
-    { id: 'wholesale', ico: '📦', name: 'Wholesale account',    price: 1500, lvl: 4, d: 'Supplies 15% cheaper and the van comes twice as fast.' },
-    { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 1200, d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
-    { id: 'firearm',   ico: '🔫', name: 'Firearms licence',     price: 1500, lvl: 4, rep: 30, d: 'Lets you buy and carry the pistol and shotgun from the weapon locker. Shoot a bystander and it is revoked.' },
-    { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 1200, rep: 40, d: 'Connoisseurs visit and pay 2.2× for quality.' },
+    { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 6000, lvl: 6, req: 'cult2', d: 'Unlocks the 16 and 20-slot tents.' },
+    { id: 'wholesale', ico: '📦', name: 'Wholesale account',    price: 3600, lvl: 4, d: 'Supplies 15% cheaper and the van comes twice as fast.' },
+    { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 3000, d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
+    { id: 'firearm',   ico: '🔫', name: 'Firearms licence',     price: 3000, lvl: 4, rep: 30, d: 'Lets you buy and carry the pistol and shotgun from the weapon locker. Shoot a bystander and it is revoked.' },
+    { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 3000, rep: 40, d: 'Connoisseurs visit and pay 2.2× for quality.' },
     { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 50, d: 'From 20:00 to 02:00 customers come 25% more often and pay 10% more.' },
-    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 1500, rep: 60, d: '+8% on every price.' },
-    { id: 'export',    ico: '🚢', name: 'Export licence',       price: 5000, lvl: 10, rep: 120, d: 'Bulk contracts in the bank app: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
+    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 60, d: '+8% on every price.' },
+    { id: 'export',    ico: '🚢', name: 'Export licence',       price: 14000, lvl: 10, rep: 120, d: 'Bulk contracts in the bank app: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
   ];
   function licById(id) { for (var i = 0; i < LICENCES.length; i++) if (LICENCES[i].id === id) return LICENCES[i]; return null; }
   function hasLic(id) { return !!(S.lic && S.lic[id]); }
@@ -175,7 +175,7 @@
   var S;
   function fresh() {
     return {
-      bank: 220, xp: 0, level: 1, rep: 0,
+      bank: 750, xp: 0, level: 1, rep: 0,
       till: 0, tips: 0, vault: 0, pocket: 0, box: { vend: 0, coffee: 0, arcade: 0 }, pending: [], courier: null,   // cash lives in places until you move it
       units: { vending: 1, lobbyCoffee: 1, arcade: 1, fridge: 1 },   // how many of each machine the shop owns
       storage: {}, vendStock: { drink: 12, snack: 12 }, coffeeStock: { cup: 40, beans: 40 }, order: null, deliveries: [],
@@ -192,6 +192,7 @@
       stash: {}, lots: { bags: {}, joints: {}, cookies: {} },   // per strain: stash[strain] = {g,qSum,thcSum}; lots[kind][strain] = {n,qSum,thcSum}
       market: 1.0, event: null, customer: null,
       log: [], stats: { harvested: 0, sold: 0, earned: 0, plants: 0 },
+      books: { monthGross: 0, dayGross: 0, exciseDue: 0, lastDayCosts: 0, arrears: 0, month: 1, lastBill: null, dayOther: 0, monthOther: 0 },   // the ledger: what has been taken, what is owed
       lastTick: now(), lastEvent: now(), lastCustomer: now(), created: now(), steps3d: 0,
       intro: { i: 0, done: false, skipped: false },   // the guided intro, only for a brand new shop
       potSoil: {}, held: null,
@@ -355,19 +356,138 @@
       burst(player.pos.x, 1.2, player.pos.z, 0xffd766, 40, 'up');
     }
   }
-  function repMult() { return 1 + Math.min(0.6, S.rep / 400); }
-  function gramValue(q, thc) { return 6 * thc * (0.6 + (q / 100) * 0.8) * S.market * repMult() * chillMult() * (hasLic('brand') ? 1.08 : 1) * (hasLic('latehours') && nightNow() ? 1.1 : 1) * (shop().markup || 1); }
-  function chillMult() { return S.chill && S.chill.until > now() ? 1.05 : 1; }
-  function bagPrice(q, thc) { return gramValue(q, thc) * 3.5 * 1.15; }
-  function jointPrice(q, thc) { return gramValue(q, thc) * 1.5; }
-  function cookiePrice(q, thc) { return gramValue(q, thc) * 0.6; }
+  // -- Prices ---------------------------------------------------------
+  // A gram sits in a real retail band: about $5.70 for plain flower, about $15 for top shelf.
+  // Everything that lifts the price is ADDED into one premium, never multiplied together: the old
+  // chain of seven multipliers could compound a $6 gram into a $100 one.
+  var ECON = {
+    baseGram: 5.5,        // $/g, plain low-grade flower at an average market
+    gradeExp: 0.8,        // quality x potency, with diminishing returns
+    repCap: 0.10,         // reputation is worth at most +10% on price; mostly it buys footfall
+    brandBonus: 0.04, lateBonus: 0.05, chillBonus: 0.02,
+    bagMarkup: 1.08,      // an eighth carries a packaging premium
+    jointMarkup: 1.35,    // a pre-roll carries a convenience premium
+    cookieShare: 0.40,    // one cookie is worth 0.40 x the gram it came from (six to a gram)
+    excise: 0.15,         // sales tax inside the shelf price, held back and paid with the monthly bill
+    taxRate: 0.10         // business tax on the month's gross
+  };
+  function gradeMult(q, thc) { return Math.pow((0.6 + (q / 100) * 0.8) * thc, ECON.gradeExp); }
+  function premiumMult() { return 1 + Math.min(ECON.repCap, S.rep / 1000) + (hasLic('brand') ? ECON.brandBonus : 0) + (hasLic('latehours') && nightNow() ? ECON.lateBonus : 0) + (S.chill && S.chill.until > now() ? ECON.chillBonus : 0); }
+  function repMult() { return premiumMult(); }
+  function gramValue(q, thc) { return ECON.baseGram * gradeMult(q, thc) * S.market * premiumMult() * (shop().markup || 1); }
+  // Packed goods are priced off the weight that actually left the stash, so the digital scale and the
+  // pre-rolled cones now trade price for volume instead of handing out free margin forever.
+  function bagPrice(q, thc) { return gramValue(q, thc) * bagGrams() * ECON.bagMarkup; }
+  function jointPrice(q, thc) { return gramValue(q, thc) * jointGrams() * ECON.jointMarkup; }
+  function cookiePrice(q, thc) { return gramValue(q, thc) * ECON.cookieShare; }
+
+  // -- Fixed costs ----------------------------------------------------
+  // A grow-op's month is rent, power and payroll. None of that existed before, which is why margins
+  // never compressed as the business grew. Bills fall every morning whether or not anything is ready
+  // to sell, so a long grow has to be financed rather than simply waited out.
+  var COST = {
+    rentBase: 20,          // the unit itself, per day
+    rentPerSlot: 7,        // floor space for every tent slot
+    rentBasement: 35,      // the tobacco works downstairs
+    rentBranch: 90,        // the second shop
+    rentFreeDays: 10,      // a fit-out period before the first rent falls, as a real lease gives you
+    powerBase: 6,          // shop lights, fridge, till, security
+    waterPerPlant: 0.4,
+    payRate: 220,          // a day of one employee, fully loaded: wage, payroll tax and cover
+    freeSlots: 8,          // up to eight slots is still a job one person can do
+    slotsPerGrower: 3,     // past that, one more grower for every three further slots
+    processPerGram: 0.55,  // trimming, lab testing and compliance on every gram harvested
+    arrearsRep: 2          // reputation lost for every day the bills go unpaid
+  };
+  function headcount() {   // nobody runs a commercial grow room and two shop floors on their own
+    var X = xs();
+    return Math.max(0, Math.ceil((slots() - COST.freeSlots) / COST.slotsPerGrower)) + (X.branch ? 3 : 0) + (hasLic('tobacco') ? 2 : 0);
+  }
+  function spendOp(n) {   // an operating cost that falls outside the morning bill
+    if (n <= 0) return 0;
+    var B = books(), paid = drawFunds(n);
+    B.dayOther += paid; B.monthOther += paid;
+    if (paid < n - 0.5) B.arrears += n - paid;
+    return paid;
+  }
+  function books() {
+    if (!S.books) S.books = { monthGross: 0, dayGross: 0, exciseDue: 0, lastDayCosts: 0, arrears: 0, month: 1, lastBill: null, dayOther: 0, monthOther: 0 };
+    if (S.books.dayOther === undefined) { S.books.dayOther = 0; S.books.monthOther = 0; }   // saves written before production costs existed
+    return S.books;
+  }
+  function bookSale(total) {   // every dollar of trade passes through here; the taxman takes his cut of it later
+    var B = books();
+    S.stats.earned = (S.stats.earned || 0) + total;
+    B.monthGross += total; B.dayGross += total; B.exciseDue += total * ECON.excise;
+  }
+  function billLines() {   // what the morning bill is made of, itemised so the P&L panel can show it
+    var X = xs(), L = lightObj(), sl = slots(), solar = S.upgrades.solar ? 0.65 : 1;
+    var free = (S.day || 1) <= COST.rentFreeDays;
+    var rent = free ? 0 : COST.rentBase + sl * COST.rentPerSlot + (hasLic('tobacco') ? COST.rentBasement : 0) + (X.branch ? COST.rentBranch : 0);
+    var power = (COST.powerBase + sl * (L.draw || 0) + (S.upgrades.hvac ? 8 : 0) + (S.upgrades.security2 ? 3 : 0) + (S.upgrades.bagline ? 4 : 0)) * solar;
+    var hired = crewList().filter(function (w) { return !w.off; }).length, need = headcount();
+    return [
+      { k: 'Rent', v: rent, d: free ? 'fit-out period, rent free until day ' + (COST.rentFreeDays + 1) : sl + ' slots' + (X.branch ? ' + branch' : '') + (hasLic('tobacco') ? ' + basement' : '') },
+      { k: 'Power', v: power, d: L.name + ' over ' + sl + ' slots' + (S.upgrades.solar ? ', solar roof taking a third off' : '') },
+      { k: 'Water', v: S.plants.length * COST.waterPerPlant, d: S.plants.length + ' plants in the tent' },
+      { k: 'Payroll', v: Math.max(0, need - hired) * COST.payRate, d: need ? need + ' staff the place needs, ' + hired + ' of them crew you hired' : 'just you, for now' }
+    ];
+  }
+  function dailyFixed() { return billLines().reduce(function (a, r) { return a + r.v; }, 0); }
+  function drawFunds(n) {   // a bill comes out of the bank first, then the vault, then the till
+    var need = n, take;
+    take = Math.min(S.bank, need); S.bank -= take; need -= take;
+    if (need > 0) { take = Math.min(S.vault, need); S.vault -= take; need -= take; }
+    if (need > 0) { take = Math.min(S.till, need); S.till -= take; need -= take; }
+    return n - need;   // what was actually paid
+  }
+  function payBills(offline) {
+    var B = books(), rows = billLines();
+    var fixed = rows.reduce(function (a, r) { return a + r.v; }, 0);   // the staff the place needs; payWages then settles the named crew on top
+    var paid = drawFunds(fixed), short = fixed - paid;
+    B.lastBill = { day: S.day, rows: rows, paid: paid, short: short };
+    B.lastDayCosts = fixed + B.dayOther; B.dayGross = 0; B.dayOther = 0;
+    if (short > 0.5) {
+      B.arrears += short; S.rep = Math.max(0, S.rep - COST.arrearsRep);
+      logEvent('Bills came to ' + money(fixed) + ' and only ' + money(paid) + ' was there: ' + money(short) + ' into arrears, rep -' + COST.arrearsRep, 'bad');
+      if (!offline) toast('Bills unpaid: ' + money(short) + ' into arrears', 'bad');
+    } else {
+      logEvent('Morning bills paid: ' + money(fixed) + ' (' + rows.slice(0, 3).map(function (r) { return r.k.toLowerCase() + ' ' + money(r.v); }).join(', ') + ')', '');
+      if (B.arrears > 0.5) { var cl = drawFunds(Math.min(B.arrears, S.bank)); if (cl > 0.5) { B.arrears -= cl; logEvent('Paid ' + money(cl) + ' off the arrears' + (B.arrears > 0.5 ? ', ' + money(B.arrears) + ' still owing' : ', all square'), B.arrears > 0.5 ? '' : 'good'); } }
+    }
+    payWages(offline);
+    monthlyTax(offline);
+  }
+  function taxDue() { var B = books(); return Math.round(B.exciseDue + B.monthGross * ECON.taxRate); }
+  function taxDay() { return (Math.floor(((S.day || 1) - 1) / 28) + 1) * 28 + 1; }
+  function monthlyTax(offline) {
+    var B = books(), m = Math.floor(((S.day || 1) - 1) / 28) + 1;
+    if (m === B.month) return;
+    B.month = m;
+    var bill = taxDue(), gross = B.monthGross;
+    B.exciseDue = 0; B.monthGross = 0; B.monthOther = 0;
+    if (bill <= 0) return;
+    var paid = drawFunds(bill), short = bill - paid;
+    if (short > 0.5) {
+      B.arrears += short; S.rep = Math.max(0, S.rep - 5);
+      logEvent('Tax on ' + money(gross) + ' of trade came to ' + money(bill) + ' and only ' + money(paid) + ' was there, rep -5', 'bad');
+      if (!offline) toast('Tax bill short by ' + money(short), 'bad');
+    } else {
+      logEvent('Tax paid: ' + money(bill) + ' on ' + money(gross) + ' of trade last month', '');
+      if (!offline) toast('Tax bill paid: ' + money(bill), '');
+    }
+  }
+  function daysText(ms) {   // grow times span days now, so minutes stopped being the useful unit
+    var d = ms / 60000 / (+SET.dayLength || 20);
+    return d >= 1 ? (Math.round(d * 10) / 10) + ' days' : Math.ceil(ms / 60000) + ' min';
+  }
   function unitPrice(kind, q, thc) { return kind === 'bags' ? bagPrice(q, thc) : kind === 'cookies' ? cookiePrice(q, thc) : jointPrice(q, thc); }
   function kindName(kind, n) { return kind === 'bags' ? (n === 1 ? 'bag' : 'bags') : kind === 'cookies' ? (n === 1 ? 'cookie' : 'cookies') : (n === 1 ? 'joint' : 'joints'); }
 
   // ── Sim engine (same rules as the 2D game) ────────────────────────
   function step(dt, offline) {
     var L = lightObj(); var auto = !!S.upgrades.autowater;
-    if (SET.dayNight === 'cycle') { S.clock += dt / 60 / (+SET.dayLength || 20) * 24; while (S.clock >= 24) { S.clock -= 24; S.day = (S.day || 1) + 1; payWages(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
+    if (SET.dayNight === 'cycle') { S.clock += dt / 60 / (+SET.dayLength || 20) * 24; while (S.clock >= 24) { S.clock -= 24; S.day = (S.day || 1) + 1; payBills(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
     creditPending(offline); updateLogistics(dt, offline);
     // humidity: each room drifts toward its moisture load; a running dehumidifier pulls it down to its target
     var pull = S.upgrades.hvac ? 4.0 : S.upgrades.dehumid ? 1.6 : 0.8; var wetBatches = S.batches.filter(function (b) { return !b.cured; }).length;
@@ -400,7 +520,7 @@
     if (!offline) {
       var target = (S.event && S.event.mult) ? S.event.mult : 1.0;
       S.market += ((target - S.market) * 0.02 + (Math.random() - 0.5) * 0.03) * Math.min(dt, 3);
-      S.market = clamp(S.market, 0.7, 2.0);
+      S.market = clamp(S.market, 0.85, 1.20);
       if (S.event && now() > S.event.until) { logEvent('Event ended: ' + S.event.label, ''); S.event = null; }
       if (S.customer && now() > S.customer.until && (S.customer.arrived || S.customer.stage || now() - (S.customer.spawnedAt || 0) > 180000)) { if (S.customer.stage) { logEvent('🚶 ' + S.customer.who + ' got tired of waiting to pay and walked (rep -2)', 'bad'); S.rep = Math.max(0, S.rep - 2); if (!offline) toast('🚶 ' + S.customer.who + ' walked out without paying', 'bad'); } S.customer = null; }
     }
@@ -410,8 +530,8 @@
     S.lastEvent = now();
     var roll = Math.random();
     if (roll < (S.staff && S.staff.guardTask === 'patrol' ? 0.03 : 0.07) && shop().open && !heist.on && S.till + S.tips >= 30) { startRobbery(); return; }
-    if (roll < 0.3) { S.event = { type: '420', label: '420 rush — prices are up!', mult: 1.6, until: now() + 35000 }; logEvent('🔥 420 rush! The market spikes for a bit.', 'good'); toast('🔥 420 rush!', 'rare'); }
-    else if (roll < 0.5) { S.event = { type: 'cup', label: 'Cannabis Cup in town — quality sells for extra rep', mult: 1.2, until: now() + 60000 }; logEvent('🏆 Cannabis Cup! Quality sales earn bonus rep.', 'rare'); }
+    if (roll < 0.3) { S.event = { type: '420', label: '420 rush — prices are up!', mult: 1.20, until: now() + 35000 }; logEvent('🔥 420 rush! The market spikes for a bit.', 'good'); toast('🔥 420 rush!', 'rare'); }
+    else if (roll < 0.5) { S.event = { type: 'cup', label: 'Cannabis Cup in town — quality sells for extra rep', mult: 1.08, until: now() + 60000 }; logEvent('🏆 Cannabis Cup! Quality sales earn bonus rep.', 'rare'); }
     else if (roll < 0.7) { var gift = randi(30, 90) * (S.upgrades.tipjar ? 2 : 1); S.tips += gift; logEvent('💰 A grateful regular left ' + money(gift) + ' in the tip jar.', 'good'); sfx('cash'); }
     else if (roll < 0.85 && S.plants.length) { var v = pick(S.plants); if (!v.hazard) { v.hazard = pick(['pest', 'mold']); logEvent('🐛 Pest outbreak on a ' + strainById(v.strain).name + '!', 'bad'); } }
     else if (!S.customer && shop().open && now() >= (S.noCustomersUntil || 0)) spawnCustomer(hasLic('premium'));   // connoisseurs only come once you hold the permit, never while someone is already at the window, and never through a locked front door
@@ -472,7 +592,7 @@
     var q = stack.qSum / stack.n, thc = stack.thcSum / stack.n;
     var price = kind === 'bags' ? bagPrice(q, thc) : jointPrice(q, thc);
     stack.qSum -= q; stack.thcSum -= thc; stack.n--;
-    S.bank += price; S.stats.sold++; S.stats.earned += price;
+    S.bank += price; S.stats.sold++; bookSale(price);
     S.rep += q > 80 ? 2 : q > 60 ? 1 : 0; gainXp(Math.round(price / 8));
     if (!quiet) { toast('💵 ' + money(price), 'good'); sfx('cash'); }
   }
@@ -522,11 +642,13 @@
       if (p.progress < 1) { toast('Not ready yet', 'bad'); return; }
       if (hotbarFull()) { toast('Hands full — G to put things down', 'bad'); return; }
       var st = strainById(p.strain); var L = lightObj(); var q = clamp(p.quality, 20, 100);
-      var wet = st.yield * (0.9 + L.qual / 60) * (p.fed ? 1.15 : 1) * (0.7 + q / 140) * (p.hazard ? 0.6 : 1) * (S.upgrades.trimmer2 ? 1.3 : S.upgrades.trimmer ? 1.15 : 1);
+      var wet = st.yield * (L.yld || 1) * (p.fed ? 1.15 : 1) * (0.7 + q / 140) * (p.hazard ? 0.6 : 1) * (S.upgrades.trimmer2 ? 1.3 : S.upgrades.trimmer ? 1.15 : 1);
       wet = Math.round(wet * 10) / 10;
       var sp = slotPos(p.slot);
       S.plants.splice(idx, 1); delete S.potSoil[p.slot];
       S.stats.harvested += wet; gainXp(Math.round(wet));
+      var proc = wet * COST.processPerGram; spendOp(proc);   // trimming, lab testing and compliance, charged on the weight that came off the plant
+      logEvent('Trim, testing and compliance on that batch: ' + money(proc), '');
       take({ kind: 'harvest', grams: wet, quality: q, thc: st.thc, strain: p.strain }); sfx('harvest');
       logEvent('✂️ Harvested ' + gram(wet) + ' of ' + st.name + ' (q' + Math.round(q) + ') — hang it to dry', 'good');
       toast('✂️ Harvested ' + gram(wet) + ' — hang it on the drying line', 'good'); world.dirty = true;
@@ -601,7 +723,7 @@
       var each = c.want === 'bags' ? bagPrice(q, thc) : jointPrice(q, thc);
       var mult = c.premium ? 2.2 : 1.15; var total = each * c.qty * mult;
       for (var i = 0; i < c.qty; i++) { stack.qSum -= q; stack.thcSum -= thc; stack.n--; }
-      S.bank += total; S.stats.sold += c.qty; S.stats.earned += total;
+      S.bank += total; S.stats.sold += c.qty; bookSale(total);
       var rep = c.premium ? randi(8, 16) : randi(1, 4) + Math.round(q / 25);
       S.rep += rep; gainXp(Math.round(total / 8));
       logEvent('💵 Sold ' + c.qty + ' ' + c.want + ' to ' + c.who + ' — ' + money(total) + ' (+' + rep + ' rep)', c.premium ? 'rare' : 'good');
@@ -618,7 +740,7 @@
       if (!hasLic('export')) return; var parts = String(arg).split(':'); var sid = parts[0], grams = Math.min(+parts[1] || 50, 100, stashOf(sid).g);
       if (grams < 20) { toast('Bulk buyers take 20 g or more', 'bad'); return; }
       var d = stashDraw(sid, grams); var amount = Math.round(gramValue(d.q, d.thc) * 0.7 * grams);
-      S.pending.push({ amount: amount, dueDay: (S.day || 1) + 1, dueAt: now() + (+SET.dayLength || 20) * 60000 }); S.stats.exported = (S.stats.exported || 0) + grams;
+      S.pending.push({ amount: amount, dueDay: (S.day || 1) + 1, dueAt: now() + (+SET.dayLength || 20) * 60000 }); S.stats.exported = (S.stats.exported || 0) + grams; bookSale(amount);
       sfx('cash'); toast('🚢 Contract signed: ' + gram(grams) + ' ' + strainById(sid).name + ' for ' + money(amount) + ', paid tomorrow', 'good'); logEvent('🚢 Export contract: ' + gram(grams) + ' ' + strainById(sid).name + ' — ' + money(amount) + ' clears next day', 'good'); world.dirty = true;
     },
     buyLight: function () {
@@ -1847,7 +1969,7 @@
     if (d.locked) return d;
     setDoor(d.id, true); return null;
   }
-  var WORKER_HIRE = 400, WORKER_WAGE = 60, CREW_MAX = 3;
+  var WORKER_HIRE = 400, WORKER_WAGE = COST.payRate, CREW_MAX = 3;
   // who turns up when you hire. Each hire costs more than the last and draws the same wage.
   var CREW_LOOK = [
     { name: 'Jo',   skin: 0xf1c27d, hair: 0x5a3a1a, hairStyle: 'ponytail', shirt: 0x2f6b4a, at: [-1.5, 1.2] },
@@ -2902,7 +3024,7 @@
     if (poi === 'rival') {
       var theirs = Math.round(unitPrice('bags', 60, 1.2) * (0.9 + ((S.day * 7) % 5) / 20)); lines.push({ label: '👀 Their price board: an eighth at ' + money(theirs) + ' <small>yours at q60: ' + money(Math.round(unitPrice('bags', 60, 1.2))) + ' · market ' + S.market.toFixed(2) + '×</small>', cls: 'muted' });
       lines.push({ label: '📣 Pay a kid ' + money(60) + ' to hand out your flyers outside their door <small>' + (S.flyerDay === S.day ? 'done for today' : 'rep +3, once a day') + '</small>', cls: S.flyerDay === S.day || S.bank < 60 ? 'muted' : '', act: S.flyerDay === S.day || S.bank < 60 ? null : function () { S.bank -= 60; S.flyerDay = S.day; S.rep += 3; sfx('ok'); toast('📣 Flyers going round — rep +3', 'good'); logEvent('📣 Flyered the rival shop — rep +3', 'good'); hud(); save(); } });
-      if (xs().branch) lines.push({ label: '🏪 This is your branch now <small>its takings reach your bank every morning</small>', cls: 'on' }); else lines.push({ label: '🏪 Buy them out · ' + money(25000) + ' <small>' + (S.rep >= 150 ? 'they will sell: the branch pays you every morning' : 'they will not talk to you below 150 rep (you have ' + Math.round(S.rep) + ')') + '</small>', cls: S.rep >= 150 && S.bank >= 25000 ? '' : 'muted', act: S.rep >= 150 && S.bank >= 25000 ? function () { S.bank -= 25000; xs().branch = true; sfx('levelup'); toast('🏪 Green Leaf is yours — a second shop', 'rare'); logEvent('🏪 Bought out Green Leaf: you now run two shops', 'rare'); hud(); save(); } : null });
+      if (xs().branch) lines.push({ label: '🏪 This is your branch now <small>its takings reach your bank every morning</small>', cls: 'on' }); else lines.push({ label: '🏪 Buy them out · ' + money(180000) + ' <small>' + (S.rep >= 150 ? 'they will sell: the branch pays you every morning' : 'they will not talk to you below 150 rep (you have ' + Math.round(S.rep) + ')') + '</small>', cls: S.rep >= 150 && S.bank >= 180000 ? '' : 'muted', act: S.rep >= 150 && S.bank >= 180000 ? function () { S.bank -= 180000; xs().branch = true; sfx('levelup'); toast('🏪 Green Leaf is yours — a second shop', 'rare'); logEvent('🏪 Bought out Green Leaf: you now run two shops', 'rare'); hud(); save(); } : null });
       ctxOpen('🌿 Green Leaf', xs().branch ? 'your second shop' : 'the competition, three doors down', lines); return;
     }
     if (poi === 'supply') {
@@ -2988,7 +3110,7 @@
     var q = h.qSum / h.n, thc = h.thcSum / h.n; if (q < v.minQ) { vipSay('that is… ordinary', '#ff6b6b'); toast(v.who + ' will not touch anything under quality ' + v.minQ, 'bad'); return; }
     var give = Math.min(v.qty - v.given, h.n); v.given += give; v.paid = (v.paid || 0) + unitPrice(v.kind, q, thc) * give * 3; h.n -= give; h.qSum -= q * give; h.thcSum -= thc * give; if (h.n <= 0) S.held = null; sfx('rustle'); world.dirty = true;
     if (v.given < v.qty) { vipSay('lovely. ' + (v.qty - v.given) + ' more', '#e8c27a'); return; }
-    var pay = Math.round(v.paid), tip = Math.round(pay * 0.2); S.till += pay; S.tips += tip; S.rep += 8; S.stats.vip = (S.stats.vip || 0) + 1; S.stats.earned = (S.stats.earned || 0) + pay; sfx('cash'); toast('🥂 ' + v.who + ' paid ' + money(pay) + ' and left ' + money(tip) + ' on the table — rep +8', 'good'); logEvent('🥂 Lounge service for ' + v.who + ': ' + money(pay) + ' + ' + money(tip) + ' tip, rep +8', 'good'); hud(); vipLeave('exquisite. until next time', '#6fdc8c');
+    var pay = Math.round(v.paid), tip = Math.round(pay * 0.2); S.till += pay; S.tips += tip; S.rep += 8; S.stats.vip = (S.stats.vip || 0) + 1; bookSale(pay); sfx('cash'); toast('🥂 ' + v.who + ' paid ' + money(pay) + ' and left ' + money(tip) + ' on the table — rep +8', 'good'); logEvent('🥂 Lounge service for ' + v.who + ': ' + money(pay) + ' + ' + money(tip) + ' tip, rep +8', 'good'); hud(); vipLeave('exquisite. until next time', '#6fdc8c');
   }
   function updateVip(dt) {
     if (vip.state === 'away') { if (!S.vip && hasLic('premium') && shop().open && Math.random() < dt / 360) startVip(); return; }
@@ -6005,7 +6127,7 @@
     var total = c.due; var rep = Math.max(0, c.rep + (extraRep || 0));
     if (c.pay === 'card') S.bank += Math.round(total * (S.upgrades.fintech ? 1.03 : 1)); else S.till += c.tendered - c.changeGiven;   // card settles straight to the bank, cash sits in the drawer
     if (c.matched && !c.subbed && Math.random() < 0.35) { var tipAmt = randi(1, 3) * (S.upgrades.tipjar ? 2 : 1); S.tips += tipAmt; logEvent('🫙 ' + c.who + ' dropped ' + money(tipAmt) + ' in the tip jar', ''); }
-    S.stats.sold += c.qty; S.stats.earned += total; S.rep += rep; gainXp(Math.round(total / 8));
+    S.stats.sold += c.qty; bookSale(total); S.rep += rep; gainXp(Math.round(total / 8));
     logEvent('💵 Sold ' + c.qty + ' ' + c.want + ' to ' + c.who + ' — ' + money(total) + ' by ' + c.pay + (note ? ' · ' + note : '') + ' (+' + rep + ' rep)', c.premium ? 'rare' : 'good');
     toast('💵 ' + money(total) + '  +' + rep + ' rep' + (note ? ' · ' + note : ''), 'good'); sfx('cash'); registerSale(c.who + ' ' + money(total));
     burst(npc.g.position.x, 1.4, npc.g.position.z - 0.3, 0xffd766, 40, 'up');
@@ -6029,7 +6151,7 @@
   function sellHeld() {
     var h = held(); if (!h || (h.kind !== 'joints' && h.kind !== 'bags' && h.kind !== 'cookies')) { toast('Bring bags, joints or cookies to the register to sell', 'bad'); return; }
     var q = h.qSum / h.n, thc = h.thcSum / h.n; var each = unitPrice(h.kind, q, thc); var total = each * h.n;
-    S.till += total; S.stats.sold += h.n; S.stats.earned += total; S.rep += (q > 80 ? 2 : q > 60 ? 1 : 0) * Math.min(h.n, 3); gainXp(Math.round(total / 8));
+    S.till += total; S.stats.sold += h.n; bookSale(total); S.rep += (q > 80 ? 2 : q > 60 ? 1 : 0) * Math.min(h.n, 3); gainXp(Math.round(total / 8));
     logEvent('💵 Rang up ' + h.n + ' ' + h.kind + ' — ' + money(total), 'good'); toast('💵 ' + money(total), 'good'); sfx('cash'); registerSale(h.n + ' ' + h.kind + ' ' + money(total));
     burst(-1.0, 1.4, 4.9, 0xffd766, 30, 'up'); S.held = null; world.dirty = true;
   }
@@ -6314,12 +6436,12 @@
   function ctxPlant(pid) {
     var p = plantById(pid); if (!p) return; var st = strainById(p.strain); var sg = stageFor(p.progress);
     var lines = [];
-    lines.push({ label: '⏱ ' + sg.label + ' · ' + Math.round(p.progress * 100) + '% · about ' + Math.ceil((1 - p.progress) * st.growMs / lightObj().spd / 60000) + ' min to harvest' });
+    lines.push({ label: '⏱ ' + sg.label + ' · ' + Math.round(p.progress * 100) + '% · about ' + daysText((1 - p.progress) * st.growMs / lightObj().spd) + ' to harvest' });
     lines.push({ label: '⭐ quality ' + Math.round(p.quality) + (p.fed ? ' · fed' : ' · not fed yet (bring nutrients: +12)') });
     if (!S.upgrades.autowater) lines.push({ label: '💧 water ' + Math.round((1 - p.thirst) * 100) + '%' + (p.thirst > 0.6 ? ' · THIRSTY, grab the can' : ''), cls: p.thirst > 0.6 ? 'bad' : '' });
     lines.push({ label: '🌫️ room humidity ' + Math.round(S.rh.grow) + '%' + (S.rh.grow > 60 ? ' · mold risk, run the dehumidifier' : S.rh.grow < 42 ? ' · very dry, plants drink faster' : ''), cls: S.rh.grow > 60 ? 'bad' : '' });
     if (p.hazard) lines.push({ label: '⚠ ' + (p.hazard === 'pest' ? 'spider mites' : 'mold') + ' — bring pest spray from the rack', cls: 'bad' });
-    lines.push({ label: '🌾 expected yield ~' + gram(st.yield * (0.9 + lightObj().qual / 60) * (p.fed ? 1.15 : 1) * (0.7 + p.quality / 140) * (S.upgrades.trimmer2 ? 1.3 : S.upgrades.trimmer ? 1.15 : 1)) });
+    lines.push({ label: '🌾 expected yield ~' + gram(st.yield * (lightObj().yld || 1) * (p.fed ? 1.15 : 1) * (0.7 + p.quality / 140) * (S.upgrades.trimmer2 ? 1.3 : S.upgrades.trimmer ? 1.15 : 1)) });
     ctxOpen(st.emoji + ' ' + st.name, 'inspecting', lines);
   }
   function ctxShelf() {
@@ -6427,7 +6549,7 @@
   function chip(k, v) { return '<span class="g3-chip">' + k + ' <b>' + v + '</b></span>'; }
   function paneSeeds() {
     var h = '<div class="g3-box"><h3>🌱 Seed bank</h3><div class="desc">Higher strains unlock as you level up. Grow time is at windowsill speed; lamps make it faster.</div><div class="g3-strains">';
-    STRAINS.forEach(function (s) { var locked = S.level < s.lvl; h += '<div class="g3-strain ' + (locked ? 'locked' : '') + '"><div class="top"><span class="emoji">' + s.emoji + '</span><span class="nm">' + s.name + '</span></div><div class="traits"><span>⏱ <b>' + Math.round(s.growMs / 60000) + 'm</b></span><span>🌾 <b>' + s.yield + 'g</b></span><span>💪 <b>' + s.thc.toFixed(1) + '×</b></span></div><div class="traits"><span><i class="sw" style="background:#' + s.bud.toString(16).padStart(6, '0') + '"></i>bud</span><span>seeds: <b>' + (S.supplies['seed_' + s.id] || 0) + '</b></span></div>' + (locked ? '<div class="g3-tier">🔒 level ' + s.lvl + '</div>' : '<button class="g3-btn primary wide" data-act="buySeed" data-id="' + s.id + '">Buy seed · ' + money(Math.round(s.seed * supplyDisc())) + '</button>') + '</div>'; });
+    STRAINS.forEach(function (s) { var locked = S.level < s.lvl; h += '<div class="g3-strain ' + (locked ? 'locked' : '') + '"><div class="top"><span class="emoji">' + s.emoji + '</span><span class="nm">' + s.name + '</span></div><div class="traits"><span>⏱ <b>' + daysText(s.growMs) + '</b></span><span>🌾 <b>' + s.yield + 'g</b></span><span>💪 <b>' + s.thc.toFixed(1) + '×</b></span></div><div class="traits"><span><i class="sw" style="background:#' + s.bud.toString(16).padStart(6, '0') + '"></i>bud</span><span>seeds: <b>' + (S.supplies['seed_' + s.id] || 0) + '</b></span></div>' + (locked ? '<div class="g3-tier">🔒 level ' + s.lvl + '</div>' : '<button class="g3-btn primary wide" data-act="buySeed" data-id="' + s.id + '">Buy seed · ' + money(Math.round(s.seed * supplyDisc())) + '</button>') + '</div>'; });
     return h + '</div></div>';
   }
   function paneLicences() {
@@ -6453,7 +6575,7 @@
         (locked ? ' · needs the ' + locked : full ? ' · the shop is full' : '') + '</span></span>' +
         (full || locked ? '<span class="g3-tier">' + (full ? 'max' : '🔒') + '</span>' : '<button class="g3-btn primary" data-act="buyUnit" data-id="' + base + '">' + money(machCost(base, have + 1)) + '</button>') + '</div>';
     });
-    h += '</div><div class="g3-box"><h3>📈 Business</h3><div class="g3-chips">' + chip('market', S.market.toFixed(2) + '×') + chip('rep', Math.floor(S.rep)) + chip('price mult', '×' + repMult().toFixed(2)) + chip('level', S.level) + '</div><div class="desc">Reputation raises every price. Connoisseurs (🎩) pay 2.2× for quality 70+.</div>' + paneStatsInner() + '</div></div>';
+    h += '</div><div class="g3-box"><h3>📈 Business</h3><div class="g3-chips">' + chip('market', S.market.toFixed(2) + '×') + chip('rep', Math.floor(S.rep)) + chip('price mult', '×' + repMult().toFixed(2)) + chip('level', S.level) + '</div><div class="desc">Reputation adds up to 10% to a price and brings people through the door. Connoisseurs (🎩) pay 2.2× for quality 70+.</div>' + paneStatsInner() + '</div></div>';
     return h;
   }
   function paneProcess() {
@@ -6492,12 +6614,25 @@
     h += '</div><div class="g3-box"><h3>📒 Statement</h3>' + paneLogInner(10) + '</div></div>';
     return h;
   }
+  function paneLedger() {
+    var B = books(), rows = billLines(), L = B.lastBill, daily = dailyFixed();
+    function row(ico, n, own) { return '<div class="g3-row"><span class="ico">' + ico + '</span><span class="meta"><span class="n">' + n + '</span><span class="own">' + own + '</span></span></div>'; }
+    var h = '<h3>Profit &amp; loss</h3><div class="desc">The bills fall every morning whether or not there is anything ready to sell. Tax is settled on the first of each month.</div>';
+    h += rows.map(function (r) { return row('−', r.k + ' ' + money(r.v), esc(r.d)); }).join('');
+    h += row('=', money(daily) + ' a day', 'what the business costs to stand still');
+    h += row('$', money(B.dayGross) + ' taken today', money(B.monthGross) + ' so far this month');
+    h += row('−', money(B.dayOther) + ' spent on the crop today', 'trimming, testing and compliance at $' + COST.processPerGram.toFixed(2) + ' a gram, ' + money(B.monthOther) + ' this month');
+    h += row('%', money(taxDue()) + ' tax owed', Math.round(ECON.excise * 100) + '% excise sits inside every sale, plus ' + Math.round(ECON.taxRate * 100) + '% on the month. Due on day ' + taxDay() + '.');
+    if (B.arrears > 0.5) h += row('!', money(B.arrears) + ' in arrears', 'unpaid bills; reputation falls every day this stands');
+    if (L && L.short > 0.5) h += '<div class="desc">Day ' + L.day + ': ' + money(L.short) + ' of that morning\'s bill went unpaid.</div>';
+    return h;
+  }
   function paneBank() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🏦 Bank · ' + money(S.bank) + '</h3><div class="desc">Online orders and upgrades are paid from the bank. Card sales land here straight away. Cash has to be collected: book a courier, meet them at the back door with the money in your pocket, and it clears the next morning.</div>' + moneyRows();
     h += '<div class="desc" style="margin-top:10px">Book a cash pickup</div><div class="g3-chips">' + [100, 500, 1000, 2500, 5000, 10000, 25000, 50000].map(function (a) { return '<button class="g3-btn' + (a <= S.vault + S.pocket ? ' primary' : '') + '" data-act="courierCall" data-id="' + a + '"' + (S.courier ? ' disabled' : '') + '>' + money(a) + '</button>'; }).join('') + '<button class="g3-btn" data-act="courierCall" data-id="all"' + (S.courier || S.vault + S.pocket < 50 ? ' disabled' : '') + '>all cash on hand · ' + money(S.vault + S.pocket) + '</button></div>';
     if (S.courier) h += '<div class="desc" style="margin-top:8px">Courier booked for <b>' + money(S.courier.amount) + '</b> · ' + (S.courier.state === 'called' ? 'arriving at the back gate shortly' : 'waiting in the back room now') + '</div>';
     if (hasLic('export')) { h += '<div class="desc" style="margin-top:10px">Bulk contracts (70% of gram value, paid tomorrow)</div>'; var anyX = false; STRAINS.forEach(function (st) { var sg = stashOf(st.id).g; if (sg < 20) return; anyX = true; var q = stashOf(st.id).qSum / sg, thc = stashOf(st.id).thcSum / sg; h += '<div class="g3-row"><span class="ico">' + st.emoji + '</span><span class="meta"><span class="n">' + st.name + ' · ' + gram(sg) + ' in the stash</span><span class="own">' + money(gramValue(q, thc) * 0.7) + ' per gram</span></span></div><div class="g3-chips">' + [20, 50, 100].filter(function (n) { return n <= sg; }).map(function (n) { return '<button class="g3-btn" data-act="exportSell" data-id="' + st.id + ':' + n + '">sell ' + n + ' g · ' + money(gramValue(q, thc) * 0.7 * n) + '</button>'; }).join('') + '</div>'; }); if (!anyX) h += '<div class="g3-empty">no strain has 20 g cured yet</div>'; }
-    h += '</div><div class="g3-box"><h3>📒 In transit</h3>' + (S.pending.length ? S.pending.map(function (p) { return '<div class="g3-row"><span class="ico">🚚</span><span class="meta"><span class="n">' + money(p.amount) + '</span><span class="own">clears ' + (SET.dayNight === 'cycle' ? 'on day ' + p.dueDay : 'tomorrow') + '</span></span></div>'; }).join('') : '<div class="g3-empty">nothing in transit</div>');
+    h += '</div><div class="g3-box">' + paneLedger() + '<h3 style="margin-top:12px">📒 In transit</h3>' + (S.pending.length ? S.pending.map(function (p) { return '<div class="g3-row"><span class="ico">🚚</span><span class="meta"><span class="n">' + money(p.amount) + '</span><span class="own">clears ' + (SET.dayNight === 'cycle' ? 'on day ' + p.dueDay : 'tomorrow') + '</span></span></div>'; }).join('') : '<div class="g3-empty">nothing in transit</div>');
     h += '<h3 style="margin-top:12px">🚚 Deliveries</h3>' + (S.order ? '<div class="g3-row"><span class="ico">🛒</span><span class="meta"><span class="n">Open order</span><span class="own">' + esc(orderSummary(S.order.items)) + ' · dispatches in a moment</span></span></div>' : '') + (S.deliveries.length ? S.deliveries.map(function (d) { return '<div class="g3-row"><span class="ico">🚚</span><span class="meta"><span class="n">' + esc(orderSummary(d.items)) + '</span><span class="own">van arrives in ~' + Math.max(0, Math.ceil((d.due - now()) / 1000)) + ' s at the back door</span></span></div>'; }).join('') : (S.order ? '' : '<div class="g3-empty">no deliveries on the road</div>')) + '</div></div>';
     return h;
   }
