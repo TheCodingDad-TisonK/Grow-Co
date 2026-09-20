@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.15
+
+Six things you reported, all in the same area: the town, and who can walk where in it.
+
+**Doors are real to everybody now.** Nobody walking around the building could see a door at all: the pathfinder threw every door away before it planned a route, and it never rebuilt itself when one opened or shut. On top of that, a shut door slid open as a decoration whenever anyone stood near it while the door itself stayed shut. Between the two, robbers appeared to stroll through the wall of the vault room and staff walked through locked doors as though they were not there. One rule now. A shut door that is not locked is no barrier, because people open doors, and you will see them do it. A locked door genuinely stops staff and customers: send your worker somewhere behind one and they give up the errand and say so. A robber goes through anything, but he has to break it first, standing at the door and working on it for a few seconds with the noise and the log entry that go with it. The lock stays broken afterwards. Locking the back rooms is worth doing now: it will not keep him out, but it costs him time and tells you where he is.
+
+**When the pathfinder cannot find a route it no longer draws a straight line through the building.** That fallback was most of what "walking through walls" actually was. Whoever it is now goes as far as there is a way and stops.
+
+**The police precinct is not next door any more.** It sat 24 metres from your front door, which made every response absurd. It is at the far end of Main Street, 96 metres away.
+
+**And the police actually turn up.** "Police arrived" used to mean the robber vanished and a line appeared in the log. Now a patrol car leaves the precinct with its lights going, comes down Main Street, pulls into the kerb outside your door, and two officers get out and walk in. They cross the shop to whoever is still inside, he puts his hands up, and they walk him back out to the car and drive off with him. The silent alarm's countdown is shorter to make room for the drive.
+
+**A closed shop is closed.** The random-event path could spawn a customer without ever checking whether you were open, so people walked in with the shutters down. It checks now, and it respects the cooling-off period after trouble as well.
+
+**Buildings stop landing on top of each other.** Nothing ever tested whether a plot was free, so the procedural blocks were laid over the named places and a Workshop pack could drop a cinema onto a road or inside a block of flats. Both of the places packs did exactly that. Every plot is tested now against the roads, the parks, your own yard and everything already standing. The town is built as terraces, so sharing a wall is still fine; sharing a living room is not. A Workshop place goes in last, once the whole town is standing, and if the spot the pack asked for is taken it quietly takes the nearest free one.
+
+**More on the streets.** Every kerb in town is dressed: lamp posts, street trees, benches, bins, hydrants, bollards, planters, bus shelters and cars parked nose to tail, all of it kept off the tarmac and out of the buildings.
+
 ## v1.14.1
 
 **The dev tools' "Fill machines" never filled the drinks fridge.** It topped up the shop's drinks, snacks, cups and beans, but the fridge is the one machine you load by hand, so its cans live on the fridge itself rather than in the shop's stock, and nothing ever put any there. It now fills every fridge you own. This was never a new problem, it just got easier to notice once you could own three of them.

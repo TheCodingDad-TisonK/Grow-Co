@@ -33,6 +33,14 @@ window.RF_GUIDE = [
   { id: 'staff', icon: '🧑‍🔧', title: 'Staff', html:
     '<ul><li><b>Jo</b> (hired at the laptop): serves the window, restocks, sweeps or tends plants. Shift + E on Jo changes the job.</li><li><b>Security guard</b>: checks ID at the door; send him on patrol to deter robbers and break up fights sooner.</li>' +
     '<li>The <b>staff roster</b> board in the office hires three more: a <b>driver</b> (wholesales your cartons every morning and runs phone deliveries), a <b>basement operator</b> (keeps the cigarette line running) and a <b>night guard</b> (stops break-ins).</li><li>Wages leave the bank at the start of each day.</li></ul>' },
+  { id: 'doors', icon: '🚪', title: 'Doors, locks and who gets through them', html:
+    '<p>Doors are real to everybody in the building now, not just to you.</p>' +
+    '<ul>' +
+    '<li>A shut door that is <b>not locked</b> is no barrier: staff, your guard and customers push it open as they reach it, and you will see it swing.</li>' +
+    '<li>A <b>locked</b> door genuinely stops them. Send your worker somewhere behind one and they will give up the errand and tell you it is locked, rather than walking through it.</li>' +
+    '<li>A <b>robber</b> does not care what is locked, but he cannot walk through it either. He stops at the door and works on it for a few seconds, you hear it and it goes in the log, and the lock stays broken afterwards. That is time you can use.</li>' +
+    '<li>So locking the back rooms is worth doing. It will not keep a determined man out, but it slows him down and tells you exactly where he is.</li>' +
+    '</ul>' },
   { id: 'crime', icon: '🚨', title: 'Robberies, weapons and the police', html:
     '<p>Robberies run in stages: someone <b>cases</b> the lobby, the <b>mask</b> comes down, the <b>demand</b> at the window, an <b>escalation</b>, sometimes a <b>second target</b> in the back, then the <b>getaway</b>.</p>' +
     '<ul><li>While he is only casing, walk up and press E to confront him. Often he just leaves.</li><li>During the demand, E on the register hands the till over and nobody gets hurt.</li><li>Four kinds, growing with your shop: snatch thief, knife robber, gunman (goes for the vault), two man crew (the bagman strips your goods shelf, and the cabinet if its shutter is up).</li>' +

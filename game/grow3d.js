@@ -414,7 +414,7 @@
     else if (roll < 0.5) { S.event = { type: 'cup', label: 'Cannabis Cup in town — quality sells for extra rep', mult: 1.2, until: now() + 60000 }; logEvent('🏆 Cannabis Cup! Quality sales earn bonus rep.', 'rare'); }
     else if (roll < 0.7) { var gift = randi(30, 90) * (S.upgrades.tipjar ? 2 : 1); S.tips += gift; logEvent('💰 A grateful regular left ' + money(gift) + ' in the tip jar.', 'good'); sfx('cash'); }
     else if (roll < 0.85 && S.plants.length) { var v = pick(S.plants); if (!v.hazard) { v.hazard = pick(['pest', 'mold']); logEvent('🐛 Pest outbreak on a ' + strainById(v.strain).name + '!', 'bad'); } }
-    else if (!S.customer) spawnCustomer(hasLic('premium'));   // connoisseurs only come once you hold the permit; never while someone is already at the window
+    else if (!S.customer && shop().open && now() >= (S.noCustomersUntil || 0)) spawnCustomer(hasLic('premium'));   // connoisseurs only come once you hold the permit, never while someone is already at the window, and never through a locked front door
   }
   function spawnCustomer(premium) {
     if (S.customer) return;   // one customer at a time: replacing the record mid-visit rebuilt the body at the door, so the one at the window seemed to vanish
@@ -1759,19 +1759,31 @@
   var WP = { hall: { x: 0, z: 1.2 }, counter: { x: -0.3, z: 3.0 }, growDoor: { x: -6.5, z: -2 }, dryDoor: { x: 6.5, z: -2 }, annexDoor: { x: 3, z: -9 }, annex: { x: 4, z: -10.6 }, officeDoor: { x: -4, z: 1.0 }, procDoor: { x: 4, z: 1.0 }, staffIn: { x: 10, z: 3.0 }, staffDoor: { x: 10, z: 4.6 }, lobby: { x: 7.5, z: 6.2 }, post: { x: 1.7, z: 7.3 } };
   var ROOM_DOORS = { grow: ['growDoor'], dry: ['dryDoor'], annex: ['dryDoor', 'annexDoor'], security: ['dryDoor', 'annexDoor'], office: ['officeDoor'], proc: ['procDoor'], lobby: ['procDoor', 'staffIn', 'staffDoor'], hall: [] };
   // ── Ground-floor pathfinding: A* over a 25 cm grid built from the obstacle boxes, then string-pulled so staff cut clean corners but never walls ──
-  var NAV = { cell: 0.2, x0: -13, z0: -19, w: 0, h: 0, grid: null, key: '', pad: 0.2 };
-  function navKey() { var k = world.obstacles.length, s = 0; for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (o.tag !== 'guard' && o.tag !== 'door') s += o.x1 * 3.1 + o.z2 * 1.7; } return k + ':' + s.toFixed(2); }
+  var NAV = { cell: 0.2, x0: -13, z0: -19, w: 0, h: 0, grid: null, raw: null, key: '', pad: 0.2 };   /* grid: locked doors are walls. raw: every door is open, which is how a man with a crowbar sees the place */
+  function navKey() { var k = world.obstacles.length, s = 0; for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (o.tag === 'guard') continue; s += o.x1 * 3.1 + o.z2 * 1.7; if (o.doorId) { var dk = doorById[o.doorId]; if (dk && dk.locked) s += 91.7; } }   /* doors count now, and locking one changes the key, so the grid is rebuilt the moment it matters */
+    return k + ':' + s.toFixed(2); }
   function navBuild() {
-    var cs = NAV.cell; NAV.w = Math.ceil(26 / cs) + 1; NAV.h = Math.ceil(33 / cs) + 1; var grid = new Uint8Array(NAV.w * NAV.h), pad = NAV.pad;
-    world.obstacles.forEach(function (o) { if ((o.floorLevel || 0) === 1 || o.floorLevel === -1 || o.tag === 'door' || o.tag === 'guard' || o.tag === 'staffdoor') return; var x1 = Math.max(0, Math.round((o.x1 - pad - NAV.x0) / cs)), x2 = Math.min(NAV.w - 1, Math.round((o.x2 + pad - NAV.x0) / cs)), z1 = Math.max(0, Math.round((o.z1 - pad - NAV.z0) / cs)), z2 = Math.min(NAV.h - 1, Math.round((o.z2 + pad - NAV.z0) / cs)); for (var z = z1; z <= z2; z++) for (var x = x1; x <= x2; x++) grid[z * NAV.w + x] = 1; });
-    NAV.grid = grid; NAV.key = navKey();
+    var cs = NAV.cell; NAV.w = Math.ceil(26 / cs) + 1; NAV.h = Math.ceil(33 / cs) + 1;
+    var grid = new Uint8Array(NAV.w * NAV.h), raw = new Uint8Array(NAV.w * NAV.h), pad = NAV.pad;
+    world.obstacles.forEach(function (o) {
+      if ((o.floorLevel || 0) === 1 || o.floorLevel === -1 || o.tag === 'guard') return;
+      var isDoor = !!o.doorId || o.tag === 'staffdoor' || o.tag === 'frontdoor';
+      var dd = o.doorId ? doorById[o.doorId] : null;
+      var blocks = !isDoor || !!(dd && dd.locked);   /* a shut door you can open is not a wall; a locked one is */
+      var x1 = Math.max(0, Math.round((o.x1 - pad - NAV.x0) / cs)), x2 = Math.min(NAV.w - 1, Math.round((o.x2 + pad - NAV.x0) / cs));
+      var z1 = Math.max(0, Math.round((o.z1 - pad - NAV.z0) / cs)), z2 = Math.min(NAV.h - 1, Math.round((o.z2 + pad - NAV.z0) / cs));
+      for (var cz = z1; cz <= z2; cz++) for (var cx = x1; cx <= x2; cx++) { var ix = cz * NAV.w + cx; if (blocks) grid[ix] = 1; if (!isDoor) raw[ix] = 1; }
+    });
+    NAV.grid = grid; NAV.raw = raw; NAV.key = navKey();
   }
-  function navFree(cx, cz) { return cx >= 0 && cz >= 0 && cx < NAV.w && cz < NAV.h && !NAV.grid[cz * NAV.w + cx]; }
+  var navG = null;   /* which of the two grids the walk being planned right now is using */
+  function navFree(cx, cz) { return cx >= 0 && cz >= 0 && cx < NAV.w && cz < NAV.h && !(navG || NAV.grid)[cz * NAV.w + cx]; }
   function navFreeAt(x, z) { return navFree(Math.round((x - NAV.x0) / NAV.cell), Math.round((z - NAV.z0) / NAV.cell)); }
   function navNearest(cx, cz) { if (navFree(cx, cz)) return [cx, cz]; for (var r = 1; r < 10; r++) for (var dz = -r; dz <= r; dz++) for (var dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dz)) === r && navFree(cx + dx, cz + dz)) return [cx + dx, cz + dz]; return null; }
   function navLos(a, b) { var d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.ceil(d / 0.1); for (var i = 0; i <= n; i++) { var t = n ? i / n : 0; if (!navFreeAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return false; } return true; }
-  function navPath(from, to) {
+  function navPath(from, to, thruDoors) {
     if (!NAV.grid || navKey() !== NAV.key) navBuild();
+    navG = thruDoors ? NAV.raw : NAV.grid;
     var W = NAV.w, H = NAV.h, cs = NAV.cell;
     var s = navNearest(Math.round((from.x - NAV.x0) / cs), Math.round((from.z - NAV.z0) / cs)), t = navNearest(Math.round((to.x - NAV.x0) / cs), Math.round((to.z - NAV.z0) / cs));
     if (!s || !t) return [{ x: to.x, z: to.z }];
@@ -1780,13 +1792,14 @@
     var heap = [], hf = [];   // binary heap of cell indices keyed by f
     function push(i, f) { heap.push(i); hf.push(f); var k = heap.length - 1; while (k > 0) { var p = (k - 1) >> 1; if (hf[p] <= hf[k]) break; var ti2 = heap[p]; heap[p] = heap[k]; heap[k] = ti2; var tf = hf[p]; hf[p] = hf[k]; hf[k] = tf; k = p; } }
     function pop() { var top = heap[0]; var li = heap.pop(), lf = hf.pop(); if (heap.length) { heap[0] = li; hf[0] = lf; var k = 0; for (;;) { var a = k * 2 + 1, b = a + 1, m = k; if (a < heap.length && hf[a] < hf[m]) m = a; if (b < heap.length && hf[b] < hf[m]) m = b; if (m === k) break; var ti3 = heap[m]; heap[m] = heap[k]; heap[k] = ti3; var tf2 = hf[m]; hf[m] = hf[k]; hf[k] = tf2; k = m; } } return top; }
-    var tx = t[0], tz = t[1]; gs[si] = 0; push(si, Math.hypot(s[0] - tx, s[1] - tz)); var found = false, iter = 0;
+    var tx = t[0], tz = t[1]; gs[si] = 0; push(si, Math.hypot(s[0] - tx, s[1] - tz)); var found = false, iter = 0, best = -1, bestH = 1e9;
     while (heap.length && iter++ < 60000) {
       var cur = pop(); if (closed[cur]) continue; closed[cur] = 1; if (cur === ti) { found = true; break; }
       var cx = cur % W, cz = (cur / W) | 0;
+      var ch = Math.hypot(cx - tx, cz - tz); if (ch < bestH) { bestH = ch; best = cur; }
       for (var dz = -1; dz <= 1; dz++) for (var dx = -1; dx <= 1; dx++) { if (!dx && !dz) continue; var nx = cx + dx, nz = cz + dz; if (!navFree(nx, nz)) continue; if (dx && dz && (!navFree(cx + dx, cz) || !navFree(cx, cz + dz))) continue; var ni = nz * W + nx; if (closed[ni]) continue; var ng = gs[cur] + (dx && dz ? 1.4142 : 1); if (ng < gs[ni]) { gs[ni] = ng; came[ni] = cur; push(ni, ng + Math.hypot(nx - tx, nz - tz)); } }
     }
-    if (!found) return [{ x: to.x, z: to.z }];
+    if (!found) { if (best < 0) return [{ x: from.x, z: from.z }]; ti = best; }   /* no way through: go as far as there is a way, rather than straight through the wall */
     var cells = []; for (var c = ti; c !== -1; c = came[c]) cells.push({ x: NAV.x0 + (c % W) * cs, z: NAV.z0 + ((c / W) | 0) * cs }); cells.reverse();
     // string pulling: keep only the corners that need to be there
     var out = [], anchor = { x: from.x, z: from.z }, k2 = 0;
@@ -1794,7 +1807,22 @@
     var last = out[out.length - 1]; if (last && Math.hypot(last.x - to.x, last.z - to.z) < 0.6 && navLos(last, to)) out[out.length - 1] = { x: to.x, z: to.z }; else out.push({ x: to.x, z: to.z });
     return out;
   }
-  function routeTo(from, x, z) { return navPath(from, { x: x, z: z }); }
+  function routeTo(from, x, z, thruDoors) { return navPath(from, { x: x, z: z }, thruDoors); }
+  // The door somebody has walked up to, if there is one. People open the ones they can; a robber
+  // gets a locked one back so he can do something about it.
+  function doorAt(pos, floorLevel, reach) {
+    var best = null, bd = reach || 1.35;
+    for (var i = 0; i < DOORS.length; i++) {
+      var d = DOORS[i]; if (d.open || (d.floor || 0) !== (floorLevel || 0)) continue;
+      var dist = Math.hypot(d.x - pos.x, d.z - pos.z); if (dist < bd) { bd = dist; best = d; }
+    }
+    return best;
+  }
+  function npcDoors(g, floorLevel) {   // walk up to a door you can open and you open it
+    var d = doorAt(g.position, floorLevel); if (!d) return null;
+    if (d.locked) return d;
+    setDoor(d.id, true); return null;
+  }
   var WORKER_HIRE = 400, WORKER_WAGE = 60;
   var WORKER_TASKS = [['serve', '🛎️ Serve the window'], ['restock', '📦 Restock rack + machines'], ['clean', '🧹 Sweep the floors'], ['water', '💧 Tend the plants'], ['idle', '☕ Take a break']];
   var GUARD_TASKS = [['door', '🪪 Watch the door'], ['patrol', '🚶 Patrol the lobby'], ['sweep', '🧹 Sweep the lobby'], ['restock', '🔥 Restock the rack']];
@@ -1864,6 +1892,7 @@
   }
   function updateWorker(dt) {
     if (!S.staff || !S.staff.worker) { if (worker.g) removeWorker(); return; }
+    if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = 4; workerSay('that one is locked'); } }   /* a locked door is the end of that errand, not something to walk through */
     if (!worker.g) buildWorker(); var g = worker.g, spd = 1.5;
     if (worker.state === 'walk') { if (walkAlong(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animateHuman(worker.h, dt, 'walk', spd, null); return; }
     if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z); worker.state = 'walk'; } } return; }
@@ -2259,6 +2288,35 @@
     var m = box(w, h, d, cityWinMat(hex, Math.max(1, Math.round(Math.max(w, d) / 6)), Math.max(1, Math.round(h / 5))), x, h / 2, z, { solid: true, tag: 'city' }); box(w + 0.4, 0.3, d + 0.4, colorMat(0x3a3d42, 0.9), x, h + 0.15, z, { cast: false });
     CITY.blds.push({ x: x, z: z, w: w, d: d, label: label || '', poi: poi || '' }); return m;
   }
+  // Is this plot actually empty? The town is built as terraces, so sharing a wall is fine and
+  // sinking a metre into next door's living room is not. Roads, parks and your own yard are hard no.
+  function cityClear(x, z, w, d) {
+    var x1 = x - w / 2, x2 = x + w / 2, z1 = z - d / 2, z2 = z + d / 2, i, o, ox, oz;
+    if (x1 < -CITY.x - 2 || x2 > CITY.x + 2 || z1 < CITY.z1 - 2 || z2 > CITY.z2 + 2) return false;
+    if (x2 > -13.5 && x1 < 13.5 && z2 > -19 && z1 < 12.5) return false;   /* your own plot: the shop, the forecourt and the yard */
+    for (i = 0; i < CITY.roads.length; i++) { o = CITY.roads[i]; if (x2 > o.x1 && x1 < o.x2 && z2 > o.z1 && z1 < o.z2) return false; }   /* never on the tarmac */
+    for (i = 0; i < CITY.parks.length; i++) {
+      o = CITY.parks[i];
+      ox = Math.min(x2, o.x2) - Math.max(x1, o.x1); oz = Math.min(z2, o.z2) - Math.max(z1, o.z1);
+      if (ox > 1.2 && oz > 1.2) return false;
+    }
+    for (i = 0; i < CITY.blds.length; i++) {
+      o = CITY.blds[i];
+      ox = Math.min(x2, o.x + o.w / 2) - Math.max(x1, o.x - o.w / 2);
+      oz = Math.min(z2, o.z + o.d / 2) - Math.max(z1, o.z - o.d / 2);
+      if (ox > 1.2 && oz > 1.2) return false;   /* a shared wall is a terrace; a shared room is a mistake */
+    }
+    return true;
+  }
+  function cityFill(x, z, w, d, h, hex, label, poi) { return cityClear(x, z, w, d) ? cityBldg(x, z, w, d, h, hex, label, poi) : null; }   /* the procedural blocks give way to anything already standing */
+  function citySpot(x, z, w, d) {   // the plot asked for if it is empty, otherwise the nearest one that is
+    if (cityClear(x, z, w, d)) return { x: x, z: z, moved: false };
+    for (var r = 4; r <= 72; r += 4) for (var a = 0; a < 12; a++) {
+      var ang = a * Math.PI / 6, nx = Math.round(x + Math.cos(ang) * r), nz = Math.round(z + Math.sin(ang) * r);
+      if (cityClear(nx, nz, w, d)) return { x: nx, z: nz, moved: true };
+    }
+    return { x: x, z: z, moved: false, stuck: true };
+  }
   function cityRoad(x1, z1, x2, z2) {   // centre line from a to b, 9 m of tarmac, 3.2 m of pavement each side
     var alongX = Math.abs(x2 - x1) > Math.abs(z2 - z1), len = alongX ? x2 - x1 : z2 - z1, cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
     var rd = new THREE.Mesh(new THREE.PlaneGeometry(alongX ? len : 9, alongX ? 9 : len), MAT.asphalt); rd.rotation.x = -Math.PI / 2; rd.position.set(cx, 0.006, cz); rd.receiveShadow = true; world.group.add(rd);
@@ -2303,6 +2361,95 @@
     g.userData.parts = parts;
     return wheels;
   }
+  // ── Street furniture: everything that makes a road look like a street ───────────────────
+  function sceneFree(x, z, r) {   // on the pavement, not in the road and not inside somebody's front room
+    var i, o;
+    for (i = 0; i < CITY.roads.length; i++) { o = CITY.roads[i]; if (x + r > o.x1 && x - r < o.x2 && z + r > o.z1 && z - r < o.z2) return false; }
+    for (i = 0; i < CITY.blds.length; i++) { o = CITY.blds[i]; if (x + r > o.x - o.w / 2 && x - r < o.x + o.w / 2 && z + r > o.z - o.d / 2 && z - r < o.z + o.d / 2) return false; }
+    if (Math.abs(x) < 15 && z > -22 && z < 13) return false;   /* your own forecourt and yard are dressed already */
+    return true;
+  }
+  function buildScenery() {
+    var C = CITY, n = 0;
+    var postM = colorMat(0x3a4046, 0.45, 0.7), headM = glowMat(0xffeec2, 0.9), darkM = colorMat(0x24282d, 0.7);
+    var benchM = colorMat(0x7a5a38, 0.85), binM = colorMat(0x2f3a33, 0.7), hydM = colorMat(0xb5342b, 0.55);
+    var glassM = new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.22, roughness: 0.05, side: THREE.DoubleSide });
+    var leafM = MAT.tree, barkM = MAT.trunk, kerbM = colorMat(0xa8a49c, 0.9);
+    function lamp(x, z, dir) {
+      cyl(0.07, 0.09, 4.6, postM, x, 2.3, z, null, 7);
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(dir[0]) > 0.5 ? 1.0 : 0.09, 0.09, Math.abs(dir[1]) > 0.5 ? 1.0 : 0.09), postM);
+      arm.position.set(x + dir[0] * 0.5, 4.55, z + dir[1] * 0.5); arm.castShadow = false; world.group.add(arm);
+      var hd = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.13, 0.26), headM);
+      hd.position.set(x + dir[0] * 1.0, 4.44, z + dir[1] * 1.0); hd.castShadow = false; world.group.add(hd); n += 3;
+    }
+    function tree(x, z, sc) {
+      cyl(0.13 * sc, 0.19 * sc, 3.0 * sc, barkM, x, 1.5 * sc, z, null, 7);
+      var cr = new THREE.Mesh(new THREE.SphereGeometry(1.75 * sc, 9, 7), leafM); cr.position.set(x, 3.5 * sc, z); cr.castShadow = true; world.group.add(cr);
+      box(1.4, 0.1, 1.4, kerbM, x, 0.05, z, { cast: false }); n += 3;
+    }
+    function bench(x, z, ry) {
+      var g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; world.group.add(g);
+      function bx(w, h, d, m, px, py, pz, rx) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(px, py, pz); if (rx) b.rotation.x = rx; b.castShadow = true; g.add(b); }
+      bx(1.7, 0.07, 0.46, benchM, 0, 0.45, 0); bx(1.7, 0.42, 0.06, benchM, 0, 0.68, -0.21, -0.18);
+      [-0.72, 0.72].forEach(function (o) { bx(0.08, 0.45, 0.42, darkM, o, 0.22, 0); }); n += 4;
+    }
+    function bin(x, z) { cyl(0.24, 0.2, 0.8, binM, x, 0.4, z, null, 8); cyl(0.26, 0.26, 0.05, darkM, x, 0.82, z, null, 8); n += 2; }
+    function hydrant(x, z) { cyl(0.11, 0.13, 0.62, hydM, x, 0.31, z, null, 7); cyl(0.16, 0.16, 0.07, hydM, x, 0.66, z, null, 7); n += 2; }
+    function bollard(x, z) { cyl(0.08, 0.09, 0.95, darkM, x, 0.47, z, null, 6); n += 1; }
+    function planter(x, z) {
+      box(1.1, 0.5, 1.1, kerbM, x, 0.25, z); var bush = new THREE.Mesh(new THREE.SphereGeometry(0.52, 8, 6), leafM);
+      bush.position.set(x, 0.72, z); bush.scale.y = 0.7; bush.castShadow = true; world.group.add(bush); n += 2;
+    }
+    function shelter(x, z, ry) {
+      var g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; world.group.add(g);
+      var rf = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.1, 1.5), darkM); rf.position.y = 2.5; g.add(rf);
+      [-1.6, 1.6].forEach(function (o) { var p = new THREE.Mesh(new THREE.BoxGeometry(0.09, 2.5, 0.09), postM); p.position.set(o, 1.25, -0.65); g.add(p); });
+      var bk = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 2.1), glassM); bk.position.set(0, 1.3, -0.72); g.add(bk);
+      var sb = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.07, 0.4), benchM); sb.position.set(0, 0.46, -0.45); g.add(sb);
+      var sg = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.34), new THREE.MeshBasicMaterial({ map: textTex(['BUS'], 220, 80, { size: 52, bg: '#16324f', titleColor: '#ffd166', line: 'rgba(0,0,0,0)' }), transparent: true }));
+      sg.position.set(0, 2.15, 0.76); sg.rotation.y = Math.PI; g.add(sg); n += 7;
+    }
+    var PARK_COLS = [0x9a2b26, 0xe6e2d6, 0x2b3138, 0x2e7d4f, 0xd9a520, 0x87909a, 0x4a3a7a, 0xb56a2a];
+    function parked(x, z, ry, i) { var g = new THREE.Group(); carBody(g, PARK_COLS[i % PARK_COLS.length]); g.position.set(x, 0, z); g.rotation.y = ry; world.group.add(g); n += 1; }
+
+    // every road gets both kerbs dressed: lamps and trees alternating, with furniture mixed in
+    var seed = 7;
+    function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+    CITY.roads.forEach(function (rd, ri) {
+      var alongX = (rd.x2 - rd.x1) > (rd.z2 - rd.z1);
+      var a0 = alongX ? rd.x1 : rd.z1, a1 = alongX ? rd.x2 : rd.z2, mid = alongX ? (rd.z1 + rd.z2) / 2 : (rd.x1 + rd.x2) / 2;
+      if (a1 - a0 < 20) return;   /* the little lane behind the yard is not a boulevard */
+      for (var side = -1; side <= 1; side += 2) {
+        var off = mid + side * 5.7, k = 0;
+        for (var a = a0 + 14; a < a1 - 14; a += 22) {
+          var x = alongX ? a : off, z = alongX ? off : a;
+          if (!sceneFree(x, z, 1.2)) { k++; continue; }
+          var dir = alongX ? [0, -side] : [-side, 0];
+          if (k % 2 === 0) lamp(x, z, dir); else tree(x + (alongX ? 0 : side * 0.9), z + (alongX ? side * 0.9 : 0), 0.85 + rnd() * 0.35);
+          // something extra between the posts
+          var bx2 = alongX ? a + 7 : off + side * 0.6, bz2 = alongX ? off + side * 0.6 : a + 7;
+          if (sceneFree(bx2, bz2, 1.0)) {
+            var pick2 = (k + ri) % 6, ry = alongX ? (side > 0 ? Math.PI : 0) : (side > 0 ? -Math.PI / 2 : Math.PI / 2);
+            if (pick2 === 0) bench(bx2, bz2, ry);
+            else if (pick2 === 1) bin(bx2, bz2);
+            else if (pick2 === 2) hydrant(bx2, bz2);
+            else if (pick2 === 3) planter(bx2, bz2);
+            else if (pick2 === 4) { bollard(bx2, bz2); bollard(bx2 + (alongX ? 1.4 : 0), bz2 + (alongX ? 0 : 1.4)); }
+            else if (k % 4 === 1) shelter(bx2, bz2, ry);
+          }
+          k++;
+        }
+        // cars at the kerb, nose to tail, skipping the stretch outside your own door
+        for (var c = a0 + 26; c < a1 - 26; c += 52) {
+          var cx = alongX ? c + rnd() * 6 : mid + side * 3.1, cz = alongX ? mid + side * 3.1 : c + rnd() * 6;
+          if (!sceneFree(cx, cz, 2.4)) continue;
+          if (Math.abs(cx) < 16 && Math.abs(cz - C.mainZ) < 12) continue;
+          parked(cx, cz, alongX ? (side > 0 ? Math.PI / 2 : -Math.PI / 2) : (side > 0 ? Math.PI : 0), Math.floor(rnd() * 8));
+        }
+      }
+    });
+    if (typeof console !== 'undefined' && console.debug) console.debug('[city] scenery meshes: ' + n);
+  }
   function buildCity() {
     var C = CITY, SW = world.sidewalkZ || ROOM.z + 2.6, treeM = MAT.tree, trunkM = MAT.trunk;
     // roads: Main Street gets its two far ends and its far pavement (the middle stretch already exists), then the back street, the north street, two avenues and the lane from the yard gate
@@ -2317,13 +2464,15 @@
     cityBldg(-8, 33, 11, 11, 5.5, 0x6b5a48, 'Iron & Oak Arms', 'gun'); cityDoor(-8, 27.5, -1, 6, 'gun', 'IRON & OAK', 'arms · ammunition · armour', 0xb5121b);
     cityBldg(-38, 0, 14, 14, 6.5, 0x7b8f6a, 'Green Leaf (rival)', 'rival'); cityDoor(-38, 7, 1, 7, 'rival', 'GREEN LEAF', 'dispensary · est. last year', 0x39d353);
     cityBldg(-22, -57, 26, 15, 7.5, 0x8d949c, 'RF Supply Co.', 'supply');
-    WSPLACES.forEach(function (q) {   /* a Workshop pack can put its own place on the map: a shopfront, a door and either a counter that sells or a service you pay for */
-      cityBldg(q.x, q.z, q.w, q.d, q.h, q.colour, q.name, q.id);
-      var fc = q.face === -1 ? -1 : 1, dz = q.z + fc * (q.d / 2 + 1.6);   /* a built-in pack skips the import validator, so every optional field needs a default here too */
-      cityDoor(q.x, dz, fc, Math.min(q.w - 2, 9), q.id, q.name.toUpperCase(), q.sub, q.doorColour);
-    }); cityDoor(-22, -49.5, 1, 9, 'supply', 'RF SUPPLY CO.', 'trade counter · load your own car', 0xf2c21a); box(6, 3.2, 0.1, colorMat(0x5f666e, 0.5, 0.6), -12, 1.6, -49.45, { cast: false });
+    // The precinct used to be two doors down, which made every police response absurd. It is at the
+    // far end of Main Street now, and it goes in with the landmarks so the blocks fill in around it.
+    cityBldg(40, 2, 12, 12, 8, 0x8a6a4a, 'Corner Tobacconist', 'tobac');
+    cityDoor(40, 8, 1, 6, 'tobac', 'CORNER TOBACCONIST', 'buys cartons wholesale', 0xe8c27a);
+    CITY.police = { x: 96, z: 1, w: 16, d: 14 };
+    cityBldg(CITY.police.x, CITY.police.z, CITY.police.w, CITY.police.d, 9, 0x5a6a8a, 'Police', 'police');
+    cityDoor(CITY.police.x, CITY.police.z + CITY.police.d / 2, 1, 7, 'police', 'POLICE PRECINCT', 'heat · bribes · statements', 0x5aa0d8);
+    cityDoor(-22, -49.5, 1, 9, 'supply', 'RF SUPPLY CO.', 'trade counter · load your own car', 0xf2c21a); box(6, 3.2, 0.1, colorMat(0x5f666e, 0.5, 0.6), -12, 1.6, -49.45, { cast: false });
     C.pois = [{ id: 'shop', name: 'Grow Co. (you)', x: 0, z: 0, col: '#6fdc8c' }, { id: 'bank', name: 'First Harvest Bank', x: -30, z: 27.5, col: '#5aa0d8' }, { id: 'gun', name: 'Iron & Oak Arms', x: -8, z: 27.5, col: '#e0564a' }, { id: 'rival', name: 'Green Leaf (rival)', x: -38, z: 7, col: '#39d353' }, { id: 'supply', name: 'RF Supply Co.', x: -22, z: -49.5, col: '#f2c21a' }, { id: 'park', name: 'Harvest Park', x: 28, z: 44, col: '#8fd17a' }];
-    WSPLACES.forEach(function (q) { C.pois.push({ id: q.id, name: q.name, x: q.x, z: q.z + (q.face === -1 ? -1 : 1) * (q.d / 2 + 1.6), col: q.pin || '#6fdc8c' }); });   /* after the list is assigned, or it would be thrown away */
     // Harvest Park: lawn, a crossing of paths, trees, benches, and people who might buy off you
     var PK = { x1: 10, x2: 48, z1: 27, z2: 62 }; C.parks.push(PK); var lawn = new THREE.Mesh(new THREE.PlaneGeometry(PK.x2 - PK.x1, PK.z2 - PK.z1), colorMat(0x5c9a48, 1)); lawn.rotation.x = -Math.PI / 2; lawn.position.set(29, 0.03, 44.5); lawn.receiveShadow = true; world.group.add(lawn);
     [[38, 2.2, 29, 44.5], [2.2, 35, 29, 44.5]].forEach(function (p) { var path = new THREE.Mesh(new THREE.PlaneGeometry(p[0], p[1]), colorMat(0xc9b78f, 1)); path.rotation.x = -Math.PI / 2; path.position.set(p[2], 0.04, p[3]); world.group.add(path); }); cyl(2.2, 2.4, 0.5, colorMat(0x9aa0a6, 0.8), 29, 0.25, 44.5, null, 20); cyl(1.9, 1.9, 0.06, colorMat(0x4a90c8, 0.2, 0.3), 29, 0.5, 44.5, null, 20); world.obstacles.push({ x1: 26.7, x2: 31.3, z1: 42.2, z2: 46.8, tag: 'city', floorLevel: 0 });
@@ -2332,18 +2481,32 @@
     [[22, 41], [36, 48], [18, 52], [41, 35], [31, 58]].forEach(function (p, i) { var h = makeHuman({ skin: pick(SKINS), hair: pick(HAIRS), shirt: pick(SHIRTS), pants: pick(PANTS), hat: pick([null, 'cap', 'beanie']), prop: pick([null, 'phone', 'coffee']), longSleeve: Math.random() < 0.5 }); h.position.set(p[0], 0, p[1]); h.rotation.y = Math.random() * 6.28; world.group.add(h); var hb = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.9, 0.7), MAT.none); hb.position.y = 0.95; h.add(hb); interactable(hb, { kind: 'parkDeal', idx: i }); parkFolk.push({ h: h, coolT: 0, want: randi(1, 3) }); });
     // everything else is the rest of town: shops and flats on the near blocks, towers further out
     var cols = [0xb9b2a2, 0x9a8f80, 0xa7b0b8, 0x8c7b6a, 0xc2b8a3, 0x7f8a94, 0xb0a08c];
-    [[-52, 2, 9, 14, 8], [-22, -2, 12, 16, 9],  [52, -2, 8, 16, 7], [26, -24, 18, 14, 10], [47, -25, 14, 14, 14], [-16, -25, 14, 12, 8], [-34, -24, 16, 14, 11], [-52, -24, 10, 14, 7], [-52, 36, 9, 18, 12], [4, 66, 14, 10, 9], [-14, 52, 18, 14, 13], [-40, 60, 22, 14, 16], [-52, 58, 0, 0, 0], [53, 38, 7, 22, 9], [52, 64, 10, 12, 8]].forEach(function (b, i) { if (b[2] > 0) cityBldg(b[0], b[1], b[2], b[3], b[4], cols[i % cols.length]); });
-    for (var ox = -110; ox <= 110; ox += 22) { if (Math.abs(ox) < 66) { if (ox !== -22) cityBldg(ox, -58, 18, 9, 10 + ((ox * 7) % 13 + 13) % 13, cols[Math.abs(ox) % cols.length]); cityBldg(ox + 3, 90, 17, 9, 12 + ((ox * 5) % 17 + 17) % 17, cols[Math.abs(ox + 3) % cols.length]); } }
-    [-98, -80, 80, 98].forEach(function (ox, i) { for (var oz = -56; oz <= 90; oz += 24) { if (Math.abs(oz - C.mainZ) < 9 || Math.abs(oz - C.backZ) < 9 || Math.abs(oz - C.northZ) < 9) continue; cityBldg(ox, oz, 14, 18, 14 + ((oz + ox) % 19 + 19) % 19, cols[(i + Math.abs(oz)) % cols.length]); } });
+    [[-52, 2, 9, 14, 8], [-22, -2, 12, 16, 9],  [52, -2, 8, 16, 7], [26, -24, 18, 14, 10], [47, -25, 14, 14, 14], [-16, -25, 14, 12, 8], [-34, -24, 16, 14, 11], [-52, -24, 10, 14, 7], [-52, 36, 9, 18, 12], [4, 66, 14, 10, 9], [-14, 52, 18, 14, 13], [-40, 60, 22, 14, 16], [-52, 58, 0, 0, 0], [53, 38, 7, 22, 9], [52, 64, 10, 12, 8]].forEach(function (b, i) { if (b[2] > 0) cityFill(b[0], b[1], b[2], b[3], b[4], cols[i % cols.length]); });
+    for (var ox = -110; ox <= 110; ox += 22) { if (Math.abs(ox) < 66) { if (ox !== -22) cityFill(ox, -58, 18, 9, 10 + ((ox * 7) % 13 + 13) % 13, cols[Math.abs(ox) % cols.length]); cityFill(ox + 3, 90, 17, 9, 12 + ((ox * 5) % 17 + 17) % 17, cols[Math.abs(ox + 3) % cols.length]); } }
+    [-98, -80, 80, 98].forEach(function (ox, i) { for (var oz = -56; oz <= 90; oz += 24) { if (Math.abs(oz - C.mainZ) < 9 || Math.abs(oz - C.backZ) < 9 || Math.abs(oz - C.northZ) < 9) continue; cityFill(ox, oz, 14, 18, 14 + ((oz + ox) % 19 + 19) % 19, cols[(i + Math.abs(oz)) % cols.length]); } });
+    // A Workshop place goes in last, once every block is standing, so it can be given a plot that is
+    // genuinely empty. A pack names where it would like to be; if that is a road, a park, your own
+    // yard or somebody else's building, it takes the nearest free plot instead and says so.
+    WSPLACES.forEach(function (q) {
+      var sp = citySpot(q.x, q.z, q.w, q.d);
+      if (sp.stuck) { console.warn('[workshop] nowhere to put ' + q.name + ': the town is full'); return; }
+      if (sp.moved) console.warn('[workshop] ' + q.name + ' asked for ' + q.x + ',' + q.z + ' but that plot is taken; built at ' + sp.x + ',' + sp.z);
+      q.bx = sp.x; q.bz = sp.z;   /* where it actually stands: the door, the pin and the counter all read this */
+      cityBldg(sp.x, sp.z, q.w, q.d, q.h, q.colour, q.name, q.id);
+      var fc = q.face === -1 ? -1 : 1, dz = sp.z + fc * (q.d / 2 + 1.6);   /* a built-in pack skips the import validator, so every optional field needs a default here too */
+      cityDoor(sp.x, dz, fc, Math.min(q.w - 2, 9), q.id, q.name.toUpperCase(), q.sub, q.doorColour);
+      C.pois.push({ id: q.id, name: q.name, x: sp.x, z: dz, col: q.pin || '#6fdc8c' });
+    });
     // a city pack fills the ground it just added: more outer avenues of blocks, and the streets run out to meet them
     if (WSCITY.grow > 0) {
       [[-C.x, C.mainZ, C.x, C.mainZ], [-C.x, C.backZ, C.x, C.backZ], [-C.x, C.northZ, C.x, C.northZ]].forEach(function (r) { var len = r[2] - r[0], rd = new THREE.Mesh(new THREE.PlaneGeometry(len, 9), MAT.asphalt); rd.rotation.x = -Math.PI / 2; rd.position.set(0, 0.005, r[1]); rd.receiveShadow = true; world.group.add(rd); });
       for (var ring = 0; ring < Math.max(1, WSCITY.rows); ring++) {
         var ax = 120 + ring * 20;
-        [-ax, ax].forEach(function (bx, bi) { for (var bz = C.z1 + 14; bz <= C.z2 - 14; bz += 26) { if (Math.abs(bz - C.mainZ) < 10 || Math.abs(bz - C.backZ) < 10 || Math.abs(bz - C.northZ) < 10) continue; cityBldg(bx, bz, 15, 19, 12 + ((bz + bx) % 21 + 21) % 21, cols[(bi + ring + Math.abs(Math.round(bz))) % cols.length]); } });
-        [C.z1 + 9 - ring * 22, C.z2 - 9 + ring * 22].forEach(function (bz2, bj) { for (var bx2 = -108; bx2 <= 108; bx2 += 24) cityBldg(bx2, bz2, 18, 12, 11 + ((bx2 * 3 + ring) % 15 + 15) % 15, cols[(bj + Math.abs(bx2)) % cols.length]); });
+        [-ax, ax].forEach(function (bx, bi) { for (var bz = C.z1 + 14; bz <= C.z2 - 14; bz += 26) { if (Math.abs(bz - C.mainZ) < 10 || Math.abs(bz - C.backZ) < 10 || Math.abs(bz - C.northZ) < 10) continue; cityFill(bx, bz, 15, 19, 12 + ((bz + bx) % 21 + 21) % 21, cols[(bi + ring + Math.abs(Math.round(bz))) % cols.length]); } });
+        [C.z1 + 9 - ring * 22, C.z2 - 9 + ring * 22].forEach(function (bz2, bj) { for (var bx2 = -108; bx2 <= 108; bx2 += 24) cityFill(bx2, bz2, 18, 12, 11 + ((bx2 * 3 + ring) % 15 + 15) % 15, cols[(bj + Math.abs(bx2)) % cols.length]); });
       }
     }
+    buildScenery();
     // the player's car, where it was left
     var cs = carState(); drive.g = new THREE.Group(); drive.wheels = carBody(drive.g, WSCAR && WSCAR.colour !== undefined ? WSCAR.colour : 0x1f4f8a, true); drive.parts = drive.g.userData.parts; drive.lamps = drive.g.userData.lamps; drive.g.position.set(cs.x, 0, cs.z); drive.g.rotation.y = cs.h; world.group.add(drive.g);
     [-0.6, 0.6].forEach(function (bx) { var sl = new THREE.SpotLight(0xfff3c8, 0, 26, 0.62, 0.5, 1.4); sl.position.set(bx, 0.62, -2.0); sl.castShadow = false; drive.g.add(sl); var tgt = new THREE.Object3D(); tgt.position.set(bx * 2.4, -0.3, -15); drive.g.add(tgt); sl.target = tgt; drive.lamps.beams.push(sl); });
@@ -2718,8 +2881,8 @@
     });
     fixtureFromBuild('roster', 'staff roster', -Math.PI / 2, function () { box(0.04, 1.0, 1.2, colorMat(0x8a6a3a, 0.9), -4.13, 1.7, 2.35, { cast: false }); signPlane(['STAFF ROSTER', 'driver · operator · night guard'], 1.1, 0.36, -4.16, 1.95, 2.35, -Math.PI / 2, { size: 24 }); hit(0.4, 1.2, 1.3, -4.25, 1.7, 2.35, { kind: 'roster' }); });   /* on the office side of the hall wall, clear of the dashboard */
     // two more doors in town: the tobacconist who buys your cartons wholesale, and the police
-    cityBldg(40, 2, 12, 12, 8, 0x8a6a4a, 'Corner Tobacconist', 'tobac'); cityDoor(40, 8, 1, 6, 'tobac', 'CORNER TOBACCONIST', 'buys cartons wholesale', 0xe8c27a); cityBldg(24, 0, 14, 16, 9, 0x5a6a8a, 'Police', 'police'); cityDoor(24, 8, 1, 7, 'police', 'POLICE', 'precinct 4', 0x5aa0d8);
-    CITY.pois.push({ id: 'tobac', name: 'Corner Tobacconist', x: 40, z: 8, col: '#e8c27a' }, { id: 'police', name: 'Police precinct', x: 24, z: 8, col: '#5aa0d8' });
+    /* the tobacconist and the precinct are landmarks in buildCity now, placed before anything else claims the ground */
+    CITY.pois.push({ id: 'tobac', name: 'Corner Tobacconist', x: 40, z: 8, col: '#e8c27a' }, { id: 'police', name: 'Police precinct', x: CITY.police.x, z: CITY.police.z + CITY.police.d / 2, col: '#5aa0d8' });
     // delivery drop marker and the weather
     /* a pool of drop markers: the round can have several stops out at once, so one beacon and one hit box per open job */
     exp.beacons = []; exp.dropHits = []; exp.rings = [];
@@ -3018,9 +3181,25 @@
   function doorsAll(what) { DOORS.forEach(function (d) { if (what === 'open') setDoor(d.id, true, false); else if (what === 'close') setDoor(d.id, false); else if (what === 'lock') setDoor(d.id, false, true); else setDoor(d.id, d.open, false); }); sfx('curtain'); save(); }
   function toggleDoor(id) { var d = doorById[id]; if (!d) return; if (d.locked) { sfx('bad'); toast('🔒 Locked — unlock it at the shop control box', 'bad'); return; } if (d.open && player.floor === d.floor && Math.hypot(player.pos.x - d.x, player.pos.z - d.z) < 0.55) { toast('Step out of the doorway first', ''); return; } d.open = !d.open; if (!S.doors) S.doors = {}; S.doors[id] = d.open; doorObstacle(d); sfx('curtain'); save(); }
   function updateDoors(dt) {
-    var folk = [], robbersNear = 0; if (worker.g) folk.push(worker.g.position); if (guard.h) folk.push(guard.h.position); robbers.forEach(function (r) { if (r.g && r.state !== 'away') { folk.push(r.g.position); robbersNear++; } });   /* robbers sit at the end of the list */
-    DOORS.forEach(function (d) { var want = d.open ? 1 : 0; if (!d.open && d.floor === 0) { for (var i = 0; i < folk.length; i++) if (Math.hypot(folk[i].x - d.x, folk[i].z - d.z) < 1.5) { want = 1; if (d.locked && i >= folk.length - robbersNear) { setDoor(d.id, true, false); sfx('hit'); toast('💥 They forced the ' + d.label + ' — the lock is broken open', 'bad'); } break; } } if (Math.abs(d.t - want) < 0.002) return; d.t = lerp(d.t, want, 1 - Math.pow(0.006, dt)); if (Math.abs(d.t - want) < 0.004) d.t = want; doorPose(d); });
-  }
+    var folk = []; if (worker.g) folk.push(worker.g.position); if (guard.h) folk.push(guard.h.position);
+    if (npc.g && npc.state !== 'away') folk.push(npc.g.position);
+    loungers.forEach(function (l) { if (l.g) folk.push(l.g.position); });
+    robbers.forEach(function (r) { if (r.g && r.state !== 'away' && r.state !== 'force') folk.push(r.g.position); });   /* a robber mid-break is handled by his own state, not by standing close */
+    if (!shop().staffDoor && folk.length) {
+      for (var sdi = 0; sdi < folk.length; sdi++) {
+        if (Math.abs(folk[sdi].x - 10) < 1.3 && Math.abs(folk[sdi].z - 4) < 1.1) { shop().staffDoor = true; syncStaffDoorObstacle(); sfx('curtain'); save(); break; }
+      }
+    }
+    DOORS.forEach(function (d) {
+      if (!d.open && !d.locked && d.floor === 0) {
+        for (var i = 0; i < folk.length; i++) {   /* staff and visitors let themselves through anything that is not locked */
+          if (Math.hypot(folk[i].x - d.x, folk[i].z - d.z) < 1.1) { setDoor(d.id, true); sfx('curtain'); break; }
+        }
+      }
+      var want = d.open ? 1 : 0;
+      if (Math.abs(d.t - want) < 0.002) return;
+      d.t = lerp(d.t, want, 1 - Math.pow(0.006, dt)); if (Math.abs(d.t - want) < 0.004) d.t = want; doorPose(d);
+    });  }
   // three places can be shut and locked: the goods shelf, the cigarette cabinet and the weapon locker.
   var LOCKABLE = { goodsShelf: { name: 'goods shelf', shutter: 'goods' }, cigCabinet: { name: 'cigarette cabinet', shutter: 'cigs' }, gunLocker: { name: 'weapon locker', shutter: null } };
   function locks() { if (!S.locks) S.locks = {}; return S.locks; }
@@ -3194,7 +3373,7 @@
   function takeTill(r, complied) {
     var got = Math.floor(S.till + S.tips); S.till = 0; S.tips = 0; r.grabbed += got; S.stats.robbed = (S.stats.robbed || 0) + got; S.rep = Math.max(0, S.rep - (complied ? 2 : 5)); sfx('bad');
     logEvent('💸 ' + (complied ? 'You handed over ' : 'The robber cleaned out ') + money(got) + ' from the till and tip jar — rep -' + (complied ? 2 : 5), 'bad'); toast('💸 ' + money(got) + ' gone from the till', 'bad');
-    if (r.kind === 'gun' && S.vault >= 50 && propInst.vault) { var v = propWorld('vault', 0, 1.0); robberSay(r, 'NOW THE SAFE', '#ff6b6b'); r.path = routeTo(r.g.position, v.x, v.z); r.state = 'raid'; r.raid = 'vault'; r.t = 0; toast('🚨 He is coming round through the staff door — he wants the VAULT', 'bad'); logEvent('🚨 The robber is heading into the back for the vault', 'bad'); }
+    if (r.kind === 'gun' && S.vault >= 50 && propInst.vault) { var v = propWorld('vault', 0, 1.0); robberSay(r, 'NOW THE SAFE', '#ff6b6b'); r.path = routeTo(r.g.position, v.x, v.z, true); r.state = 'raid'; r.raid = 'vault'; r.t = 0; toast('🚨 He is coming round through the staff door — he wants the VAULT', 'bad'); logEvent('🚨 The robber is heading into the back for the vault', 'bad'); }
     else { robberFlee(r); if (r === robber && (mate.state === 'raid' || mate.state === 'loot')) { finishLoot(mate, true); robberFlee(mate); } }
     hud();
   }
@@ -3302,14 +3481,14 @@
   function robberInteract(d, h) { var r = robberOf(d); if (h && h.kind === 'bat') swingBat(); else if (h && WEAPONS[h.kind]) fireWeapon(); else if (r.state === 'case') confrontRobber(r); else toast('Get the bat or something from the weapon locker, hand over the till, or let security handle it', 'bad'); }
   function panicButton() {
     if (!heist.on || !heist.masked) { toast('Nothing to call in', ''); return; } if (!S.upgrades.panic) { toast('No silent alarm installed — it is under upgrades', 'bad'); return; }
-    if (heist.policeT > 0) { toast('🚓 Police already on the way · ' + Math.ceil(heist.policeT) + ' s', ''); return; } heist.policeT = 22; sfx('click'); toast('🚨 Silent alarm tripped — police in about 20 seconds', 'good'); logEvent('🚨 You hit the silent alarm', '');
+    if (heist.policeT > 0) { toast('🚓 Police already on the way · ' + Math.ceil(heist.policeT) + ' s', ''); return; } heist.policeT = 12; sfx('click'); toast('🚨 Silent alarm tripped — a car is being sent', 'good'); logEvent('🚨 You hit the silent alarm', '');
   }
   function policeArrive() {
-    var inside = robbers.filter(function (r) { return r.state !== 'away' && r.state !== 'out' && r.masked; }); sfx('siren');
-    if (!inside.length) { toast('🚓 Police arrived too late — they took a statement', ''); logEvent('🚓 Police arrived after it was over', ''); return; }
-    inside.forEach(function (r) { returnLoot(r); r.state = 'out'; r.t = 0; lieDown(r.h); robberSay(r, 'ok! OK! I give up', '#ffc857'); }); S.rep += 3; S.stats.foiled = (S.stats.foiled || 0) + 1; logEvent('🚓 Police stormed in and arrested ' + (inside.length > 1 ? 'both robbers' : 'the robber') + ' — everything they had on them came back · rep +3', 'good'); toast('🚓 POLICE! ' + (inside.length > 1 ? 'Both robbers' : 'Robber') + ' arrested', 'good');
+    var inside = copTargets();
+    if (!inside.length) { sfx('siren'); toast('🚓 Police arrived too late — they took a statement', ''); logEvent('🚓 Police arrived after it was over', ''); return; }
+    policeStart();   /* the car has to get here from the far end of Main Street before anyone is arrested */
   }
-  function clearHeist() { robbers.forEach(function (r) { r.state = 'away'; if (r.g) r.g.visible = false; }); heist.on = false; heist.policeT = 0; }
+  function clearHeist() { if (police.on) return; robbers.forEach(function (r) { r.state = 'away'; if (r.g) r.g.visible = false; }); heist.on = false; heist.policeT = 0; }   /* not while the officers are still walking him out */
   function heistHint() {
     if (!heist.on) return ''; var lead = robber, pol = heist.policeT > 0 ? ' 🚓 police in ' + Math.ceil(heist.policeT) + ' s.' : S.upgrades.panic && heist.masked ? ' Press P for the silent alarm.' : '';
     if (player.downT > 0) return '🩸 You are down. Stay still.';
@@ -3324,7 +3503,140 @@
     if (!heist.on) return; heist.t += dt;
     if (heist.policeT > 0) { heist.policeT -= dt; if (heist.policeT <= 0) { heist.policeT = 0; policeArrive(); } }
     robbers.forEach(function (r) { if (r.state !== 'away' && r.h) updateRobber(r, dt); });
-    if (robbers.every(function (r) { return r.state === 'away'; })) { heist.on = false; heist.policeT = 0; save(); hud(); }
+    if (!police.on && robbers.every(function (r) { return r.state === 'away'; })) { heist.on = false; heist.policeT = 0; save(); hud(); }
+  }
+  function robberForce(r, g2) {   // a shut door on his way is something to break, not to walk through
+    var d = doorAt(g2.position, 0, 1.5); if (!d) return false;
+    if (!d.locked) { setDoor(d.id, true); sfx('door'); return false; }   /* unlocked: he just opens it and keeps going */
+    r.forceDoor = d; r.forceBack = r.state; r.forceTo = r.path && r.path.length ? r.path[r.path.length - 1] : null;
+    r.forceFor = ROB_KINDS[r.kind] && r.kind === 'gun' ? 2.6 : 3.8; r.forceHit = 0;
+    r.state = 'force'; r.t = 0;
+    robberSay(r, 'locked? not for long', '#ff6b6b');
+    logEvent('🚪 He is working on ' + (d.name || 'a locked door'), 'bad');
+    return true;
+  }
+  // ── The police response: a car, two officers and an arrest you can watch ────────────────
+  var police = { on: false, phase: '', t: 0, g: null, wheels: [], bar: null, cops: [], took: [], lightT: 0, horn: 0 };
+  var COP_KERB = { x: 3.4, z: 0 };   // filled in from the road when the car is built
+  function policeBuild() {
+    var C = CITY, startX = (C.police ? C.police.x : 96) - 6, lane = C.mainZ - 0.3;
+    COP_KERB.z = C.mainZ - 4.0;
+    var g = new THREE.Group(); police.wheels = carBody(g, 0xf2f4f7);
+    g.position.set(startX, 0, lane); g.rotation.y = -Math.PI / 2;   /* nose pointing west, down Main Street */
+    world.group.add(g); police.g = g;
+    // the blue stripe and the light bar, so it reads as a police car and not a white hatchback
+    var stripe = colorMat(0x1b4f9c, 0.5);
+    [-1.02, 1.02].forEach(function (sx) { var b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.34, 2.9), stripe); b.position.set(sx, 0.72, 0.1); b.castShadow = false; g.add(b); });
+    var barG = new THREE.Group(); barG.position.set(0, 1.44, -0.15); g.add(barG); police.bar = barG;
+    barG.add(new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.07, 0.22), colorMat(0x22262b, 0.6)));
+    police.lamp = [-1, 1].map(function (sx, i) {
+      var m = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.13, 0.24), glowMat(i ? 0x2f6bff : 0xff2f3a, 1.6));
+      m.position.set(sx * 0.3, 0.06, 0); m.castShadow = false; barG.add(m);
+      var l = new THREE.PointLight(i ? 0x2f6bff : 0xff2f3a, 0, 14); l.position.set(sx * 0.3, 0.3, 0); barG.add(l);
+      return { m: m, l: l };
+    });
+    police.cops = [0, 1].map(function (i) {
+      var h = makeHuman({ skin: pick(SKINS), hair: pick(HAIRS), shirt: 0x1f2a44, pants: 0x1a2136, hat: 'cap' });
+      var cg = new THREE.Group(); cg.add(h); cg.visible = false; world.group.add(cg);
+      return { g: cg, h: h, path: [], side: i ? 1 : -1 };
+    });
+  }
+  function policeLights(dt) {
+    police.lightT += dt;
+    var f2 = Math.floor(police.lightT * 4) % 2;
+    police.lamp.forEach(function (p, i) { var on = (i === f2); p.m.material.emissiveIntensity = on ? 2.4 : 0.15; p.l.intensity = on ? 2.2 : 0; });
+  }
+  function policeStart() {
+    if (police.on) return;
+    if (!police.g) policeBuild();
+    var C = CITY;
+    police.g.visible = true; police.g.position.set((C.police ? C.police.x : 96) - 6, 0, C.mainZ - 0.3); police.g.rotation.y = -Math.PI / 2;
+    police.on = true; police.phase = 'drive'; police.t = 0; police.took = [];
+    police.cops.forEach(function (c) { c.g.visible = false; c.path = []; });
+    sfx('siren');
+    toast('🚓 A car is on its way from the precinct', '');
+    logEvent('🚓 A patrol car left the precinct', '');
+  }
+  function copTargets() { return robbers.filter(function (r) { return r.state !== 'away' && r.state !== 'out' && r.masked; }); }
+  function policeDone(msg, good) {
+    police.on = false; police.phase = ''; if (police.g) police.g.visible = false;
+    police.cops.forEach(function (c) { c.g.visible = false; });
+    if (msg) { toast(msg, good ? 'good' : ''); logEvent(msg, good ? 'good' : ''); }
+    heist.policeT = 0; hud(); save();
+  }
+  function updatePolice(dt) {
+    if (!police.on) return;
+    police.t += dt; policeLights(dt);
+    var g = police.g, P = police.phase;
+    if (P === 'drive') {
+      var tx = COP_KERB.x, tz = police.t > 0.1 && Math.abs(g.position.x - tx) < 9 ? COP_KERB.z : CITY.mainZ - 0.3;
+      var sp = Math.abs(g.position.x - tx) > 14 ? 15 : 6;
+      g.position.x = lerp(g.position.x, tx, 1 - Math.pow(0.12, dt));
+      g.position.z = lerp(g.position.z, tz, 1 - Math.pow(0.35, dt));
+      police.wheels.forEach(function (w) { w.rotation.x -= sp * dt; });
+      if (Math.abs(g.position.x - tx) < 0.6) {
+        g.position.x = tx; police.phase = 'out'; police.t = 0;
+        police.cops.forEach(function (c, i) {
+          c.g.visible = true; c.g.position.set(tx + c.side * 1.3, 0, COP_KERB.z);
+          c.path = routeTo(c.g.position, 0.6 * c.side, ROOM.z - 1.2, true);
+        });
+        sfx('door'); toast('🚓 Two officers are walking in', '');
+      }
+      return;
+    }
+    if (P === 'out') {
+      var walking = false;
+      police.cops.forEach(function (c) { if (c.path.length) { walking = true; if (walkAlong(c.g, c.path, 2.6, dt)) c.path = []; animateHuman(c.h, dt, 'walk', 2.6, null); } else animateHuman(c.h, dt, 'idle', 0, null); });
+      if (!walking) {
+        var tg = copTargets();
+        if (!tg.length) { policeDone('🚓 The officers took a statement and left', false); return; }
+        police.cops.forEach(function (c, i) { var r = tg[Math.min(i, tg.length - 1)]; c.path = routeTo(c.g.position, r.g.position.x + c.side * 0.8, r.g.position.z + 0.7, true); });
+        police.phase = 'close'; police.t = 0;
+      }
+      return;
+    }
+    if (P === 'close') {
+      var still = false;
+      police.cops.forEach(function (c) { if (c.path.length) { still = true; if (walkAlong(c.g, c.path, 2.9, dt)) c.path = []; animateHuman(c.h, dt, 'walk', 2.9, null); } else animateHuman(c.h, dt, 'idle', 0, null); });
+      var tg2 = copTargets();
+      if (!tg2.length) { policeDone('🚓 Whoever it was had already gone', false); return; }
+      if (!still || police.t > 9) {
+        tg2.forEach(function (r) { returnLoot(r); r.state = 'cuffed'; r.t = 0; r.path = []; robberSay(r, 'alright! ALRIGHT!', '#ffc857'); });
+        police.took = tg2; police.phase = 'cuff'; police.t = 0; sfx('ok');
+      }
+      return;
+    }
+    if (P === 'cuff') {
+      police.cops.forEach(function (c) { animateHuman(c.h, dt, 'idle', 0, police.took[0] ? police.took[0].g.position : null); });
+      if (police.t > 2.2) {
+        var back = { x: COP_KERB.x, z: COP_KERB.z + 1.2 };
+        police.cops.forEach(function (c) { c.path = routeTo(c.g.position, back.x + c.side * 1.4, back.z, true); });
+        police.took.forEach(function (r) { r.path = routeTo(r.g.position, back.x, back.z + 0.9, true); });
+        police.phase = 'walkout'; police.t = 0;
+        S.rep += 3; S.stats.foiled = (S.stats.foiled || 0) + 1;
+        logEvent('🚓 Arrested and walked out to the car. Word gets round: rep +3', 'good');
+      }
+      return;
+    }
+    if (P === 'walkout') {
+      var moving = false;
+      police.cops.forEach(function (c) { if (c.path.length) { moving = true; if (walkAlong(c.g, c.path, 2.2, dt)) c.path = []; animateHuman(c.h, dt, 'walk', 2.2, null); } else animateHuman(c.h, dt, 'idle', 0, null); });
+      police.took.forEach(function (r) { if (r.path && r.path.length) moving = true; });
+      if (!moving || police.t > 22) {
+        police.took.forEach(function (r) { r.state = 'away'; if (r.g) r.g.visible = false; if (r.bubble) r.bubble.visible = false; standBack(r.h); world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; }); });
+        police.cops.forEach(function (c) { c.g.visible = false; });
+        police.phase = 'leave'; police.t = 0; sfx('door');
+        heist.on = false;
+      }
+      return;
+    }
+    if (P === 'leave') {
+      g.position.x = lerp(g.position.x, (CITY.police ? CITY.police.x : 96) + 10, 1 - Math.pow(0.25, dt));
+      g.position.z = lerp(g.position.z, CITY.mainZ + 2.7, 1 - Math.pow(0.4, dt));
+      police.wheels.forEach(function (w) { w.rotation.x -= 13 * dt; });
+      if (police.t > 6) policeDone('🚓 They have taken him in', true);
+      return;
+    }
   }
   function updateRobber(r, dt) {
     var g2 = r.g, K = ROB_KINDS[r.kind], P = r.h.userData.parts;
@@ -3351,7 +3663,21 @@
       if (r.t > K.demandT) { if (r.weapon && r.weapon !== 'knife' && player.downT <= 0 && Math.hypot(player.pos.x - g2.position.x, player.pos.z - g2.position.z) < 9 && sightLine(g2)) robberShoot(r, 0.15); if (r.state === 'demand') takeTill(r, false); }
       return;
     }
+    if (r.state === 'force') {   // shoulder, boot, crowbar: whatever is quickest
+      r.t += dt; animateHuman(r.h, dt, 'idle', 0, null);
+      P.rArm.rotation.x = -1.2 + Math.sin(r.t * 11) * 0.7; P.torso.rotation.x = 0.2 + Math.sin(r.t * 11) * 0.12;
+      if (r.t > 0.45 && !r.forceHit) { r.forceHit = 1; sfx('hit'); }
+      if (r.t > r.forceFor) {
+        P.torso.rotation.x = 0; P.rArm.rotation.x = 0;
+        var fd = r.forceDoor;
+        if (fd) { setDoor(fd.id, true, false); sfx('door'); logEvent('🚪 ' + (fd.name || 'A door') + ' was forced open', 'bad'); toast('🚪 He has forced ' + (fd.name || 'a door'), 'bad'); }
+        r.forceDoor = null; r.forceHit = 0; r.state = r.forceBack || 'raid'; r.t = 0;
+        r.path = r.forceTo ? routeTo(g2.position, r.forceTo.x, r.forceTo.z, true) : r.path;
+      }
+      armedReact(r, dt); return;
+    }
     if (r.state === 'raid') {
+      if (robberForce(r, g2)) return;
       if (walkAlong(g2, r.path, K.speed + 0.4, dt)) { r.state = 'loot'; r.t = 0; robberSay(r, r.raid === 'vault' ? 'come on… open…' : 'jackpot', '#ffc857'); }
       animateHuman(r.h, dt, 'walk', K.speed + 0.4, null); aim(); armedReact(r, dt); return;
     }
@@ -3361,8 +3687,16 @@
       return;
     }
     if (r.state === 'flee') {
+      if (robberForce(r, g2)) return;
       if (walkAlong(g2, r.path, r.masked ? 3.3 : 1.6, dt)) { if (r.masked && (r.grabbed > 0 || r.goods.length || Object.keys(r.disp).length)) startGetaway(r); else if (r.grabbed > 0 || r.goods.length || Object.keys(r.disp).length) logEvent('💨 The ' + K.label + ' got away with ' + (r.grabbed > 0 ? money(r.grabbed) : 'your goods') + (r.goods.length && r.grabbed > 0 ? ' and a bag of your goods' : ''), 'bad'); r.state = 'away'; g2.visible = false; r.bubble.visible = false; world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; }); }
       animateHuman(r.h, dt, 'walk', r.masked ? 3.3 : 1.6, null); return;
+    }
+    if (r.state === 'cuffed') {   // hands up, and he walks out to the car on his own legs
+      r.t += dt;
+      if (r.path && r.path.length) { walkAlong(g2, r.path, 1.5, dt); animateHuman(r.h, dt, 'walk', 1.5, null); }
+      else animateHuman(r.h, dt, 'idle', 0, null);
+      P.lArm.rotation.x = -2.5; P.rArm.rotation.x = -2.5;
+      return;
     }
     if (r.state === 'down') { r.t += dt; if (r.t > r.downFor) { standBack(r.h); robberSay(r, 'I am gone, I am gone', '#ffc857'); robberFlee(r); } return; }
     if (r.state === 'out') { r.t += dt; if (r.t > 5) { r.state = 'away'; g2.visible = false; r.bubble.visible = false; standBack(r.h); world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; }); } }
@@ -6260,12 +6594,12 @@
     var dt = Math.min(clock.getDelta(), 0.1);
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
-    updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus();
+    updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus();
     updateDayNight(); updateSecurity(dt);
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); renderer.render(scene, vc); } else renderer.render(scene, camera);
     if (SET.fps) { fpsAcc += dt; fpsN++; fpsT += dt; if (fpsT > 0.5) { $('h-fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; fpsT = 0; } }
   }
   frame();
   // debug / automation handle (read-only use; not part of the game loop)
-  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, unitIds: unitIds, unitCount: unitCount, machCost: machCost, buyUnit: buyUnit, machState: machState, syncMachines: syncMachines, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
+  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision, setDoor: setDoor, doorAt: doorAt, navBuild: navBuild }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, unitIds: unitIds, unitCount: unitCount, machCost: machCost, buyUnit: buyUnit, machState: machState, syncMachines: syncMachines, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
 })();
