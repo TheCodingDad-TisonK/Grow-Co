@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.13.2
+
+**Cigarettes could not be handed over.** A customer would ask for a pack of RF Smoking 10s, you would fetch it, and they refused it no matter how many times you pressed E.
+
+The check that decides whether the thing in your hands is wanted only ever read the main order. A cigarette side order is kept on its own line, so a pack always failed that check and the handover never ran, even though the handover itself knew perfectly well what to do with cigarettes. It reads both lines now.
+
+The crosshair had the same blind spot, and that is the half you could actually see. Standing in front of the customer with the right pack in hand, the prompt still said "still wants 3 joints" and never mentioned the smokes at all. It now lists the pack alongside the rest of the order, confirms when the pack you are holding is the one they asked for, and says so plainly when it is not. That last part matters, because the two 10s packs are easy to mix up: RF Smoking 10s is the red pack, RF Smoking Light 10s the pale one with the blue top.
+
 ## v1.13.1
 
 **Snow no longer turns the lights out.** Two things were wrong with it.

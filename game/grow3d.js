@@ -5388,7 +5388,22 @@
     if (d.kind === 'line') { if (h && h.kind === 'harvest') return 'Hang ' + gram(h.grams) + ' to dry'; var dr = S.batches.filter(function (b) { return !b.cured; }).length; return 'Drying line <small>' + dr + ' hanging' + (dr ? ' · ' + Math.round(dryPct() * 100) + '% dry' : '') + '</small>'; }
     if (d.kind === 'shelf') { var cured = S.batches.filter(function (b) { return b.cured; }).length; return 'Curing shelf <small>' + cured + ' jar' + (cured === 1 ? '' : 's') + ' curing · look at a jar to take it</small>'; }
     if (d.kind === 'customer' && h && h.kind === 'bat') return 'Swing at ' + (S.customer ? S.customer.who : 'them') + ' <small>a paying customer…</small>';
-    if (d.kind === 'customer') { if (!S.customer) return 'Customer'; var c = S.customer; if (!c.arrived) return c.who + ' <small>still coming through the ID check</small>'; var open = orderLines(c).filter(function (l) { return l.given.n < l.qty; }); var mine = h && open.filter(function (l) { return l.kind === h.kind; })[0]; if (mine) return 'Hand ' + Math.min(h.n, mine.qty - mine.given.n) + ' ' + kindName(h.kind, Math.min(h.n, mine.qty - mine.given.n)) + ' to ' + c.who + ' <small>' + (open.length > 1 ? 'then ' + open.filter(function (l) { return l !== mine; }).map(lineText).join(', ') : 'that completes the order') + '</small>'; return c.who + ' <small>still wants ' + open.map(lineText).join(', ') + (c.premium ? ' · q' + c.minQ + '+' : '') + ' · see the ticket top left</small>'; }
+    if (d.kind === 'customer') {
+      if (!S.customer) return 'Customer'; var c = S.customer;
+      if (!c.arrived) return c.who + ' <small>still coming through the ID check</small>';
+      var open = orderLines(c).filter(function (l) { return l.given.n < l.qty; });
+      var cq = (c.cig && c.cig.given < c.cig.qty) ? c.cig : null;   /* the smokes ride on their own line, not in orderLines, so the prompt has to name them itself */
+      var cigText = function (q) { return (q.qty - q.given) + ' × ' + CIG_SKUS[q.sku].name; };
+      if (h && h.kind === 'cigs') {
+        if (!cq) return c.who + ' <small>did not ask for cigarettes</small>';
+        if (cq.sku !== h.sku) return c.who + ' <small>asked for ' + CIG_SKUS[cq.sku].name + ', not that pack</small>';
+        return 'Hand ' + Math.min(h.n, cq.qty - cq.given) + ' × ' + CIG_SKUS[cq.sku].name + ' to ' + c.who + ' <small>' + (open.length ? 'then ' + open.map(lineText).join(', ') : 'that completes the order') + '</small>';
+      }
+      var mine = h && open.filter(function (l) { return l.kind === h.kind; })[0];
+      if (mine) { var rest = open.filter(function (l) { return l !== mine; }).map(lineText); if (cq) rest.push(cigText(cq)); return 'Hand ' + Math.min(h.n, mine.qty - mine.given.n) + ' ' + kindName(h.kind, Math.min(h.n, mine.qty - mine.given.n)) + ' to ' + c.who + ' <small>' + (rest.length ? 'then ' + rest.join(', ') : 'that completes the order') + '</small>'; }
+      var all = open.map(lineText); if (cq) all.push(cigText(cq));
+      return c.who + ' <small>still wants ' + all.join(', ') + (c.premium ? ' · q' + c.minQ + '+' : '') + ' · see the ticket top left</small>';
+    }
     if (d.kind === 'water') return h && h.kind === 'can' ? 'Put the can back' : (h ? 'Hands full <small>G to put down</small>' : 'Pick up the watering can');
     if (d.kind === 'tv') return 'TV <small>' + { off: 'off', desk: 'shop dashboard', growcam: 'grow cam', news: 'house news' }[TV_CHANNELS[tv.channel]] + ' · E next channel</small>';
     if (d.kind === 'secdesk') return sec.view.on ? 'Leave the cameras' : sit.on ? 'Watch the cameras' : 'Sit down and watch the cameras';
@@ -5490,7 +5505,8 @@
     else if (d.kind === 'jar') { if (hotbarFull()) { toast('Hands full — G to put things down', 'bad'); return; } var b = batchById(d.bid); if (!b || !b.cured) return; S.batches = S.batches.filter(function (x) { return x.id !== d.bid; }); take({ kind: 'jar', bid: b.id, grams: b.grams, quality: b.quality, baseQ: b.baseQ, thc: b.thc, startedAt: b.startedAt, strain: b.strain }); toast('Took the jar — empty it at the bench', 'good'); }
     else if (d.kind === 'line') { if (h && h.kind === 'harvest') actions.hang(); else ctxShelf(); }
     else if (d.kind === 'shelf') ctxShelf();
-    else if (d.kind === 'customer') { if (!S.customer) return; var hb2 = held(); if (hb2 && hb2.kind === 'bat') { swingBat(); return; } if (!S.customer.arrived && !S.customer.stage) { toast(S.customer.who + ' is still at the ID check', ''); return; } if (h && orderLines(S.customer).some(function (l) { return l.kind === h.kind && l.given.n < l.qty; })) handOver(); else if (h) toast(S.customer.who + ' wants ' + wantText(S.customer), 'bad'); else { toast(S.customer.who + ' wants ' + wantText(S.customer) + ' — grab them from the goods shelf', ''); npc.say(wantText(S.customer) + ', when you can', '#6fdc8c'); } }
+    else if (d.kind === 'customer') { if (!S.customer) return; var hb2 = held(); if (hb2 && hb2.kind === 'bat') { swingBat(); return; } if (!S.customer.arrived && !S.customer.stage) { toast(S.customer.who + ' is still at the ID check', ''); return; } var cigWant = h && h.kind === 'cigs' && S.customer.cig && S.customer.cig.given < S.customer.cig.qty;   /* a cigarette side order is not in orderLines, so it needs its own way past the gate */
+      if (h && (cigWant || orderLines(S.customer).some(function (l) { return l.kind === h.kind && l.given.n < l.qty; }))) handOver(); else if (h) toast(S.customer.who + ' wants ' + wantText(S.customer), 'bad'); else { toast(S.customer.who + ' wants ' + wantText(S.customer) + ' — grab them from the goods shelf', ''); npc.say(wantText(S.customer) + ', when you can', '#6fdc8c'); } }
     else if (d.kind === 'tv') tvCycle();
     else if (d.kind === 'secdesk') { if (sec.view.on) camExit(); else camEnter(); }
     else if (d.kind === 'seccam') { toast('📹 ' + secCamName(d.idx) + ' is recording. Watch it from the security room desk.', ''); sfx('click'); }
