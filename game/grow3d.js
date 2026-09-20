@@ -1474,14 +1474,17 @@
   // ── Shelf / line contents (batches) ───────────────────────────────
   // ── Shelf, drying rack and bench contents (synced from the save) ──
   // the goods shelf contents: cells per strain (2 columns x 3 rows), bags stacked left, joints in a tube right, a price card above
+  var GOODS_ROWS = 3, GOODS_CELL = 0.85;
+  function goodsCols() { return Math.max(2, Math.ceil(STRAINS.length / GOODS_ROWS)); }   // three shelves high, as wide as it needs to be
+  function goodsWidth() { return goodsCols() * GOODS_CELL; }
   function syncGoods() {
     var inst = propInst.goodsShelf; if (!inst) return;
     var gg = inst.ctx.dynGroup(); var gate = gg.userData.shutter; while (gg.children.length) gg.remove(gg.children[0]); if (gate) gg.add(gate);   /* restocking must not throw the roll gate away with the goods */
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'goods'; });
-    var cellW = 0.8, cellY = [0.185, 0.76, 1.32];
+    var cellW = 0.8, cellY = [0.185, 0.76, 1.32], cols = goodsCols();
     STRAINS.forEach(function (st, i) {
-      var col = i % 2, row = Math.floor(i / 2); if (row > 2) return;
-      var cx = (col - 0.5) * (cellW + 0.05), cy = cellY[2 - row]; var bags = lotOf('bags', st.id), joints = lotOf('joints', st.id), stash = stashOf(st.id);
+      var col = i % cols, row = Math.floor(i / cols); if (row > GOODS_ROWS - 1) return;
+      var cx = (col - (cols - 1) / 2) * GOODS_CELL, cy = cellY[2 - row]; var bags = lotOf('bags', st.id), joints = lotOf('joints', st.id), stash = stashOf(st.id);
       var cookies = lotOf('cookies', st.id); var any = bags.n > 0 || joints.n > 0 || cookies.n > 0 || stash.g > 0;
       // price card on the back panel
       var bq = bags.n ? bags.qSum / bags.n : 0, jq = joints.n ? joints.qSum / joints.n : 0;
@@ -4178,7 +4181,8 @@
     var rim = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.02, 8, 24), MAT.black); clockG.add(rim);
     world.clockHands = { h: new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.12, 0.01), MAT.black), m: new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.18, 0.01), MAT.black) };
     world.clockHands.h.position.set(0, 0, -0.03); world.clockHands.m.position.set(0, 0, -0.035); world.clockHands.h.geometry.translate(0, 0.06, 0); world.clockHands.m.geometry.translate(0, 0.09, 0); clockG.add(world.clockHands.h); clockG.add(world.clockHands.m);
-    STRAINS.forEach(function (s, i) { var px = -1.2 + i * 0.62; var sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.7), new THREE.MeshStandardMaterial({ map: textTex(['STRAIN ' + (i + 1), s.emoji, s.name, s.thc.toFixed(1) + '× · ' + s.yield + 'g'], 384, 540, { size: 44, titleColor: '#8a8a8a', bg: '#f0ead8', color: '#2a2a2a', line: 'rgba(0,0,0,0)' }), roughness: 0.9 })); sheet.position.set(px, 2.25, -1.88); sheet.rotation.z = (i % 2 ? 0.02 : -0.02); world.group.add(sheet); var pin = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), new THREE.MeshStandardMaterial({ color: 0xc94a3a })); pin.position.set(px, 2.58, -1.87); world.group.add(pin); });
+    var shN = STRAINS.length, shGap = Math.min(0.62, 4.6 / Math.max(1, shN - 1)), shW = Math.min(0.5, shGap * 0.82);
+    STRAINS.forEach(function (s, i) { var px = -(shN - 1) / 2 * shGap + i * shGap; var sheet = new THREE.Mesh(new THREE.PlaneGeometry(shW, shW * 1.4), new THREE.MeshStandardMaterial({ map: textTex(['STRAIN ' + (i + 1), s.emoji, s.name, s.thc.toFixed(1) + '× · ' + s.yield + 'g'], 384, 540, { size: 44, titleColor: '#8a8a8a', bg: '#f0ead8', color: '#2a2a2a', line: 'rgba(0,0,0,0)' }), roughness: 0.9 })); sheet.position.set(px, 2.25, -1.88); sheet.rotation.z = (i % 2 ? 0.02 : -0.02); world.group.add(sheet); var pin = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), new THREE.MeshStandardMaterial({ color: 0xc94a3a })); pin.position.set(px, 2.58, -1.87); world.group.add(pin); });
   }
   function syncRack() {
     if (!propInst.rack) return; var g = propInst.rack.ctx.dynGroup(); while (g.children.length) g.remove(g.children[0]);
@@ -4195,7 +4199,7 @@
     var spare = Math.min(Math.max(0, (S.supplies.pot || 0) - S.plants.length), 4);
     for (var pI = 0; pI < spare; pI++) { var pt = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.14, 14), MAT.pot); pt.position.set(rx - 0.3 + pI * 0.2, 1.93, rz); g.add(pt); }
     var jars = Math.min(S.supplies.jar || 0, 3); for (var jI = 0; jI < jars; jI++) { var jr = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.14, 12), MAT.jar); jr.position.set(rx + 0.2 + jI * 0.14, 1.93, rz + 0.12); g.add(jr); }
-    var sx2 = 0; STRAINS.forEach(function (st) { var n = S.supplies['seed_' + st.id] || 0; if (!n) return; var pk = productSeedPacket(st, 1.35); pk.position.set(rx - 0.36 + sx2 * 0.16, 1.48, rz - 0.15); pk.rotation.x = -0.35; g.add(pk); var ph = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.16, 0.12), MAT.none); ph.position.copy(pk.position); g.add(ph); interactable(ph, { kind: 'rackItem', item: 'seed_' + st.id, label: st.name + ' seed' }); ph.userData.dynGroup = 'rack'; ph.userData.propId = 'rack'; sx2++; });
+    var sx2 = 0; STRAINS.forEach(function (st) { var n = S.supplies['seed_' + st.id] || 0; if (!n) return; var pk = productSeedPacket(st, 1.35); pk.position.set(rx - 0.36 + (sx2 % 6) * 0.16, 1.48 - Math.floor(sx2 / 6) * 0.19, rz - 0.15);   /* six to a row, then the next shelf down */ pk.rotation.x = -0.35; g.add(pk); var ph = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.16, 0.12), MAT.none); ph.position.copy(pk.position); g.add(ph); interactable(ph, { kind: 'rackItem', item: 'seed_' + st.id, label: st.name + ' seed' }); ph.userData.dynGroup = 'rack'; ph.userData.propId = 'rack'; sx2++; });
     if (soil > 0) { var sh = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.3, 0.44), MAT.none); sh.position.set(rx, 0.42, rz); g.add(sh); interactable(sh, { kind: 'rackItem', item: 'soil', label: 'bag of soil' }); sh.userData.dynGroup = 'rack'; sh.userData.propId = 'rack'; }
     if (nut > 0) { var nh = new THREE.Mesh(new THREE.BoxGeometry(0.1 * nut + 0.04, 0.18, 0.1), MAT.none); nh.position.set(rx - 0.36 + (nut - 1) * 0.05, 0.9, rz - 0.1); g.add(nh); interactable(nh, { kind: 'rackItem', item: 'nutrients', label: 'nutrients' }); nh.userData.dynGroup = 'rack'; nh.userData.propId = 'rack'; }
     if (spr > 0) { var rh = new THREE.Mesh(new THREE.BoxGeometry(0.1 * spr + 0.04, 0.22, 0.1), MAT.none); rh.position.set(rx + 0.1 + (spr - 1) * 0.05, 0.94, rz + 0.1); g.add(rh); interactable(rh, { kind: 'rackItem', item: 'remedy', label: 'pest spray' }); rh.userData.dynGroup = 'rack'; rh.userData.propId = 'rack'; }
@@ -5164,13 +5168,14 @@
   } });
   // display shelf for packed goods in the processing room: one cell per strain, bags left and joints right
   defProp('goodsShelf', { label: 'goods shelf', x: 6.5, z: 3.55, rot: 2, build: function (c) {
-    var wood = MAT.darkwood, w = 1.7, d = 0.42;
+    var wood = MAT.darkwood, w = goodsWidth(), d = 0.42, cols = goodsCols();
     c.box(w, 0.05, d, wood, 0, 0.16, 0, { solid: true }); [0.74, 1.3, 1.86].forEach(function (y) { c.box(w, 0.035, d, wood, 0, y, 0); });
     c.box(w, 2.0, 0.03, colorMat(0x2b2119, 0.9), 0, 1.0, -d / 2 + 0.015, { cast: false });   // back panel
-    [-1, 1].forEach(function (s) { c.box(0.05, 2.0, d, wood, s * (w / 2 - 0.025), 1.0, 0); }); c.box(0.05, 1.8, d, wood, 0, 1.06, 0);   // uprights and a centre divider
+    [-1, 1].forEach(function (s) { c.box(0.05, 2.0, d, wood, s * (w / 2 - 0.025), 1.0, 0); });
+    for (var dv = 1; dv < cols; dv++) c.box(0.05, 1.8, d, wood, (dv - cols / 2) * GOODS_CELL, 1.06, 0);   // uprights, and a divider between every pair of cells
     c.box(w, 0.06, d + 0.02, wood, 0, 2.03, 0);
-    c.sign(['GROW CO.', 'house menu · bags & joints'], 1.2, 0.3, 0, 2.2, 0.0, 0, { titleColor: '#6fdc8c', bg: '#0f1a12' });
-    for (var i = 0; i < 3; i++) c.add(spot(0xfff1d0, 0.35, 1.2, (i - 1) * 0.55, 1.98, 0.12));   // little downlights
+    c.sign(['GROW CO.', 'house menu · bags & joints'], Math.min(w - 0.2, 2.2), 0.3, 0, 2.2, 0.0, 0, { titleColor: '#6fdc8c', bg: '#0f1a12' });
+    for (var i = 0; i < cols + 1; i++) c.add(spot(0xfff1d0, 0.35, 1.2, (i - cols / 2) * GOODS_CELL, 1.98, 0.12));   // a downlight over every divider
     var gg = c.dynGroup(); var gsh = new THREE.Group(); var gst = colorMat(0xa7adb4, 0.35, 0.8), gdk = colorMat(0x5b6168, 0.4, 0.7);
     var gpanel = new THREE.Mesh(new THREE.BoxGeometry(w - 0.12, 1.9, 0.014), gst); gsh.add(gpanel);
     for (var gs = 0; gs < 17; gs++) { var gbar = new THREE.Mesh(new THREE.BoxGeometry(w - 0.12, 0.012, 0.02), gdk); gbar.position.y = -0.9 + gs * 0.113; gsh.add(gbar); }

@@ -58,6 +58,7 @@
     var order = Object.keys(groups).sort(function (a, b) { return (a === 'Yours' ? 2 : a === 'Bundles' ? 1 : 0) - (b === 'Yours' ? 2 : b === 'Bundles' ? 1 : 0); });
     var html = '<div class="rf-ws"><p class="rf-ws-lead">Content packs change what the game has in it. Turn one on or off and the shop reloads. Your saves are not touched: a pack only adds things you can then buy.</p>';
     if (wsMsg) html += '<div class="rf-ws-msg">' + wsMsg + '</div>';
+    if (wsDirty) html += '<div class="rf-ws-msg rf-ws-pending">Changes are waiting. <button class="primary" data-rf="ws-apply">↻ Apply and rebuild the shop</button></div>';
     order.forEach(function (k) {
       html += '<h3 class="rf-ws-head">' + k + '</h3><div class="rf-ws-grid">';
       groups[k].forEach(function (p) {
@@ -106,6 +107,7 @@
     var s = readSlot(n); body('<div class="rf-how"><b>Delete slot ' + n + '?</b><br>Day ' + (s && s.day || 1) + ', level ' + (s && s.level || 1) + ', ' + money(s && s.bank) + ' in the bank. This erases that shop for good: money, stock, licences, layout, everything. The other slots are not touched.</div><div class="rf-menu-btns"><button class="danger" data-rf="del-yes" data-n="' + n + '">Yes, delete slot ' + n + '</button><button data-rf="back">← Keep it</button></div>');
   }
   function play() { menu.classList.add('fade'); setTimeout(function () { menu.hidden = true; }, 700); var b = $('g3-start-btn'); if (b) b.click(); }
+  var wsDirty = false;   // packs turned on or off that the running shop has not been rebuilt for
   function reloadInto(n, autoplay) { try { localStorage.setItem('rfgrowco-slot', String(n)); sessionStorage.setItem('rfgc-skip-splash', '1'); if (autoplay) sessionStorage.setItem('rfgc-autoplay', '1'); } catch (e) {} if (urlSave) location.href = location.pathname; else location.reload(); }
   menu.addEventListener('click', function (e) {
     var t = e.target.closest('[data-rf]'); if (!t) return; var a = t.getAttribute('data-rf'), n = +t.getAttribute('data-n');
@@ -116,7 +118,12 @@
     else if (a === 'how') showHow(); else if (a === 'back') showMain(); else if (a === 'ch') { chapter = +t.getAttribute('data-i') || 0; showHow(); }
     else if (a === 'shop') showWorkshop();
     else if (a === 'ws-help') showWsHelp();
-    else if (a === 'ws-on') { var id = t.getAttribute('data-id'); var was = window.RF_WORKSHOP.packs().filter(function (p) { return p.id === id; })[0]; window.RF_WORKSHOP.setOn(id, !(was && was.on)); wsMsg = 'The shop reloads so the change takes hold…'; showWorkshop(); setTimeout(function () { reloadInto(urlSave ? 1 : active(), false); }, 260); }
+    else if (a === 'ws-on') {
+      var id = t.getAttribute('data-id'); var was = window.RF_WORKSHOP.packs().filter(function (p) { return p.id === id; })[0];
+      window.RF_WORKSHOP.setOn(id, !(was && was.on));
+      wsDirty = true; wsMsg = ''; showWorkshop();   /* pick as many as you like: the shop is rebuilt once, when you apply */
+    }
+    else if (a === 'ws-apply') { wsDirty = false; wsMsg = 'Rebuilding the shop…'; showWorkshop(); setTimeout(function () { reloadInto(urlSave ? 1 : active(), false); }, 200); }
     else if (a === 'ws-imp') { var fi = $('rf-ws-file'); if (fi) fi.click(); }
     else if (a === 'ws-exp') window.RF_WORKSHOP.exportPack(t.getAttribute('data-id'));
     else if (a === 'ws-del') { window.RF_WORKSHOP.removePack(t.getAttribute('data-id')); wsMsg = 'Pack removed. Reloading…'; showWorkshop(); setTimeout(function () { reloadInto(urlSave ? 1 : active(), false); }, 260); }

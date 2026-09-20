@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.16.2
+
+**The shop was built for six strains.** A seed pack takes you to twelve, and three places had the number six baked into their geometry. The worst was the goods shelf: a fixed two by three grid that silently dropped everything past the sixth strain. With both seed packs on, six of your twelve strains could be grown, cured and packed and then never put out for sale at all. The shelf sizes itself to the list now, three shelves high and as many bays wide as it needs, with a divider and a downlight over each one. At six strains it is exactly the shelf it always was.
+
+The strain sheets on the hall wall marched off the end of it once there were more than six, and the seed packets on the supply rack overhung the rack. Both fit themselves to however many strains you have.
+
+**Turning packs on no longer restarts the shop each time.** Every toggle in the Workshop reloaded the whole game, so switching on three packs meant sitting through three restarts. Toggling is instant now and a banner offers one **Apply and rebuild** when you are done.
+
 ## v1.16.1
 
 **The shop control box was buried.** It is still where it always was, on the security room wall, but the plot the town is told to keep clear only covered the main room. The security room is an annex that sticks out past it, so a Workshop place could be built straight through that corner with the control box inside it. That is what happened with the places pack on: the grocery was put up over the security room. The exclusion now covers the whole building, wings and yard included.
