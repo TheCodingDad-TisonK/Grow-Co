@@ -799,6 +799,7 @@
   function interactable(mesh, data) { mesh.userData.interact = data; world.interact.push(mesh); return mesh; }
 
   // Lighting: sky/sun (day-night), ambient, and the tent lamp (tiered)
+  var fogCol = new THREE.Color(), SNOW_FOG = new THREE.Color(0x9fb2c0), RAIN_FOG = new THREE.Color(0x55606b);
   var hemi = new THREE.HemisphereLight(0xbcd8ff, 0x3a2f22, 0.32); scene.add(hemi);
   var sun = new THREE.DirectionalLight(0xfff1d6, 1.1); sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -22; sun.shadow.camera.right = 22; sun.shadow.camera.top = 22; sun.shadow.camera.bottom = -22; sun.shadow.camera.near = 1; sun.shadow.camera.far = 60; sun.shadow.bias = -0.0008;
@@ -2735,7 +2736,10 @@
     // weather and season
     if (WSFEST.snow && W.kind !== 'snow') { W.kind = 'snow'; W.until = now() + 3600000; exp.wxKind = 'snow'; }   /* a seasonal pack keeps the snow falling */
     if (now() > W.until) { var se = season(), r = Math.random(); W.kind = se === 'Winter' ? (r < 0.45 ? 'snow' : r < 0.6 ? 'clear' : 'clear') : r < (se === 'Autumn' ? 0.4 : 0.22) ? 'rain' : r < (se === 'Summer' ? 0.3 : 0.45) && se !== 'Spring' ? 'storm' : 'clear'; W.until = now() + randi(150, 320) * 1000; if (exp.wxKind && exp.wxKind !== W.kind) toast({ clear: '🌤️ It is clearing up', rain: '🌧️ It has started to rain — fewer people out', storm: '⛈️ A storm is rolling in — the street is emptying', snow: '❄️ It is snowing' }[W.kind], ''); exp.wxKind = W.kind; }
-    var wet = W.kind !== 'clear', show = wet && outdoors(); exp.wx.visible = show; scene.fog.near = lerp(scene.fog.near, wet ? 14 : 30, 0.02); scene.fog.far = lerp(scene.fog.far, W.kind === 'storm' ? 55 : wet ? 75 : 110, 0.02);
+    var wet = W.kind !== 'clear', show = wet && outdoors(); exp.wx.visible = show;
+    var fogN = show ? (W.kind === 'storm' ? 14 : W.kind === 'rain' ? 20 : 26) : 30;   /* indoors keeps the clear-weather fog: shutting the door should not fog the room */
+    var fogF = show ? (W.kind === 'storm' ? 55 : W.kind === 'rain' ? 80 : 100) : 110;
+    scene.fog.near = lerp(scene.fog.near, fogN, 0.02); scene.fog.far = lerp(scene.fog.far, fogF, 0.02);
     if (show) { var fall = W.kind === 'snow' ? 1.6 : 15, arr = exp.wx.geometry.attributes.position; for (var i = 0; i < arr.count; i++) { var y = arr.getY(i) - fall * dt; if (y < 0) y += 16; arr.setY(i, y); if (W.kind === 'snow') arr.setX(i, arr.getX(i) + Math.sin(y * 2 + i) * dt * 0.4); } arr.needsUpdate = true; exp.wx.position.set(camera.position.x, camera.position.y - 6, camera.position.z); exp.wx.material.size = W.kind === 'snow' ? 0.14 : 0.07; exp.wx.material.opacity = W.kind === 'snow' ? 0.9 : 0.55; }
     // fireworks over the town after dark, from a seasonal pack
     if (WSFEST.fireworks) { exp.fwT = (exp.fwT || 0) - dt; if (exp.fwT <= 0) { exp.fwT = randf(2.4, 6.5); if (nightNow() && outdoors()) { var fx2 = camera.position.x + randf(-55, 55), fz2 = camera.position.z + randf(-55, 55); burst(fx2, randf(16, 30), fz2, [0xff6b6b, 0xffc857, 0x6fdc8c, 0x7fd4ff, 0xff9ad2][randi(0, 4)], 46, 'up'); sfx('gunshot'); } } }
@@ -6027,10 +6031,15 @@
     var day = clamp(sunAlt * 1.4 + 0.1, 0, 1);
     var dusk = clamp(1 - Math.abs(sunAlt) * 3, 0, 1);
     skyCol.setRGB(lerp(0.02, 0.55, day) + dusk * 0.35, lerp(0.03, 0.72, day) + dusk * 0.12, lerp(0.08, 0.95, day));
-    scene.background = skyCol; scene.fog.color.copy(skyCol);
+    scene.background = skyCol;
+    var wk = (S.x && S.x.weather) ? S.x.weather.kind : 'clear';
+    fogCol.copy(skyCol);
+    if (wk === 'snow') fogCol.lerp(SNOW_FOG, 0.55);        /* falling snow is bright, never black */
+    else if (wk === 'rain' || wk === 'storm') fogCol.lerp(RAIN_FOG, 0.3);
+    scene.fog.color.copy(fogCol);
     sun.intensity = 0.1 + day * 0.9; sun.color.setRGB(1, lerp(0.7, 0.95, day) + dusk * 0.0, lerp(0.5, 0.85, day) - dusk * 0.2);
     var ang = (h - 6) / 12 * Math.PI; sun.position.set(Math.cos(ang) * 30, Math.max(2, Math.sin(ang) * 30), 12); sun.target.position.set(0, 0, 0);
-    hemi.intensity = 0.12 + day * 0.28; hemi.color.setRGB(lerp(0.3, 0.75, day), lerp(0.35, 0.85, day), lerp(0.6, 1.0, day));
+    hemi.intensity = (0.12 + day * 0.28) * (wk === 'snow' ? 1.5 : wk === 'storm' ? 0.85 : 1); hemi.color.setRGB(lerp(0.3, 0.75, day), lerp(0.35, 0.85, day), lerp(0.6, 1.0, day));
     var indoor = 1 - day * 0.5; roomLight.intensity = 0.2 + indoor * 0.3; roomLight2.intensity = roomLight3.intensity = 0.15 + indoor * 0.25;
     if (world.streetLights) world.streetLights.forEach(function (l) { l.intensity = 0.1 + (1 - day) * 1.2; });
     if (world.roomLamps) world.roomLamps.forEach(function (l) { l.intensity = l.userData.off ? 0 : (l.userData.base || 0.7) * (0.75 + indoor * 0.5); });

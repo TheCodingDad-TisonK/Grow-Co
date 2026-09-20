@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.13.1
+
+**Snow no longer turns the lights out.** Two things were wrong with it.
+
+The falling flakes were correctly only drawn outdoors, but the **fog that comes with the weather was applied everywhere**, indoors included. Snow pulled the fog in to 14 metres, so standing in your own shop the far wall was already fading out. The fog now only closes in when you are actually outside, and snow is the gentlest of the three rather than as thick as rain.
+
+Worse, the fog took its colour straight from the sky, and after dark the sky is almost black. Everything past the fog line went to black, which is what made it so hard to see. **Snow scatters light rather than swallowing it**, so it now lifts the fog well clear of black, rain lifts it a little, and a snowy night also gets a touch more ambient light. A snowy night reads as a pale haze now instead of a wall of black.
+
 ## v1.13
 
 **The drinks fridge and the coffee machine got what the vending machine got.**
