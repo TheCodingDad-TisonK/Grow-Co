@@ -2482,7 +2482,7 @@
   function cityClear(x, z, w, d) {
     var x1 = x - w / 2, x2 = x + w / 2, z1 = z - d / 2, z2 = z + d / 2, i, o, ox, oz;
     if (x1 < -CITY.x - 2 || x2 > CITY.x + 2 || z1 < CITY.z1 - 2 || z2 > CITY.z2 + 2) return false;
-    if (x2 > -13.5 && x1 < 13.5 && z2 > -19 && z1 < 12.5) return false;   /* your own plot: the shop, the forecourt and the yard */
+    if (x2 > -16 && x1 < 18.5 && z2 > -24 && z1 < 13) return false;   /* your own plot: the shop, the security annex out at x 17, the forecourt and the yard behind */
     for (i = 0; i < CITY.roads.length; i++) { o = CITY.roads[i]; if (x2 > o.x1 && x1 < o.x2 && z2 > o.z1 && z1 < o.z2) return false; }   /* never on the tarmac */
     for (i = 0; i < CITY.parks.length; i++) {
       o = CITY.parks[i];
@@ -4368,7 +4368,28 @@
     var chit = box(0.6, 0.85, 0.3, MAT.none, bx, by, bz - 0.12, { cast: false, receive: false }); interactable(chit, { kind: 'controls' });
     var ctlSign = signPlane(['SHOP CONTROLS'], 0.7, 0.2, bx, 1.98, bz + 0.02, Math.PI, { titleColor: '#ffc857' }); fixtureAdd('ctlBox', 'shop control box', [cg, chit, ctlSign], Math.PI);
     drawCtlScreen();
-    // speakers: hall + lobby + grow room
+    // Two satellite panels: one behind the register, one in the office. Smaller box, fewer switches.
+    [
+      { id: 'miniFront',  fx: 'ctlFront',  label: 'front of house panel', x: 2.55, y: 1.5, z: 3.62, rot: Math.PI, sign: 'FRONT OF HOUSE', col: 0x2f6b4a },
+      { id: 'miniOffice', fx: 'ctlOffice', label: 'office panel',         x: -6.3, y: 1.5, z: 1.86, rot: 0,       sign: 'OFFICE', col: 0x2f5b8a }
+    ].forEach(function (p) {
+      var g = new THREE.Group(); g.position.set(p.x, p.y, p.z); g.rotation.y = p.rot; world.group.add(g);
+      var caseM = colorMat(0xd8dce0, 0.6), faceM = colorMat(0xeceff2, 0.5);
+      var bodyM = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.44, 0.09), caseM); bodyM.castShadow = false; g.add(bodyM);
+      var face = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.012), faceM); face.position.z = 0.051; face.castShadow = false; g.add(face);
+      var strip = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.06, 0.014), colorMat(p.col, 0.5)); strip.position.set(0, 0.16, 0.053); strip.castShadow = false; g.add(strip);
+      for (var r2 = 0; r2 < 3; r2++) {
+        var rk = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 0.02), colorMat(0x3a3d42, 0.5));
+        rk.position.set(-0.08 + (r2 % 2) * 0.16, 0.03 - Math.floor(r2 / 2) * 0.1, 0.057); rk.castShadow = false; g.add(rk);
+        var ld = new THREE.Mesh(new THREE.SphereGeometry(0.007, 6, 6), new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 1.6 }));
+        ld.position.set(-0.03 + (r2 % 2) * 0.16, 0.03 - Math.floor(r2 / 2) * 0.1, 0.058); ld.castShadow = false; g.add(ld);
+      }
+      var sg = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.05), new THREE.MeshBasicMaterial({ map: textTex([p.sign], 280, 50, { size: 26, bg: 'rgba(0,0,0,0)', color: '#12161a', titleColor: '#12161a', line: 'rgba(0,0,0,0)' }), transparent: true }));
+      sg.position.set(0, -0.155, 0.054); g.add(sg);
+      var hit = box(0.42, 0.55, 0.26, MAT.none, p.x, p.y, p.z + (p.rot ? -0.1 : 0.1), { cast: false, receive: false });
+      interactable(hit, { kind: p.id });
+      fixtureAdd(p.fx, p.label, [g, hit], p.rot);   /* F2 moves them like any other fitting */
+    });
     world.speakers = [[0, 2.9, -1.7], [0, 2.9, 4.4], [-6.5, 2.9, -8.6]];
     world.speakers.forEach(function (sp) { box(0.3, 0.42, 0.24, MAT.black, sp[0], sp[1], sp[2]); var cone = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.06, 0.03, 16), new THREE.MeshStandardMaterial({ color: 0x555a60 })); cone.rotation.x = Math.PI / 2; cone.position.set(sp[0], sp[1] - 0.05, sp[2] + (sp[2] > 4 ? 0.13 : 0.13)); world.group.add(cone); });
     // CLOSED sign twin for the neon
@@ -4461,6 +4482,31 @@
   };
   function radioNext() { var i = STATION_ORDER.indexOf(shop().radio); var next = STATION_ORDER[(i + 1) % STATION_ORDER.length]; radio.set(next); applyShopState(); toast('♪ ' + STATIONS[next].name, ''); save(); }
 
+  // The satellite panels: the same switches, only the ones that belong in that room.
+  var MINI_CTL = {
+    front:  { title: '🏪 Front of house', shop: true, roller: true, lights: ['hall', 'lobby'], doors: [] },
+    office: { title: '🗄️ Office panel', shop: false, roller: false, lights: ['office', 'grow', 'dry'], doors: ['office'] }
+  };
+  function paneMiniCtl(scope) {
+    var M = MINI_CTL[scope] || MINI_CTL.front, sh = shop();
+    var h = '<div class="g3-grid"><div class="g3-box"><h3>' + M.title + '</h3>';
+    if (M.shop) {
+      h += '<div class="desc">The front door and the lights over the hall and lounge. The full board is in the security room.</div>';
+      h += '<button class="g3-btn wide ' + (sh.open ? 'danger' : 'primary') + '" data-act="shopToggle">' + (sh.open ? '🔴 Close the shop' : '🟢 Open the shop') + '</button>';
+    } else {
+      h += '<div class="desc">The lights back here and the office door. The full board is in the security room.</div>';
+    }
+    if (M.roller) h += '<button class="g3-btn wide' + (world.rollerOpen ? ' primary' : '') + '" data-act="rollerToggle">' + (world.rollerOpen ? '🚪 Close the shutter' : '🚪 Open the shutter') + '</button>';
+    h += '<h3 style="margin-top:12px">💡 Lights</h3><div class="g3-chips">' + M.lights.map(function (r) {
+      return '<button class="g3-btn' + (sh.rooms && sh.rooms[r] === false ? '' : ' primary') + '" data-act="roomLight" data-id="' + r + '">' + ROOM_NAMES[r] + '</button>';
+    }).join('') + '</div>';
+    if (M.doors.length) {
+      h += '<h3 style="margin-top:12px">🚪 Doors</h3><div class="g3-chips">' + DOORS.filter(function (d) { return M.doors.some(function (k) { return d.id.indexOf(k) >= 0 || (d.name || '').toLowerCase().indexOf(k) >= 0; }); }).map(function (d) {
+        return '<button class="g3-btn' + (d.open ? ' primary' : '') + '" data-act="doorToggle" data-id="' + d.id + '">' + d.name + (d.locked ? ' 🔒' : '') + '</button>';
+      }).join('') + '</div>';
+    }
+    return h + '</div></div>';
+  }
   function paneControls() {
     var sh = shop();
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🏪 Shop</h3><div class="desc">Closed means no new customers walk in; the one at the window leaves.</div>' +
@@ -6065,6 +6111,8 @@
     if (d.kind === 'kfridge') return h ? (h.kind === 'snack' ? 'Put the snack back' : 'Hands full <small>G to put down</small>') : 'Open the fridge <small>grab a snack</small>';
     if (d.kind === 'eatspot') return h && h.kind === 'snack' ? 'Eat at the ' + d.label : 'Dining table <small>bring food from the fridge</small>';
     if (d.kind === 'bed') return sit.on ? 'Get up' : 'Sleep until morning <small>skips to 06:00 · plants keep growing</small>';
+    if (d.kind === 'miniFront') return 'Front of house panel <small>' + (shop().open ? 'open' : 'closed') + ' · hall and lounge lights · E</small>';
+    if (d.kind === 'miniOffice') return 'Office panel <small>lights back here and the office door · E</small>';
     if (d.kind === 'controls') return 'Shop controls <small>' + (shop().open ? 'open' : 'closed') + ' · lights ' + (shop().lights ? 'on' : 'off') + ' · radio ' + STATIONS[shop().radio].name + '</small>';
     if (d.kind === 'curtain') return (curtainOpen(d.key) ? 'Close ' : 'Open ') + d.label;
     if (d.kind === 'staffdoor') return (shop().staffDoor ? 'Close' : 'Open') + ' the staff door';
@@ -6171,6 +6219,8 @@
     else if (d.kind === 'eatspot') eatSnack();
     else if (d.kind === 'bed') napBed();
     else if (d.kind === 'controls') ui.openPanel('controls');
+    else if (d.kind === 'miniFront') ui.openPanel('miniFront');
+    else if (d.kind === 'miniOffice') ui.openPanel('miniOffice');
     else if (d.kind === 'curtain') toggleCurtain(d.key);
     else if (d.kind === 'staffdoor') toggleStaffDoor();
     else if (d.kind === 'frontdoor') toggleShopOpen();
@@ -6296,6 +6346,8 @@
       else if (kind === 'register') { title = '💵 Register'; body = paneRegister(); }
       else if (kind === 'desk') { title = '📊 Shop dashboard'; body = paneDesk(); }
       else if (kind === 'controls') { title = '🏪 Shop controls'; body = paneControls(); }
+      else if (kind === 'miniFront') { title = '🏪 Front of house'; body = paneMiniCtl('front'); }
+      else if (kind === 'miniOffice') { title = '🗄️ Office panel'; body = paneMiniCtl('office'); }
       else if (kind === 'jobs') { title = '🚚 Deliveries'; tabs = [['phone', '📱 Burner'], ['tablet', '📋 Tablet']]; body = paneJobs(tab === 'tablet' ? 'tablet' : 'phone'); }
       else if (hooks.panel[kind]) { var hp = hooks.panel[kind](tab); title = hp.title; tabs = hp.tabs || []; body = hp.body; if (!tab && tabs.length) { tab = tabs[0][0]; this.panelTab = tab; } }
       else if (kind === 'inventory') { title = '🎒 Inventory & diary'; tabs = [['inv', '🎒 Inventory'], ['log', '📜 Diary'], ['stats', '📊 Stats']]; body = tab === 'log' ? paneLog() : tab === 'stats' ? paneStats() : paneInventory(); }

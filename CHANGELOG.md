@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.16.1
+
+**The shop control box was buried.** It is still where it always was, on the security room wall, but the plot the town is told to keep clear only covered the main room. The security room is an annex that sticks out past it, so a Workshop place could be built straight through that corner with the control box inside it. That is what happened with the places pack on: the grocery was put up over the security room. The exclusion now covers the whole building, wings and yard included.
+
+**Two more panels, where you actually stand.** A small one behind the register for the front of house: open and close the shop, the shutter, and the hall and lounge lights. Another in the office for the lights back there and the office door. The full board is still in the security room, and all three move with F2 like any other fitting.
+
 ## v1.16
 
 **Three assistants, not one.** The shop floor took exactly one helper because she was a boolean. It is a crew now: hire up to three at the laptop under **Staff**, each costing more than the last, each with their own name, their own look and their own job. Jo, Mika and Sam.
