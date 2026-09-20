@@ -83,6 +83,17 @@ window.RF_GUIDE = [
     '<li>Without the keyring you can still open and shut anything that is unlocked. You simply cannot lock or unlock.</li>' +
     '<li>The shop control box lists every door with its own shut and lock buttons, plus lock all and unlock all, if you would rather do it from one place.</li>' +
     '<li>Jo and the guard carry their own keys and walk through locked doors. A robber has to force one, which costs him time.</li></ul>' },
+  { id: 'machines', icon: '🥤', title: 'Machines: vending, coffee, arcade, fridge', html:
+    '<p>Four machines earn on their own, and you can own more than one of each: up to four vending machines, four coffee machines, four arcade cabinets and three fridges. Buy extras at the laptop under <b>Gear</b>, in the <b>Machines</b> box. Each one costs more than the last.</p>' +
+    '<ul>' +
+    '<li>A machine you buy lands beside the one you already have, in the first clear space along the same wall. Press <b>F2</b> and drag it wherever you actually want it: where you leave it is where it stays.</li>' +
+    '<li>Every machine is its own machine. Its door, its delivery tray, the cup under its spout and the cans on its shelves belong to it alone. Open one and the others stay shut.</li>' +
+    '<li>Stock and money are the shop\'s, not the machine\'s. All your vending machines sell from the same drinks and snacks, all your coffee machines pour from the same cups and beans, and each kind pays into one cash box. Empty it at any of them.</li>' +
+    '<li>The drinks fridge is the exception: each fridge holds its own cans, because you load it by hand with a case of drinks.</li>' +
+    '<li>Extra vending machines come in their own livery, so a row of them does not look like the same machine four times.</li>' +
+    '<li>The coffee machine needs the <b>Lobby coffee machine</b> upgrade before you can buy a second; vending and coffee need the <b>Vending &amp; catering permit</b>, and the arcade the <b>Amusement permit</b>.</li>' +
+    '<li>Customers who stay for a while will use whichever of your machines they fancy, so more machines means fewer of them queueing at one.</li>' +
+    '</ul>' },
   { id: 'build', icon: '🛠️', title: 'Making the place yours', html:
     '<ul><li><b>F2 edit mode</b>: look at furniture, E grabs, R turns, E drops, Backspace resets. It also carries <b>signs, the dashboard screen, the staff roster, the key hook and the control box</b>: those stick flat to whatever surface you look at, at any height.</li><li><b>F3 creative mode</b>: a catalogue of furniture and building pieces with finishes and colours. C opens the catalogue, R rotates, the wheel raises, P paints, X copies, Del removes.</li><li>Every door slides with E and can be locked from the control box.</li></ul>' },
   { id: 'stuck', icon: '🧭', title: 'I am stuck', html:

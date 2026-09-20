@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.14
+
+**You can own more than one machine.** Props were one instance per name, so the shop could hold exactly one vending machine, one coffee machine, one arcade cabinet and one fridge, and that was the end of it. Buy extras at the laptop under **Gear**, in the new **Machines** box: up to four vending machines, four coffee machines, four arcade cabinets and three fridges, each costing a little more than the last.
+
+A machine you buy lands in the first clear space along the same wall as the one you already have, checked against everything actually standing in the room, and it is pinned there so it never drifts between sessions. Press **F2** and drag it wherever you really want it.
+
+**Each one is genuinely its own machine.** Its door, its delivery tray, the cup under its spout and the cans on its shelves belong to it alone. Open the second vending machine to restock it and the first stays shut. Pour a coffee on one and take it off that one. The crosshair now names the machine you are looking at rather than the machine.
+
+Stock and money stay the shop's, which is how a shop with three machines and one storeroom actually works: every vending machine sells from the same drinks and snacks, every coffee machine pours from the same cups and beans, and each kind pays into one cash box you can empty at any of them. The drinks fridge is the exception, because you load it by hand: each fridge holds its own cans.
+
+Extra vending machines come in their own livery, red, blue, green and graphite, so a row of them does not read as the same machine pasted four times.
+
+Two smaller things came out of the same work. Where a customer stands to use a machine is now worked out from where that machine actually is, so it follows the thing when you move it in edit mode instead of walking to where it used to be, and a customer picks whichever of your machines they fancy. And the drinks fridge no longer has its stock reset behind your back by an old bit of save-file housekeeping.
+
 ## v1.13.2
 
 **Cigarettes could not be handed over.** A customer would ask for a pack of RF Smoking 10s, you would fetch it, and they refused it no matter how many times you pressed E.

@@ -177,6 +177,7 @@
     return {
       bank: 220, xp: 0, level: 1, rep: 0,
       till: 0, tips: 0, vault: 0, pocket: 0, box: { vend: 0, coffee: 0, arcade: 0 }, pending: [], courier: null,   // cash lives in places until you move it
+      units: { vending: 1, lobbyCoffee: 1, arcade: 1, fridge: 1 },   // how many of each machine the shop owns
       storage: {}, vendStock: { drink: 12, snack: 12 }, coffeeStock: { cup: 40, beans: 40 }, order: null, deliveries: [],
       display: { lighter: 6, rpaper: 4, rgrinder: 1 }, noCustomersUntil: 0, courierBanUntil: 0,
       stock: { bags: {}, joints: {}, cookies: {} }, staff: { worker: false, task: 'idle', guardTask: 'door' },   // the back-room stock cabinet for packed goods; who works here and what they are on
@@ -2663,7 +2664,7 @@
     gun:  { x1: 48, x2: 58, z1: -6, z2: 2, spawn: [53, 0.8, 0], exit: { x: -8, z: 25.4, floor: 0, yaw: 0 }, name: 'Iron & Oak Arms' }
   };
   var exp = { zoneLight: null, zone: '', wx: null, wxKind: '', beacon: null, dropHit: null, getaway: null, opT: 0, heatBand: 0, roofBeds: [], roofSigns: [], genLed: null };
-  function xs() { if (!S.x || typeof S.x !== 'object') S.x = {}; var X = S.x; if (typeof X.heat !== 'number') X.heat = 0; if (!X.staff) X.staff = { driver: false, operator: false, night: false }; if (!X.lab) X.lab = { job: null, out: { cart: 0, hash: 0, gummy: 0, choc: 0 } }; if (typeof X.lab.out.hash !== 'number') X.lab.out.hash = 0; if (!X.roof) X.roof = [0, 1, 2, 3, 4, 5].map(function () { return { stage: 'empty', t: 0 }; }); if (!X.garage) X.garage = {}; if (!X.weather) X.weather = { kind: 'clear', until: 0 }; if (!X.bagline) X.bagline = { on: false, t: 0 }; if (!Array.isArray(X.jobs)) X.jobs = []; if (!X.mach) X.mach = { vendDoor: false, coffDoor: false, tray: [], cup: 0 }; if (typeof X.mach.fridge !== 'number') X.mach.fridge = 6; if (typeof X.mach.fridgeDoor !== 'boolean') X.mach.fridgeDoor = false; if (typeof X.mach.brew !== 'number') X.mach.brew = 0; if (!X.jobT) X.jobT = { ph: 120, tab: 60 }; if (!X.tablet) X.tablet = 'dock'; if (!S.car) carState(); if (!S.car.cigs) S.car.cigs = {}; return X; }
+  function xs() { if (!S.x || typeof S.x !== 'object') S.x = {}; var X = S.x; if (typeof X.heat !== 'number') X.heat = 0; if (!X.staff) X.staff = { driver: false, operator: false, night: false }; if (!X.lab) X.lab = { job: null, out: { cart: 0, hash: 0, gummy: 0, choc: 0 } }; if (typeof X.lab.out.hash !== 'number') X.lab.out.hash = 0; if (!X.roof) X.roof = [0, 1, 2, 3, 4, 5].map(function () { return { stage: 'empty', t: 0 }; }); if (!X.garage) X.garage = {}; if (!X.weather) X.weather = { kind: 'clear', until: 0 }; if (!X.bagline) X.bagline = { on: false, t: 0 }; if (!Array.isArray(X.jobs)) X.jobs = []; if (!X.jobT) X.jobT = { ph: 120, tab: 60 }; if (!X.tablet) X.tablet = 'dock'; if (!S.car) carState(); if (!S.car.cigs) S.car.cigs = {}; return X; }
   function powerOn() { return !!S.upgrades.generator || now() > (xs().blackoutUntil || 0); }
   function season() { return ['Spring', 'Summer', 'Autumn', 'Winter'][Math.floor(((S.day || 1) - 1) / 7) % 4]; }
   function weekend() { var d = (S.day || 1) % 7; return d === 6 || d === 0; }
@@ -3393,11 +3394,20 @@
   // ── Lobby visitors: after paying, a customer may hit the vending machine, grab a coffee, sit for a smoke, then leave ──
   var loungers = [];   // every customer body currently doing something in the lobby
   var LOUNGE_SEATS = [{ prop: 'lobbyBenchL', lx: -0.38 }, { prop: 'lobbyBenchL', lx: 0.38 }, { prop: 'lobbyBenchR', lx: -0.38 }, { prop: 'lobbyBenchR', lx: 0.38 }];
+  // Where a visitor stands is worked out from where the machine actually is, so it follows the
+  // thing when you move it in edit mode and it picks one of your machines when you own several.
   var LOBBY_STOPS = {
-    vend:   { x: ROOM.x - 0.5 - 0.85, z: 6.8, yaw: Math.PI / 2, dur: 4.5, act: 1.4 },
-    arcade: { x: -ROOM.x + 0.45 + 0.85, z: 6.4, yaw: -Math.PI / 2, dur: 9, act: 1.2 },
-    coffee: { x: ROOM.x - 0.4 - 0.8, z: 8.1, yaw: Math.PI / 2, dur: 5.5, act: 1.8 }
+    vend:   { prop: 'vending',     off: 0.85, dur: 4.5, act: 1.4 },
+    arcade: { prop: 'arcade',      off: 0.85, dur: 9,   act: 1.2 },
+    coffee: { prop: 'lobbyCoffee', off: 0.8,  dur: 5.5, act: 1.8 }
   };
+  function builtUnits(base) { return unitIds(base).filter(function (u) { return propInst[u] && !propPlacement(u).hidden; }); }
+  function lobbyStop(kind) {
+    var t = LOBBY_STOPS[kind], open = builtUnits(t.prop); if (!open.length) return null;
+    var P = propPlacement(pick(open)), r = ((P.rot % 4) + 4) % 4;
+    var dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r];   // the prop's front, in quarter turns: 0 is +z
+    return { x: P.x + dx * t.off, z: P.z + dz * t.off, yaw: Math.atan2(-dx, -dz), dur: t.dur, act: t.act };
+  }
   function freeLoungeSeat() {
     var free = LOUNGE_SEATS.filter(function (s) { return propInst[s.prop] && !loungers.some(function (l) { return l.seat === s; }); });
     return free.length ? pick(free) : null;
@@ -3444,7 +3454,7 @@
     l.step++; var st = l.plan[l.step]; var from = { x: l.g.position.x, z: l.g.position.z }; l.t = 0;
     if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = [{ x: from.x, z: 6.6 }, { x: 0.4, z: 7.9 }, { x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]; return; }
     if (st.kind === 'bench') { l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
-    else { var s = LOBBY_STOPS[st.kind]; l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
+    else { var s = lobbyStop(st.kind); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
   }
   // the machine does its thing: you get paid, they get something to hold
   function lobbyServe(l) {
@@ -4187,7 +4197,68 @@
   // {x, z, rot (quarter turns), floor} comes from S.layout[id] or the default; edit mode rewrites it.
   var PROPS = {}; var PROP_ORDER = []; var propInst = {};
   function defProp(id, def) { PROPS[id] = def; PROP_ORDER.push(id); }
-  function propPlacement(id) { var d = PROPS[id]; var o = (S.layout && S.layout[id]) || {}; return { x: typeof o.x === 'number' ? o.x : d.x, z: typeof o.z === 'number' ? o.z : d.z, rot: typeof o.rot === 'number' ? o.rot : (d.rot || 0), floor: d.floor || 0, hidden: !!o.hidden }; }
+  // A prop marked `multi` can be owned more than once. Extra units are ordinary props under a
+  // derived id (vending#2), so placement, edit mode, obstacles and the save file all work already.
+  // Stock and the cash float stay shop-wide: one storeroom and one float behind however many machines.
+  function unitBase(id) { var i = id.indexOf('#'); return i < 0 ? id : id.slice(0, i); }
+  function unitCount(base) { var d = PROPS[base]; if (!d || !d.multi) return 1; var n = (S.units && S.units[base]) || 1; return clamp(Math.round(n), 1, d.multi.max); }
+  function unitIds(base) { var out = [base]; for (var n = 2; n <= unitCount(base); n++) out.push(base + '#' + n); return out; }
+  function machCost(base, n) { return Math.round(PROPS[base].multi.price * Math.pow(1.35, n - 2)); }
+  function upgById(id) { for (var i = 0; i < UPGRADES.length; i++) if (UPGRADES[i].id === id) return UPGRADES[i]; return { name: id }; }
+  function unitLock(base) { var m = PROPS[base].multi; if (m.lic && !hasLic(m.lic)) return licById(m.lic).name; if (m.upg && !S.upgrades[m.upg]) return upgById(m.upg).name; return null; }
+  function unitSpot(base, n) {   // extra units walk out along whichever wall the first one stands against, taking the first clear place either side
+    var d = PROPS[base], alongZ = (d.rot === 1 || d.rot === 3), half = d.multi.gap * 0.42, lvl = d.floor || 0;
+    var taken = (world.obstacles || []).filter(function (o) { return o.tag === 'prop' && unitBase(o.prop || '') !== base && (o.floorLevel || 0) === lvl; });   /* the walls are obstacles as well, and sliding along one must not count as hitting it */
+    var sibs = PROP_ORDER.filter(function (id) { return unitBase(id) === base && PROPS[id]; }).map(propPlacement);
+    for (var k = 1; k <= 12; k++) {
+      for (var side = 0; side < 2; side++) {
+        var step = d.multi.gap * k * (side ? -1 : 1);
+        var x = d.x + (alongZ ? 0 : step), z = d.z + (alongZ ? step : 0);
+        var lim = alongZ ? ROOM.z : ROOM.x, along = alongZ ? z : x;
+        if (along < -lim + 0.7 || along > lim - 0.7) continue;   /* only the axis it slides along needs bounding: the other one is already where the first machine stands, hard against the wall */
+        if (taken.some(function (o) { return x + half > o.x1 && x - half < o.x2 && z + half > o.z1 && z - half < o.z2; })) continue;
+        if (sibs.some(function (P) { return Math.abs(P.x - x) < d.multi.gap * 0.8 && Math.abs(P.z - z) < d.multi.gap * 0.8; })) continue;
+        return { x: x, z: z };
+      }
+    }
+    // The wall is full. Stand it out in front of the first one rather than inside it, so you can
+    // see it and drag it where you want with F2.
+    var fr = [[0, 1], [1, 0], [0, -1], [-1, 0]][((d.rot % 4) + 4) % 4], out = d.multi.gap * 1.2 * (n - 1);
+    return { x: clamp(d.x + fr[0] * out, -ROOM.x + 0.7, ROOM.x - 0.7), z: clamp(d.z + fr[1] * out, -ROOM.z + 0.7, ROOM.z - 0.7) };
+  }
+  function registerUnits() {   // run once before the world is built, and again every time you buy one
+    Object.keys(PROPS).forEach(function (base) {
+      var d = PROPS[base]; if (!d.multi || unitBase(base) !== base) return;
+      for (var n = 2; n <= unitCount(base); n++) {
+        var id = base + '#' + n; if (PROPS[id]) continue;
+        var sp = unitSpot(base, n);
+        PROPS[id] = Object.assign({}, d, { x: sp.x, z: sp.z, label: d.label + ' ' + n, unit: n });
+        PROP_ORDER.push(id);
+      }
+    });
+  }
+  function buyUnit(base) {
+    var d = PROPS[base]; if (!d || !d.multi) return;
+    var have = unitCount(base);
+    if (have >= d.multi.max) { toast('There is no room for another ' + d.label, 'bad'); return; }
+    if (d.multi.lic && !hasLic(d.multi.lic)) { toast('Needs the ' + licById(d.multi.lic).name, 'bad'); return; }
+    if (d.multi.upg && !S.upgrades[d.multi.upg]) { toast('Needs the ' + upgById(d.multi.upg).name + ' first', 'bad'); return; }
+    if (!spend(machCost(base, have + 1))) return;
+    if (!S.units) S.units = {}; S.units[base] = have + 1;
+    registerUnits();
+    var nid = base + '#' + (have + 1);
+    if (!S.layout) S.layout = {};
+    S.layout[nid] = Object.assign({}, S.layout[nid] || {}, { x: PROPS[nid].x, z: PROPS[nid].z });   /* pin where it landed: the spot is picked against the room as it stands now, and at load time nothing is built yet */
+    buildProp(nid);
+    sfx('vault'); toast(d.multi.ico + ' ' + d.label + ' ' + (have + 1) + ' installed — press F2 to move it', 'rare');
+    logEvent(d.multi.ico + ' Installed ' + d.label + ' ' + (have + 1), 'rare');
+    world.dirty = true; save();
+  }
+  function propPlacement(id) {
+    var d = PROPS[id]; var o = (S.layout && S.layout[id]) || {}; var base = unitBase(id);
+    var owned = base === id || unitIds(base).indexOf(id) >= 0;   /* a unit you sold or reset away keeps its prop record but builds nothing */
+    return { x: typeof o.x === 'number' ? o.x : d.x, z: typeof o.z === 'number' ? o.z : d.z, rot: typeof o.rot === 'number' ? o.rot : (d.rot || 0), floor: d.floor || 0, unit: d.unit || 1, hidden: !!o.hidden || !owned };
+  }
   function hiddenProps() { return PROP_ORDER.filter(function (id) { return S.layout && S.layout[id] && S.layout[id].hidden; }); }
   function propCtx(g, id, floorLevel) {
     var obs = [];
@@ -4195,7 +4266,7 @@
       box: function (w, h, d, mat, x, y, z, opts) { opts = opts || {}; var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = opts.cast !== false; m.receiveShadow = opts.receive !== false; g.add(m); if (opts.solid) obs.push({ x1: x - w / 2, x2: x + w / 2, z1: z - d / 2, z2: z + d / 2 }); return m; },
       cyl: function (rt, rb, h, mat, x, y, z, seg) { var m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 18), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; g.add(m); return m; },
       add: function (m) { g.add(m); return m; },
-      hit: function (w, h, d, x, y, z, data) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), MAT.none); m.position.set(x, y, z); g.add(m); interactable(m, data); m.userData.propId = id; return m; },
+      hit: function (w, h, d, x, y, z, data) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), MAT.none); m.position.set(x, y, z); g.add(m); if (data) data.propId = id;   /* the prompt has to know WHICH machine it is looking at, not just what kind */ interactable(m, data); m.userData.propId = id; return m; },
       sign: function (lines, w, h, x, y, z, rotY, opts) { opts = opts || {}; var tex = textTex(lines, Math.round(w * 320), Math.round(h * 320), Object.assign({ size: Math.round(h * 48) }, opts)); var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true })); m.position.set(x, y, z); m.rotation.y = rotY || 0; g.add(m); return m; },
       placard: function (lines, w, h, x, y, z, opts) { var stand = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.25, 6), MAT.metal); stand.position.set(x, y - h / 2 - 0.12, z); g.add(stand); return ctx.sign(lines, w, h, x, y, z, 0, opts); },
       solid: function (x1, x2, z1, z2) { obs.push({ x1: x1, x2: x2, z1: z1, z2: z2 }); },
@@ -4215,7 +4286,7 @@
     if (!P.hidden) def.build(ctx, P);   // removed in creative mode: the prop exists but builds nothing until restored
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = id; });
     ctx.obstacles.forEach(function (o) { var r = rotAABB(o, P.rot); world.obstacles.push({ x1: P.x + Math.min(r.x1, r.x2), x2: P.x + Math.max(r.x1, r.x2), z1: P.z + Math.min(r.z1, r.z2), z2: P.z + Math.max(r.z1, r.z2), tag: 'prop', prop: id, floorLevel: P.floor }); });
-    if (def.after) def.after(ctx, P, inst);
+    if (def.after) def.after(ctx, P, inst, id);
   }
   function buildAllProps() { PROP_ORDER.forEach(buildProp); }
   function propWorld(id, lx, lz) { var inst = propInst[id]; inst.g.updateMatrixWorld(true); var v = new THREE.Vector3(lx, 0, lz); inst.g.localToWorld(v); return v; }   // fresh matrix: props are queried right after they are built, before any render
@@ -4323,7 +4394,7 @@
     var cst = c.cyl(0.14, 0.12, 0.12, colorMat(0x2a2d33, 0.5), 0.32, 0.5, 1.05, 16); c.box(0.16, 0.16, 0.16, colorMat(0x1a1c1e, 0.5), 0.32, 0.5, 1.05).visible = false;
     c.hit(2.0, 1.2, 1.0, 0, 0.6, 0, { kind: 'couch', seat: 'sofa' });
   }, after: function (c, P) { var v = propWorld('sofa', 0, 0.1); world.sofaSeat = { x: v.x, z: v.z, yaw: P.rot * Math.PI / 2 - Math.PI }; } });
-  defProp('fridge', { label: 'drinks fridge', x: 3.3, z: -1.5, rot: 0, build: function (c) {
+  defProp('fridge', { label: 'drinks fridge', x: 3.3, z: -1.5, rot: 0, multi: { max: 3, price: 500, gap: 1.0, ico: '🧊' }, build: function (c) {
     // a shell with the front open, a hinged glass door, and shelves holding what is actually in it
     var shellM = colorMat(0xe8e8ee, 0.4, 0.2), inner = colorMat(0xdfe6ea, 0.8), chrome = MAT.chrome;
     c.box(0.8, 1.9, 0.06, inner, 0, 0.95, -0.32, { cast: false });
@@ -4346,7 +4417,7 @@
     for (var r = 0; r < 4; r++) { var sh = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.018, 0.55), colorMat(0xc8ccd2, 0.5, 0.4)); sh.position.set(0, 0.38 + r * 0.36, 0); sh.castShadow = false; shelves.add(sh); }
     c.light(new THREE.PointLight(0xbfe8ff, 0.55, 2.6), 0, 1.45, 0.15);
     c.hit(0.82, 1.9, 0.72, 0, 0.95, 0, { kind: 'fridge' });
-  }, after: function () { syncFridge(); } });
+  }, after: function (c, P, inst, id) { syncFridge(id); } });
   defProp('coffeeBar', { label: 'coffee bar', x: 1.2, z: -1.7, rot: 0, build: function (c) {
     c.box(1.2, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(1.26, 0.04, 0.56, MAT.counterTop, 0, 0.92, 0, { cast: false }); c.box(1.2, 0.06, 0.02, MAT.chrome, 0, 0.03, 0.25, { cast: false });
     drawer(c, 0.5, 0.2, 0.02, -0.3, 0.7, 0.24); drawer(c, 0.5, 0.2, 0.02, 0.3, 0.7, 0.24);
@@ -4433,7 +4504,7 @@
   defProp('lobbyBenchR', { label: 'lobby bench', x: 8.5, z: 8.2, rot: 2, build: lobbyBench });
   defProp('magTable', { label: 'magazine table', x: -6.6, z: 7.6, build: function (c) { c.cyl(0.32, 0.32, 0.03, MAT.wood, 0, 0.45, 0, 24); c.cyl(0.03, 0.03, 0.44, MAT.chrome, 0, 0.22, 0, 10); c.cyl(0.2, 0.22, 0.02, MAT.chrome, 0, 0.01, 0, 24); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: textTex(['HIGH', 'times'], 150, 110, { size: 34, bg: '#6fdc8c', color: '#062010', titleColor: '#062010', line: 'rgba(0,0,0,0)' }) }), -0.05, 0.47, 0, { cast: false }); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: textTex(['GROW', 'weekly'], 150, 110, { size: 34, bg: '#ffc857', color: '#332200', titleColor: '#332200', line: 'rgba(0,0,0,0)' }) }), 0.1, 0.48, -0.05, { cast: false }).rotation.y = 0.3; c.solid(-0.33, 0.33, -0.33, 0.33); } });
   defProp('lobbyPlant', { label: 'lobby plant', x: -10.5, z: 5.0, build: function (c) { c.cyl(0.26, 0.2, 0.5, colorMat(0x2a2d33, 0.5), 0, 0.25, 0, 20); c.cyl(0.24, 0.24, 0.02, MAT.soil, 0, 0.5, 0, 20); c.cyl(0.015, 0.02, 0.9, MAT.trunk, 0, 0.9, 0, 8); for (var i = 0; i < 12; i++) { var lf = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.8), MAT.leaf); var a = i * 0.55; lf.position.set(Math.cos(a) * 0.08, 1.0 + (i % 3) * 0.2, Math.sin(a) * 0.08); lf.rotation.set(-0.5 - (i % 4) * 0.15, a + Math.PI / 2, 0); lf.castShadow = true; c.add(lf); } c.solid(-0.3, 0.3, -0.3, 0.3); } });
-  defProp('lobbyCoffee', { label: 'lobby coffee machine', x: ROOM.x - 0.4, z: 8.1, rot: 3, build: function (c) {
+  defProp('lobbyCoffee', { label: 'lobby coffee machine', x: ROOM.x - 0.4, z: 8.1, rot: 3, multi: { max: 4, price: 600, gap: 0.95, ico: '☕', lic: 'catering', upg: 'lobby', name: 'Coffee machine' }, build: function (c) {
     if (!S.upgrades.lobby) return;   // stand + machine appear with the upgrade
     c.box(0.6, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(0.66, 0.04, 0.56, MAT.counterTop, 0, 0.92, 0, { cast: false });
     var body = colorMat(0x1c1c22, 0.4, 0.3), chrome = MAT.chrome;
@@ -4456,9 +4527,11 @@
     c.hit(0.72, 1.6, 0.62, 0, 0.8, 0, { kind: 'lobbyCoffee' });
     var cupHit = c.hit(0.24, 0.2, 0.22, 0, 1.02, 0.12, { kind: 'coffeeCup' }); cupHit.userData.coffCupHit = true;   /* parked out of the world while there is no cup, so it never steals the machine's own prompt */
     c.placard(['COFFEE', 'help yourself'], 0.42, 0.15, 0, 1.62, 0.22, { titleColor: '#ffc857' });
-  }, after: function () { syncCoffee(); } });
-  defProp('vending', { label: 'vending machine', x: ROOM.x - 0.5, z: 6.8, rot: 3, build: function (c) {
-    var shell = colorMat(0x8f1f1a, 0.45, 0.25), dark = colorMat(0x1a1d21, 0.6), steel = colorMat(0x9aa0a6, 0.35, 0.7), inner = colorMat(0x23272c, 0.8);
+  }, after: function (c, P, inst, id) { syncCoffee(id); } });
+  defProp('vending', { label: 'vending machine', x: ROOM.x - 0.5, z: 6.8, rot: 3, multi: { max: 4, price: 900, gap: 1.15, ico: '🥤', lic: 'catering' }, build: function (c, P) {
+    var SKIN = [[0x8f1f1a, '#ffc857'], [0x14507a, '#8fd0ff'], [0x1d6b45, '#b6f2c9'], [0x2b2f36, '#e8eef4']];   /* a row of identical red machines would read as a copy-paste, so every unit gets its own livery */
+    var sk = SKIN[(((P && P.unit) || 1) - 1) % SKIN.length];
+    var shell = colorMat(sk[0], 0.45, 0.25), dark = colorMat(0x1a1d21, 0.6), steel = colorMat(0x9aa0a6, 0.35, 0.7), inner = colorMat(0x23272c, 0.8);
     // a shell, not a block: the front-left is left open so you can see the stock behind the glass
     c.box(0.95, 1.95, 0.06, inner, 0, 0.975, -0.33, { cast: false });          /* back */
     c.box(0.06, 1.95, 0.72, shell, -0.445, 0.975, 0);                          /* left side */
@@ -4470,7 +4543,7 @@
     c.solid(-0.48, 0.48, -0.37, 0.37);
     c.box(0.99, 0.05, 0.76, dark, 0, 1.97, 0, { cast: false });
     c.box(0.86, 0.24, 0.03, dark, 0, 1.79, 0.355, { cast: false });
-    c.sign(['SNACKS & DRINKS'], 0.78, 0.15, 0, 1.79, 0.373, 0, { size: 30, bold: true, bg: '#101812', titleColor: '#ffc857', line: 'rgba(255,200,87,.6)' });
+    c.sign(['SNACKS & DRINKS'], 0.78, 0.15, 0, 1.79, 0.373, 0, { size: 30, bold: true, bg: '#101812', titleColor: sk[1], line: 'rgba(255,255,255,.35)' });
 
     // the glazed service door, hinged on the left upright
     var door = new THREE.Group(); door.position.set(-0.43, 1.12, 0.345); c.add(door); door.userData.vendDoor = true;
@@ -4515,7 +4588,7 @@
     c.box(0.07, 0.06, 0.02, dark, 0.315, 0.92, 0.368, { cast: false });
     c.hit(0.95, 1.95, 0.75, 0, 0.97, 0, { kind: 'vending' });
     c.light(new THREE.PointLight(0xbfe8ff, 0.5, 2.6), -0.13, 1.5, 0.2);
-  }, after: function () { syncVending(); } });
+  }, after: function (c, P, inst, id) { syncVending(id); } });
   defProp('menuScreen', { label: 'menu screen', x: 4.0, z: 4 + WALL_T / 2 + 0.05, rot: 0, build: function (c) {
     c.box(1.4, 0.8, 0.05, MAT.black, 0, 2.05, 0); var tex = textTex(['TODAY', 'eighths · joints', 'top shelf on request', 'ID required'], 560, 320, { size: 40, bg: '#0b1a12', titleColor: '#6fdc8c', color: '#c9e8d0', line: 'rgba(111,220,140,.6)' });
     var scr = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.72), new THREE.MeshBasicMaterial({ map: tex })); scr.position.set(0, 2.05, 0.03); c.add(scr); c.light(new THREE.PointLight(0x6fdc8c, 0.25, 3), 0, 2.0, 0.4);
@@ -4602,7 +4675,7 @@
     c.hit(0.8, 1.0, 0.8, 0, 0.5, 0, { kind: 'vault' });
   } });
   // coin-op arcade cabinet in the lobby: customers drop a dollar in, you empty the coin box
-  defProp('arcade', { label: 'arcade cabinet', x: -ROOM.x + 0.45, z: 6.4, rot: 1, build: function (c) {
+  defProp('arcade', { label: 'arcade cabinet', x: -ROOM.x + 0.45, z: 6.4, rot: 1, multi: { max: 4, price: 750, gap: 1.0, ico: '🕹️', lic: 'amusement' }, build: function (c) {
     // the same cabinet as the creative catalogue, with a coin box customers feed
     var col = 0x2a2d33; c.box(0.7, 1.8, 0.7, colorMat(col, 0.5), 0, 0.9, 0, { solid: true }); c.box(0.6, 0.45, 0.02, MAT.screen, 0, 1.3, 0.36, { cast: false }); c.box(0.7, 0.2, 0.3, colorMat(col, 0.5), 0, 1.0, 0.45);
     c.cyl(0.012, 0.012, 0.12, MAT.chrome, -0.15, 1.15, 0.5, 8); var ball = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), colorMat(0xc94a3a, 0.4)); ball.position.set(-0.15, 1.22, 0.5); c.add(ball);
@@ -4948,15 +5021,30 @@
     face.position.z = d / 2 + 0.001; G.add(face); return G;
   }
   // ── The machines: what is on the coils, the door that opens to refill, and the tray you reach into ──
-  var mach = { vendDoorT: 0, coffDoorT: 0, frDoorT: 0, brewT: 0, drops: [] };
-  function machState() { var X = xs(); if (!X.mach) X.mach = { vendDoor: false, coffDoor: false, tray: [], cup: 0 }; if (!Array.isArray(X.mach.tray)) X.mach.tray = []; return X.mach; }
-  function fridgeParts() {
-    var inst = propInst.fridge; if (!inst) return null; var p = inst.g.userData.frParts;
+  var machA = {};
+  function machAnim(id) { return machA[id] || (machA[id] = { doorT: 0, brewT: 0, drops: [] }); }   // door swing, pour timer and falling stock, per machine
+  function machState(id) {
+    var X = xs(); if (!X.mach || typeof X.mach !== 'object') X.mach = {};
+    if (!X.mach.perUnit) {   /* saves from before there could be two machines kept every machine's state in one object; split it out by prop */
+      var o = X.mach; X.mach = { perUnit: true };
+      X.mach.vending = { vendDoor: !!o.vendDoor, tray: Array.isArray(o.tray) ? o.tray : [] };
+      X.mach.lobbyCoffee = { coffDoor: !!o.coffDoor, cup: o.cup || 0 };
+      X.mach.fridge = { fridgeDoor: !!o.fridgeDoor, fridge: typeof o.fridge === 'number' ? o.fridge : 6 };   /* the fridge you start with comes stocked; any you buy later start empty */
+    }
+    var m = X.mach[id || 'vending'] || (X.mach[id || 'vending'] = {});
+    if (!Array.isArray(m.tray)) m.tray = [];
+    if (typeof m.cup !== 'number') m.cup = 0;
+    if (typeof m.fridge !== 'number') m.fridge = 0;
+    return m;
+  }
+  function syncMachines() { ['vending', 'lobbyCoffee', 'fridge'].forEach(function (b) { unitIds(b).forEach(function (u) { if (b === 'vending') syncVending(u); else if (b === 'lobbyCoffee') syncCoffee(u); else syncFridge(u); }); }); }
+  function fridgeParts(id) {
+    var inst = propInst[id || 'fridge']; if (!inst) return null; var p = inst.g.userData.frParts;
     if (!p || !p.door || !p.door.parent) { p = {}; inst.g.traverse(function (o) { if (o.userData.fridgeDoor) p.door = o; if (o.userData.fridgeShelves) p.shelves = o; }); inst.g.userData.frParts = p; }
     return p.door ? p : null;
   }
-  function coffParts() {
-    var inst = propInst.lobbyCoffee; if (!inst) return null; var p = inst.g.userData.cfParts;
+  function coffParts(id) {
+    var inst = propInst[id || 'lobbyCoffee']; if (!inst) return null; var p = inst.g.userData.cfParts;
     if (!p || !p.cups || !p.cups.parent) { p = {}; inst.g.traverse(function (o) { if (o.userData.coffCups) p.cups = o; if (o.userData.coffBrew) p.brew = o; if (o.userData.coffLid) p.lid = o; if (o.userData.coffBeans) p.beans = o; if (o.userData.coffCupHit) p.cupHit = o; }); inst.g.userData.cfParts = p; }
     return p.cups ? p : null;
   }
@@ -4973,55 +5061,57 @@
     }
     return G;
   }
-  function syncFridge() {
-    var p = fridgeParts(); if (!p || !p.shelves) return;
+  function syncFridge(id) {
+    if (!id) { unitIds('fridge').forEach(function (u) { syncFridge(u); }); return; }
+    var p = fridgeParts(id); if (!p || !p.shelves) return;
     (p.shelves.userData.slots || []).forEach(function (m) { p.shelves.remove(m); });
     p.shelves.userData.slots = [];
-    var n = Math.min(machState().fridge || 0, 16);
+    var n = Math.min(machState(id).fridge || 0, 16);
     for (var i = 0; i < n; i++) {
       var col = i % 4, row = Math.floor(i / 4);
       var d = drinkMesh(1); d.position.set(-0.24 + col * 0.16, 0.445 + row * 0.36, -0.02 + (i % 2) * 0.12);
       p.shelves.add(d); p.shelves.userData.slots.push(d);
     }
-    p.shelves.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = 'fridge'; } });
+    p.shelves.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = id; } });
   }
-  function syncCoffee() {
-    var p = coffParts(); if (!p) return;
+  function syncCoffee(id) {
+    if (!id) { unitIds('lobbyCoffee').forEach(function (u) { syncCoffee(u); }); return; }
+    var p = coffParts(id); if (!p) return;
     (p.cups.userData.slots || []).forEach(function (m) { p.cups.remove(m); });
     p.cups.userData.slots = [];
     var stack = Math.min(Math.ceil((S.coffeeStock.cup || 0) / 6), 7);
     for (var i = 0; i < stack; i++) { var cu = cupMesh(1, false); cu.position.y = i * 0.022; p.cups.add(cu); p.cups.userData.slots.push(cu); }
     if (p.beans) { var lvl = clamp((S.coffeeStock.beans || 0) / 40, 0.05, 1); p.beans.scale.y = lvl; p.beans.position.y = 1.40 + 0.06 * lvl; p.beans.visible = (S.coffeeStock.beans || 0) > 0; }
     while (p.brew.children.length) p.brew.remove(p.brew.children[0]);
-    if (machState().cup > 0) { var c2 = cupMesh(1, true); p.brew.add(c2); }
-    if (p.cupHit) p.cupHit.position.y = machState().cup > 0 ? 1.02 : -50;
-    p.cups.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = 'lobbyCoffee'; } });
-    p.brew.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = 'lobbyCoffee'; } });
+    if (machState(id).cup > 0) { var c2 = cupMesh(1, true); p.brew.add(c2); }
+    if (p.cupHit) p.cupHit.position.y = machState(id).cup > 0 ? 1.02 : -50;
+    p.cups.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = id; } });
+    p.brew.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = id; } });
   }
-  function fridgeDoorToggle() { var M = machState(); M.fridgeDoor = !M.fridgeDoor; sfx(M.fridgeDoor ? 'drawer' : 'close'); toast(M.fridgeDoor ? '🧊 Fridge open' : '🧊 Fridge shut', ''); save(); }
-  function fridgeTake() {
-    var M = machState();
+  function fridgeDoorToggle(id) { var M = machState(id); M.fridgeDoor = !M.fridgeDoor; sfx(M.fridgeDoor ? 'drawer' : 'close'); toast(M.fridgeDoor ? '🧊 Fridge open' : '🧊 Fridge shut', ''); save(); }
+  function fridgeTake(id) {
+    var M = machState(id);
     if ((M.fridge || 0) <= 0) { toast('The fridge is empty — load a case of drinks', 'bad'); return; }
     if (hotbarFull()) { toast('Hands full — G to put something down', 'bad'); return; }
-    M.fridge--; take({ kind: 'can2' }); sfx('pickup'); toast('🥤 Took a cold one — ' + M.fridge + ' left', 'good'); syncFridge(); save();
+    M.fridge--; take({ kind: 'can2' }); sfx('pickup'); toast('🥤 Took a cold one — ' + M.fridge + ' left', 'good'); syncFridge(id); save();
   }
-  function coffBrew() {
-    var M = machState();
+  function coffBrew(id) {
+    var M = machState(id);
     if (M.cup > 0) { toast('There is already a cup under the spout', ''); return; }
     if ((S.coffeeStock.cup || 0) <= 0) { toast('Out of cups', 'bad'); return; }
     if ((S.coffeeStock.beans || 0) <= 0) { toast('Out of beans', 'bad'); return; }
-    S.coffeeStock.cup--; S.coffeeStock.beans--; S.box.coffee += 2; M.cup = 1; mach.brewT = 1.5;
-    sfx('coffee'); toast('☕ Pouring…', ''); syncCoffee(); save();
+    S.coffeeStock.cup--; S.coffeeStock.beans--; S.box.coffee += 2; M.cup = 1; machAnim(id).brewT = 1.5;
+    sfx('coffee'); toast('☕ Pouring…', ''); syncCoffee(); save();   /* every machine draws on the same cups and beans, so they all restack */
   }
-  function coffTake() {
-    var M = machState();
+  function coffTake(id) {
+    var M = machState(id);
     if (M.cup <= 0) { toast('Nothing under the spout — E on the machine to pour one', ''); return; }
-    if (mach.brewT > 0) { toast('Still pouring', ''); return; }
+    if (machAnim(id).brewT > 0) { toast('Still pouring', ''); return; }
     if (hotbarFull()) { toast('Hands full — G to put something down', 'bad'); return; }
-    M.cup = 0; take({ kind: 'cup2' }); sfx('pickup'); toast('☕ Took the coffee', 'good'); syncCoffee(); save();
+    M.cup = 0; take({ kind: 'cup2' }); sfx('pickup'); toast('☕ Took the coffee', 'good'); syncCoffee(id); save();
   }
-  function vendParts() {
-    var inst = propInst.vending; if (!inst) return null;
+  function vendParts(id) {
+    var inst = propInst[id || 'vending']; if (!inst) return null;
     var p = inst.g.userData.vendParts;
     if (!p || !p.door || !p.door.parent) {
       p = {}; inst.g.traverse(function (o) {
@@ -5052,8 +5142,9 @@
     fa.position.z = 0.0255 * s2; G.add(fa);
     return G;
   }
-  function syncVending() {   // the coils hold exactly what the machine is stocked with
-    var p = vendParts(); if (!p || !p.racks) return;
+  function syncVending(id) {   // the coils hold exactly what the machine is stocked with
+    if (!id) { unitIds('vending').forEach(function (u) { syncVending(u); }); return; }
+    var p = vendParts(id); if (!p || !p.racks) return;
     var racks = p.racks;
     (racks.userData.slots || []).forEach(function (m) { racks.remove(m); });
     racks.userData.slots = [];
@@ -5066,76 +5157,84 @@
       var c2 = j % 4, r2 = Math.floor(j / 4);
       var sn = snackMesh(1); sn.position.set(-0.225 + c2 * 0.15, -0.02 - r2 * 0.29, 0.02); sn.rotation.z = Math.PI / 2; racks.add(sn); racks.userData.slots.push(sn);
     }
-    racks.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = 'vending'; } });
-    syncTray();
+    racks.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = id; } });
+    syncTray(id);
   }
-  function syncTray() {   // whatever has dropped sits in the delivery tray until you take it
-    var p = vendParts(); if (!p || !p.tray) return;
+  function syncTray(id) {   // whatever has dropped sits in the delivery tray until you take it
+    id = id || 'vending';
+    var p = vendParts(id); if (!p || !p.tray) return;
     while (p.tray.children.length) p.tray.remove(p.tray.children[0]);
-    var M = machState();
+    var M = machState(id);
     M.tray.slice(0, 4).forEach(function (it, i) {
       var m = it === 'drink' ? drinkMesh(1) : snackMesh(1);
       m.position.set(-0.16 + i * 0.11, 0.035, 0);
       if (it === 'drink') m.rotation.z = Math.PI / 2; else m.rotation.y = 0.3;
       p.tray.add(m);
     });
-    p.tray.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = 'vending'; } });
-    if (!p.trayHit) { var inst2 = propInst.vending; if (inst2) inst2.g.traverse(function (o) { if (o.userData.interact && o.userData.interact.kind === 'vendTray') p.trayHit = o; }); }
+    p.tray.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = id; } });
+    if (!p.trayHit) { var inst2 = propInst[id]; if (inst2) inst2.g.traverse(function (o) { if (o.userData.interact && o.userData.interact.kind === 'vendTray') p.trayHit = o; }); }
     if (p.trayHit) p.trayHit.position.y = M.tray.length ? 0.42 : -50;   /* an empty tray must not swallow the machine's prompt */
   }
-  function vendDisplay(txt) {
-    var p = vendParts(); if (!p || !p.disp) return;
+  function vendDisplay(id, txt) {
+    var p = vendParts(id); if (!p || !p.disp) return;
     if (p.disp.material.map) p.disp.material.map.dispose();
     p.disp.material.map = textTex([txt], 200, 120, { size: txt.length > 7 ? 34 : 52, bg: '#08120c', color: '#6fdc8c', titleColor: '#6fdc8c', line: 'rgba(0,0,0,0)' });
     p.disp.material.needsUpdate = true;
   }
-  function vendDoorToggle() {
-    var M = machState(); M.vendDoor = !M.vendDoor;
+  function vendDoorToggle(id) {
+    var M = machState(id); M.vendDoor = !M.vendDoor;
     sfx(M.vendDoor ? 'drawer' : 'close');
     toast(M.vendDoor ? '🔧 Machine open — the racks are out, load drinks or snacks straight in' : '🔒 Machine closed', M.vendDoor ? '' : 'good');
-    vendDisplay(M.vendDoor ? 'SERVICE' : 'READY'); save();
+    vendDisplay(id, M.vendDoor ? 'SERVICE' : 'READY'); save();
   }
-  function vendDispense(item) {   // a coil turns, the item falls, and it lands in the tray
-    var M = machState();
-    if ((S.vendStock[item] || 0) <= 0) { toast('The machine is out of ' + (item === 'drink' ? 'drinks' : 'snacks'), 'bad'); vendDisplay('SOLD OUT'); return false; }
+  function vendDispense(id, item) {   // a coil turns, the item falls, and it lands in the tray
+    var M = machState(id);
+    if ((S.vendStock[item] || 0) <= 0) { toast('The machine is out of ' + (item === 'drink' ? 'drinks' : 'snacks'), 'bad'); vendDisplay(id, 'SOLD OUT'); return false; }
     S.vendStock[item]--; S.box.vend += 2; S.stats.vend = (S.stats.vend || 0) + 1;
-    var p = vendParts();
-    if (p && p.tray) { var m = item === 'drink' ? drinkMesh(1) : snackMesh(1); var wp = new THREE.Vector3(); p.tray.getWorldPosition(wp); mach.drops.push({ m: m, t: 0, item: item }); m.position.set(wp.x, wp.y + 1.0, wp.z); world.group.add(m); }
-    sfx('vend'); vendDisplay('THANK YOU');
-    M.tray.push(item); syncVending(); save();
+    var p = vendParts(id);
+    if (p && p.tray) { var m = item === 'drink' ? drinkMesh(1) : snackMesh(1); var wp = new THREE.Vector3(); p.tray.getWorldPosition(wp); machAnim(id).drops.push({ m: m, t: 0, item: item }); m.position.set(wp.x, wp.y + 1.0, wp.z); world.group.add(m); }
+    sfx('vend'); vendDisplay(id, 'THANK YOU');
+    M.tray.push(item); syncVending(); save();   /* the racks are a shared stock, so every machine thins out together */
     return true;
   }
-  function vendTakeTray() {
-    var M = machState();
+  function vendTakeTray(id) {
+    var M = machState(id);
     if (!M.tray.length) { toast('The tray is empty', ''); return; }
     if (hotbarFull()) { toast('Hands full — G to put something down', 'bad'); return; }
     var it = M.tray.shift();
     take({ kind: it === 'drink' ? 'can2' : 'snack' });
     toast(it === 'drink' ? '🥤 Took the can out of the tray' : '🍫 Took the bar out of the tray', 'good');
-    syncTray(); save();
+    syncTray(id); save();
   }
   function updateMachines(dt) {
-    if (mach.brewT > 0) { mach.brewT -= dt; if (mach.brewT <= 0) { sfx('ok'); toast('☕ Ready', 'good'); } }
-    var fp = fridgeParts();
-    if (fp) { var FM = machState(), fw = FM.fridgeDoor ? 1 : 0;
-      if (Math.abs(mach.frDoorT - fw) > 0.002) { mach.frDoorT = lerp(mach.frDoorT, fw, 1 - Math.pow(0.004, dt)); if (Math.abs(mach.frDoorT - fw) < 0.005) mach.frDoorT = fw; fp.door.rotation.y = -1.3 * mach.frDoorT; } }
-    var cp = coffParts();
-    if (cp && cp.lid) { var CM = machState(), cw = CM.coffDoor ? 1 : 0;
-      if (Math.abs(mach.coffDoorT - cw) > 0.002) { mach.coffDoorT = lerp(mach.coffDoorT, cw, 1 - Math.pow(0.004, dt)); if (Math.abs(mach.coffDoorT - cw) < 0.005) mach.coffDoorT = cw; cp.lid.rotation.x = -1.6 * mach.coffDoorT; } }
-    var p = vendParts(); if (!p) return;
-    var M = machState(), want = M.vendDoor ? 1 : 0;
-    if (Math.abs(mach.vendDoorT - want) > 0.002) {
-      mach.vendDoorT = lerp(mach.vendDoorT, want, 1 - Math.pow(0.004, dt));
-      if (Math.abs(mach.vendDoorT - want) < 0.005) mach.vendDoorT = want;
-      p.door.rotation.y = -1.35 * mach.vendDoorT;                      /* the door swings on its hinge */
-      if (p.racks) p.racks.position.z = 0.02 + 0.3 * mach.vendDoorT;   /* and the racks ride out with it */
-      if (p.flap) p.flap.rotation.x = -0.5 * mach.vendDoorT;
-    }
-    for (var i = mach.drops.length - 1; i >= 0; i--) {
-      var d = mach.drops[i]; d.t += dt;
-      d.m.position.y -= (0.9 + d.t * 3.2) * dt; d.m.rotation.x += dt * 5;
-      if (d.t > 0.55) { world.group.remove(d.m); mach.drops.splice(i, 1); syncTray(); }
-    }
+    unitIds('fridge').forEach(function (id) {
+      var fp = fridgeParts(id); if (!fp) return;
+      var A = machAnim(id), fw = machState(id).fridgeDoor ? 1 : 0;
+      if (Math.abs(A.doorT - fw) > 0.002) { A.doorT = lerp(A.doorT, fw, 1 - Math.pow(0.004, dt)); if (Math.abs(A.doorT - fw) < 0.005) A.doorT = fw; fp.door.rotation.y = -1.3 * A.doorT; }
+    });
+    unitIds('lobbyCoffee').forEach(function (id) {
+      var A = machAnim(id);
+      if (A.brewT > 0) { A.brewT -= dt; if (A.brewT <= 0) { sfx('ok'); toast('☕ Ready', 'good'); } }
+      var cp = coffParts(id); if (!cp || !cp.lid) return;
+      var cw = machState(id).coffDoor ? 1 : 0;
+      if (Math.abs(A.doorT - cw) > 0.002) { A.doorT = lerp(A.doorT, cw, 1 - Math.pow(0.004, dt)); if (Math.abs(A.doorT - cw) < 0.005) A.doorT = cw; cp.lid.rotation.x = -1.6 * A.doorT; }
+    });
+    unitIds('vending').forEach(function (id) {
+      var p = vendParts(id); if (!p) return;
+      var A = machAnim(id), want = machState(id).vendDoor ? 1 : 0;
+      if (Math.abs(A.doorT - want) > 0.002) {
+        A.doorT = lerp(A.doorT, want, 1 - Math.pow(0.004, dt));
+        if (Math.abs(A.doorT - want) < 0.005) A.doorT = want;
+        p.door.rotation.y = -1.35 * A.doorT;                      /* the door swings on its hinge */
+        if (p.racks) p.racks.position.z = 0.02 + 0.3 * A.doorT;   /* and the racks ride out with it */
+        if (p.flap) p.flap.rotation.x = -0.5 * A.doorT;
+      }
+      for (var i = A.drops.length - 1; i >= 0; i--) {
+        var dp = A.drops[i]; dp.t += dt;
+        dp.m.position.y -= (0.9 + dp.t * 3.2) * dt; dp.m.rotation.x += dt * 5;
+        if (dp.t > 0.55) { world.group.remove(dp.m); A.drops.splice(i, 1); syncTray(id); }
+      }
+    });
   }
   function buildHeldMesh(h) {
     var g = new THREE.Group();
@@ -5425,11 +5524,11 @@
     if (d.kind === 'storage') return 'Storage racks <small>' + (Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }).length || 'no') + ' items · aim at a crate to take it · Shift+E for the stock list</small>';
     if (d.kind === 'vault') return S.pocket > 0 ? 'Put ' + money(S.pocket) + ' in the vault <small>holds ' + money(S.vault) + ' · Shift+E opens it</small>' : 'Open the vault <small>holds ' + money(S.vault) + '</small>';
     if (d.kind === 'tips') return S.tips > 0 ? 'Empty the tip jar <small>' + money(S.tips) + '</small>' : 'Tip jar <small>empty</small>';
-    if (d.kind === 'vending') { var MM = machState(); if (h && h.kind === 'crate') return (h.item === 'drink' || h.item === 'snack') ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That does not go in here'; if (MM.vendDoor) return 'Machine open <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks · E buys one for $2' + (S.box.vend > 0 ? ' · Shift+E opens it, the box holds ' + money(S.box.vend) : ' · Shift+E opens it') + '</small>'; }
-    if (d.kind === 'fridge') { var FM2 = machState(); if (h && h.kind === 'crate') return h.item === 'drink' ? (FM2.fridgeDoor ? 'Load ' + h.n + ' drinks into the fridge' : 'Open the fridge first <small>Shift+E</small>') : 'Only drinks go in the fridge'; return 'Drinks fridge <small>' + (FM2.fridge || 0) + ' cold' + (FM2.fridgeDoor ? ' · E takes one · Shift+E shuts it' : ' · E takes one · Shift+E opens it') + '</small>'; }
-    if (d.kind === 'coffeeCup') { var CM2 = machState(); return CM2.cup > 0 ? (mach.brewT > 0 ? 'Pouring… <small>give it a second</small>' : 'Fresh coffee <small>E takes the cup</small>') : ''; }
-    if (d.kind === 'vendTray') { var MT = machState(); return MT.tray.length ? 'Delivery tray <small>' + MT.tray.length + ' waiting · E takes one</small>' : ''; }
-    if (d.kind === 'lobbyCoffee') { var CD = machState(); if (h && h.kind === 'crate') return (h.item === 'cup' || h.item === 'beans') ? (CD.coffDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' into the hopper' : 'Lift the hopper lid first <small>Shift+E</small>') : 'That does not go in here'; return (S.box.coffee > 0 ? 'Empty the cash box <small>' + money(S.box.coffee) + ' · ' : 'Coffee machine <small>') + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' servings of beans</small>'; }
+    if (d.kind === 'vending') { var MM = machState(d.propId); if (h && h.kind === 'crate') return (h.item === 'drink' || h.item === 'snack') ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That does not go in here'; if (MM.vendDoor) return 'Machine open <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks · E buys one for $2' + (S.box.vend > 0 ? ' · Shift+E opens it, the box holds ' + money(S.box.vend) : ' · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'fridge') { var FM2 = machState(d.propId); if (h && h.kind === 'crate') return h.item === 'drink' ? (FM2.fridgeDoor ? 'Load ' + h.n + ' drinks into the fridge' : 'Open the fridge first <small>Shift+E</small>') : 'Only drinks go in the fridge'; return 'Drinks fridge <small>' + (FM2.fridge || 0) + ' cold' + (FM2.fridgeDoor ? ' · E takes one · Shift+E shuts it' : ' · E takes one · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'coffeeCup') { var CM2 = machState(d.propId); return CM2.cup > 0 ? (machAnim(d.propId).brewT > 0 ? 'Pouring… <small>give it a second</small>' : 'Fresh coffee <small>E takes the cup</small>') : ''; }
+    if (d.kind === 'vendTray') { var MT = machState(d.propId); return MT.tray.length ? 'Delivery tray <small>' + MT.tray.length + ' waiting · E takes one</small>' : ''; }
+    if (d.kind === 'lobbyCoffee') { var CD = machState(d.propId); if (h && h.kind === 'crate') return (h.item === 'cup' || h.item === 'beans') ? (CD.coffDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' into the hopper' : 'Lift the hopper lid first <small>Shift+E</small>') : 'That does not go in here'; return (S.box.coffee > 0 ? 'Empty the cash box <small>' + money(S.box.coffee) + ' · ' : 'Coffee machine <small>') + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' servings of beans</small>'; }
     if (d.kind === 'atm') return 'Use the ATM <small>bank ' + money(S.bank) + ' · pocket ' + money(S.pocket) + ' · deposits clear at once, 2% fee</small>';
     if (d.kind === 'arcade') return S.box.arcade > 0 ? 'Empty the coin box <small>' + money(S.box.arcade) + '</small>' : 'Arcade cabinet <small>coin box empty</small>';
     if (d.kind === 'courier') return 'Hand the courier ' + money(S.courier ? S.courier.amount : 0) + ' <small>pocket ' + money(S.pocket) + '</small>';
@@ -5532,30 +5631,30 @@
     else if (d.kind === 'vault') { if (S.pocket > 0 && !(player.keys.ShiftLeft || player.keys.ShiftRight)) { var dep = S.pocket; S.vault += dep; S.pocket = 0; sfx('vault'); toast('🔒 ' + money(dep) + ' into the vault — now ' + money(S.vault), 'good'); logEvent('🔒 Vault deposit: ' + money(dep) + ' (vault ' + money(S.vault) + ')', ''); } else ui.openPanel('vault'); }
     else if (d.kind === 'tips') { var tp = S.tips; if (takeCash(tp, 'tip jar')) S.tips = 0; }
     else if (d.kind === 'vending') {
-      var MD = machState(), shift = player.keys.ShiftLeft || player.keys.ShiftRight;
-      if (shift) { vendDoorToggle(); }
+      var MD = machState(d.propId), shift = player.keys.ShiftLeft || player.keys.ShiftRight;
+      if (shift) { vendDoorToggle(d.propId); }
       else if (h && h.kind === 'crate') {
         if (h.item !== 'drink' && h.item !== 'snack') toast('That does not go in the vending machine', 'bad');
         else if (!MD.vendDoor) toast('Open the machine first — Shift+E', 'bad');
         else { S.vendStock[h.item] += h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; syncVending(); }
       }
-      else if (MD.vendDoor) { var vb2 = S.box.vend; if (vb2 > 0 && takeCash(vb2, 'vending machine')) { S.box.vend = 0; vendDisplay('SERVICE'); } else toast('Load drinks or snacks onto the racks, or Shift+E to shut it', ''); }
-      else { var pickV = (S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'; vendDispense(pickV); }
+      else if (MD.vendDoor) { var vb2 = S.box.vend; if (vb2 > 0 && takeCash(vb2, 'vending machine')) { S.box.vend = 0; vendDisplay(d.propId, 'SERVICE'); } else toast('Load drinks or snacks onto the racks, or Shift+E to shut it', ''); }
+      else { var pickV = (S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'; vendDispense(d.propId, pickV); }
     }
-    else if (d.kind === 'vendTray') { vendTakeTray(); }
+    else if (d.kind === 'vendTray') { vendTakeTray(d.propId); }
     else if (d.kind === 'fridge') {
-      var FI = machState(), shf = player.keys.ShiftLeft || player.keys.ShiftRight;
-      if (shf) fridgeDoorToggle();
+      var FI = machState(d.propId), shf = player.keys.ShiftLeft || player.keys.ShiftRight;
+      if (shf) fridgeDoorToggle(d.propId);
       else if (h && h.kind === 'crate') {
         if (h.item !== 'drink') toast('Only drinks go in the fridge', 'bad');
         else if (!FI.fridgeDoor) toast('Open the fridge first — Shift+E', 'bad');
-        else { FI.fridge = (FI.fridge || 0) + h.n; sfx('putdown'); toast('🧊 ' + h.n + ' drinks chilling — ' + FI.fridge + ' in the fridge', 'good'); S.held = null; world.dirty = true; syncFridge(); save(); }
+        else { FI.fridge = (FI.fridge || 0) + h.n; sfx('putdown'); toast('🧊 ' + h.n + ' drinks chilling — ' + FI.fridge + ' in the fridge', 'good'); S.held = null; world.dirty = true; syncFridge(d.propId); save(); }
       }
-      else fridgeTake();
+      else fridgeTake(d.propId);
     }
-    else if (d.kind === 'coffeeCup') { coffTake(); }
+    else if (d.kind === 'coffeeCup') { coffTake(d.propId); }
     else if (d.kind === 'lobbyCoffee') {
-      var CI = machState(), shc = player.keys.ShiftLeft || player.keys.ShiftRight;
+      var CI = machState(d.propId), shc = player.keys.ShiftLeft || player.keys.ShiftRight;
       if (shc) { CI.coffDoor = !CI.coffDoor; sfx(CI.coffDoor ? 'drawer' : 'close'); toast(CI.coffDoor ? '☕ Hopper open — load cups or beans' : '☕ Hopper closed', ''); save(); }
       else if (h && h.kind === 'crate') {
         if (h.item !== 'cup' && h.item !== 'beans') toast('That does not go in the coffee machine', 'bad');
@@ -5563,7 +5662,7 @@
         else { S.coffeeStock[h.item] += h.n; sfx('putdown'); toast('☕ Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' beans', 'good'); logEvent('☕ Restocked the coffee machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; syncCoffee(); save(); }
       }
       else if (CI.coffDoor) { var cb2 = S.box.coffee; if (cb2 > 0 && takeCash(cb2, 'coffee machine')) S.box.coffee = 0; else toast('Load cups or beans, or Shift+E to close the hopper', ''); }
-      else coffBrew();
+      else coffBrew(d.propId);
     }
     else if (d.kind === 'atm') { ui.openPanel('atm'); }
     else if (d.kind === 'arcade') { var ab = S.box.arcade; if (takeCash(ab, 'arcade coin box')) S.box.arcade = 0; }
@@ -5731,6 +5830,14 @@
     h += '<div class="g3-row"><span class="ico">💡</span><span class="meta"><span class="n">Lighting</span><span class="own">Faster growth + higher quality. now: ' + L.name + '</span></span>' + (nextL ? '<button class="g3-btn primary" data-act="buyLight">' + nextL.name + ' · ' + money(nextL.price) + '</button>' : '<span class="g3-tier">maxed</span>') + '</div>';
     h += '<div class="g3-row"><span class="ico">⛺</span><span class="meta"><span class="n">Grow tent</span><span class="own">More plant slots. now: ' + slots() + ' slots</span></span>' + (nextT ? (nextT.lic && !hasLic(nextT.lic) ? '<span class="g3-tier">🔒 ' + nextT.slots + ' slots needs ' + licById(nextT.lic).name + '</span>' : '<button class="g3-btn primary" data-act="buyTent">' + nextT.slots + ' slots · ' + money(nextT.price) + '</button>') : '<span class="g3-tier">maxed</span>') + '</div>';
     UPGRADES.forEach(function (u) { var why = !S.upgrades[u.id] && (u.req && !S.upgrades[u.req] ? 'needs ' + (UPGRADES.filter(function (x) { return x.id === u.req; })[0] || { name: u.req }).name : u.lvl && S.level < u.lvl ? 'level ' + u.lvl : ''); h += '<div class="g3-row"><span class="ico">' + u.ico + '</span><span class="meta"><span class="n">' + u.name + '</span><span class="own">' + u.d + '</span></span>' + (S.upgrades[u.id] ? '<span class="g3-tier">✓ installed</span>' : why ? '<span class="g3-tier">🔒 ' + why + '</span>' : '<button class="g3-btn primary" data-act="buyUpg" data-id="' + u.id + '">' + money(u.price) + '</button>') + '</div>'; });
+    h += '</div><div class="g3-box"><h3>🥤 Machines</h3><div class="desc">Buy another and it lands beside the one you have. Press <b>F2</b> to drag it anywhere you like. They share the shop\'s stock and float.</div>';
+    ['vending', 'lobbyCoffee', 'arcade', 'fridge'].forEach(function (base) {
+      var d = PROPS[base]; if (!d || !d.multi) return;
+      var have = unitCount(base), full = have >= d.multi.max, locked = unitLock(base);
+      h += '<div class="g3-row"><span class="ico">' + d.multi.ico + '</span><span class="meta"><span class="n">' + (d.multi.name || d.label.replace(/^./, function (m2) { return m2.toUpperCase(); })) + '</span><span class="own">' + have + ' of ' + d.multi.max +
+        (locked ? ' · needs the ' + locked : full ? ' · the shop is full' : '') + '</span></span>' +
+        (full || locked ? '<span class="g3-tier">' + (full ? 'max' : '🔒') + '</span>' : '<button class="g3-btn primary" data-act="buyUnit" data-id="' + base + '">' + money(machCost(base, have + 1)) + '</button>') + '</div>';
+    });
     h += '</div><div class="g3-box"><h3>📈 Business</h3><div class="g3-chips">' + chip('market', S.market.toFixed(2) + '×') + chip('rep', Math.floor(S.rep)) + chip('price mult', '×' + repMult().toFixed(2)) + chip('level', S.level) + '</div><div class="desc">Reputation raises every price. Connoisseurs (🎩) pay 2.2× for quality 70+.</div>' + paneStatsInner() + '</div></div>';
     return h;
   }
@@ -5838,6 +5945,7 @@
     else if (act === 'stockToShelf') { var sp2 = id.split('|'); stockToShelf(sp2[0], sp2[1]); toast('Out on the shelf', ''); sfx('putdown'); }
     else if (act === 'shelfToStock') { ['bags', 'joints', 'cookies'].forEach(function (k) { Object.keys(S.lots[k]).forEach(function (sid) { shelfToStock(k, sid); }); }); toast('🔒 Shelf cleared into the cabinet', 'good'); sfx('vault'); }
     else if (act === 'stockAllToShelf') { ['bags', 'joints', 'cookies'].forEach(function (k) { Object.keys(S.stock[k] || {}).forEach(function (sid) { stockToShelf(k, sid); }); }); toast('🛍️ Everything is out on the shelf', ''); sfx('putdown'); }
+    else if (act === 'buyUnit') { buyUnit(id); }
     else if (act === 'hire') { hireWorker(); }
     else if (act === 'fire') { fireWorker(); }
     else if (act === 'workerTask') { workerTask(id); }
@@ -6117,7 +6225,7 @@
   if (elapsed > 2) step(elapsed, true);
   S.lastTick = now();
   shop(); dustList(); var offlineDust = Math.min(4, Math.floor((now() - (S.lastDust || now())) / 300000)); if (offlineDust > 0) { spawnDust(offlineDust); S.lastDust = now(); }
-  buildStatic(); buildProps(); buildDecor(); fixtureFromBuild('deskBoard', 'desk screen', 0, buildDeskBoard); buildShopControls(); buildBroom(); buildUpstairs(); buildVipWing(); buildBasement(); buildAllProps(); buildSwitches(); buildStreet(); buildCity(); buildExpansion(); buildNpc(); buildGuard(); buildWorker(); syncKeyHook(); applyFixtures(); introDraw(); applyShopState(); syncDust(); applySettings(); resize(); updateDayNight();
+  buildStatic(); buildProps(); buildDecor(); fixtureFromBuild('deskBoard', 'desk screen', 0, buildDeskBoard); buildShopControls(); buildBroom(); buildUpstairs(); buildVipWing(); buildBasement(); registerUnits(); buildAllProps(); buildSwitches(); buildStreet(); buildCity(); buildExpansion(); buildNpc(); buildGuard(); buildWorker(); syncKeyHook(); applyFixtures(); introDraw(); applyShopState(); syncDust(); applySettings(); resize(); updateDayNight();
   runHooks(hooks.boot);
   // Blender models come out of IndexedDB after boot, so whatever is in hand is rebuilt once they land
   if (WS) { WS.onModelsReady(function () { if (WS.hasModels()) { heldKey = ' '; world.dirty = true; } }); WS.loadModels(); }
@@ -6159,5 +6267,5 @@
   }
   frame();
   // debug / automation handle (read-only use; not part of the game loop)
-  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
+  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, unitIds: unitIds, unitCount: unitCount, machCost: machCost, buyUnit: buyUnit, machState: machState, syncMachines: syncMachines, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
 })();
