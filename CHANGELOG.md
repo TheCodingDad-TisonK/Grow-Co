@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.16
+
+**Three assistants, not one.** The shop floor took exactly one helper because she was a boolean. It is a crew now: hire up to three at the laptop under **Staff**, each costing more than the last, each with their own name, their own look and their own job. Jo, Mika and Sam.
+
+**Send them home and call them back.** Staff used to be either on the payroll or gone for good. Now each assistant, and security, can be sent home for the day: they leave the floor, draw no wage while they are off, and come back when you call them in. Ctrl+E on an assistant sends that one home on the spot.
+
+**Give them a spot to stand.** Shift+E on an assistant, choose **Send them somewhere**, walk to the place you want them and press **E**. That is where they wait between jobs until you clear it.
+
+**They tell you when there is nothing to do.** Putting someone on sweeping with a clean floor, or on restocking with an empty storeroom, genuinely left them with no job, so they stood there silently and looked broken. They say why now.
+
+**ID checks mean something.** The check at the door was scenery: the guard looked at a card for a couple of seconds and everyone was waved through. Every customer now carries a real ID, and roughly one in seven will not stand up: underage, expired, a photo that is not them, or a plain fake. With security on the door they show it to the guard, who is good but not perfect and will sometimes wave a bad one through. With security off shift they bring it straight to you at the window and **E** opens the card. Either way you can **always ask to see it yourself** with Shift+E, even for someone the guard already passed, which is how you catch his mistakes. Serve on a bad one and it is on you: heat, reputation, and a fair chance of a fine. Refuse a bad one and you gain reputation; refuse a good one and you lose it.
+
+**The buildings are buildings now.** Every block in town was one box with a window texture on it. They have a stone base at street level, a string course where the shopfront stops, a cornice under the parapet, and something on the roof: a stair head with a water tank, a plant or an aerial. The tall ones get a setback storey.
+
 ## v1.15
 
 Six things you reported, all in the same area: the town, and who can walk where in it.

@@ -33,6 +33,22 @@ window.RF_GUIDE = [
   { id: 'staff', icon: '🧑‍🔧', title: 'Staff', html:
     '<ul><li><b>Jo</b> (hired at the laptop): serves the window, restocks, sweeps or tends plants. Shift + E on Jo changes the job.</li><li><b>Security guard</b>: checks ID at the door; send him on patrol to deter robbers and break up fights sooner.</li>' +
     '<li>The <b>staff roster</b> board in the office hires three more: a <b>driver</b> (wholesales your cartons every morning and runs phone deliveries), a <b>basement operator</b> (keeps the cigarette line running) and a <b>night guard</b> (stops break-ins).</li><li>Wages leave the bank at the start of each day.</li></ul>' },
+  { id: 'crew', icon: '🧑‍🔧', title: 'Your crew and the door', html:
+    '<p>You can have <b>three assistants</b> on the floor. Hire them at the laptop under <b>Staff</b>; each one costs more than the last and takes a wage out of the bank every morning.</p>' +
+    '<ul>' +
+    '<li>Each one has their own job: serve the window, restock, sweep, tend the plants, or take a break. Set it from the roster or with <b>Shift+E</b> on them.</li>' +
+    '<li><b>Send home</b> takes someone off the floor for the day. They draw no wage while they are off, and <b>Call in</b> brings them back. The same works for security.</li>' +
+    '<li><b>Shift+E</b> then <b>Send them somewhere</b> lets you post an assistant: walk to the spot, press <b>E</b>, and that is where they wait between jobs. Clear it from the same menu.</li>' +
+    '<li>If they have nothing to do they will say so rather than standing there silently: no dust to sweep, an empty storeroom, plants already fine.</li>' +
+    '</ul>' },
+  { id: 'ids', icon: '🪪', title: 'ID checks', html:
+    '<p>Every customer carries a real ID, and roughly one in seven will not stand up: underage, expired, a photo that is not them, or a plain fake.</p>' +
+    '<ul>' +
+    '<li>With <b>security on the door</b> they show it to the guard. He is good but not perfect, and he will sometimes wave a bad one through.</li>' +
+    '<li>With <b>security off shift</b> they bring it straight to you at the window. <b>E</b> on them opens the card.</li>' +
+    '<li>You can <b>always ask to see it yourself</b>: <b>Shift+E</b> on any customer, even one the guard already passed. That is how you catch his mistakes.</li>' +
+    '<li>Serve on a bad ID and it is on you: heat, reputation, and a decent chance of a fine. Refuse a bad one and you gain reputation. Refuse a perfectly good one and you lose it.</li>' +
+    '</ul>' },
   { id: 'doors', icon: '🚪', title: 'Doors, locks and who gets through them', html:
     '<p>Doors are real to everybody in the building now, not just to you.</p>' +
     '<ul>' +

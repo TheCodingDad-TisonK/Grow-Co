@@ -416,11 +416,31 @@
     else if (roll < 0.85 && S.plants.length) { var v = pick(S.plants); if (!v.hazard) { v.hazard = pick(['pest', 'mold']); logEvent('🐛 Pest outbreak on a ' + strainById(v.strain).name + '!', 'bad'); } }
     else if (!S.customer && shop().open && now() >= (S.noCustomersUntil || 0)) spawnCustomer(hasLic('premium'));   // connoisseurs only come once you hold the permit, never while someone is already at the window, and never through a locked front door
   }
+  // ── ID: a card with a face, a date and sometimes something wrong with it ───────────────
+  var ID_FLAWS = [
+    { why: 'under 18', hint: 'the date of birth puts them at ' },
+    { why: 'the photo is not them', hint: 'the photograph does not match the face in front of you' },
+    { why: 'the card is a fake', hint: 'the lamination is lifting at the corner and the print is soft' },
+    { why: 'it expired', hint: 'the expiry date has been and gone' }
+  ];
+  function makeId(who) {
+    var bad = Math.random() < 0.14;
+    var flaw = bad ? randi(0, ID_FLAWS.length - 1) : -1;
+    var age = (flaw === 0) ? randi(15, 17) : randi(19, 68);
+    return { who: who, age: age, no: 'RF' + randi(100000, 999999), flaw: flaw, ok: !bad, seen: false, by: '' };
+  }
+  function idFlawText(id) {
+    if (id.ok) return '';
+    var F = ID_FLAWS[id.flaw];
+    return F.hint + (id.flaw === 0 ? id.age : '');
+  }
+  function guardOnDuty() { return !guardOff() && !!guard.h; }
   function spawnCustomer(premium) {
     if (S.customer) return;   // one customer at a time: replacing the record mid-visit rebuilt the body at the door, so the one at the window seemed to vanish
     var c = pick(CUSTOMERS); var wr = Math.random(); var wantKind = wr < 0.45 ? 'joints' : wr < 0.8 || S.pkg.cookies.n <= 0 ? 'bags' : 'cookies'; var wantJoints = wantKind === 'joints';
     S.customer = { who: c.who, avatar: c.a, color: c.c, want: wantKind, qty: wantJoints ? randi(2, 5) : wantKind === 'cookies' ? randi(2, 6) : randi(1, 3), premium: !!premium, minQ: premium ? 70 : 0, until: now() + (premium ? 60000 : 45000) * (S.upgrades.lounge2 ? 2 : S.upgrades.lobby ? 1.5 : 1) };
     S.customer.arrived = false; S.customer.spawnedAt = now(); S.customer.pay = hasLic('retail') && Math.random() < 0.45 ? 'card' : 'cash';
+    S.customer.id = makeId(c.who);   /* a real document, and about one in eight will not stand up */
     // every customer names a strain: usually one you actually have packed or in the stash, sometimes something you will have to grow
     var known = strainsWithGoods(); S.customer.strain = known.length && Math.random() < 0.8 ? pick(known) : pick(STRAINS.filter(function (s) { return s.lvl <= S.level + 2; })).id;
     // the order: a main line, sometimes a second product, sometimes bits from the counter display
@@ -1740,6 +1760,7 @@
   }
   guard.say = function (text, color, ms) { var ob = guard.bubble.material.map; guard.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); guard.bubble.material.needsUpdate = true; if (ob) ob.dispose(); guard.bubble.visible = true; clearTimeout(guard.sayT); guard.sayT = setTimeout(function () { guard.bubble.visible = false; }, ms || 2200); };
   function updateGuard(dt) {
+    if (guardOff() || !guard.h) return;
     if (!guard.h) return;
     var P = guard.h.userData.parts;
     if (robber.state === 'demand' || robber.state === 'in') { animateHuman(guard.h, dt, 'idle', 0, robber.g.position); P.rArm.rotation.x = -1.4; P.rArm.rotation.z = -0.2; guard.h.userData.setMood('angry'); return; }
@@ -1823,28 +1844,143 @@
     if (d.locked) return d;
     setDoor(d.id, true); return null;
   }
-  var WORKER_HIRE = 400, WORKER_WAGE = 60;
+  var WORKER_HIRE = 400, WORKER_WAGE = 60, CREW_MAX = 3;
+  // who turns up when you hire. Each hire costs more than the last and draws the same wage.
+  var CREW_LOOK = [
+    { name: 'Jo',   skin: 0xf1c27d, hair: 0x5a3a1a, hairStyle: 'ponytail', shirt: 0x2f6b4a, at: [-1.5, 1.2] },
+    { name: 'Mika', skin: 0xc68642, hair: 0x1c1c22, shirt: 0x2f5b8a, at: [-2.5, 1.5] },
+    { name: 'Sam',  skin: 0xe0ac7e, hair: 0x8a6a3a, shirt: 0x8a5a2f, at: [-0.5, 1.6] }
+  ];
+  function crewHireCost() { return Math.round(WORKER_HIRE * Math.pow(1.6, crewList().length)); }
+  function crewList() {   // the saved crew, migrating the single assistant that used to live on a boolean
+    if (!S.staff) S.staff = {};
+    if (!Array.isArray(S.staff.crew)) {
+      S.staff.crew = S.staff.worker ? [{ look: 0, task: S.staff.task || 'idle' }] : [];
+    }
+    if (S.staff.crew.length > CREW_MAX) S.staff.crew.length = CREW_MAX;   /* keep the same array: callers hold on to it */
+    S.staff.crew.forEach(function (c, i) { if (typeof c.look !== 'number') c.look = i; if (!c.task) c.task = 'idle'; });
+    S.staff.worker = S.staff.crew.length > 0;   /* a few places still ask the old question */
+    return S.staff.crew;
+  }
+  function crewName(i) { var c = crewList()[i]; return c ? CREW_LOOK[c.look % CREW_LOOK.length].name : 'nobody'; }
+  function crewOnFloor() { return crewList().filter(function (c) { return !c.off; }).length; }
+  function crewShift(i, off) {   // home for the day, or back in. Off the floor is off the payroll.
+    var list = crewList(), c = list[i]; if (!c) return;
+    if (off === undefined) off = !c.off;
+    c.off = !!off; crewSync();
+    sfx(off ? 'door' : 'ok');
+    toast((off ? '🏠 ' : '🧑‍🔧 ') + crewName(i) + (off ? ' has gone home for the day' : ' is back on the floor'), off ? '' : 'good');
+    logEvent((off ? '🏠 Sent ' : '🧑‍🔧 Called ') + crewName(i) + (off ? ' home' : ' back in'), '');
+    save(); ui.refreshOpen();
+  }
   var WORKER_TASKS = [['serve', '🛎️ Serve the window'], ['restock', '📦 Restock rack + machines'], ['clean', '🧹 Sweep the floors'], ['water', '💧 Tend the plants'], ['idle', '☕ Take a break']];
   var GUARD_TASKS = [['door', '🪪 Watch the door'], ['patrol', '🚶 Patrol the lobby'], ['sweep', '🧹 Sweep the lobby'], ['restock', '🔥 Restock the rack']];
-  function workerTaskLabel() { var t = WORKER_TASKS.filter(function (x) { return x[0] === (S.staff.task || 'idle'); })[0]; return t ? t[1].slice(3) : 'idle'; }
+  function workerTaskLabel(i) { var c = crewList()[i === undefined ? (worker ? worker.idx : 0) : i]; var t = WORKER_TASKS.filter(function (x) { return x[0] === ((c && c.task) || 'idle'); })[0]; return t ? t[1].slice(3) : 'idle'; }
   function guardTaskLabel() { var t = GUARD_TASKS.filter(function (x) { return x[0] === (S.staff.guardTask || 'door'); })[0]; return t ? t[1].slice(3) : 'at the door'; }
-  var worker = { g: null, h: null, state: 'idle', path: [], t: 0, job: null, bubble: null, sayT: 0, idleT: 0, coolT: 0 };
-  function buildWorker() {
-    if (worker.g || !S.staff || !S.staff.worker) return;
-    var g = new THREE.Group(); g.position.set(-1.5, 0, 1.2); world.group.add(g); worker.g = g;
-    worker.h = makeHuman({ skin: 0xf1c27d, hair: 0x5a3a1a, hairStyle: 'ponytail', shirt: 0x2f6b4a, pants: 0x2a2d33, shoes: 0x333333, watch: true, logo: '🌿', mood: 'happy' }); g.add(worker.h);
-    var badge = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: textTex(['STAFF'], 160, 60, { size: 30, bg: '#6fdc8c', color: '#062010', line: 'rgba(0,0,0,0)' }) })); badge.position.set(0.1, 0.5, 0.148); worker.h.userData.parts.torso.add(badge);
-    worker.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.4, 0.44, 0, 2.25, 0, g); worker.bubble.visible = false;
-    var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; worker.h.add(hb); interactable(hb, { kind: 'worker' });
+  var WORKER_NONE = { g: null, h: null, state: 'idle', path: [], t: 0, job: null, bubble: null, sayT: 0, idleT: 0, coolT: 0, hasBroom: false, idx: 0 };
+  var crew = [];              // one runtime record per hired assistant
+  var worker = WORKER_NONE;   // the one being updated right now: every worker helper reads this
+  function buildWorker(rec) {
+    if (!rec || rec.g) return;
+    var L = CREW_LOOK[rec.look % CREW_LOOK.length];
+    var g = new THREE.Group(); g.position.set(L.at[0], 0, L.at[1]); world.group.add(g); rec.g = g;
+    rec.h = makeHuman({ skin: L.skin, hair: L.hair, hairStyle: L.hairStyle, shirt: L.shirt, pants: 0x2a2d33, shoes: 0x333333, watch: true, logo: '🌿', mood: 'happy' }); g.add(rec.h);
+    var badge = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: textTex(['STAFF'], 160, 60, { size: 30, bg: '#6fdc8c', color: '#062010', line: 'rgba(0,0,0,0)' }) })); badge.position.set(0.1, 0.5, 0.148); rec.h.userData.parts.torso.add(badge);
+    rec.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.4, 0.44, 0, 2.25, 0, g); rec.bubble.visible = false;
+    var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; rec.h.add(hb); interactable(hb, { kind: 'worker', idx: rec.idx });
   }
-  function removeWorker() { if (!worker.g) return; worker.hasBroom = false; worker.broomMesh = null; syncBroom(); world.group.remove(worker.g); world.interact = world.interact.filter(function (m) { return !(m.userData.interact && m.userData.interact.kind === 'worker'); }); worker.g = null; worker.h = null; worker.state = 'idle'; worker.job = null; worker.path = []; }
-  function workerSay(text, color, ms) { if (!worker.bubble) return; var ob = worker.bubble.material.map; worker.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); worker.bubble.material.needsUpdate = true; if (ob) ob.dispose(); worker.bubble.visible = true; clearTimeout(worker.sayT); worker.sayT = setTimeout(function () { if (worker.bubble) worker.bubble.visible = false; }, ms || 2400); }
-  function hireWorker() { if (S.staff.worker) return; if (!spend(WORKER_HIRE)) return; S.staff.worker = true; S.staff.task = 'idle'; buildWorker(); sfx('rare'); toast('🤝 Jo starts today — Shift+E on her to give orders', 'good'); logEvent('🤝 Hired Jo as shop assistant (' + money(WORKER_WAGE) + ' a day)', 'good'); save(); ui.refreshOpen(); }
-  function fireWorker() { if (!S.staff.worker) return; S.staff.worker = false; removeWorker(); toast('👋 Jo has gone home for good', ''); logEvent('👋 Let Jo go', ''); save(); ui.refreshOpen(); }
-  function payWages(offline) { if (!S.staff || !S.staff.worker) return; if (S.bank >= WORKER_WAGE) { S.bank -= WORKER_WAGE; logEvent('💸 Paid Jo ' + money(WORKER_WAGE), ''); } else { S.staff.worker = false; if (!offline) { removeWorker(); toast('👋 Jo quit — the bank could not cover her wage', 'bad'); } logEvent('👋 Jo quit: no money in the bank for wages', 'bad'); } }
-  function workerTask(t) { if (!S.staff.worker) return; S.staff.task = t; worker.job = null; worker.state = 'idle'; worker.path = []; worker.coolT = 0; var lbl = workerTaskLabel(); workerSay(t === 'idle' ? 'nice, a break' : 'on it: ' + lbl.toLowerCase(), '#6fdc8c'); toast('🧑‍🔧 Jo: ' + lbl, ''); save(); ui.refreshOpen(); }
-  function guardTask(t) { S.staff.guardTask = t; guard.pauseT = 0; guard.say(t === 'door' ? 'back on the door' : t === 'patrol' ? 'doing the rounds' : t === 'sweep' ? 'I will tidy the lobby' : 'I will fill the rack', '#6fdc8c', 2400); toast('🛡️ Security: ' + guardTaskLabel(), ''); save(); ui.refreshOpen(); }
-  function workerMenu() { ctxOpen('🧑‍🔧 Jo', 'now: ' + workerTaskLabel() + ' · pick a job', WORKER_TASKS.map(function (t) { return { label: t[1], cls: S.staff.task === t[0] ? 'on' : '', act: function () { workerTask(t[0]); } }; })); }
+  function removeWorker(rec) {
+    rec = rec || worker; if (!rec.g) return;
+    rec.hasBroom = false; rec.broomMesh = null; syncBroom();
+    world.group.remove(rec.g);
+    world.interact = world.interact.filter(function (m) { var d = m.userData.interact; return !(d && d.kind === 'worker' && (d.idx || 0) === (rec.idx || 0)); });   /* this one's hit box, not everybody's */
+    rec.g = null; rec.h = null; rec.bubble = null; rec.state = 'idle'; rec.job = null; rec.path = [];
+  }
+  function workerSay(text, color, ms) { if (!worker || !worker.bubble) return; var ob = worker.bubble.material.map; worker.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); worker.bubble.material.needsUpdate = true; if (ob) ob.dispose(); worker.bubble.visible = true; clearTimeout(worker.sayT); worker.sayT = setTimeout(function () { if (worker.bubble) worker.bubble.visible = false; }, ms || 2400); }
+  function crewSync() {   // runtime records follow the saved crew: build the new ones, clear out the gone ones
+    var list = crewList();
+    crew.filter(function (r) { return r.idx >= list.length; }).forEach(function (r) { removeWorker(r); });
+    crew = crew.filter(function (r) { return r.idx < list.length; });
+    list.forEach(function (c, i) {
+      var r = crew.filter(function (x) { return x.idx === i; })[0];
+      if (!r) { r = { idx: i, look: c.look, g: null, h: null, state: 'idle', path: [], t: 0, job: null, bubble: null, sayT: 0, idleT: 0, coolT: 0, hasBroom: false }; crew.push(r); }
+      r.look = c.look;
+      if (c.off) { removeWorker(r); r.job = null; r.path = []; r.state = 'idle'; } else buildWorker(r);
+    });
+    crew.sort(function (a, b) { return a.idx - b.idx; });
+    worker = crew[0] || WORKER_NONE;
+  }
+  function hireWorker() {
+    var list = crewList();
+    if (list.length >= CREW_MAX) { toast('That is a full crew already', 'bad'); return; }
+    var cost = crewHireCost(); if (!spend(cost)) return;
+    var used = list.map(function (c) { return c.look; });
+    var look = 0; for (var i = 0; i < CREW_LOOK.length; i++) if (used.indexOf(i) < 0) { look = i; break; }
+    list.push({ look: look, task: 'idle' }); S.staff.worker = true;
+    crewSync(); sfx('rare');
+    var nm = CREW_LOOK[look].name;
+    toast('🤝 ' + nm + ' starts today — Shift+E on them to give orders', 'good');
+    logEvent('🤝 Hired ' + nm + ' for ' + money(cost), 'good'); save(); ui.refreshOpen();
+  }
+  function fireWorker(i) {
+    var list = crewList(); i = (i === undefined || i < 0) ? list.length - 1 : i;
+    if (!list[i]) return; var nm = crewName(i);
+    list.splice(i, 1); S.staff.worker = list.length > 0;
+    crewSync();
+    toast('👋 ' + nm + ' has gone home for good', ''); logEvent('👋 Let ' + nm + ' go', ''); save(); ui.refreshOpen();
+  }
+  function payWages(offline) {
+    var list = crewList(); if (!list.length) return;
+    for (var i = list.length - 1; i >= 0; i--) {
+      if (list[i].off) { logEvent('🏠 ' + crewName(i) + ' was off, no wage', ''); continue; }   /* sent home means sent home: no work, no pay, no quitting over it */
+      if (S.bank >= WORKER_WAGE) { S.bank -= WORKER_WAGE; logEvent('💸 Paid ' + crewName(i) + ' ' + money(WORKER_WAGE), ''); }
+      else {
+        var nm = crewName(i); list.splice(i, 1);
+        if (!offline) { toast('👋 ' + nm + ' quit — the wages did not come out', 'bad'); }
+        logEvent('👋 ' + nm + ' walked out: no wages in the bank', 'bad');
+      }
+    }
+    S.staff.worker = list.length > 0; crewSync();
+  }
+
+  function workerTask(t, i) { var list = crewList(); i = i || 0; if (!list[i]) return; list[i].task = t; var r = crew.filter(function (x) { return x.idx === i; })[0] || worker; var prev = worker; worker = r; r.job = null; r.state = 'idle'; r.path = []; r.coolT = 0; var lbl = workerTaskLabel(i); workerSay(t === 'idle' ? 'nice, a break' : 'on it: ' + lbl.toLowerCase(), '#6fdc8c'); toast('🧑‍🔧 Jo: ' + lbl, ''); save(); ui.refreshOpen(); }
+  function guardOff() { if (!S.staff) S.staff = {}; return !!S.staff.guardOff; }
+  function guardShift(off) {
+    if (!S.staff) S.staff = {};
+    if (off === undefined) off = !S.staff.guardOff;
+    S.staff.guardOff = !!off;
+    if (off) { if (guard.h) { world.group.remove(guard.h); world.interact = world.interact.filter(function (m) { return !(m.userData.interact && m.userData.interact.kind === 'guard'); }); guard.h = null; guard.bubble = null; } world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); }
+    else if (!guard.h) buildGuard();
+    sfx(off ? 'door' : 'ok');
+    toast(off ? '🏠 Security has gone home' : '🛡️ Security is back on the door', off ? '' : 'good');
+    logEvent(off ? '🏠 Sent security home' : '🛡️ Called security back in', '');
+    save(); ui.refreshOpen();
+  }
+  function guardTask(t) { if (guardOff()) { toast('Security is not in — call them back first', 'bad'); return; } S.staff.guardTask = t; guard.pauseT = 0; guard.say(t === 'door' ? 'back on the door' : t === 'patrol' ? 'doing the rounds' : t === 'sweep' ? 'I will tidy the lobby' : 'I will fill the rack', '#6fdc8c', 2400); toast('🛡️ Security: ' + guardTaskLabel(), ''); save(); ui.refreshOpen(); }
+  var postPick = -1;   // which assistant is waiting to be told where to stand
+  function postStart(i) {
+    postPick = i; ctxClose();
+    toast('📍 Walk to the spot and press E to post ' + crewName(i) + ' there · Esc to cancel', '');
+    lockPointer();
+  }
+  function postSet() {
+    var i = postPick; postPick = -1; var c = crewList()[i]; if (!c) return;
+    c.post = { x: +player.pos.x.toFixed(2), z: +player.pos.z.toFixed(2) };
+    var r = crew.filter(function (x) { return x.idx === i; })[0];
+    if (r) { r.job = null; r.path = []; r.state = 'idle'; }
+    sfx('ok'); toast('📍 ' + crewName(i) + ' will stand here', 'good');
+    logEvent('📍 Posted ' + crewName(i) + ' at ' + c.post.x.toFixed(1) + ', ' + c.post.z.toFixed(1), '');
+    save(); ui.refreshOpen();
+  }
+  function postClear(i) { var c = crewList()[i]; if (!c) return; c.post = null; toast('📍 ' + crewName(i) + ' is back on the floor', ''); save(); ui.refreshOpen(); }
+  function workerMenu(i) {
+    i = i || 0; var c = crewList()[i]; if (!c) return;
+    var lines = WORKER_TASKS.map(function (t) { return { label: t[1], cls: c.task === t[0] ? 'on' : '', act: function () { workerTask(t[0], i); } }; });
+    lines.push({ label: '📍 Send them somewhere', act: function () { postStart(i); } });
+    if (c.post) lines.push({ label: '📍 Clear their spot', act: function () { postClear(i); } });
+    lines.push({ label: '🏠 Send home for the day', act: function () { crewShift(i, true); } });
+    ctxOpen('🧑‍🔧 ' + crewName(i), 'now: ' + workerTaskLabel(i) + (c.post ? ' · posted' : '') + ' · pick a job', lines);
+  }
   function guardMenu() { ctxOpen('🛡️ Security', 'now: ' + guardTaskLabel() + ' · pick a job', GUARD_TASKS.map(function (t) { return { label: t[1], cls: S.staff.guardTask === t[0] ? 'on' : '', act: function () { guardTask(t[0]); } }; })); }
   // one order line from the shelf: the asked strain first, any strain of that kind second
   function workerFillLine(c, l) {
@@ -1888,16 +2024,38 @@
     if (task === 'clean' && worker.hasBroom && !dustList().length) return { x: ROOM.x - 0.65, z: -0.85, dur: 0.6, done: workerDropBroom };
     if (task === 'clean') { var d = dustList().slice().sort(function (a, b) { return Math.hypot(a.x - g.position.x, a.z - g.position.z) - Math.hypot(b.x - g.position.x, b.z - g.position.z); })[0]; if (d) return { x: d.x, z: d.z, dur: 2.2, done: function () { S.dust = dustList().filter(function (p) { return p.id !== d.id; }); world.dustDirty = true; sfx('dust'); } }; if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null; }
     if (task === 'water') { var p = S.plants.filter(function (pl) { return pl.progress < 1 && ((pl.thirst > 0.35 && !S.upgrades.autowater) || (!pl.fed && (S.supplies.nutrients || 0) > 0) || (pl.hazard && (S.supplies.remedy || 0) > 0)); })[0]; if (p) { var sp = slotPosOf(p.id); return { x: sp.x, z: sp.z + 0.55, dur: 1.6, done: function () { if (p.thirst > 0.35 && !S.upgrades.autowater) { p.thirst = 0; sfx('water'); } else if (!p.fed && (S.supplies.nutrients || 0) > 0) { p.fed = true; S.supplies.nutrients--; p.quality = Math.min(100, (p.quality || 50) + 12); sfx('feed'); } else if (p.hazard && (S.supplies.remedy || 0) > 0) { p.hazard = null; S.supplies.remedy--; sfx('spray'); } world.dirty = true; } }; } if (!near(-4.5, -3.2)) return { x: -4.5, z: -3.2, dur: 0, done: function () {} }; return null; }
+    var post = (crewList()[worker.idx] || {}).post;
+    if (post) { if (!near(post.x, post.z)) return { x: post.x, z: post.z, dur: 0, done: function () {} }; return null; }   /* posted: their spot is where they wait */
     if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null;
   }
   function updateWorker(dt) {
-    if (!S.staff || !S.staff.worker) { if (worker.g) removeWorker(); return; }
-    if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = 4; workerSay('that one is locked'); } }   /* a locked door is the end of that errand, not something to walk through */
+    var list = crewList();
+    if (crew.length !== list.length) crewSync();
+    if (!list.length) { worker = WORKER_NONE; return; }
+    var prev = worker;
+    for (var ci = 0; ci < crew.length; ci++) { if ((list[crew[ci].idx] || {}).off) continue; worker = crew[ci]; updateOneWorker(dt); }
+    worker = crew[0] || WORKER_NONE;
+  }
+  function updateOneWorker(dt) {
+    if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = now() + 6000; workerSay('that one is locked', '#ffc857', 2600); } }   /* a locked door is the end of that errand, not something to walk through */
     if (!worker.g) buildWorker(); var g = worker.g, spd = 1.5;
     if (worker.state === 'walk') { if (walkAlong(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animateHuman(worker.h, dt, 'walk', spd, null); return; }
     if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z); worker.state = 'walk'; } } return; }
     animateHuman(worker.h, dt, 'idle', 0, player.pos); worker.idleT += dt; if (worker.idleT < 0.7) return; worker.idleT = 0;
-    var job = workerNextJob(S.staff.task || 'idle'); if (job) { worker.job = job; worker.path = routeTo(g.position, job.x, job.z); worker.state = 'walk'; }
+    var task = (crewList()[worker.idx] || {}).task || 'idle';
+    var job = workerNextJob(task);
+    if (!job && task !== 'idle') {   /* nothing to do is not the same as broken: say so */
+      worker.nagT = (worker.nagT || 0) + 0.7;
+      if (worker.nagT > 14) {
+        worker.nagT = 0;
+        var why = task === 'clean' ? 'floor is clean, boss'
+          : task === 'restock' ? 'storeroom is empty, boss'
+          : task === 'water' ? 'plants are all happy'
+          : task === 'serve' ? 'nobody at the window' : 'nothing for me right now';
+        workerSay(why, '#ffc857', 2600);
+      }
+    } else worker.nagT = 0;
+    if (job) { worker.job = job; worker.path = routeTo(g.position, job.x, job.z); worker.state = 'walk'; }
   }
   // the guard walks with the same router; the door post keeps its obstacle only while he stands there
   function guardGo(x, z, fn) { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); guard.path = routeTo(guard.h.position, x, z); guard.walking = true; guard.onArrive = fn || null; guard.toPost = Math.abs(x - WP.post.x) < 0.01 && Math.abs(z - WP.post.z) < 0.01; }
@@ -1939,6 +2097,21 @@
   }
   npc.leaveHappy = function () { npcLeave('happy', 'thanks! 🙏', '#6fdc8c'); };
   npc.leaveSad = function () { npcLeave('sad', 'never mind…', '#ff6b6b'); };
+  // What security makes of the card. They are good, not perfect, and you can always look yourself.
+  function guardVerdict(c) {
+    var id = c.id; if (!id || id.seen) return true;
+    id.seen = true; id.by = 'guard';
+    var sharp = clamp(0.62 + (S.upgrades.security2 ? 0.22 : S.upgrades.security ? 0.12 : 0) + (S.staff && S.staff.guardTask === 'door' ? 0.1 : -0.1), 0.3, 0.96);
+    if (!id.ok && Math.random() < sharp) {
+      guard.say('not with that, mate', '#ff6b6b', 2600);
+      logEvent('🪪 Security turned ' + c.who + ' away: ' + ID_FLAWS[id.flaw].why, '');
+      toast('🪪 Security turned someone away · ' + ID_FLAWS[id.flaw].why, '');
+      npc.leaveSad(); S.customer = null; hud();
+      return false;
+    }
+    if (!id.ok) { c.idDodgy = true; guard.say('go on through', '#6fdc8c', 1600); }   /* waved through with a bad card: yours to catch */
+    return true;
+  }
   npc.sayT = null;
   npc.say = function (text, color) { if ((npc.state !== 'wait' && npc.state !== 'rack') || !npc.human) return; var ob = npc.bubble.material.map; npc.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); npc.bubble.material.needsUpdate = true; if (ob) ob.dispose(); npc.human.userData.setMood('talk'); clearTimeout(npc.sayT); npc.sayT = setTimeout(function () { if (npc.state === 'wait' || npc.state === 'rack' && S.customer) { npc.setBubble(S.customer); npc.human.userData.setMood(CAST[npc.who] && CAST[npc.who].mood || 'neutral'); } }, 2600); };
   npc.setBubble = function (c) { var gv = c.given ? c.given.n : 0; var lines = c.stage ? [c.who + (c.premium ? ' 🎩' : ''), c.pay === 'card' ? '💳 card · ' + money(c.due) : '💵 holds out ' + money(c.tendered)] : c.arrived ? [c.who + (c.premium ? ' 🎩' : '')].concat(orderRows(c).map(function (r) { return (r.done ? '✓ ' : '· ') + r.text; })).concat(c.premium ? ['quality ' + c.minQ + '+ please'] : []) : [c.who + (c.premium ? ' 🎩' : ''), pick(['hey', 'evening', 'yo', 'hi there'])]; var ob = npc.bubble.material.map; var bh = Math.max(200, 60 + lines.length * 46); npc.bubble.scale.y = 1.5 * bh / 512; npc.bubble.position.y = 2.25 + (bh - 200) / 512 * 0.75; npc.bubble.material.map = textTex(lines, 512, bh, { size: lines.length > 3 ? 32 : 36, titleColor: c.premium ? '#ffc857' : '#6fdc8c', line: c.premium ? 'rgba(255,200,87,.7)' : 'rgba(111,220,140,.6)' }); npc.bubble.material.needsUpdate = true; if (ob) ob.dispose(); };
@@ -1958,8 +2131,8 @@
     if (c && npc.cust !== c && npc.human && (npc.state === 'enter' || npc.state === 'check' || npc.state === 'towindow' || npc.state === 'wait')) { npc.leaveSad(); c = null; }   // the record was swapped under this body: it walks out, the new customer comes in after
     var g = npc.g; if (!g.visible || !npc.human) return;
     var walkSpeed = (npc.human.userData.spec.hunch ? 0.9 : 1.5);
-    if (npc.state === 'enter') { if (walkAlong(g, npc.path, walkSpeed, dt)) { npc.state = 'check'; npc.checkT = 0; g.rotation.y = Math.PI / 2; guard.startCheck(); npc.human.userData.parts.lArm.rotation.x = -1.1; } animateHuman(npc.human, dt, 'walk', walkSpeed, null); }
-    else if (npc.state === 'check') { npc.checkT += dt; animateHuman(npc.human, dt, 'idle', 0, guard.h.position); npc.human.userData.parts.lArm.rotation.x = -1.1; npc.human.userData.parts.lArm.rotation.z = 0.2; if (npc.checkT > 2.6) { npc.state = 'towindow'; npc.path = CUSTOMER_WINDOW.map(function (p) { return { x: p[0], z: p[1] }; }); } }
+    if (npc.state === 'enter') { if (walkAlong(g, npc.path, walkSpeed, dt)) { if (guardOnDuty()) { npc.state = 'check'; npc.checkT = 0; g.rotation.y = Math.PI / 2; guard.startCheck(); npc.human.userData.parts.lArm.rotation.x = -1.1; } else { npc.state = 'towindow'; npc.path = CUSTOMER_WINDOW.map(function (p) { return { x: p[0], z: p[1] }; }); if (c) { c.idPending = true; } } }   /* nobody on the door: they bring the card to you */ animateHuman(npc.human, dt, 'walk', walkSpeed, null); }
+    else if (npc.state === 'check') { npc.checkT += dt; animateHuman(npc.human, dt, 'idle', 0, guard.h ? guard.h.position : player.pos); npc.human.userData.parts.lArm.rotation.x = -1.1; npc.human.userData.parts.lArm.rotation.z = 0.2; if (npc.checkT > 2.6) { if (c && c.id && !guardVerdict(c)) return; npc.state = 'towindow'; npc.path = CUSTOMER_WINDOW.map(function (p) { return { x: p[0], z: p[1] }; }); } }
     else if (npc.state === 'towindow') { if (walkAlong(g, npc.path, walkSpeed, dt)) { npc.state = 'wait'; npc.bubble.visible = true; if (c && c === npc.cust && !c.arrived) { c.arrived = true; c.until = now() + (c.premium ? 75000 : 60000) * (S.upgrades.lounge2 ? 2 : S.upgrades.lobby ? 1.5 : 1); sfx('bell'); npc.setBubble(c); logEvent('🗣️ ' + c.who + ' at the window — wants ' + wantText(c) + (c.premium ? ' at q' + c.minQ + '+' : ''), c.premium ? 'rare' : ''); toast('🗣️ ' + c.who + ': ' + wantText(c), ''); hud(); if (c.acc && c.acc.some(function (a2) { return a2.ok === undefined; })) { npc.state = 'rack'; npc.rackStep = 0; npc.rackT = 0; npc.path = [{ x: 0.95, z: 5.0 }]; } } npc.human.userData.setMood('talk'); setTimeout(function () { if (npc.state === 'wait') npc.human.userData.setMood(CAST[npc.who] && CAST[npc.who].mood || 'neutral'); }, 1800); } animateHuman(npc.human, dt, 'walk', walkSpeed, null); }
     else if (npc.state === 'wait') {
       g.rotation.y = lerp(g.rotation.y, Math.PI, 0.05);
@@ -2284,8 +2457,24 @@
     if (!WIN_TEX) WIN_TEX = makeTex(128, 128, function (ctx, w, h) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h); for (var y = 0; y < 4; y++) for (var x = 0; x < 4; x++) { ctx.fillStyle = Math.random() < 0.3 ? '#ffe9a8' : Math.random() < 0.5 ? '#3a4652' : '#56687a'; ctx.fillRect(x * 32 + 7, y * 32 + 8, 18, 17); } }, [1, 1]);
     var t = WIN_TEX.clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return new THREE.MeshStandardMaterial({ map: t, color: hex, roughness: 0.85 });
   }
+  function cityDetail(x, z, w, d, h, hex) {
+    var seed = Math.abs(Math.round(x * 7.3 + z * 13.1));
+    var baseH = Math.min(2.8, h * 0.45);
+    box(w + 0.18, baseH, d + 0.18, colorMat(mixHex(hex, 0x000000, 0.42), 0.9), x, baseH / 2, z, { cast: false });                    /* the stone base at street level */
+    box(w + 0.34, 0.24, d + 0.34, colorMat(mixHex(hex, 0xffffff, 0.3), 0.8), x, baseH + 0.12, z, { cast: false });                   /* string course where the shopfront stops */
+    box(w + 0.28, 0.3, d + 0.28, colorMat(mixHex(hex, 0xffffff, 0.22), 0.8), x, h - 0.32, z, { cast: false });                       /* cornice under the parapet */
+    if (h > 6.5) {
+      var sw = Math.min(3.2, w * 0.34), sd = Math.min(3.2, d * 0.34);
+      box(sw, 1.3, sd, colorMat(mixHex(hex, 0x000000, 0.3), 0.9), x + w * 0.18, h + 0.95, z - d * 0.18);                             /* stair head */
+      if (seed % 3 === 0) cyl(0.62, 0.62, 1.5, colorMat(0x767b82, 0.6, 0.4), x - w * 0.24, h + 1.05, z + d * 0.2, null, 8);          /* water tank */
+      else if (seed % 3 === 1) box(1.5, 0.75, 1.1, colorMat(0x8a9099, 0.7), x - w * 0.24, h + 0.68, z + d * 0.2);                    /* plant on the roof */
+      else cyl(0.045, 0.045, 2.6, colorMat(0x3a3d42, 0.5), x - w * 0.24, h + 1.6, z + d * 0.2, null, 5);                             /* aerial */
+    }
+    if (h > 12) box(w * 0.66, 2.4, d * 0.66, cityWinMat(mixHex(hex, 0xffffff, 0.12), 2, 1), x, h + 1.2, z);                          /* a setback storey on the tall ones */
+  }
   function cityBldg(x, z, w, d, h, hex, label, poi) {
     var m = box(w, h, d, cityWinMat(hex, Math.max(1, Math.round(Math.max(w, d) / 6)), Math.max(1, Math.round(h / 5))), x, h / 2, z, { solid: true, tag: 'city' }); box(w + 0.4, 0.3, d + 0.4, colorMat(0x3a3d42, 0.9), x, h + 0.15, z, { cast: false });
+    cityDetail(x, z, w, d, h, hex);
     CITY.blds.push({ x: x, z: z, w: w, d: d, label: label || '', poi: poi || '' }); return m;
   }
   // Is this plot actually empty? The town is built as terraces, so sharing a wall is fine and
@@ -3181,7 +3370,7 @@
   function doorsAll(what) { DOORS.forEach(function (d) { if (what === 'open') setDoor(d.id, true, false); else if (what === 'close') setDoor(d.id, false); else if (what === 'lock') setDoor(d.id, false, true); else setDoor(d.id, d.open, false); }); sfx('curtain'); save(); }
   function toggleDoor(id) { var d = doorById[id]; if (!d) return; if (d.locked) { sfx('bad'); toast('🔒 Locked — unlock it at the shop control box', 'bad'); return; } if (d.open && player.floor === d.floor && Math.hypot(player.pos.x - d.x, player.pos.z - d.z) < 0.55) { toast('Step out of the doorway first', ''); return; } d.open = !d.open; if (!S.doors) S.doors = {}; S.doors[id] = d.open; doorObstacle(d); sfx('curtain'); save(); }
   function updateDoors(dt) {
-    var folk = []; if (worker.g) folk.push(worker.g.position); if (guard.h) folk.push(guard.h.position);
+    var folk = []; crew.forEach(function (r) { if (r.g) folk.push(r.g.position); }); if (guard.h) folk.push(guard.h.position);
     if (npc.g && npc.state !== 'away') folk.push(npc.g.position);
     loungers.forEach(function (l) { if (l.g) folk.push(l.g.position); });
     robbers.forEach(function (r) { if (r.g && r.state !== 'away' && r.state !== 'force') folk.push(r.g.position); });   /* a robber mid-break is handled by his own state, not by standing close */
@@ -4078,7 +4267,7 @@
   function checkColor(st) { return st === 'healthy' || st === 'ok' ? DESK_OK : st === 'degraded' || st === 'warn' ? DESK_WARN : st === 'unknown' ? DESK_MUTE : DESK_BAD; }
   function dashRows() {
     var X = typeof xs === 'function' ? xs() : { heat: 0, staff: {}, weather: { kind: 'clear' } }, T = typeof tob === 'function' ? tob() : null, packs = T ? CIG_KEYS.reduce(function (a, k) { return a + T.packs[k]; }, 0) : 0;
-    var staffN = (S.staff && S.staff.worker ? 1 : 0) + 1 + (X.staff.driver ? 1 : 0) + (X.staff.operator ? 1 : 0) + (X.staff.night ? 1 : 0);
+    var staffN = crewList().length + 1 + (X.staff.driver ? 1 : 0) + (X.staff.operator ? 1 : 0) + (X.staff.night ? 1 : 0);
     return {
       overview: [['Bank', money(S.bank), 'cash on site ' + money(cashOnSite())], ['Reputation', String(Math.round(S.rep)), 'level ' + S.level], ['Market', (S.market || 1).toFixed(2) + 'x', shop().open ? 'shop is open' : 'shop is closed'], ['Day', String(S.day || 1), (typeof season === 'function' ? season() : '') + ' · ' + X.weather.kind]],
       prs: [['Cured stash', Math.round(S.cured.g) + ' g', 'ready to pack'], ['Eighth bags', String(S.pkg.bags.n), 'on the goods shelf'], ['Joints', String(S.pkg.joints.n), 'on the goods shelf'], ['Cookies', String(S.pkg.cookies.n), 'on the goods shelf']],
@@ -4188,7 +4377,7 @@
   }
   function syncStaffDoorObstacle() { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'staffdoor'; }); if (!shop().staffDoor) world.obstacles.push(staffDoor.obstacle); }
   function toggleStaffDoor() { shop().staffDoor = !shop().staffDoor; syncStaffDoorObstacle(); sfx('door'); toast(shop().staffDoor ? 'Staff door open' : 'Staff door closed', ''); applyShopState(); save(); }
-  function updateStaffDoor(dt) { if (!staffDoor.g) return; var staffNear = (worker.g && Math.hypot(worker.g.position.x - 10, worker.g.position.z - 4) < 1.1) || (guard.h && guard.walking && Math.hypot(guard.h.position.x - 10, guard.h.position.z - 4) < 1.1); var target = (shop().staffDoor || staffNear) ? 1 : 0; staffDoor.t = lerp(staffDoor.t, target, 1 - Math.pow(0.01, dt)); staffDoor.g.rotation.y = -staffDoor.t * 1.75;
+  function updateStaffDoor(dt) { if (!staffDoor.g) return; var staffNear = crew.some(function (r) { return r.g && Math.hypot(r.g.position.x - 10, r.g.position.z - 4) < 1.1; }) || (guard.h && guard.walking && Math.hypot(guard.h.position.x - 10, guard.h.position.z - 4) < 1.1); var target = (shop().staffDoor || staffNear) ? 1 : 0; staffDoor.t = lerp(staffDoor.t, target, 1 - Math.pow(0.01, dt)); staffDoor.g.rotation.y = -staffDoor.t * 1.75;
     if (world.frontDoor) { var fd = world.frontDoor; var ft = shop().open ? 1 : 0; fd.t = lerp(fd.t, ft, 1 - Math.pow(0.01, dt)); fd.g.rotation.y = fd.t * 1.6; } }
   function drawCtlScreen() {
     if (!world.ctl || !world.ctl.canvas) return; var c = world.ctl.canvas, ctx = c.getContext('2d'), sh = shop();
@@ -4358,7 +4547,7 @@
     signPlane(['BROOM', 'sweep the dust · E on a patch'], 1.0, 0.36, ROOM.x - 0.02, 2.05, bz, -Math.PI / 2, { titleColor: '#ffc857' });
     syncBroom();
   }
-  function syncBroom() { var onWall = !(held() && held().kind === 'broom') && !worker.hasBroom; (world.broomMeshes || []).forEach(function (m) { m.visible = onWall; }); }
+  function syncBroom() { var onWall = !(held() && held().kind === 'broom') && !crew.some(function (r) { return r.hasBroom; }); (world.broomMeshes || []).forEach(function (m) { m.visible = onWall; }); }
 
   // ── Upstairs: private living floor reached by the office stairs ────
   var UP = { y: 3.75, h: 3.0 };                          // floor level + ceiling height of the upper floor
@@ -5722,11 +5911,41 @@
     var left = Math.max(0, Math.round((c.until - now()) / 1000)), total = c.stage ? 60 : (c.premium ? 75 : 60) * (S.upgrades.lounge2 ? 2 : S.upgrades.lobby ? 1.5 : 1);
     var h = '<div class="head"><span class="av">' + c.avatar + '</span><span class="who">' + esc(c.who) + (c.premium ? ' 🎩' : '') + '</span><span class="t' + (left < 15 ? ' late' : '') + '">' + (c.arrived || c.stage ? left + 's' : 'ID check') + '</span></div>';
     h += '<div class="bar"><i style="width:' + Math.round(Math.min(100, left / total * 100)) + '%"></i></div>';
+    if (c.idPending) return h + '<div class="row"><span class="ic">🪪</span><span class="tx">holding out their ID — <b>E</b> to check it</span></div>';
     if (!c.arrived && !c.stage) return h + '<div class="row"><span class="ic">🪪</span><span class="tx">coming through the ID check…</span></div>';
     orderRows(c).forEach(function (r) { h += '<div class="row' + (r.done ? ' done' : '') + (r.missed ? ' miss' : '') + '"><span class="ic">' + r.icon + '</span><span class="tx">' + esc(r.text) + '<small>' + esc(r.sub) + '</small></span><span class="ck">' + (r.done ? '✓' : r.missed ? '✗' : '') + '</span></div>'; });
     if (c.premium && !c.stage) h += '<div class="note">🎩 quality ' + c.minQ + '+ only · pays 2.2×</div>';
     if (c.stage) h += '<div class="note pay">' + (c.pay === 'card' ? '💳 pays by card · ' + money(c.due) : '💵 holds out ' + money(c.tendered) + ' for ' + money(c.due) + (c.tendered > c.due ? ' · change ' + money(c.tendered - c.due) : '')) + '<br>ring it up at the register</div>';
     return h;
+  }
+  function idCard(c) {
+    var id = c.id; if (!id) return;
+    var sub = id.by === 'guard' ? 'security passed this one' : 'they are holding it out to you';
+    var lines = [
+      { label: '🪪 ' + id.who + ' · ' + id.age + ' years old', cls: 'flat' },
+      { label: '№ ' + id.no + (id.by === 'guard' ? ' · checked at the door' : ''), cls: 'flat' }
+    ];
+    if (!id.ok) lines.push({ label: '⚠ ' + idFlawText(id), cls: 'flat' });
+    else lines.push({ label: 'Nothing wrong with it as far as you can see', cls: 'flat' });
+    lines.push({ label: '✅ Serve them', act: function () { idAccept(c); } });
+    lines.push({ label: '🚫 Refuse and show them out', act: function () { idRefuse(c); } });
+    ctxOpen('🪪 ' + c.who + "'s ID", sub, lines);
+  }
+  function idAccept(c) {
+    c.idPending = false; c.idDodgy = false; c.id.by = 'you';
+    if (!c.id.ok) {
+      addHeat(12); S.rep = Math.max(0, S.rep - 4);
+      toast('🪪 You served a bad ID — that is on you now', 'bad');
+      logEvent('🪪 Served ' + c.who + ' on an ID that was ' + ID_FLAWS[c.id.flaw].why + ' — heat +12, rep -4', 'bad');
+      if (Math.random() < 0.3) policeFine('Serving on an invalid ID');
+    } else { sfx('ok'); toast('🪪 ID checks out', 'good'); }
+    hud(); save();
+  }
+  function idRefuse(c) {
+    c.idPending = false;
+    if (!c.id.ok) { S.rep += 2; S.stats.idCaught = (S.stats.idCaught || 0) + 1; sfx('ok'); toast('🪪 Good catch · rep +2', 'good'); logEvent('🪪 Refused ' + c.who + ': ' + ID_FLAWS[c.id.flaw].why + ' — rep +2', 'good'); }
+    else { S.rep = Math.max(0, S.rep - 3); toast('🪪 Their ID was fine · rep -3', 'bad'); logEvent('🪪 Refused ' + c.who + ' over a perfectly good ID — rep -3', 'bad'); }
+    npc.leaveSad(); S.customer = null; hud(); save();
   }
   function wantText(c) { var lines = orderLines(c); var t = lines.map(function (l) { return l.qty + ' ' + (l.strain ? strainById(l.strain).name + ' ' : '') + kindName(l.kind, l.qty); }).join(', '); if (c.acc && c.acc.length) t += ' and a ' + c.acc.map(function (a2) { return ACC[a2.item].name; }).join(', a '); if (c.cig) t += ' and ' + c.cig.qty + ' × ' + CIG_SKUS[c.cig.sku].name; return t; }
   function tenderFor(due) { var opts = []; [5, 10, 20, 50, 100].forEach(function (d) { var v = Math.ceil(due / d) * d; if (v > due && v - due < 60) opts.push(v); }); return (Math.random() < 0.3 || !opts.length) ? due : pick(opts); }
@@ -5823,6 +6042,7 @@
     if (d.kind === 'customer' && h && h.kind === 'bat') return 'Swing at ' + (S.customer ? S.customer.who : 'them') + ' <small>a paying customer…</small>';
     if (d.kind === 'customer') {
       if (!S.customer) return 'Customer'; var c = S.customer;
+      if (c.idPending) return '🪪 Check ' + c.who + "'s ID <small>they are holding it out</small>";
       if (!c.arrived) return c.who + ' <small>still coming through the ID check</small>';
       var open = orderLines(c).filter(function (l) { return l.given.n < l.qty; });
       var cq = (c.cig && c.cig.given < c.cig.qty) ? c.cig : null;   /* the smokes ride on their own line, not in orderLines, so the prompt has to name them itself */
@@ -5938,7 +6158,10 @@
     else if (d.kind === 'jar') { if (hotbarFull()) { toast('Hands full — G to put things down', 'bad'); return; } var b = batchById(d.bid); if (!b || !b.cured) return; S.batches = S.batches.filter(function (x) { return x.id !== d.bid; }); take({ kind: 'jar', bid: b.id, grams: b.grams, quality: b.quality, baseQ: b.baseQ, thc: b.thc, startedAt: b.startedAt, strain: b.strain }); toast('Took the jar — empty it at the bench', 'good'); }
     else if (d.kind === 'line') { if (h && h.kind === 'harvest') actions.hang(); else ctxShelf(); }
     else if (d.kind === 'shelf') ctxShelf();
-    else if (d.kind === 'customer') { if (!S.customer) return; var hb2 = held(); if (hb2 && hb2.kind === 'bat') { swingBat(); return; } if (!S.customer.arrived && !S.customer.stage) { toast(S.customer.who + ' is still at the ID check', ''); return; } var cigWant = h && h.kind === 'cigs' && S.customer.cig && S.customer.cig.given < S.customer.cig.qty;   /* a cigarette side order is not in orderLines, so it needs its own way past the gate */
+    else if (d.kind === 'customer') { if (!S.customer) return; var hb2 = held(); if (hb2 && hb2.kind === 'bat') { swingBat(); return; }
+      if (S.customer.id && (S.customer.idPending || player.keys.ShiftLeft || player.keys.ShiftRight)) { idCard(S.customer); return; }   /* they are holding it out, or you have asked to see it again */
+      if (!S.customer.arrived && !S.customer.stage) { toast(S.customer.who + ' is still at the ID check', ''); return; }
+      var cigWant = h && h.kind === 'cigs' && S.customer.cig && S.customer.cig.given < S.customer.cig.qty;   /* a cigarette side order is not in orderLines, so it needs its own way past the gate */
       if (h && (cigWant || orderLines(S.customer).some(function (l) { return l.kind === h.kind && l.given.n < l.qty; }))) handOver(); else if (h) toast(S.customer.who + ' wants ' + wantText(S.customer), 'bad'); else { toast(S.customer.who + ' wants ' + wantText(S.customer) + ' — grab them from the goods shelf', ''); npc.say(wantText(S.customer) + ', when you can', '#6fdc8c'); } }
     else if (d.kind === 'tv') tvCycle();
     else if (d.kind === 'secdesk') { if (sec.view.on) camExit(); else camEnter(); }
@@ -6014,7 +6237,8 @@
     else if (d.kind === 'keyHook') keyHookInteract();
     else if (d.kind === 'lounger') { var lg2 = loungers.filter(function (l) { return l.id === d.lid; })[0]; if (!lg2) return; if (h && h.kind === 'bat') { swingBat(); return; } if (fight && (fight.a === lg2 || fight.b === lg2)) { endFight('player'); return; } loungerSay(lg2, pick(['all good, boss', 'nice place', '🙏', 'top shelf, this']), '#e8f1ea'); }
     else if (d.kind === 'stock') { if (isGoods(h) && !(player.keys.ShiftLeft || player.keys.ShiftRight)) stockStore(h); else ui.openPanel('stock'); }
-    else if (d.kind === 'worker') { if (player.keys.ShiftLeft || player.keys.ShiftRight) workerMenu(); else workerSay(pick(['on it, boss', workerTaskLabel(), 'all good here', 'need me somewhere?']), '#e8f1ea'); }
+    else if (d.kind === 'worker') { var wi = d.idx || 0;
+      if (player.keys.ControlLeft || player.keys.ControlRight) { crewShift(wi, true); return; }   /* Ctrl+E sends this one home */ var wr = crew.filter(function (x) { return x.idx === wi; })[0]; if (wr) worker = wr; if (player.keys.ShiftLeft || player.keys.ShiftRight) workerMenu(wi); else workerSay(pick(['on it, boss', workerTaskLabel(wi), 'all good here', 'need me somewhere?']), '#e8f1ea'); }
     else if (d.kind === 'guard' && (player.keys.ShiftLeft || player.keys.ShiftRight)) { guardMenu(); }
     else if (d.kind === 'guard') { guard.say(pick(['all quiet, boss', 'checked ' + (S.stats.sold + 3) + ' IDs today', 'no trouble tonight', 'want me to lock up later?']), '#e8f1ea', 2600); }
     else if (d.kind === 'water') { if (h && h.kind === 'can') { S.held = null; world.dirty = true; toast('Can back on the reel', ''); } else if (hotbarFull()) toast('Hands full — G to put things down', 'bad'); else { take({ kind: 'can' }); toast('💧 Grabbed the watering can — E on a plant to water', 'good'); } }
@@ -6237,10 +6461,19 @@
     return h;
   }
   function paneStaff() {
-    var st = S.staff; var h = '<div class="g3-grid"><div class="g3-box"><h3>🧑‍🔧 Shop assistant</h3>';
-    if (!st.worker) h += '<div class="desc">Jo can serve the window, restock the rack and the machines, sweep, and tend the plants. Give orders with <b>Shift+E</b> on her, or from here.</div><button class="g3-btn primary wide" data-act="hire">🤝 Hire Jo · ' + money(WORKER_HIRE) + ' now + ' + money(WORKER_WAGE) + ' a day from the bank</button>';
-    else { h += '<div class="desc">On the payroll · ' + money(WORKER_WAGE) + ' a day, taken from the bank each morning. If the bank cannot cover it she walks.</div><div class="g3-chips">' + WORKER_TASKS.map(function (t) { return '<button class="g3-btn' + (st.task === t[0] ? ' primary' : '') + '" data-act="workerTask" data-id="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="g3-btn wide" data-act="fire">👋 Let Jo go</button>'; }
-    h += '</div><div class="g3-box"><h3>🛡️ Security</h3><div class="desc">The guard checks IDs at the door by default. Send him on a patrol to keep robbers away and break up fights faster, or give him a chore. He always comes back to the door when someone walks in. <b>Shift+E</b> on him works too.</div><div class="g3-chips">' + GUARD_TASKS.map(function (t) { return '<button class="g3-btn' + (st.guardTask === t[0] ? ' primary' : '') + '" data-act="guardTask" data-id="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div></div></div>';
+    var st = S.staff, list = crewList();
+    var h = '<div class="g3-grid"><div class="g3-box"><h3>🧑‍🔧 Shop floor · ' + list.length + ' of ' + CREW_MAX + '</h3>';
+    h += '<div class="desc">Assistants serve the window, restock the rack and the machines, sweep and tend the plants. Each one takes ' + money(WORKER_WAGE) + ' a day out of the bank, and walks if it is not there. Give orders with <b>Shift+E</b> on them, or from here.</div>';
+    if (!list.length) h += '<div class="g3-empty">Nobody on the floor but you.</div>';
+    list.forEach(function (c, i) {
+      h += '<div class="g3-row"><span class="ico">' + (c.off ? '🏠' : '🧑‍🔧') + '</span><span class="meta"><span class="n">' + crewName(i) + '</span><span class="own">' + (c.off ? 'at home · no wage while they are off' : workerTaskLabel(i) + (c.post ? ' · posted at ' + c.post.x.toFixed(0) + ', ' + c.post.z.toFixed(0) : '') + ' · ' + money(WORKER_WAGE) + ' a day') + '</span></span><button class="g3-btn' + (c.off ? ' primary' : '') + '" data-act="crewShift" data-id="' + i + '">' + (c.off ? '📞 Call in' : '🏠 Send home') + '</button><button class="g3-btn" data-act="fire" data-id="' + i + '">Let go</button></div>';
+      if (!c.off) h += '<div class="g3-chips">' + WORKER_TASKS.map(function (t) { return '<button class="g3-btn' + (c.task === t[0] ? ' primary' : '') + '" data-act="workerTask" data-id="' + i + '|' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
+    });
+    if (list.length < CREW_MAX) h += '<button class="g3-btn primary wide" data-act="hire">🤝 Hire ' + CREW_LOOK[Math.min(list.length, CREW_LOOK.length - 1)].name + ' · ' + money(crewHireCost()) + ' now + ' + money(WORKER_WAGE) + ' a day</button>';
+    else h += '<div class="desc">That is as many as the shop floor will take.</div>';
+    h += '</div><div class="g3-box"><h3>🛡️ Security · ' + (guardOff() ? 'off shift' : 'on the door') + '</h3>' +
+      '<button class="g3-btn wide' + (guardOff() ? ' primary' : '') + '" data-act="guardShift">' + (guardOff() ? '📞 Call security in' : '🏠 Send security home') + '</button>' +
+      '<div class="desc">The guard checks IDs at the door by default. Send him on a patrol to keep robbers away and break up fights faster, or give him a chore. He always comes back to the door when someone walks in. <b>Shift+E</b> on him works too.</div><div class="g3-chips">' + GUARD_TASKS.map(function (t) { return '<button class="g3-btn' + (st.guardTask === t[0] ? ' primary' : '') + '" data-act="guardTask" data-id="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div></div></div>';
     return h;
   }
   function paneRegister() {
@@ -6281,9 +6514,11 @@
     else if (act === 'stockAllToShelf') { ['bags', 'joints', 'cookies'].forEach(function (k) { Object.keys(S.stock[k] || {}).forEach(function (sid) { stockToShelf(k, sid); }); }); toast('🛍️ Everything is out on the shelf', ''); sfx('putdown'); }
     else if (act === 'buyUnit') { buyUnit(id); }
     else if (act === 'hire') { hireWorker(); }
-    else if (act === 'fire') { fireWorker(); }
-    else if (act === 'workerTask') { workerTask(id); }
+    else if (act === 'fire') { fireWorker(+id); }
+    else if (act === 'workerTask') { var wt = String(id).split('|'); workerTask(wt[1], +wt[0]); }
     else if (act === 'guardTask') { guardTask(id); }
+    else if (act === 'crewShift') { crewShift(+id); }
+    else if (act === 'guardShift') { guardShift(); }
     else if (act === 'tillEmpty') { var tl2 = S.till; if (takeCash(tl2, 'till')) S.till = 0; }
     else if (act === 'vaultDeposit') { if (S.pocket > 0) { var dp2 = S.pocket; S.vault += dp2; S.pocket = 0; sfx('vault'); toast('🔒 ' + money(dp2) + ' into the vault', 'good'); logEvent('🔒 Vault deposit: ' + money(dp2), ''); } }
     else if (act === 'vaultWithdraw') { var amt = id === 'all' ? S.vault : id === 'courier' ? Math.max(0, (S.courier ? S.courier.amount : 0) - S.pocket) : +id; amt = Math.min(amt, S.vault); if (amt > 0) { S.vault -= amt; S.pocket += amt; sfx('vault'); toast('👛 Took ' + money(amt) + ' out — pocket ' + money(S.pocket), 'good'); } }
@@ -6508,6 +6743,7 @@
     if (!ui.started) return;
     if (ui.taskOpen) { if (e.code === 'Escape') { taskCancel(); } else if (e.code === 'Space' && !e.repeat) taskPress(true); e.preventDefault(); return; }   // Space is the only task key: E, clicks and every other key are swallowed while a task runs
     if (sec.view.on && !ui.blocked()) { if (e.code === 'Escape' || e.code === 'KeyE') camExit(); else if (/^Digit[1-6]$/.test(e.code)) camShow(+e.code.charAt(5) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') camShow(sec.view.idx + 1); else if (e.code === 'ArrowLeft' || e.code === 'KeyA') camShow(sec.view.idx - 1); e.preventDefault(); return; }
+    if (e.code === 'Escape' && postPick >= 0) { postPick = -1; toast('📍 Cancelled', ''); e.preventDefault(); return; }
     if (e.code === 'Escape') { if (!ui.blocked() && runHooks(hooks.keydown, e)) { e.preventDefault(); return; } if (ui.ctxOpen) { ctxClose(); } else if (ui.panelOpen) { ui.closePanel(); } else if (ui.menuOpen) { closeMenu(); } else { openMenu(); } e.preventDefault(); return; }
     if (ui.ctxOpen) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') { ctxClose(); e.preventDefault(); } return; }
     if (ui.panelOpen || ui.menuOpen) { if (e.code === 'Tab' && ui.panelKind === 'inventory') { ui.closePanel(); e.preventDefault(); } return; }
@@ -6529,6 +6765,7 @@
     if (/^Digit[1-6]$/.test(e.code)) { selectSlot(+e.code.charAt(5) - 1); sfx('click'); e.preventDefault(); return; }
     if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }
     if (e.code === 'KeyJ') { jobsPanel(); e.preventDefault(); return; }
+    if (e.code === 'KeyE' && postPick >= 0) { postSet(); e.preventDefault(); return; }
     if (e.code === 'KeyE') { interact(); e.preventDefault(); }
     if (e.code === 'KeyP') { panicButton(); e.preventDefault(); }
     if (e.code === 'Tab') { ui.openPanel('inventory'); e.preventDefault(); }
