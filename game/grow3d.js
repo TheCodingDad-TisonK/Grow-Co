@@ -6016,7 +6016,7 @@
       case 'goods': STRAINS.forEach(function (st) { ['bags', 'joints', 'cookies'].forEach(function (k) { lotAdd(k, st.id, 5, 72, st.thc); }); }); break;
       case 'supplies': SUPPLIES.forEach(function (it) { if (it.tool) S.supplies[it.id] = 1; else S.supplies[it.id] = (S.supplies[it.id] || 0) + 10; }); STRAINS.forEach(function (st) { S.supplies['seed_' + st.id] = (S.supplies['seed_' + st.id] || 0) + 5; }); break;
       case 'storage': SUPPLIES.forEach(function (it) { if (!it.tool) S.storage[it.id] = (S.storage[it.id] || 0) + (it.qty || 10); }); STRAINS.forEach(function (st) { S.storage['seed_' + st.id] = (S.storage['seed_' + st.id] || 0) + 5; }); break;
-      case 'machines': S.vendStock.drink = 24; S.vendStock.snack = 24; S.coffeeStock.cup = 80; S.coffeeStock.beans = 80; S.display.lighter = 20; S.display.rpaper = 10; S.display.rgrinder = 5; break;
+      case 'machines': S.vendStock.drink = 24; S.vendStock.snack = 24; S.coffeeStock.cup = 80; S.coffeeStock.beans = 80; S.display.lighter = 20; S.display.rpaper = 10; S.display.rgrinder = 5; unitIds('fridge').forEach(function (u) { machState(u).fridge = 16; }); break;   /* the fridge holds its own cans rather than drawing on the shop's, so it needs filling by name */
       case 'plants': S.plants = []; S.potSoil = {}; for (var i = 0; i < slots(); i++) { var st2 = STRAINS[i % STRAINS.length]; S.potSoil[i] = true; S.plants.push({ id: 'p' + now() + i, strain: st2.id, progress: 1, quality: 75, thirst: 0.1, fed: true, hazard: null, slot: i }); } S.supplies.pot = Math.max(S.supplies.pot || 0, slots()); break;
       case 'batches': STRAINS.slice(0, 5).forEach(function (st, i) { S.batches.push({ id: 'b' + now() + i, grams: 18, quality: 70, baseQ: 70, thc: st.thc, startedAt: now(), cured: i >= 3, dry: i >= 3 ? 1 : 0.2, strain: st.id }); }); break;
       case 'customer': case 'premium': closeMenu(); if (S.customer) { S.customer = null; npc.leaveSad(); toast('Sending the current customer away first — the new one walks in after', ''); } else spawnCustomer(id === 'premium'); break;
@@ -6033,7 +6033,7 @@
       case 'empty': S.hotbar = [null, null, null, null, null, null]; break; case 'humid': S.rh.grow = 80; S.rh.dry = 80; break;
       case 'tp_lobby': tp(0, 6.5); return; case 'tp_office': tp(-8, 1); return; case 'tp_grow': tp(-3, -4); return; case 'tp_annex': tp(4, -10.5); return; case 'tp_yard': tp(4.5, -15); return; case 'tp_security': tp(10, -10); return;
     }
-    world.dirty = true; rebuildDynamic(); syncRack(); syncDust(); hud(); save(); applyShopState(); updateDayNight(); sfx('rare'); toast('🛠 ' + (DEV.filter(function (d) { return d[0] === id; })[0] || [id, id])[1], 'good');
+    world.dirty = true; rebuildDynamic(); syncRack(); syncDust(); syncMachines(); hud(); save(); applyShopState(); updateDayNight(); sfx('rare'); toast('🛠 ' + (DEV.filter(function (d) { return d[0] === id; })[0] || [id, id])[1], 'good');
   }
   $('g3-menu-body').addEventListener('click', function (e) { var ia = e.target.closest('[data-act]'); if (ia) { var act = ia.getAttribute('data-act'); if (act === 'introSkip') introSkip(); else if (act === 'introRestart') introRestart(); else return; $('g3-menu-body').innerHTML = introMenuHtml(); return; } var b = e.target.closest('[data-dev]'); if (!b) return; devAction(b.getAttribute('data-dev')); });   /* the pause menu carries its own actions as well as the dev buttons */
   function settingsHtml() {

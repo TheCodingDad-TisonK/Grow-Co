@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.14.1
+
+**The dev tools' "Fill machines" never filled the drinks fridge.** It topped up the shop's drinks, snacks, cups and beans, but the fridge is the one machine you load by hand, so its cans live on the fridge itself rather than in the shop's stock, and nothing ever put any there. It now fills every fridge you own. This was never a new problem, it just got easier to notice once you could own three of them.
+
+While it was open: nothing in the dev tools was redrawing the machines afterwards, so the coils, the cup stack, the bean hopper and the fridge shelves kept showing the old numbers until you next touched one. They refresh on the spot now.
+
 ## v1.14
 
 **You can own more than one machine.** Props were one instance per name, so the shop could hold exactly one vending machine, one coffee machine, one arcade cabinet and one fridge, and that was the end of it. Buy extras at the laptop under **Gear**, in the new **Machines** box: up to four vending machines, four coffee machines, four arcade cabinets and three fridges, each costing a little more than the last.
