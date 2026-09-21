@@ -65,7 +65,7 @@ The game needs no server logic. Anything that can serve the `game/` folder as st
 
 `WASD` move · `Shift` run · `E` use, pick up, hand over · `Shift+E` second action · `G` put back · `1 to 6` hotbar · `Tab` inventory · `M` map · `P` silent alarm · `F2` edit mode · `F3` creative mode · right click closes menus · `F7` report a bug · `Esc` pause · `F11` fullscreen
 
-The main menu has a thirteen chapter guide, including an "I am stuck" chapter. The same guide is in the [wiki](https://github.com/TheCodingDad-TisonK/Grow-Co/wiki/Player-Guide).
+The main menu has a twenty chapter guide, including an "I am stuck" chapter. The same guide is in the [wiki](https://github.com/TheCodingDad-TisonK/Grow-Co/wiki/Player-Guide).
 
 ## Repository layout
 

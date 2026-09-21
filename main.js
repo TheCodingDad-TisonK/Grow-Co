@@ -53,8 +53,10 @@ function createWindow() {
   });
 
   // the game never navigates anywhere; anything that tries opens in the real browser instead
-  win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
-  win.webContents.on('will-navigate', (event, url) => { if (!url.startsWith('file:')) { event.preventDefault(); shell.openExternal(url); } });
+  // only http(s) links: anything else (file:, smb:, a protocol handler) would be run by the shell, not shown in a browser
+  const openWeb = (url) => { try { if (/^https?:$/.test(new URL(url).protocol)) shell.openExternal(url); } catch (e) {} };
+  win.webContents.setWindowOpenHandler(({ url }) => { openWeb(url); return { action: 'deny' }; });
+  win.webContents.on('will-navigate', (event, url) => { if (!url.startsWith('file:')) { event.preventDefault(); openWeb(url); } });
   win.on('closed', () => { win = null; });
 }
 

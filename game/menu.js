@@ -41,7 +41,7 @@
   function showMain() {
     card.classList.remove('wide');
     var head = '';
-    if (urlSave) head = '<div class="rf-how">Developer save "' + urlSave + '" is loaded. <button data-rf="play" class="primary" style="margin-top:8px;width:100%">▶ Play it</button></div>';
+    if (urlSave) head = '<div class="rf-how">Developer save "' + esc(urlSave) + '" is loaded. <button data-rf="play" class="primary" style="margin-top:8px;width:100%">▶ Play it</button></div>';
     else if (SLOTS) { var rows = ''; for (var n = 1; n <= SLOTS; n++) rows += slotRow(n); head = '<div class="rf-slots">' + rows + '</div>'; }
     else { var one = readSlot(1); head = '<div class="rf-menu-btns"><button class="primary" data-rf="play">' + (used(one) ? '▶ Continue' : '▶ Start your shop') + '</button></div><div class="rf-menu-save">' + (used(one) ? line(one) : 'No shop yet. It starts with a tent, a seed and ' + money(220)) + '</div>'; }
     var WS = window.RF_WORKSHOP, wsn = WS ? WS.activeCount() : 0;
@@ -63,7 +63,7 @@
       html += '<h3 class="rf-ws-head">' + k + '</h3><div class="rf-ws-grid">';
       groups[k].forEach(function (p) {
         html += '<div class="rf-ws-card' + (p.on ? ' on' : '') + '">' +
-          '<div class="rf-ws-ico">' + p.icon + '</div>' +
+          '<div class="rf-ws-ico">' + esc(p.icon) + '</div>' +
           '<div class="rf-ws-body"><b>' + esc(p.name) + '</b><small>' + esc(p.blurb) + '</small>' +
           '<span class="rf-ws-meta">' + esc(p.counts) + ' · by ' + esc(p.author) + (p.group ? ' · one at a time' : '') + '</span></div>' +
           '<div class="rf-ws-act"><button class="' + (p.on ? 'primary' : '') + '" data-rf="ws-on" data-id="' + esc(p.id) + '">' + (p.on ? '✓ On' : 'Off') + '</button>' +

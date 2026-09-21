@@ -16,8 +16,9 @@ npx wrangler secret put GITHUB_TOKEN     # fine-grained token, this repo only, I
 npx wrangler deploy
 ```
 
-Optional rate limiting: create a KV namespace and bind it as `RATE` in `wrangler.toml`. Without it the
-relay still works, it just does not count reports per IP.
+Rate limiting is required: create a KV namespace and bind it as `RATE` in `wrangler.toml`. The relay
+address ships inside the game, so it is public, and without the binding the relay refuses every report
+(503). It allows 5 reports an hour per IP and 150 a day in total.
 
 ## Point the game at it
 

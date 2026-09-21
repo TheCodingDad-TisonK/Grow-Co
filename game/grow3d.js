@@ -208,6 +208,7 @@
     if (!S.lic && S.stats && S.stats.earned > 0) { S.lic = { retail: true, catering: true, amusement: true, lounge: true }; if (S.tent >= 2) S.lic.cult2 = true; }   // a shop that was already trading keeps what it could do before licences existed
     var f = fresh();
     for (var k in f) if (S[k] === undefined) S[k] = f[k];
+    for (var k1 in f) { var fd = f[k1], sd = S[k1]; if (fd && sd && typeof fd === 'object' && typeof sd === 'object' && !Array.isArray(fd) && !Array.isArray(sd)) for (var k2 in fd) if (sd[k2] === undefined) sd[k2] = fd[k2]; }   /* one level down too: books, box, rh */
     for (var sk in f.supplies) if (S.supplies[sk] === undefined) S.supplies[sk] = f.supplies[sk];
     if (!S.potSoil || typeof S.potSoil !== 'object') S.potSoil = {};
     // older saves kept one pooled stash and one pile per kind: file them under the starter strain
@@ -215,6 +216,8 @@
     if (!Object.keys(S.stash).length && S.cured && S.cured.g > 0) S.stash.sunflower = { g: S.cured.g, qSum: S.cured.qSum, thcSum: S.cured.thcSum };
     ['bags', 'joints', 'cookies'].forEach(function (k) { if (!Object.keys(S.lots[k]).length && S.pkg && S.pkg[k] && S.pkg[k].n > 0) S.lots[k].sunflower = { n: S.pkg[k].n, qSum: S.pkg[k].qSum, thcSum: S.pkg[k].thcSum }; });
     syncTotals(); bindHotbar();
+    S.vip = null;   /* the lounge guest is a runtime figure: a saved one can never be served or sent away, and blocks every later guest */
+    S.tent = clamp(Math.floor(+S.tent || 0), 0, TENTS.length - 1);   /* a tent from a content pack that has since been switched off */
     if (!S.intro) S.intro = { i: 0, done: false, skipped: false };
     if (!S.intro.done && !S.intro.skipped && S.intro.i === 0 && ((S.stats && S.stats.earned > 0) || S.day > 1 || S.plants.length || S.xp > 0)) S.intro.skipped = true;   /* a shop that is already running never gets handed a tutorial */
     // plants keep a fixed pot (slot); older saves get the first free ones
@@ -224,7 +227,11 @@
     return S;
   }
   var saveT = null;
-  function save() { if (saveT) return; saveT = setTimeout(function () { saveT = null; try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} }, 300); }
+  var saveFailed = false;
+  function writeSave() { try { localStorage.setItem(SAVE, JSON.stringify(S)); saveFailed = false; } catch (e) { if (!saveFailed) { saveFailed = true; try { toast('⚠ The game could not save: the storage is full or blocked', 'bad'); } catch (e2) {} } } }
+  function save() { if (saveT) return; saveT = setTimeout(function () { saveT = null; writeSave(); }, 300); }
+  function saveNow() { if (saveT) { clearTimeout(saveT); saveT = null; } writeSave(); }   /* the debounce would lose the last change when the window closes */
+  window.addEventListener('pagehide', function () { if (ui.started) saveNow(); }); window.addEventListener('beforeunload', function () { if (ui.started) saveNow(); });
   function slots() { return TENTS[S.tent].slots; }
   function lightObj() { for (var i = 0; i < LIGHTS.length; i++) if (LIGHTS[i].id === S.light) return LIGHTS[i]; return LIGHTS[0]; }
   function lightIdx() { for (var i = 0; i < LIGHTS.length; i++) if (LIGHTS[i].id === S.light) return i; return 0; }
@@ -487,7 +494,7 @@
   // ── Sim engine (same rules as the 2D game) ────────────────────────
   function step(dt, offline) {
     var L = lightObj(); var auto = !!S.upgrades.autowater;
-    if (SET.dayNight === 'cycle') { S.clock += dt / 60 / (+SET.dayLength || 20) * 24; while (S.clock >= 24) { S.clock -= 24; S.day = (S.day || 1) + 1; payBills(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
+    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ while (S[dKey] >= 24) { S[dKey] -= 24; S.day = (S.day || 1) + 1; payBills(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
     creditPending(offline); updateLogistics(dt, offline);
     // humidity: each room drifts toward its moisture load; a running dehumidifier pulls it down to its target
     var pull = S.upgrades.hvac ? 4.0 : S.upgrades.dehumid ? 1.6 : 0.8; var wetBatches = S.batches.filter(function (b) { return !b.cured; }).length;
@@ -503,8 +510,9 @@
         if (!offline && was < 1 && p.progress >= 1) { logEvent('🌸 A ' + strainById(p.strain).name + ' is ready to harvest', 'good'); }
       }
       if (S.upgrades.doser && !p.fed && p.progress > 0.35) { p.fed = true; p.quality = clamp(p.quality + 12, 20, 100); if (!offline) logEvent('🧪 The doser fed a ' + strainById(p.strain).name, ''); }
-      if (!auto) p.thirst = clamp(p.thirst + THIRST_RATE * (S.rh.grow < 42 ? 1.3 : 1) * dt, 0, 1);
-      if (!auto && p.thirst > 0.7) p.quality = clamp(p.quality - 0.5 * dt, 20, 100);
+      var thWas = p.thirst, thRate = THIRST_RATE * (S.rh.grow < 42 ? 1.3 : 1);
+      if (!auto) p.thirst = clamp(p.thirst + thRate * dt, 0, 1);
+      if (!auto && p.thirst > 0.7) { var dryDt = thWas > 0.7 ? dt : Math.max(0, dt - (0.7 - thWas) / thRate); p.quality = clamp(p.quality - 0.5 * dryDt, 20, 100); }   /* only the part of the step actually spent thirsty costs quality */
       if (p.hazard) p.quality = clamp(p.quality - 0.8 * dt, 20, 100);
       else if (!offline && p.progress > 0.4 && p.progress < 1) {
         var hc = HAZARD_CHANCE * (S.upgrades.security2 ? 0.25 : S.upgrades.security ? 0.5 : 1) * moldMult();
@@ -515,7 +523,7 @@
     for (var b = 0; b < S.batches.length; b++) {
       var batch = S.batches[b];
       if (!batch.cured) { if (batch.dry === undefined) batch.dry = clamp((now() - batch.startedAt) / dryMs(), 0, 1); batch.dry = clamp(batch.dry + (dt * 1000 / dryMs()) * dryFactor(), 0, 1); if (batch.dry >= 1) { batch.cured = true; if (!offline) logEvent('🏺 A batch finished drying — it is curing on the shelf', ''); } }
-      else { var gained = 0.5 * rackFast * dt; if (batch.quality < batch.baseQ + cureCap) batch.quality = clamp(batch.quality + gained, 0, 100); }
+      else { var gained = 0.5 * rackFast * dt; if (batch.quality < batch.baseQ + cureCap) batch.quality = clamp(batch.quality + gained, 0, Math.min(100, batch.baseQ + cureCap)); }
     }
     if (!offline) {
       var target = (S.event && S.event.mult) ? S.event.mult : 1.0;
@@ -922,6 +930,17 @@
     highlight: new THREE.MeshBasicMaterial({ color: 0x6fdc8c, transparent: true, opacity: 0.25, side: THREE.DoubleSide }),
     none: new THREE.MeshBasicMaterial({ visible: false })
   };
+  // a discarded part of the scene gives its GPU buffers back. Shared tables (MAT, TEX, product materials, face textures) are left alone.
+  function disposeTree(root) {
+    if (!root || !root.traverse) return; var keep = [];
+    [MAT, TEX, typeof PROD_M === 'object' ? PROD_M : null, typeof faceCache === 'object' ? faceCache : null].forEach(function (tb) { if (tb) for (var k in tb) keep.push(tb[k]); });
+    root.traverse(function (o) {
+      if (o.geometry && o.geometry.dispose) o.geometry.dispose();
+      var ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+      ms.forEach(function (m) { if (!m || keep.indexOf(m) >= 0) return; if (m.map && m.map.isCanvasTexture && keep.indexOf(m.map) < 0) m.map.dispose(); if (m.dispose) m.dispose(); });
+    });
+  }
+  function clearKids(g) { while (g.children.length) { var ch = g.children[0]; g.remove(ch); disposeTree(ch); } }
   function colorMat(hex, rough, metal, extra) { var m = new THREE.MeshStandardMaterial({ color: hex, roughness: rough === undefined ? 0.7 : rough, metalness: metal || 0 }); if (extra) for (var k in extra) m[k] = extra[k]; return m; }
   function fabricMat(hex) { var m = MAT.fabric.clone(); m.color.setHex(hex); return m; }
   function glowMat(hex, intensity) { return new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: intensity || 1.5, roughness: 0.4 }); }
@@ -1388,7 +1407,7 @@
     return { pot: pot, soil: soil };
   }
   function buildTent() {
-    if (world.tentGroup) { world.group.remove(world.tentGroup); world.interact = world.interact.filter(function (m) { return !m.userData.tent; }); world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'tent' && o.tag !== 'pot'; }); }
+    if (world.tentGroup) { world.group.remove(world.tentGroup); disposeTree(world.tentGroup); world.interact = world.interact.filter(function (m) { return !m.userData.tent; }); world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'tent' && o.tag !== 'pot'; }); }
     var g = new THREE.Group(); world.tentGroup = g; world.group.add(g);
     var ts = tentSize(); var h = 2.4; var ox = TENT_ORIGIN.x, oz = TENT_ORIGIN.z;
     // tent shell: back + two sides + roof, open front (toward +z). Mylar inside.
@@ -1601,7 +1620,7 @@
   function goodsWidth() { return goodsCols() * GOODS_CELL; }
   function syncGoods() {
     var inst = propInst.goodsShelf; if (!inst) return;
-    var gg = inst.ctx.dynGroup(); var gate = gg.userData.shutter; while (gg.children.length) gg.remove(gg.children[0]); if (gate) gg.add(gate);   /* restocking must not throw the roll gate away with the goods */
+    var gg = inst.ctx.dynGroup(); var gate = gg.userData.shutter; clearKids(gg); if (gate) gg.add(gate);   /* restocking must not throw the roll gate away with the goods */
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'goods'; });
     var cellW = 0.8, cellY = [0.185, 0.76, 1.32], cols = goodsCols();
     STRAINS.forEach(function (st, i) {
@@ -1627,7 +1646,7 @@
   }
   function syncStorage() {
     var inst = propInst.storeRack; if (!inst) return;
-    var gg = inst.ctx.dynGroup(); while (gg.children.length) gg.remove(gg.children[0]);
+    var gg = inst.ctx.dynGroup(); clearKids(gg);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'storage'; });
     var ids = Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }); var slotsY = [0.265, 0.965, 1.665];
     ids.slice(0, 15).forEach(function (id, i) {
@@ -1640,7 +1659,7 @@
     gg.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'storeRack'; });
   }
   function syncDisplay() {
-    var dg = world.displayGroup; if (!dg) return; while (dg.children.length) dg.remove(dg.children[0]); var d = S.display || {};
+    var dg = world.displayGroup; if (!dg) return; clearKids(dg); var d = S.display || {};
     for (var i = 0; i < Math.min(d.lighter || 0, 8); i++) { var lt = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.07, 0.012), colorMat([0xc94a3a, 0x2f6b9a, 0x3aa36a, 0xffd166, 0xf2f2f2, 0x7a5aa8][i % 6], 0.4)); lt.position.set(0.73 + i * 0.045, 1.12, 4.32); dg.add(lt); var cap = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.015, 0.012), MAT.chrome); cap.position.set(0.73 + i * 0.045, 1.163, 4.32); dg.add(cap); }
     for (var p = 0; p < Math.min(d.rpaper || 0, 5); p++) { var pk = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.075, 0.012), colorMat(p % 2 ? 0xf5f0e0 : 0xd9b36a, 0.8)); pk.position.set(0.75 + p * 0.065, 1.195, 4.18); pk.rotation.x = 0.15; dg.add(pk); }
     for (var q = 0; q < Math.min(d.rgrinder || 0, 3); q++) { var gr = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.03, 12), colorMat([0x2a2d33, 0x8a6a2a, 0x3a3f46][q], 0.4, 0.6)); gr.position.set(1.07 + q * 0.065, 1.1, 4.3); dg.add(gr); }
@@ -1648,9 +1667,9 @@
   }
   function syncShelf() {
     if (!propInst.cureShelf || !propInst.dryRack || !propInst.bench) return;
-    var g = propInst.cureShelf.ctx.dynGroup(); while (g.children.length) g.remove(g.children[0]);
-    var lg = propInst.dryRack.ctx.dynGroup(); while (lg.children.length) lg.remove(lg.children[0]);
-    var bg = propInst.bench.ctx.dynGroup(); while (bg.children.length) bg.remove(bg.children[0]);
+    var g = propInst.cureShelf.ctx.dynGroup(); clearKids(g);
+    var lg = propInst.dryRack.ctx.dynGroup(); clearKids(lg);
+    var bg = propInst.bench.ctx.dynGroup(); clearKids(bg);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'shelf' && m.userData.dynGroup !== 'bench'; });
     syncGoods(); syncStorage(); syncDisplay();
     var jarsOwned = S.supplies.jar || 0;
@@ -1883,7 +1902,7 @@
     guard.h.traverse(function (o) { if (o.isMesh && o !== badge) interactable(o, { kind: 'guard' }); });
     world.obstacles.push({ x1: 1.4, x2: 2.0, z1: 7.0, z2: 7.6, tag: 'guard' });
   }
-  guard.say = function (text, color, ms) { var ob = guard.bubble.material.map; guard.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); guard.bubble.material.needsUpdate = true; if (ob) ob.dispose(); guard.bubble.visible = true; clearTimeout(guard.sayT); guard.sayT = setTimeout(function () { guard.bubble.visible = false; }, ms || 2200); };
+  guard.say = function (text, color, ms) { if (!guard.bubble) return; var ob = guard.bubble.material.map; guard.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); guard.bubble.material.needsUpdate = true; if (ob) ob.dispose(); guard.bubble.visible = true; clearTimeout(guard.sayT); guard.sayT = setTimeout(function () { guard.bubble.visible = false; }, ms || 2200); };
   function updateGuard(dt) {
     if (guardOff() || !guard.h) return;
     if (!guard.h) return;
@@ -1945,12 +1964,12 @@
       var ch = Math.hypot(cx - tx, cz - tz); if (ch < bestH) { bestH = ch; best = cur; }
       for (var dz = -1; dz <= 1; dz++) for (var dx = -1; dx <= 1; dx++) { if (!dx && !dz) continue; var nx = cx + dx, nz = cz + dz; if (!navFree(nx, nz)) continue; if (dx && dz && (!navFree(cx + dx, cz) || !navFree(cx, cz + dz))) continue; var ni = nz * W + nx; if (closed[ni]) continue; var ng = gs[cur] + (dx && dz ? 1.4142 : 1); if (ng < gs[ni]) { gs[ni] = ng; came[ni] = cur; push(ni, ng + Math.hypot(nx - tx, nz - tz)); } }
     }
-    if (!found) { if (best < 0) return [{ x: from.x, z: from.z }]; ti = best; }   /* no way through: go as far as there is a way, rather than straight through the wall */
+    var cutShort = !found; if (!found) { if (best < 0) return [{ x: from.x, z: from.z }]; ti = best; }   /* no way through: go as far as there is a way, rather than straight through the wall */
     var cells = []; for (var c = ti; c !== -1; c = came[c]) cells.push({ x: NAV.x0 + (c % W) * cs, z: NAV.z0 + ((c / W) | 0) * cs }); cells.reverse();
     // string pulling: keep only the corners that need to be there
     var out = [], anchor = { x: from.x, z: from.z }, k2 = 0;
     while (k2 < cells.length) { var far = k2; for (var j = cells.length - 1; j > k2; j--) { if (navLos(anchor, cells[j])) { far = j; break; } } if (far === k2 && k2 < cells.length - 1 && !navLos(anchor, cells[k2])) far = k2; out.push(cells[far]); anchor = cells[far]; k2 = far + 1; }
-    var last = out[out.length - 1]; if (last && Math.hypot(last.x - to.x, last.z - to.z) < 0.6 && navLos(last, to)) out[out.length - 1] = { x: to.x, z: to.z }; else out.push({ x: to.x, z: to.z });
+    var last = out[out.length - 1]; if (last && Math.hypot(last.x - to.x, last.z - to.z) < 0.6 && navLos(last, to)) out[out.length - 1] = { x: to.x, z: to.z }; else if (!cutShort) out.push({ x: to.x, z: to.z });
     return out;
   }
   function routeTo(from, x, z, thruDoors) { return navPath(from, { x: x, z: z }, thruDoors); }
@@ -2058,7 +2077,7 @@
     var list = crewList(); if (!list.length) return;
     for (var i = list.length - 1; i >= 0; i--) {
       if (list[i].off) { logEvent('🏠 ' + crewName(i) + ' was off, no wage', ''); continue; }   /* sent home means sent home: no work, no pay, no quitting over it */
-      if (S.bank >= WORKER_WAGE) { S.bank -= WORKER_WAGE; logEvent('💸 Paid ' + crewName(i) + ' ' + money(WORKER_WAGE), ''); }
+      if (S.bank + S.vault + S.till >= WORKER_WAGE) { drawFunds(WORKER_WAGE); logEvent('💸 Paid ' + crewName(i) + ' ' + money(WORKER_WAGE), ''); }
       else {
         var nm = crewName(i); list.splice(i, 1);
         if (!offline) { toast('👋 ' + nm + ' quit — the wages did not come out', 'bad'); }
@@ -2206,7 +2225,7 @@
     npc.bubble = sprite(textTex(['…'], 512, 200, { size: 40 }), 1.5, 0.58, 0, 2.25, 0, g);
   }
   npc.setCustomer = function (c) {
-    if (npc.human) { npc.g.remove(npc.human); world.interact = world.interact.filter(function (m) { return !m.userData.npc; }); }
+    if (npc.human) { npc.g.remove(npc.human); disposeTree(npc.human); world.interact = world.interact.filter(function (m) { return !m.userData.npc; }); }
     var spec = CAST[c.who] || {}; npc.human = makeHuman(spec); npc.g.add(npc.human); npc.who = c.who; npc.cust = c;
     var hitBox = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hitBox.position.y = 1.25; hitBox.userData.npc = true; npc.human.add(hitBox); interactable(hitBox, { kind: 'customer', label: c.who, prompt: 'Serve' });
     npc.setBubble(c);
@@ -2320,7 +2339,7 @@
   }
   function courierArrive() {
     if (!courier.g) { courier.g = new THREE.Group(); world.group.add(courier.g); courier.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, courier.g); }
-    if (courier.h) courier.g.remove(courier.h);
+    if (courier.h) { courier.g.remove(courier.h); disposeTree(courier.h); }
     courier.h = makeHuman({ skin: 0xe0ac7e, hair: 0x2b1b12, shirt: 0x1f3a5f, pants: 0x1f3a5f, hat: 'cap', capColor: 0x1f3a5f, longSleeve: true, hairStyle: 'short', watch: true, shoes: 0x111111, logo: '🏦', mood: 'neutral' });
     courier.g.add(courier.h); var el = courier.h.userData.parts.lArm.userData.elbow; var cs = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.1), colorMat(0x1a1c20, 0.5, 0.3)); cs.position.set(0, -0.45, 0.02); el.add(cs);
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; hb.userData.courier = true; courier.h.add(hb); interactable(hb, { kind: 'courier' });
@@ -2368,7 +2387,7 @@
   }
   function lieDown(h) { h.rotation.x = -Math.PI / 2; h.position.y = 0.28; }
   function standBack(h) { h.rotation.x = 0; h.position.y = 0; }
-  function policeFine(reason) { addHeat(15); var fine = 500; S.bank = Math.max(0, S.bank - fine); S.noCustomersUntil = now() + 120000; logEvent('🚓 ' + reason + ' — police fine ' + money(fine) + ', customers stay away for a while', 'bad'); toast('🚓 Police fine ' + money(fine) + ' — no customers for 2 minutes', 'bad'); }
+  function policeFine(reason) { addHeat(15); var fine = 500; drawFunds(fine); S.noCustomersUntil = now() + 120000; logEvent('🚓 ' + reason + ' — police fine ' + money(fine) + ', customers stay away for a while', 'bad'); toast('🚓 Police fine ' + money(fine) + ' — no customers for 2 minutes', 'bad'); }
   function hitNpc(what, ref) {
     if (what === 'customer') {
       if (npc.state === 'down') { npc.state = 'out'; npc.downT = 0; S.rep = Math.max(0, S.rep - 25); logEvent('🚑 ' + npc.who + ' is out cold — an ambulance took them away', 'bad'); policeFine('You put ' + npc.who + ' in hospital'); return; }
@@ -2477,7 +2496,7 @@
     syncTobRack();
   }
   function syncTobRack() {
-    var g = tobUI.rackG; if (!g) return; while (g.children.length) g.remove(g.children[0]); var T = tob();
+    var g = tobUI.rackG; if (!g) return; clearKids(g); var T = tob();
     CIG_KEYS.forEach(function (k, i) { var K = CIG_SKUS[k]; var cartons = Math.min(8, Math.ceil(T.packs[k] / TOB.carton)); for (var c = 0; c < cartons; c++) { var w = K.size === 20 ? 0.3 : 0.24; var m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, 0.4), colorMat(K.col, 0.6)); m.position.set(-0.75 + (c % 4) * 0.5, [0.37, 0.92, 1.47, 2.02][i] + Math.floor(c / 4) * 0.105, 0); g.add(m); var band = new THREE.Mesh(new THREE.BoxGeometry(w + 0.004, 0.03, 0.404), colorMat(K.top, 0.6)); band.position.copy(m.position); band.position.y += 0.03; g.add(band); } });
   }
   function setTobSign(key, lines) { var s = tobUI.signs[key]; if (!s) return; var txt = lines.join('|'); if (s.txt === txt) return; s.txt = txt; var ob = s.mesh.material.map; s.mesh.material.map = textTex(lines, s.w, s.h, s.opts); s.mesh.material.needsUpdate = true; if (ob) ob.dispose(); }
@@ -2550,7 +2569,7 @@
     ctxOpen('🚬 Cigarette cabinet', 'packs stay behind the shutter; you hand them to the customer', lines);
   }
   function syncCigCab() {
-    var inst = propInst.cigCabinet; if (!inst) return; var g = inst.ctx.dynGroup(); var keep = g.userData.shutter; while (g.children.length) g.remove(g.children[0]); if (keep) g.add(keep);
+    var inst = propInst.cigCabinet; if (!inst) return; var g = inst.ctx.dynGroup(); var keep = g.userData.shutter; clearKids(g); if (keep) g.add(keep);
     Object.keys(CIG_SKUS).forEach(function (k, i) { var K = CIG_SKUS[k], n = Math.min(i < 4 ? 8 : 3, cigStock(k)), big = K.size === 20; for (var p = 0; p < n; p++) { var w = big ? 0.075 : 0.06, hh = big ? 0.11 : 0.09; var m = productCigPack(K, big ? 1.3 : 1.25); m.position.set((i < 4 ? -0.45 : 0.27) + p * 0.082, [1.62, 1.27, 0.92, 0.57, 1.62, 1.27, 0.92, 0.57][i] + hh / 2, 0.06); m.traverse(function (o) { if (o.isMesh) o.castShadow = false; }); g.add(m); } });   /* the cabinet shows the same pack you hand over */
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = 'cigCabinet'; });
   }
@@ -2822,7 +2841,7 @@
     }
     buildScenery();
     // the player's car, where it was left
-    var cs = carState(); drive.g = new THREE.Group(); drive.wheels = carBody(drive.g, WSCAR && WSCAR.colour !== undefined ? WSCAR.colour : 0x1f4f8a, true); drive.parts = drive.g.userData.parts; drive.lamps = drive.g.userData.lamps; drive.g.position.set(cs.x, 0, cs.z); drive.g.rotation.y = cs.h; world.group.add(drive.g);
+    var cs = carState(); if (!isFinite(cs.x) || !isFinite(cs.z) || Math.abs(cs.x) > CITY.x - 1 || cs.z < CITY.z1 + 1 || cs.z > CITY.z2 - 1) { cs.x = 7.7; cs.z = -15.3; cs.h = Math.PI / 2; }   /* saved outside the town */ drive.g = new THREE.Group(); drive.wheels = carBody(drive.g, WSCAR && WSCAR.colour !== undefined ? WSCAR.colour : 0x1f4f8a, true); drive.parts = drive.g.userData.parts; drive.lamps = drive.g.userData.lamps; drive.g.position.set(cs.x, 0, cs.z); drive.g.rotation.y = cs.h; world.group.add(drive.g);
     [-0.6, 0.6].forEach(function (bx) { var sl = new THREE.SpotLight(0xfff3c8, 0, 26, 0.62, 0.5, 1.4); sl.position.set(bx, 0.62, -2.0); sl.castShadow = false; drive.g.add(sl); var tgt = new THREE.Object3D(); tgt.position.set(bx * 2.4, -0.3, -15); drive.g.add(tgt); sl.target = tgt; drive.lamps.beams.push(sl); });
     var chit = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.5, 4.2), MAT.none); chit.position.y = 0.8; drive.g.add(chit); interactable(chit, { kind: 'car' });
     /* the openable parts get their own hit boxes, each poking out past the car box so the crosshair finds them first */
@@ -2962,7 +2981,7 @@
   }
   function updateCity(dt) {
     traffic.forEach(function (c) {
-      var p = c.g.position, ahead = (drive.g.position.x - p.x) * c.dir, side = Math.abs(drive.g.position.z - c.z), pa = (player.pos.x - p.x) * c.dir, ps = Math.abs(player.pos.z - c.z); var stop = (ahead > 0 && ahead < 9 && side < 2.4) || (!drive.on && player.floor === 0 && pa > 0 && pa < 7 && ps < 2.2);
+      var p = c.g.position, ahead = (drive.g.position.x - p.x) * c.dir, side = Math.abs(drive.g.position.z - c.z), pa = (player.pos.x - p.x) * c.dir, ps = Math.abs(player.pos.z - c.z); var stop = (drive.on && ahead > 0 && ahead < 9 && side < 2.4) || (!drive.on && player.floor === 0 && pa > 0 && pa < 7 && ps < 2.2);
       traffic.forEach(function (o) { if (o === c || o.z !== c.z) return; var d = (o.g.position.x - p.x) * c.dir; if (d > 0 && d < 8) stop = true; });
       c.cur = lerp(c.cur, stop ? 0 : c.v, 1 - Math.pow(0.05, dt)); p.x += c.cur * c.dir * dt; if (p.x * c.dir > CITY.x - 2) p.x = -c.dir * (CITY.x - 2);
     });
@@ -3030,7 +3049,7 @@
     if (poi === 'supply') {
       var near = carNear(-22, -44, 34) && trunkCount() < trunkCap(), tr = carState().trunk; if (trunkCount() >= trunkCap()) lines.push({ label: '🧰 The trunk is full (' + trunkCap() + ' items) — unload at your bay, or fit the bigger trunk in the garage', cls: 'muted' });
       if (!near) lines.push({ label: '🚗 Bring your car round to load up: they do not deliver from the trade counter', cls: 'muted' });
-      SUPPLIES.filter(function (it) { return !it.tool; }).slice(0, 9).forEach(function (it) { var price = Math.max(1, Math.round(it.price * 0.8)); lines.push({ label: it.ico + ' ' + it.name + ' · ' + money(price) + ' <small>20% under the laptop price · ' + (tr[it.id] || 0) + ' in the trunk</small>', cls: near && S.bank >= price ? '' : 'muted', act: near && S.bank >= price ? function () { S.bank -= price; tr[it.id] = (tr[it.id] || 0) + itemPack(it.id); sfx('crate'); toast(it.ico + ' ' + it.name + ' into the trunk — unload it at your parking bay', 'good'); hud(); save(); } : null }); });
+      SUPPLIES.filter(function (it) { return !it.tool; }).slice(0, 9).forEach(function (it) { var price = Math.max(1, Math.round(it.price * 0.8)); lines.push({ label: it.ico + ' ' + it.name + ' · ' + money(price) + ' <small>20% under the laptop price · ' + (tr[it.id] || 0) + ' in the trunk</small>', cls: near && S.bank >= price ? '' : 'muted', act: near && S.bank >= price ? function () { S.bank -= price; tr[it.id] = (tr[it.id] || 0) + (it.qty || 1); sfx('crate'); toast(it.ico + ' ' + it.name + ' into the trunk — unload it at your parking bay', 'good'); hud(); save(); } : null }); });
       ctxOpen('📦 RF Supply Co. trade counter', 'bank ' + money(S.bank) + ' · trunk holds ' + trunkCount() + ' items · no waiting for the van', lines); return;
     }
   }
@@ -3214,9 +3233,9 @@
     // weather and season
     if (WSFEST.snow && W.kind !== 'snow') { W.kind = 'snow'; W.until = now() + 3600000; exp.wxKind = 'snow'; }   /* a seasonal pack keeps the snow falling */
     if (now() > W.until) { var se = season(), r = Math.random(); W.kind = se === 'Winter' ? (r < 0.45 ? 'snow' : r < 0.6 ? 'clear' : 'clear') : r < (se === 'Autumn' ? 0.4 : 0.22) ? 'rain' : r < (se === 'Summer' ? 0.3 : 0.45) && se !== 'Spring' ? 'storm' : 'clear'; W.until = now() + randi(150, 320) * 1000; if (exp.wxKind && exp.wxKind !== W.kind) toast({ clear: '🌤️ It is clearing up', rain: '🌧️ It has started to rain — fewer people out', storm: '⛈️ A storm is rolling in — the street is emptying', snow: '❄️ It is snowing' }[W.kind], ''); exp.wxKind = W.kind; }
-    var wet = W.kind !== 'clear', show = wet && outdoors(); exp.wx.visible = show;
-    var fogN = show ? (W.kind === 'storm' ? 14 : W.kind === 'rain' ? 20 : 26) : 30;   /* indoors keeps the clear-weather fog: shutting the door should not fog the room */
-    var fogF = show ? (W.kind === 'storm' ? 55 : W.kind === 'rain' ? 80 : 100) : 110;
+    var wet = W.kind !== 'clear', show = wet && outdoors(); exp.wx.visible = show; exp.wxMix = lerp(exp.wxMix || 0, show && W.kind === 'snow' ? 1 : 0, 0.04);   /* how much of the snow look applies: eased, and only out of doors */
+    var fogN = show ? (W.kind === 'storm' ? 14 : W.kind === 'rain' ? 20 : 30) : 30;   /* indoors keeps the clear-weather fog: shutting the door should not fog the room */
+    var fogF = show ? (W.kind === 'storm' ? 55 : W.kind === 'rain' ? 80 : 120) : 110;   /* the flakes carry the snow; the fog must not white out every texture in town */
     scene.fog.near = lerp(scene.fog.near, fogN, 0.02); scene.fog.far = lerp(scene.fog.far, fogF, 0.02);
     if (show) { var fall = W.kind === 'snow' ? 1.6 : 15, arr = exp.wx.geometry.attributes.position; for (var i = 0; i < arr.count; i++) { var y = arr.getY(i) - fall * dt; if (y < 0) y += 16; arr.setY(i, y); if (W.kind === 'snow') arr.setX(i, arr.getX(i) + Math.sin(y * 2 + i) * dt * 0.4); } arr.needsUpdate = true; exp.wx.position.set(camera.position.x, camera.position.y - 6, camera.position.z); exp.wx.material.size = W.kind === 'snow' ? 0.14 : 0.07; exp.wx.material.opacity = W.kind === 'snow' ? 0.9 : 0.55; }
     // fireworks over the town after dark, from a seasonal pack
@@ -3228,7 +3247,7 @@
     if (exp.genLed) exp.genLed.material.emissiveIntensity = S.upgrades.generator ? 1.6 : 0.2; if (exp.genLed && S.upgrades.generator) { exp.genLed.material.color.setHex(0x39d353); exp.genLed.material.emissive.setHex(0x39d353); }
     // heat cools off; at high heat an inspector turns up
     X.heat = Math.max(0, X.heat - dt * 0.03); if (X.heat < 25) exp.heatBand = 0;
-    if (X.heat >= 60 && Math.random() < dt / 260) { var fine = 200 + Math.round((S.pocket || 0) * 0.25); fine = Math.min(fine, S.bank + (S.pocket || 0)); var fromPocket = Math.min(S.pocket || 0, fine); S.pocket -= fromPocket; S.bank = Math.max(0, S.bank - (fine - fromPocket)); X.heat = Math.max(0, X.heat - 25); sfx('siren'); toast('🚔 Inspection! Undeclared cash and paperwork: ' + money(fine) + ' in fines', 'bad'); logEvent('🚔 Police inspection — ' + money(fine) + ' in fines. Bank your pocket cash and lie low.', 'bad'); hud(); }
+    if (X.heat >= 60 && Math.random() < dt / 260) { var fine = 200 + Math.round((S.pocket || 0) * 0.25); fine = Math.min(fine, S.bank + S.vault + S.till + (S.pocket || 0)); var fromPocket = Math.min(S.pocket || 0, fine); S.pocket -= fromPocket; drawFunds(fine - fromPocket); X.heat = Math.max(0, X.heat - 25); sfx('siren'); toast('🚔 Inspection! Undeclared cash and paperwork: ' + money(fine) + ' in fines', 'bad'); logEvent('🚔 Police inspection — ' + money(fine) + ' in fines. Bank your pocket cash and lie low.', 'bad'); hud(); }
     // the lab and the bag line run only with power
     if (on) {
       var J = X.lab.job; if (J) { J.t += dt; if (J.t >= J.dur) { X.lab.out[J.sku] += J.n; X.lab.job = null; sfx('ok'); toast('🧪 Lab batch done: ' + J.n + ' × ' + CIG_SKUS[J.sku].name + ' waiting on the lab shelf', 'good'); save(); } }
@@ -3390,7 +3409,7 @@
     exp.getaway = { g: g, dir: dir, t: 0, loot: { grabbed: r.grabbed, goods: r.goods, disp: r.disp, cigs: r.cigs || {} } }; r.grabbed = 0; r.goods = []; r.disp = {}; r.cigs = {}; toast('🚗 They jumped into a black car heading ' + (dir > 0 ? 'east' : 'west') + ' on Main Street — catch it with yours and you get it all back!', 'bad');
   }
   function expansionNewDay(offline) {
-    var X = xs(), wages = (X.staff.driver ? 90 : 0) + (X.staff.operator ? 80 : 0) + (X.staff.night ? 70 : 0); if (wages) { S.bank = Math.max(0, S.bank - wages); if (!offline) logEvent('💼 Extra staff wages: ' + money(wages), ''); }
+    var X = xs(), wages = (X.staff.driver ? 90 : 0) + (X.staff.operator ? 80 : 0) + (X.staff.night ? 70 : 0); if (wages) { var wPaid = drawFunds(wages); if (wages - wPaid > 0.5) books().arrears += wages - wPaid; if (!offline) logEvent('💼 Extra staff wages: ' + money(wages), ''); }
     if (X.staff.driver) { var T = tob(), val = 0, n = 0; CIG_KEYS.forEach(function (k) { n += T.packs[k]; val += T.packs[k] * CIG_SKUS[k].price * 0.65; T.packs[k] = 0; }); if (n) { S.bank += Math.round(val); syncTobRack(); if (!offline) { logEvent('🚚 Your driver sold ' + n + ' packs wholesale for ' + money(Math.round(val)), 'good'); toast('🚚 Driver: ' + n + ' packs wholesaled · ' + money(Math.round(val)), 'good'); } } }
     if (X.branch) { var inc = Math.round(randi(350, 800) * (S.market || 1)); S.bank += inc; if (!offline) { logEvent('🏪 Green Leaf (your branch) sent over ' + money(inc), 'good'); toast('🏪 Branch takings: ' + money(inc), 'good'); } }
     if (!offline && weekend()) toast('📅 It is the weekend — expect more people through the door', ''); if (!offline && (S.day % 28) === 25) toast('🎉 Holiday week starts — footfall is up by half', 'rare');
@@ -3536,6 +3555,7 @@
   function keyDoor(id) {
     var d = doorById[id]; if (!d) return;
     if (!hasKeys()) { sfx('bad'); toast('🔑 You need the keyring: it hangs on the hook in the office', 'bad'); return; }
+    if (!d.locked && player.floor === d.floor && Math.abs(player.pos.x - d.x) < 1.1 && Math.abs(player.pos.z - d.z) < 1.1) { toast('Step out of the doorway first', ''); return; }
     setDoor(id, d.open, !d.locked); sfx(d.locked ? 'click' : 'curtain'); toast(d.locked ? '🔒 Locked the ' + d.label : '🔓 Unlocked the ' + d.label, d.locked ? '' : 'good'); save();
   }
   function doorPrompt(d) { if (d.kind !== 'door') return ''; var o = doorById[d.id]; if (!o) return ''; var k = hasKeys(); if (o.locked) return '🔒 ' + o.name + ' <small>' + (k ? 'Shift+E unlocks it' : 'locked · the keyring hangs in the office') + '</small>'; return (o.open ? 'Slide the ' + o.label + ' shut' : 'Slide the ' + o.label + ' open') + (k ? ' <small>Shift+E locks it</small>' : ''); }
@@ -4178,10 +4198,10 @@
         l.t += dt; var k2 = 1 - clamp(l.t / 0.7, 0, 1); l.g.position.y = -0.22 * k2; poseSeated(l, k2);
         if (k2 <= 0) { l.g.position.y = 0; l.glow.intensity = 0; l.joint.visible = false; l.seat = null; l.h.userData.setMood(CAST[l.who] && CAST[l.who].mood || 'neutral'); nextStep(l); }
       }
-      else if (l.state === 'leave') { if (walkAlong(l.g, l.path, speed * 1.05, dt)) { world.group.remove(l.g); clearTimeout(l.sayT); world.interact = world.interact.filter(function (m) { return m.userData.lounger !== l.id; }); loungers.splice(i, 1); continue; } animateHuman(l.h, dt, 'walk', speed, null); }
+      else if (l.state === 'leave') { if (walkAlong(l.g, l.path, speed * 1.05, dt)) { world.group.remove(l.g); disposeTree(l.g); clearTimeout(l.sayT); world.interact = world.interact.filter(function (m) { return m.userData.lounger !== l.id; }); loungers.splice(i, 1); continue; } animateHuman(l.h, dt, 'walk', speed, null); }
       else if (l.state === 'fight') { /* driven by updateFight */ }
       else if (l.state === 'down') { l.t += dt; if (l.t > 4) { standBack(l.h); l.plan = []; l.step = -1; l.state = 'leave'; nextStep(l); loungerSay(l, 'you are insane', '#ff6b6b'); } }
-      else if (l.state === 'out') { l.t += dt; if (l.t > 5) { world.group.remove(l.g); clearTimeout(l.sayT); world.interact = world.interact.filter(function (m) { return m.userData.lounger !== l.id; }); loungers.splice(i, 1); continue; } }
+      else if (l.state === 'out') { l.t += dt; if (l.t > 5) { world.group.remove(l.g); disposeTree(l.g); clearTimeout(l.sayT); world.interact = world.interact.filter(function (m) { return m.userData.lounger !== l.id; }); loungers.splice(i, 1); continue; } }
     }
   }
 
@@ -4292,7 +4312,7 @@
       if (p.pauseT > 0) { p.pauseT -= dt; animateHuman(h, dt, 'idle', 0, player.pos); if (p.pauseT <= 0) h.rotation.y = p.dir > 0 ? Math.PI / 2 : -Math.PI / 2; continue; }
       h.position.x += p.dir * p.speed * dt; animateHuman(h, dt, 'walk', p.speed, null);
       if (Math.abs(h.position.x) < 5 && Math.random() < 0.004) { p.pauseT = 2 + Math.random() * 4; h.rotation.y = Math.PI; }
-      if (Math.abs(h.position.x) > 40) { world.group.remove(h); peds.splice(i, 1); i--; spawnPed(); }
+      if (Math.abs(h.position.x) > 40) { world.group.remove(h); disposeTree(h); peds.splice(i, 1); i--; spawnPed(); }
     }
     if (peds.length < 5 && Math.random() < 0.002) spawnPed();
   }
@@ -4307,7 +4327,7 @@
     STRAINS.forEach(function (s, i) { var px = -(shN - 1) / 2 * shGap + i * shGap; var sheet = new THREE.Mesh(new THREE.PlaneGeometry(shW, shW * 1.4), new THREE.MeshStandardMaterial({ map: textTex(['STRAIN ' + (i + 1), s.emoji, s.name, s.thc.toFixed(1) + '× · ' + s.yield + 'g'], 384, 540, { size: 44, titleColor: '#8a8a8a', bg: '#f0ead8', color: '#2a2a2a', line: 'rgba(0,0,0,0)' }), roughness: 0.9 })); sheet.position.set(px, 2.25, -1.88); sheet.rotation.z = (i % 2 ? 0.02 : -0.02); world.group.add(sheet); var pin = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), new THREE.MeshStandardMaterial({ color: 0xc94a3a })); pin.position.set(px, 2.58, -1.87); world.group.add(pin); });
   }
   function syncRack() {
-    if (!propInst.rack) return; var g = propInst.rack.ctx.dynGroup(); while (g.children.length) g.remove(g.children[0]);
+    if (!propInst.rack) return; var g = propInst.rack.ctx.dynGroup(); clearKids(g);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'rack'; });
     var rx = 0, rz = 0;
     var soil = Math.min(S.supplies.soil || 0, 6);
@@ -4572,7 +4592,7 @@
   };
   var STATION_ORDER = ['off', 'lofi', 'dub', 'synth', 'jazz'];
   function mtof(m) { return 440 * Math.pow(2, (m - 69) / 12); }
-  radio.ensure = function () { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); if (!radio.master) { radio.master = AC.createGain(); radio.master.gain.value = 0; radio.lp = AC.createBiquadFilter(); radio.lp.type = 'lowpass'; radio.lp.frequency.value = 2600; radio.comp = AC.createDynamicsCompressor(); radio.master.connect(radio.lp); radio.lp.connect(radio.comp); radio.comp.connect(AC.destination); } };
+  radio.ensure = function () { audio(); if (!radio.master) { radio.master = AC.createGain(); radio.master.gain.value = 0; radio.lp = AC.createBiquadFilter(); radio.lp.type = 'lowpass'; radio.lp.frequency.value = 2600; radio.comp = AC.createDynamicsCompressor(); radio.master.connect(radio.lp); radio.lp.connect(radio.comp); radio.comp.connect(AC.destination); } };
   radio.set = function (station) {
     if (!STATIONS[station]) station = 'off';
     radio.station = station; shop().radio = station;
@@ -4689,7 +4709,7 @@
     var hb = held(); var show = !!(hb && hb.kind === 'broom'); if (world.dustRings) { var pulse = 0.35 + Math.abs(Math.sin(now() / 260)) * 0.45; world.dustRings.forEach(function (r) { r.visible = show; }); DUST_RING.opacity = pulse; }
   }
   function syncDust() {
-    world.dustDirty = false; while (dustGroup.children.length) dustGroup.remove(dustGroup.children[0]);
+    world.dustDirty = false; clearKids(dustGroup);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'dust'; });
     dustList().forEach(function (p) { var m = new THREE.Mesh(new THREE.PlaneGeometry(p.s, p.s), DUST_MAT); m.rotation.set(-Math.PI / 2, 0, p.r); m.position.set(p.x, 0.012, p.z); dustGroup.add(m); var ring = new THREE.Mesh(new THREE.RingGeometry(p.s * 0.5, p.s * 0.5 + 0.03, 32), DUST_RING); ring.rotation.x = -Math.PI / 2; ring.position.set(p.x, 0.016, p.z); ring.userData.dustRing = true; ring.visible = false; dustGroup.add(ring); var hit = new THREE.Mesh(new THREE.BoxGeometry(p.s + 0.2, 0.4, p.s + 0.2), MAT.none); hit.position.set(p.x, 0.2, p.z); dustGroup.add(hit); interactable(hit, { kind: 'dust', id: p.id }); hit.userData.dynGroup = 'dust'; });
     world.dustRings = []; dustGroup.children.forEach(function (o) { if (o.userData.dustRing) world.dustRings.push(o); });
@@ -4974,7 +4994,7 @@
   function rotAABB(o, rot) { var r = ((rot % 4) + 4) % 4; if (r === 0) return o; if (r === 1) return { x1: o.z1, x2: o.z2, z1: -o.x2, z2: -o.x1 }; if (r === 2) return { x1: -o.x2, x2: -o.x1, z1: -o.z2, z2: -o.z1 }; return { x1: -o.z2, x2: -o.z1, z1: o.x1, z2: o.x2 }; }
   function buildProp(id) {
     var def = PROPS[id]; var old = propInst[id];
-    if (old) { world.group.remove(old.g); world.interact = world.interact.filter(function (m) { return m.userData.propId !== id; }); world.obstacles = world.obstacles.filter(function (o) { return o.prop !== id; }); if (old.lights) old.lights.forEach(function (l) { scene.remove(l); }); }
+    if (old) { world.group.remove(old.g); disposeTree(old.g); world.interact = world.interact.filter(function (m) { return m.userData.propId !== id; }); world.obstacles = world.obstacles.filter(function (o) { return o.prop !== id; }); if (old.lights) old.lights.forEach(function (l) { scene.remove(l); }); }
     var P = propPlacement(id); var g = new THREE.Group(); g.position.set(P.x, P.floor === 1 ? UP.y : 0, P.z); g.rotation.y = P.rot * Math.PI / 2; g.userData.propId = id; world.group.add(g);
     var ctx = propCtx(g, id, P.floor); var inst = { g: g, def: def, P: P, ctx: ctx, lights: [] }; propInst[id] = inst;
     ctx.light = function (l, x, y, z) { l.position.set(x, y, z); g.add(l); inst.lights.push(l); return l; };
@@ -5527,11 +5547,12 @@
     var outside = player.pos.z > ROOM.z + 0.12, inDoor = Math.abs(player.pos.x) < 0.62;   // through the front door and onto the pavement, as far as the kerb
     var bx = outside ? 26 : ROOM.x - r - 0.05, bz = (outside || inDoor) ? (world.sidewalkZ || ROOM.z + 2.6) + 1.45 - r : ROOM.z - r - 0.05;
     if (player.floor === 0) { nx = clamp(nx, -CITY.x, CITY.x); nz = clamp(nz, CITY.z1, CITY.z2); } else if (player.floor !== -1) { nx = clamp(nx, -bx, bx); nz = clamp(nz, -(ROOM.z + 10.5), bz); }   // ground level is the whole town now; upstairs keeps the building's footprint   // the back annex and yard extend past the main building
-    // obstacles: separate axis resolution
+    // obstacles: separate axis resolution. One that ALREADY overlaps the player is skipped, so there is always a way out of it
+    var px0 = player.pos.x, pz0 = player.pos.z; function insideNow(ob) { return px0 + r > ob.x1 && px0 - r < ob.x2 && pz0 + r > ob.z1 && pz0 - r < ob.z2; }
     var tx = nx, tz = player.pos.z;
-    for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (!obstacleActive(o)) continue; if (tx + r > o.x1 && tx - r < o.x2 && tz + r > o.z1 && tz - r < o.z2) tx = player.pos.x; }
+    for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (!obstacleActive(o) || insideNow(o)) continue; if (tx + r > o.x1 && tx - r < o.x2 && tz + r > o.z1 && tz - r < o.z2) tx = player.pos.x; }
     var tz2 = nz;
-    for (var j = 0; j < world.obstacles.length; j++) { var o2 = world.obstacles[j]; if (!obstacleActive(o2)) continue; if (tx + r > o2.x1 && tx - r < o2.x2 && tz2 + r > o2.z1 && tz2 - r < o2.z2) tz2 = player.pos.z; }
+    for (var j = 0; j < world.obstacles.length; j++) { var o2 = world.obstacles[j]; if (!obstacleActive(o2) || insideNow(o2)) continue; if (tx + r > o2.x1 && tx - r < o2.x2 && tz2 + r > o2.z1 && tz2 - r < o2.z2) tz2 = player.pos.z; }
     player.pos.x = tx; player.pos.z = tz2;
     var st = stairT(tx, tz2); if (st >= 0) player.floor = st >= 0.5 ? 1 : 0;
   }
@@ -5778,7 +5799,7 @@
     var stack = Math.min(Math.ceil((S.coffeeStock.cup || 0) / 6), 7);
     for (var i = 0; i < stack; i++) { var cu = cupMesh(1, false); cu.position.y = i * 0.022; p.cups.add(cu); p.cups.userData.slots.push(cu); }
     if (p.beans) { var lvl = clamp((S.coffeeStock.beans || 0) / 40, 0.05, 1); p.beans.scale.y = lvl; p.beans.position.y = 1.40 + 0.06 * lvl; p.beans.visible = (S.coffeeStock.beans || 0) > 0; }
-    while (p.brew.children.length) p.brew.remove(p.brew.children[0]);
+    clearKids(p.brew);
     if (machState(id).cup > 0) { var c2 = cupMesh(1, true); p.brew.add(c2); }
     if (p.cupHit) p.cupHit.position.y = machState(id).cup > 0 ? 1.02 : -50;
     p.cups.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.userData.propId = id; } });
@@ -5796,7 +5817,8 @@
     if (M.cup > 0) { toast('There is already a cup under the spout', ''); return; }
     if ((S.coffeeStock.cup || 0) <= 0) { toast('Out of cups', 'bad'); return; }
     if ((S.coffeeStock.beans || 0) <= 0) { toast('Out of beans', 'bad'); return; }
-    S.coffeeStock.cup--; S.coffeeStock.beans--; S.box.coffee += 2; M.cup = 1; machAnim(id).brewT = 1.5;
+    if ((S.pocket || 0) < 2) { sfx('bad'); toast('A cup is $2 from your pocket, and your pocket is short', 'bad'); return; }
+    S.pocket -= 2; S.coffeeStock.cup--; S.coffeeStock.beans--; S.box.coffee = (S.box.coffee || 0) + 2; M.cup = 1; machAnim(id).brewT = 1.5;
     sfx('coffee'); toast('☕ Pouring…', ''); syncCoffee(); save();   /* every machine draws on the same cups and beans, so they all restack */
   }
   function coffTake(id) {
@@ -5859,7 +5881,7 @@
   function syncTray(id) {   // whatever has dropped sits in the delivery tray until you take it
     id = id || 'vending';
     var p = vendParts(id); if (!p || !p.tray) return;
-    while (p.tray.children.length) p.tray.remove(p.tray.children[0]);
+    clearKids(p.tray);
     var M = machState(id);
     M.tray.slice(0, 4).forEach(function (it, i) {
       var m = it === 'drink' ? drinkMesh(1) : snackMesh(1);
@@ -5886,7 +5908,8 @@
   function vendDispense(id, item) {   // a coil turns, the item falls, and it lands in the tray
     var M = machState(id);
     if ((S.vendStock[item] || 0) <= 0) { toast('The machine is out of ' + (item === 'drink' ? 'drinks' : 'snacks'), 'bad'); vendDisplay(id, 'SOLD OUT'); return false; }
-    S.vendStock[item]--; S.box.vend += 2; S.stats.vend = (S.stats.vend || 0) + 1;
+    if ((S.pocket || 0) < 2) { sfx('bad'); toast('It takes $2 from your pocket, and your pocket is short', 'bad'); return false; }
+    S.pocket -= 2; S.vendStock[item]--; S.box.vend = (S.box.vend || 0) + 2; S.stats.vend = (S.stats.vend || 0) + 1;
     var p = vendParts(id);
     if (p && p.tray) { var m = item === 'drink' ? drinkMesh(1) : snackMesh(1); var wp = new THREE.Vector3(); p.tray.getWorldPosition(wp); machAnim(id).drops.push({ m: m, t: 0, item: item }); m.position.set(wp.x, wp.y + 1.0, wp.z); world.group.add(m); }
     sfx('vend'); vendDisplay(id, 'THANK YOU');
@@ -6138,7 +6161,7 @@
   var payActions = {
     payCard: function () { var c = S.customer; if (!c || c.stage !== 'pay' || c.pay !== 'card') return; sfx('card'); if (!c.declined && Math.random() < 0.1) { c.declined = true; sfx('bad'); toast('💳 Declined — "huh, try it again"', 'bad'); npc.say('declined?? try again', '#ff6b6b'); return; } toast('💳 Approved', 'good'); finalizeSale(0, 'card'); },
     payCash: function () { var c = S.customer; if (!c || c.stage !== 'pay' || c.pay !== 'cash') return; sfx('drawer'); if (c.tendered === c.due) { finalizeSale(1, 'exact cash'); return; } c.stage = 'change'; c.changeGiven = 0; toast('Took ' + money(c.tendered) + ' — now count out the change', ''); },
-    chg: function (d) { var c = S.customer; if (!c || c.stage !== 'change') return; c.changeGiven += d; sfx(d >= 5 ? 'rustle' : 'coins'); },
+    chg: function (d) { var c = S.customer; if (!c || c.stage !== 'change') return; c.changeGiven = Math.min(c.changeGiven + d, c.tendered); sfx(d >= 5 ? 'rustle' : 'coins'); },
     chgUndo: function () { var c = S.customer; if (!c || c.stage !== 'change') return; c.changeGiven = 0; },
     chgGive: function () {
       var c = S.customer; if (!c || c.stage !== 'change') return; var due = c.tendered - c.due;
@@ -6758,7 +6781,7 @@
     else if (m === 'edit') { closeMenu(); if (!edit.on) editToggle(); }
     else if (m === 'dev') { body.hidden = false; body.innerHTML = devHtml(); }
     else if (m === 'creative') { closeMenu(); if (window.RFGROW && window.RFGROW.creative) window.RFGROW.creative.toggle(true); }
-    else if (m === 'quit') { save(); window.close(); setTimeout(function () { toast('Your game is saved. You can close the window.', ''); }, 200); }
+    else if (m === 'quit') { saveNow(); window.close(); setTimeout(function () { toast('Your game is saved. You can close the window.', ''); }, 200); }
   });
   var DEV = [
     ['money', '💵 +$1,000 bank'], ['pocket', '👛 +$500 pocket'], ['till', '🧾 Till +$120 · tips +$20 · machines +$30'], ['stash', '🌿 +20 g cured of every strain'], ['goods', '🛍️ +5 bags, joints, cookies of every strain'],
@@ -6909,7 +6932,7 @@
   }
 
   // ── Day / night ───────────────────────────────────────────────────
-  var skyCol = new THREE.Color();
+  var skyCol = new THREE.Color(), snowFog = new THREE.Color();
   function updateDayNight() {
     var h = gameHour();
     var sunAlt = Math.sin((h - 6) / 12 * Math.PI); // 1 at noon, -1 at midnight
@@ -6919,12 +6942,13 @@
     scene.background = skyCol;
     var wk = (S.x && S.x.weather) ? S.x.weather.kind : 'clear';
     fogCol.copy(skyCol);
-    if (wk === 'snow') fogCol.lerp(SNOW_FOG, 0.55);        /* falling snow is bright, never black */
+    var wxm = (exp && exp.wxMix) || 0;
+    if (wk === 'snow') { snowFog.copy(SNOW_FOG).multiplyScalar(0.14 + 0.86 * day); fogCol.lerp(snowFog, 0.4 * wxm); }        /* as bright as the hour allows: grey-white by day, dim at night, and none of it indoors */
     else if (wk === 'rain' || wk === 'storm') fogCol.lerp(RAIN_FOG, 0.3);
     scene.fog.color.copy(fogCol);
     sun.intensity = 0.1 + day * 0.9; sun.color.setRGB(1, lerp(0.7, 0.95, day) + dusk * 0.0, lerp(0.5, 0.85, day) - dusk * 0.2);
     var ang = (h - 6) / 12 * Math.PI; sun.position.set(Math.cos(ang) * 30, Math.max(2, Math.sin(ang) * 30), 12); sun.target.position.set(0, 0, 0);
-    hemi.intensity = (0.12 + day * 0.28) * (wk === 'snow' ? 1.5 : wk === 'storm' ? 0.85 : 1); hemi.color.setRGB(lerp(0.3, 0.75, day), lerp(0.35, 0.85, day), lerp(0.6, 1.0, day));
+    hemi.intensity = (0.12 + day * 0.28) * (wk === 'snow' ? 1 + 0.2 * wxm : wk === 'storm' ? 0.85 : 1); hemi.color.setRGB(lerp(0.3, 0.75, day), lerp(0.35, 0.85, day), lerp(0.6, 1.0, day));
     var indoor = 1 - day * 0.5; roomLight.intensity = 0.2 + indoor * 0.3; roomLight2.intensity = roomLight3.intensity = 0.15 + indoor * 0.25;
     if (world.streetLights) world.streetLights.forEach(function (l) { l.intensity = 0.1 + (1 - day) * 1.2; });
     if (world.roomLamps) world.roomLamps.forEach(function (l) { l.intensity = l.userData.off ? 0 : (l.userData.base || 0.7) * (0.75 + indoor * 0.5); });
@@ -6942,7 +6966,7 @@
     player.keys[e.code] = true;
     if (runHooks(hooks.keydown, e)) { e.preventDefault(); return; }
     if (drive.on && !e.repeat) {   /* at the wheel the letter keys belong to the car */
-      if (e.code === 'KeyE') { var ja = jobAtCar(); if (ja >= 0) jobHandOver(ja); else exitCar(); e.preventDefault(); return; }   /* pulled up at a drop: E hands it over, and only gets you out once the drop is done */
+      if (e.code === 'KeyE') { var ja = jobAtCar(), jn = xs().jobs.length; if (ja >= 0) jobHandOver(ja); if (ja < 0 || xs().jobs.length === jn) exitCar(); e.preventDefault(); return; }   /* pulled up at a drop: E hands it over, and only gets you out once the drop is done */
       if (e.code === 'KeyI') { ignition(); e.preventDefault(); return; }
       if (e.code === 'KeyP') { parkBrake(); e.preventDefault(); return; }
       if (e.code === 'KeyL') { carLightStep(); e.preventDefault(); return; }
@@ -6958,10 +6982,10 @@
     if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }
     if (e.code === 'KeyJ') { jobsPanel(); e.preventDefault(); return; }
     if (e.code === 'KeyE' && postPick >= 0) { postSet(); e.preventDefault(); return; }
-    if (e.code === 'KeyE') { interact(); e.preventDefault(); }
+    if (e.code === 'KeyE') { if (!e.repeat) interact(); e.preventDefault(); }
     if (e.code === 'KeyP') { panicButton(); e.preventDefault(); }
     if (e.code === 'Tab') { ui.openPanel('inventory'); e.preventDefault(); }
-    if (e.code === 'KeyG' || e.code === 'KeyQ') { putBack(); afterAction(); }
+    if ((e.code === 'KeyG' || e.code === 'KeyQ') && !e.repeat) { putBack(); afterAction(); }
   });
   document.addEventListener('wheel', function (e) { if (!player.locked || ui.blocked() || edit.on || sec.view.on) return; if (window.RFGROW && window.RFGROW.creative && window.RFGROW.creative.state.on) return; if (drive.on) { drive.dist = clamp(drive.dist + (e.deltaY > 0 ? 0.7 : -0.7), 3.2, 12); drive.look.t = 1.4; return; }   /* the wheel pulls the chase camera in and out at the wheel */ selectSlot(S.slot + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
   document.addEventListener('keyup', function (e) { player.keys[e.code] = false; if (ui.taskOpen && e.code === 'Space') taskPress(false); });
@@ -7007,7 +7031,7 @@
 
   // sim tick (1s), independent of frame rate
   setInterval(function () {
-    if (!ui.started) { S.lastTick = now(); return; }
+    if (!ui.started || ui.menuOpen) { S.lastTick = now(); return; }   /* paused means paused */
     var before = JSON.stringify([S.plants.map(function (p) { return p.hazard; }), S.batches.map(function (b) { return b.cured; }), !!S.customer]);
     step(1, false); maybeEvent(); maybeCustomer(); S.lastTick = now(); S.steps3d++; save();
     var after = JSON.stringify([S.plants.map(function (p) { return p.hazard; }), S.batches.map(function (b) { return b.cured; }), !!S.customer]);
@@ -7023,7 +7047,7 @@
     var dt = Math.min(clock.getDelta(), 0.1);
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
-    updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus();
+    if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); }
     updateDayNight(); updateSecurity(dt);
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); renderer.render(scene, vc); } else renderer.render(scene, camera);
     if (SET.fps) { fpsAcc += dt; fpsN++; fpsT += dt; if (fpsT > 0.5) { $('h-fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; fpsT = 0; } }

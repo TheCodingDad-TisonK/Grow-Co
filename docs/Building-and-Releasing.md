@@ -44,7 +44,7 @@ Builds are not signed, so SmartScreen warns on first run. If you get a certifica
 ## Cutting a release
 
 1. Update `version` in `package.json` and add a section to `CHANGELOG.md`.
-2. Commit, then tag: `git tag v1.1.0 && git push --tags`.
+2. Commit, then tag: `git tag v1.1.0 && git push origin v1.1.0` (push the one tag by name: a `--tags` push carrying several tags starts no workflow).
 3. The **Release** workflow builds the installer on Windows and attaches it to a GitHub release for that tag.
 
 To do it by hand instead: `npm run installer`, then `gh release create v1.1.0 dist/Grow-Co-Setup-1.1.0.exe --notes-file <notes>`.

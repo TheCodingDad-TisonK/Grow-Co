@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.17.1
+
+**A cold read of the whole game.** Ten fresh reviewers went through every line with no idea how any of it was meant to work, and this release fixes what they found that could cost you a save, a session or an honest day's takings.
+
+**Things that could trap you or end a session.** Locking a door while standing in its doorway shut it on top of you, and nothing could get you out. The key now asks you to step out first, and more generally anything that ends up overlapping you (a prop dropped on your own feet, a door, a bad exit from the car) can always be walked out of. Sending security home in the middle of an ID check could stop the game dead. Reloading while a guest was in the lounge meant no guest ever came again on that save. Switching off a content pack could leave a save that would not load, because its tent no longer existed, or a car parked outside a town that had shrunk: the tent now falls back and the car goes home to its bay.
+
+**Saving.** The game saved a third of a second after every change, so quitting or closing the window inside that moment lost the last thing you did. It now writes on the way out. And if the save cannot be written at all, because the storage is full or blocked, it says so instead of failing silently.
+
+**Naps were ruining the crop.** Sleeping, or coming back after a few minutes away, advanced thirst over the whole gap and then charged the quality penalty as if the plants had been bone dry the entire time, which dropped every plant to the floor. Only the time actually spent thirsty counts now. The same long step let a curing batch sail past its ceiling to 100, which made both curing upgrades pointless. The ceiling holds.
+
+**Money that was not right.** RF Supply Co. handed over ten of anything for less than the price of one. Your own vending and coffee machines paid you $2 every time you used them and gave you the drink as well: the owner pays like anyone else now. Wages came out of the bank only, so a careful owner with everything in the vault lost the whole crew at dawn; wages now draw on the bank, then the vault, then the till, like every other bill. Change can no longer be counted out past the note you were handed, which used to push the till below zero.
+
+**Paused means paused.** The pause menu said Paused while the whole shop carried on behind it, which included an armed robber who kept shooting at you while you could not move. The world now holds still until you close the menu.
+
+**A fixed time of day was a holiday from the bills.** With the sky set to always day, evening or night, the calendar never moved, so rent, power, wages and tax were never charged again while the takings kept coming. The days turn over now whatever the sky is doing.
+
+**Fines and extra staff find the vault.** A police fine or an inspection could only ever reach the bank and your pocket, so keeping the cash in the vault made every one of them free. They draw on the vault and the till now, and the driver, operator and night guard are paid the same way, with anything you cannot cover going into arrears instead of quietly vanishing.
+
+**Snow.** Snow painted the fog a bright grey at every hour, so a snowy night turned the town into pale cut-outs, and it pushed half again as much ambient light into every room in the building, which flattened the shadows and washed the textures out indoors as well. Snow is now only as bright as the hour allows, leaves the inside of the shop alone, eases in and out as you walk through the door, and no longer whites out the far end of the street.
+
+**Crew and walls.** When somebody could not reach where they were going, the route was cut short at the last reachable spot and then the real destination was added back on the end, so they finished the trip straight through the wall. They stop where the route stops.
+
+**Old saves.** A save from before a line of the ledger existed loaded with that line missing, and the first sum to touch it turned the money into NaN for good. Missing lines are filled in on load.
+
+**Sound.** A save with the radio playing loaded with every sound effect dead for the whole session. Fixed.
+
+**Holding E** repeated the action thirty times a second: it could drain a vending machine, or flip the shop open and closed until the customer at the window vanished. One press, one action. Pressing E in the car at a drop you cannot fill now lets you out instead of doing nothing.
+
+**Traffic** queued forever behind your car when it was parked at the kerb with nobody in it. An empty car is scenery now, like every other parked car.
+
+**Long sessions.** Every restock, every harvest, every customer and every passer-by left their 3D models behind in graphics memory, and a long enough session would eventually lose the display. Everything the game throws away is now released.
+
+**Under the bonnet.** The desktop app only ever hands web links to your browser, a developer save name is escaped on the menu like every other string, and the release notes for builders now push one tag by name. A Workshop pack's icon is escaped too. The release build refuses a tag that does not match the version in package.json, the syntax check covers the Workshop file, and the optional bug-report relay now refuses to run without its rate limit, caps what it will file in a day, and cleans player text before it goes into an issue.
+
 ## v1.17
 
 **The economy was not an economy.** A gram of top shelf could reach $99 once reputation, the market, the brand registration, late hours and your own markup had all multiplied together. Meanwhile the shop cost nothing at all to run: no rent, no power, no water, no tax, and the only money ever leaving the building was $60 a day in wages. Everything buyable in the game, every upgrade, licence, tent and lamp, came to $73,160, which a mature shop earned back in about thirteen minutes. This release rebuilds the money from the ground up.
