@@ -5511,7 +5511,8 @@
     c.fern(0, 1.21, 0.4);
   } });
   function bookshelfBuild(c, w, h, rows) {
-    // open carcass (sides, base, back) so the books on the shelves are actually visible; the old solid block hid them\n    [-1, 1].forEach(function (sd) { c.box(0.06, h, 0.3, MAT.darkwood, sd * (w / 2 - 0.03), h / 2, 0); }); c.box(w, 0.08, 0.3, MAT.darkwood, 0, 0.04, 0); c.box(w, h, 0.05, MAT.darkwood, 0, h / 2, -0.125); c.box(w - 0.12, h - 0.12, 0.01, colorMat(0x2a1c10, 0.8), 0, h / 2, -0.097, { cast: false }); c.solid(-w / 2, w / 2, -0.15, 0.15);
+    // open carcass (sides, base, back) so the books on the shelves are actually visible; the old solid block hid them
+    [-1, 1].forEach(function (sd) { c.box(0.06, h, 0.3, MAT.darkwood, sd * (w / 2 - 0.03), h / 2, 0); }); c.box(w, 0.08, 0.3, MAT.darkwood, 0, 0.04, 0); c.box(w, h, 0.05, MAT.darkwood, 0, h / 2, -0.125); c.box(w - 0.12, h - 0.12, 0.01, colorMat(0x2a1c10, 0.8), 0, h / 2, -0.097, { cast: false }); c.solid(-w / 2, w / 2, -0.15, 0.15);
     for (var r = 0; r < rows; r++) { var sy = 0.3 + r * ((h - 0.4) / rows); c.box(w - 0.06, 0.025, 0.28, MAT.wood, 0, sy, 0.01, { cast: false }); var bx = -w / 2 + 0.06; var lean = 0; while (bx < w / 2 - 0.12) { var bw = randf(0.035, 0.08), bh = randf(0.2, 0.32); var bk = c.box(bw, bh, randf(0.16, 0.22), colorMat(pick([0xc94a3a, 0x2f6b9a, 0x3aa36a, 0xe0c25a, 0x7a5aa8, 0xf2f2f2, 0x8a4a2a, 0x1c1c22]), 0.9), bx + bw / 2, sy + bh / 2 + 0.012, 0.03, { cast: false }); if (Math.random() < 0.15 && bx > -w / 2 + 0.2) { bk.rotation.z = 0.18; bk.position.x += 0.02; bx += 0.03; } bx += bw + 0.008; if (Math.random() < 0.12) bx += randf(0.05, 0.12); } if (r === rows - 1) { c.cyl(0.05, 0.04, 0.12, MAT.jar, w / 2 - 0.15, sy + 0.07, 0.05, 12); } }
     c.box(w, 0.06, 0.32, MAT.darkwood, 0, h - 0.03, 0.005);
   }
@@ -7485,7 +7486,7 @@
   runHooks(hooks.boot);
   defightScene(); defightScene();   /* twice: a first nudge can land a face on another */
   // Blender models come out of IndexedDB after boot, so whatever is in hand is rebuilt once they land
-  if (WS) { WS.onModelsReady(function () { if (WS.hasModels()) { heldKey = ' '; world.dirty = true; } }); WS.loadModels(); }
+  if (WS) { WS.onModelsReady(function () { if (WS.hasModels()) { heldKey = '\u0000'; world.dirty = true; } }); WS.loadModels(); }
   camera.position.copy(player.pos); camera.rotation.set(0, player.yaw, 0);
 
   // start screen
