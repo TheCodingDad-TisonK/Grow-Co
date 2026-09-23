@@ -4518,11 +4518,15 @@
   var LOBBY_STOPS = {
     vend:   { prop: 'vending',     off: 0.85, dur: 4.5, act: 1.4 },
     arcade: { prop: 'arcade',      off: 0.85, dur: 9,   act: 1.2 },
-    coffee: { prop: 'lobbyCoffee', off: 0.8,  dur: 5.5, act: 1.8 }
+    coffee: { prop: 'lobbyCoffee', off: 0.8,  dur: 5.5, act: 1.8 },
+    fridge: { prop: 'fridge',      off: 0.8,  dur: 4,   act: 1.5 }
   };
+  function lobbyFridges() {   // drinks fridges a customer can walk up to: stood in the lobby, with something cold in them
+    return builtUnits('fridge').filter(function (u) { var P = propPlacement(u); return !P.floor && roomOf(P.x, P.z) === 'lobby' && (machState(u).fridge || 0) > 0; });
+  }
   function builtUnits(base) { return unitIds(base).filter(function (u) { return propInst[u] && !propPlacement(u).hidden; }); }
-  function lobbyStop(kind) {
-    var t = LOBBY_STOPS[kind], open = builtUnits(t.prop); if (!open.length) return null;
+  function lobbyStop(kind, unit) {
+    var t = LOBBY_STOPS[kind], open = unit ? [unit] : builtUnits(t.prop); if (!open.length) return null;
     var P = propPlacement(pick(open)), r = ((P.rot % 4) + 4) % 4;
     var dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r];   // the prop's front, in quarter turns: 0 is +z
     return { x: P.x + dx * t.off, z: P.z + dz * t.off, yaw: Math.atan2(-dx, -dz), dur: t.dur, act: t.act };
@@ -4542,6 +4546,7 @@
     var plan = [];
     if (hasLic('catering') && (S.vendStock.drink > 0 || S.vendStock.snack > 0) && Math.random() < 0.35) plan.push({ kind: 'vend' });
     if (hasLic('catering') && S.upgrades.lobby && propInst.lobbyCoffee && S.coffeeStock.cup > 0 && S.coffeeStock.beans > 0 && Math.random() < 0.4) plan.push({ kind: 'coffee' });
+    if (hasLic('catering')) { var frs = lobbyFridges(); if (frs.length && Math.random() < 0.3) plan.push({ kind: 'fridge', unit: pick(frs) }); }   /* a cold can from a fridge stood out in the lobby */
     if (hasLic('amusement') && propInst.arcade && Math.random() < 0.25) plan.push({ kind: 'arcade' });
     if (hasLic('lounge') && c.want === 'joints' && Math.random() < 0.4) { var seat = freeLoungeSeat(); if (seat) plan.push({ kind: 'bench', seat: seat }); }
     return plan;
@@ -4573,7 +4578,7 @@
     l.step++; var st = l.plan[l.step]; var from = { x: l.g.position.x, z: l.g.position.z }; l.t = 0;
     if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = [{ x: from.x, z: 6.6 }, { x: 0.4, z: 7.9 }, { x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]; return; }
     if (st.kind === 'bench') { l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
-    else { var s = lobbyStop(st.kind); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
+    else { var s = lobbyStop(st.kind, st.unit); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useUnit = st.unit; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
   }
   // the machine does its thing: you get paid, they get something to hold
   function lobbyServe(l) {
@@ -4581,6 +4586,15 @@
     if (l.useKind === 'arcade') {
       S.box.arcade += 1; S.stats.arcade = (S.stats.arcade || 0) + 1; sfx('arcade');
       loungerSay(l, pick(['one more go', 'high score!', 'argh, so close']), '#ffd166'); logEvent('🕹️ ' + l.who + ' played the arcade (+$1 in the coin box)', '');
+      return;
+    }
+    if (l.useKind === 'fridge') {   // $2 a can out of the fridge they walked up to, into the vending box
+      var FM = machState(l.useUnit || 'fridge');
+      if ((FM.fridge || 0) <= 0) { loungerSay(l, 'fridge is empty? 😒', '#ff6b6b'); logEvent('🧊 ' + l.who + ' found the drinks fridge empty', 'bad'); return; }
+      FM.fridge--; S.box.vend += 2; S.stats.fridge = (S.stats.fridge || 0) + 1; sfx('pickup'); syncFridge(l.useUnit || 'fridge');
+      var cold = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(0x3ad0ff, 0.4, 0.3)); cold.position.set(0, -0.37, 0.03); le.add(cold);
+      loungerSay(l, pick(['ice cold 🧊', 'cheers', 'just what I needed']), '#e8f1ea');
+      toast('🧊 ' + l.who + ' took a cold drink from the fridge (+$2 in the vending box)', ''); logEvent('🧊 ' + l.who + ' bought a cold drink from the fridge (+$2)', '');
       return;
     }
     if (l.useKind === 'vend') {
@@ -7102,7 +7116,7 @@
       var d = PROPS[base]; if (!d || !d.multi) return;
       var have = unitCount(base), full = have >= d.multi.max, locked = unitLock(base);
       h += '<div class="g3-row"><span class="ico">' + d.multi.ico + '</span><span class="meta"><span class="n">' + (d.multi.name || d.label.replace(/^./, function (m2) { return m2.toUpperCase(); })) + '</span><span class="own">' + have + ' of ' + d.multi.max +
-        (locked ? ' · needs the ' + locked : full ? ' · the shop is full' : '') + '</span></span>' +
+        (locked ? ' · needs the ' + locked : full ? ' · the shop is full' : '') + (base === 'fridge' ? ' · one stood in the lobby sells cold drinks to customers at $2 a can, with the catering permit' : '') + '</span></span>' +
         (full || locked ? '<span class="g3-tier">' + (full ? 'max' : '🔒') + '</span>' : '<button class="g3-btn primary" data-act="buyUnit" data-id="' + base + '">' + money(machCost(base, have + 1)) + '</button>') + '</div>';
     });
     h += '</div><div class="g3-box"><h3>📈 Business</h3><div class="g3-chips">' + chip('market', S.market.toFixed(2) + '×') + chip('rep', Math.floor(S.rep)) + chip('price mult', '×' + repMult().toFixed(2)) + chip('level', S.level) + '</div><div class="desc">Reputation adds up to 10% to a price and brings people through the door. Connoisseurs (🎩) pay 2.2× for quality 70+.</div>' + paneStatsInner() + '</div></div>';
