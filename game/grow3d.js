@@ -7377,13 +7377,14 @@
       '<h4>The shop</h4><p>The <b>control box</b> in the office opens or closes the shop, kills the lights and picks a radio station. <b>Curtains</b> on every window and the door open with E. The <b>staff door</b> swings open with E. Dust settles on the floors; the <b>broom</b> hangs in the processing room.</p>' +
       '<h4>Keys</h4><p><b>WASD</b> move · <b>Shift</b> run · <b>Space</b> jump · <b>Ctrl</b> crouch · <b>E</b> / click pick up, use, talk · <b>G</b> put down · <b>Tab</b> inventory · <b>Esc</b> menu</p>';
   }
+  var appliedQuality = null;   /* the quality the materials were last compiled for */
   function applySettings() {
     camera.fov = SET.fov; camera.updateProjectionMatrix();
     var q = SET.quality; renderer.shadowMap.enabled = q !== 'low'; renderer.shadowMap.type = q === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     var ms = q === 'high' ? 2048 : 1024; if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
     renderer.shadowMap.needsUpdate = true; lightBudget.point = q === 'high' ? 12 : q === 'medium' ? 8 : 5;
     renderer.setPixelRatio(q === 'low' ? Math.min(window.devicePixelRatio, 1) * 0.66 : q === 'medium' ? Math.min(window.devicePixelRatio, 1.25) : Math.min(window.devicePixelRatio, 2));
-    scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; });
+    if (q !== appliedQuality) { appliedQuality = q; scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; }); }   /* recompiling every shader is only needed when the shadow type changes with quality, never for FOV, sensitivity or HUD scale */
     $('h-fps').hidden = !SET.fps;
     document.documentElement.style.fontSize = (SET.hudScale || 1) * 100 + '%';
   }
