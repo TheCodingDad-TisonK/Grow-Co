@@ -587,7 +587,10 @@
     // the order: a main line, sometimes a second product, sometimes bits from the counter display
     var cu = S.customer; cu.lines = [{ kind: cu.want, strain: cu.strain, qty: cu.qty, given: { n: 0, qSum: 0, thcSum: 0 } }]; cu.given = cu.lines[0].given;
     if (Math.random() < 0.35) { var kinds2 = ['bags', 'joints', 'cookies'].filter(function (k) { return k !== cu.want && (k !== 'cookies' || S.pkg.cookies.n > 0); }); var k2 = pick(kinds2); cu.lines.push({ kind: k2, strain: known.length ? pick(known) : cu.strain, qty: k2 === 'bags' ? 1 : randi(1, 3), given: { n: 0, qSum: 0, thcSum: 0 } }); }
-    cu.acc = []; if (Math.random() < 0.45) { if (Math.random() < 0.6) cu.acc.push({ item: 'lighter', qty: 1 }); if (Math.random() < 0.5) cu.acc.push({ item: 'rpaper', qty: 1 }); if (Math.random() < 0.15) cu.acc.push({ item: 'rgrinder', qty: 1 }); } var cks = anyCigStock(); if (cks.length && Math.random() < 0.4) cu.cig = { sku: pick(cks), qty: Math.random() < 0.25 ? 2 : 1, given: 0 };
+    cu.acc = []; if (Math.random() < 0.45) {   /* one or two extras off the counter, likelier the more of it is on show; the three staples can still be asked for when the rack has run dry */
+      var accW = Object.keys(ACC).map(function (k) { return [k, (S.display[k] || 0) + (k === 'lighter' || k === 'rpaper' || k === 'rgrinder' ? 1 : 0)]; }).filter(function (w) { return w[1] > 0; });
+      for (var an = Math.random() < 0.35 ? 2 : 1; an > 0 && accW.length; an--) { var ar = Math.random() * accW.reduce(function (a, w) { return a + w[1]; }, 0), ai = accW.length - 1; for (var aj = 0; aj < accW.length; aj++) { ar -= accW[aj][1]; if (ar < 0) { ai = aj; break; } } cu.acc.push({ item: accW[ai][0], qty: 1 }); accW.splice(ai, 1); }
+    } var cks = anyCigStock(); if (cks.length && Math.random() < 0.4) cu.cig = { sku: pick(cks), qty: Math.random() < 0.25 ? 2 : 1, given: 0 };
     if (premium) { logEvent('🎩 A connoisseur (' + c.who + ') just walked in — looks like they want top-shelf', 'rare'); toast('🎩 Connoisseur walking in', 'rare'); }
     else logEvent('🚪 ' + c.who + ' walked in — security is checking ID', '');
   }
@@ -6584,7 +6587,7 @@
     toast('💵 ' + c.who + ' is paying by ' + c.pay + ' — ring it up at the register', ''); hud(); world.dirty = true;
   }
   // what a cash customer holds out: sometimes exact, usually the next round note above the total
-  function accIcon(id) { return { lighter: '🔥', rpaper: '📄', rgrinder: '⚙️' }[id] || '🛒'; }
+  function accIcon(id) { return { lighter: '🔥', rpaper: '📄', rgrinder: '⚙️' }[id] || (supplyById(id) && supplyById(id).ico) || '🛒'; }
   function kindIcon(k) { return { bags: '🛍️', joints: '🚬', cookies: '🍪' }[k] || '📦'; }
   // the order as separate rows: main lines with given/qty, then the counter-display extras
   function orderRows(c) {
