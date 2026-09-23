@@ -130,7 +130,7 @@
     { id: 'retail',    ico: '🪪', name: 'Retail licence',       price: 800,  lvl: 2,  d: 'Customers may pay by card. Without it everyone pays cash.' },
     { id: 'catering',  ico: '☕', name: 'Vending & catering permit', price: 450, d: 'The vending machine and coffee machine may sell.' },
     { id: 'amusement', ico: '🕹️', name: 'Amusement permit',     price: 400,  d: 'The arcade cabinet may take coins.' },
-    { id: 'lounge',    ico: '🛋️', name: 'Lounge licence',       price: 700,  rep: 25, d: 'Customers may sit and smoke in the lobby.' },
+    { id: 'lounge',    ico: '🛋️', name: 'Lounge licence',       price: 700,  rep: 25, d: 'Customers may sit and smoke in the lobby, and each one buys a joint off the goods shelf to do it.' },
     { id: 'cult2',     ico: '🌱', name: 'Cultivation permit II', price: 900, lvl: 3, d: 'Unlocks the ' + tentSizes('cult2') + ' tents and the roof greenhouse beds. Plants grow 5% faster.' },
     { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 6000, lvl: 6, req: 'cult2', d: 'Unlocks the ' + tentSizes('cult3') + ' tents.' },
     { id: 'wholesale', ico: '📦', name: 'Wholesale account',    price: 3600, lvl: 4, d: 'Supplies 15% cheaper and the van comes twice as fast.' },
@@ -4683,7 +4683,7 @@
     if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = [{ x: from.x, z: 6.6 }, { x: 0.4, z: 7.9 }, { x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]; return; }
     if (st.kind === 'bench') {   /* a smoke in the lounge starts with buying the joint, off the goods shelf at the board price; no joints, no sit */
       var jid = Object.keys(S.lots.joints).filter(function (k) { return S.lots.joints[k].n > 0; })[0];
-      if (!jid) { l.seat = null; loungerSay(l, 'No joints left? Another time, then.', '#ffc857', 2400); logEvent('🪑 ' + l.who + ' wanted a joint for the lounge, but the shelf had none', ''); nextStep(l); return; }
+      if (!jid) { l.seat = null; loungerSay(l, 'No joints left? Another time, then.', '#ffc857', 2400); logEvent('🪑 ' + l.who + ' wanted a joint for the lounge, but the goods shelf had none', ''); nextStep(l); return; }
       var jd = lotDraw('joints', jid, 1), jp = Math.max(1, Math.round(jointPrice(jd.q, jd.thc))); S.till += jp; bookSale(jp); S.stats.sold++; syncGoods();
       logEvent('🪑 ' + l.who + ' bought a ' + strainById(jid).name + ' joint to smoke in the lounge (' + money(jp) + ' in the till)', '');
       l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
@@ -6658,7 +6658,7 @@
     else if (h.kind === 'can') { toast('Put the can down', ''); }
     else if (h.kind === 'broom') { toast('Broom back on the hook', ''); }
     else if (h.kind === 'snack') { toast('Left the snack for later', ''); }
-    else if (h.kind === 'crate') { S.storage[h.item] = (S.storage[h.item] || 0) + h.n; toast('Crate back in storage', ''); }
+    else if (h.kind === 'crate') { S.storage[h.item] = (S.storage[h.item] || 0) + h.n; toast('Crate back in the back room', ''); }
     else if (h.kind === 'keys') { toast('🔑 Keyring back on its hook in the office', ''); setTimeout(syncKeyHook, 0); }   /* the hotbar slot clears just after this, so re-read it on the next tick */
     else if (h.kind === 'bat') { toast('Bat back by the counter', ''); if (world.batMesh) world.batMesh.visible = true; }
     else if (WEAPONS[h.kind]) { toast('The ' + WEAPONS[h.kind].name + ' is back in the weapon locker', ''); }
@@ -6901,7 +6901,7 @@
     if (d.kind === 'deskboard') return 'Shop dashboard <small>' + DESK_PAGE_LABEL[DESK_PAGES[deskBoard.page]] + ' · E for the full sheet</small>';
     if (d.kind === 'switch') return (roomLit(d.room) ? 'Lights off' : 'Lights on') + ' <small>' + ROOM_NAMES[d.room] + '</small>';
     if (d.kind === 'dehum') return 'Dehumidifier <small>' + dehumLabel(d.zone) + ' · RH ' + Math.round(S.rh[d.zone]) + '% · E next setting</small>';
-    if (d.kind === 'storeItem') { var sn = S.storage[d.item] || 0; if (h && (h.kind !== 'crate' || h.item !== d.item) && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; return 'Take a crate of ' + itemName(d.item) + ' <small>' + sn + ' in storage · E takes ' + Math.min(sn, itemPack(d.item)) + ' · Shift+E all' + (h ? ' · adds to the crate' : '') + '</small>'; }
+    if (d.kind === 'storeItem') { var sn = S.storage[d.item] || 0; if (h && (h.kind !== 'crate' || h.item !== d.item) && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; return 'Take a crate of ' + itemName(d.item) + ' <small>' + sn + ' in the back room · E takes ' + Math.min(sn, itemPack(d.item)) + ' · Shift+E all' + (h ? ' · adds to the crate' : '') + '</small>'; }
     if (d.kind === 'storage') return 'Storage racks <small>' + (Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }).length || 'no') + ' items · aim at a crate to take it · Shift+E for the stock list</small>';
     if (d.kind === 'vault') return S.pocket > 0 ? 'Put ' + money(S.pocket) + ' in the vault <small>holds ' + money(S.vault) + ' · Shift+E opens it</small>' : 'Open the vault <small>holds ' + money(S.vault) + '</small>';
     if (d.kind === 'tips') return S.tips > 0 ? 'Empty the tip jar <small>' + money(S.tips) + '</small>' : 'Tip jar <small>empty</small>';
@@ -7152,7 +7152,7 @@
       if (kind === 'laptop') { title = '💻 Supply desk'; tabs = [['shop', '🛒 Supplies'], ['seeds', '🌱 Seed bank'], ['gear', '⚙️ Gear'], ['lic', '🪪 Licences'], ['staff', '🧑‍🔧 Staff'], ['bank', '🏦 Bank']]; body = tab === 'seeds' ? paneSeeds() : tab === 'gear' ? paneUpgrades() : tab === 'lic' ? paneLicences() : tab === 'staff' ? paneStaff() : tab === 'bank' ? paneBank() : paneShop(); }
       else if (kind === 'vault') { title = '🔒 Vault'; body = paneVault(); }
       else if (kind === 'atm') { title = '🏧 ATM'; body = paneAtm(); }
-      else if (kind === 'storage') { title = '📦 Storage'; body = paneStorage(); }
+      else if (kind === 'storage') { title = '📦 Back room'; body = paneStorage(); }
       else if (kind === 'stock') { title = '🗄️ Stock cabinet'; body = paneStock(); }
       else if (kind === 'bench') { title = '✂️ Workbench'; body = paneProcess(); }
       else if (kind === 'register') { title = '💵 Till'; body = paneRegister(); }
@@ -7226,7 +7226,7 @@
 
   function paneShop() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🛒 Supplies</h3><div class="desc">Paid from the bank (' + money(S.bank) + '). Orders are boxed up and the supplier\'s van drops them in the back room a couple of minutes later. Carry crates from there to the supply rack or the machines.</div>' + (S.order ? '<div class="g3-chips"><span class="g3-chip amber">open order: ' + esc(orderSummary(S.order.items)) + '</span></div>' : '') + (S.deliveries.length ? '<div class="g3-chips">' + S.deliveries.map(function (d) { return '<span class="g3-chip">🚚 ' + esc(orderSummary(d.items)) + ' · ~' + Math.max(0, Math.ceil((d.due - now()) / 1000)) + ' s</span>'; }).join('') + '</div>' : '');
-    SUPPLIES.forEach(function (it) { var own = it.tool ? (S.supplies[it.id] ? 'owned' : 'not yet') : (S.supplies[it.id] || 0); h += '<div class="g3-row"><span class="ico">' + it.ico + '</span><span class="meta"><span class="n">' + it.name + '</span><span class="own">' + (it.stock === 'vend' ? 'machine: ' + (S.vendStock[it.id] || 0) : it.stock === 'coffee' ? 'machine: ' + (S.coffeeStock[it.id] || 0) : 'rack: ' + own) + ((S.storage[it.id] || 0) ? ' · storage: ' + S.storage[it.id] : '') + ' · ' + it.hint + '</span></span><span class="price">' + money(Math.round(it.price * supplyDisc())) + '</span><button class="g3-btn" data-act="buy" data-id="' + it.id + '"' + (it.tool && S.supplies[it.id] ? ' disabled' : '') + '>Buy</button></div>'; });
+    SUPPLIES.forEach(function (it) { var own = it.tool ? (S.supplies[it.id] ? 'owned' : 'not yet') : (S.supplies[it.id] || 0); h += '<div class="g3-row"><span class="ico">' + it.ico + '</span><span class="meta"><span class="n">' + it.name + '</span><span class="own">' + (it.stock === 'vend' ? 'machine: ' + (S.vendStock[it.id] || 0) : it.stock === 'coffee' ? 'machine: ' + (S.coffeeStock[it.id] || 0) : 'rack: ' + own) + ((S.storage[it.id] || 0) ? ' · back room: ' + S.storage[it.id] : '') + ' · ' + it.hint + '</span></span><span class="price">' + money(Math.round(it.price * supplyDisc())) + '</span><button class="g3-btn" data-act="buy" data-id="' + it.id + '"' + (it.tool && S.supplies[it.id] ? ' disabled' : '') + '>Buy</button></div>'; });
     h += '</div><div class="g3-box"><h3>🌿 Grow room</h3><div class="desc">What you have on hand right now.</div><div class="g3-chips">' +
       chip('cash', money(S.bank)) + chip('soil', S.supplies.soil || 0) + chip('pots free', (S.supplies.pot || 0) - S.plants.length) + chip('nutrients', S.supplies.nutrients || 0) + chip('spray', S.supplies.remedy || 0) + chip('baggies', S.supplies.bag || 0) + chip('papers', S.supplies.paper || 0) + chip('tips', S.supplies.tip || 0) + chip('jars', S.supplies.jar || 0) + '</div>' +
       '<div class="desc">Seeds in stock:</div><div class="g3-chips">' + STRAINS.map(function (s) { return chip(s.emoji + ' ' + s.name, S.supplies['seed_' + s.id] || 0); }).join('') + '</div>' +
