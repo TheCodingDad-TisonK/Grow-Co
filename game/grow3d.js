@@ -2718,6 +2718,7 @@
     if (!S[id] || typeof S[id].x !== 'number') S[id] = { x: d.x, z: d.z, h: Math.PI / 2, trunk: {} }; if (!S[id].trunk) S[id].trunk = {};
     if (typeof S[id].lights !== 'number') S[id].lights = 0; if (typeof S[id].brake !== 'boolean') S[id].brake = true; if (typeof S[id].odo !== 'number') S[id].odo = 0;
     if (!S[id].open) S[id].open = { doorL: false, doorR: false, boot: false, bonnet: false, hatch: false, counter: false };
+    if (!S[id].cigs || typeof S[id].cigs !== 'object') S[id].cigs = {};   /* cartons ride in whichever vehicle they were loaded into */
     return S[id];
   }
   function carState() { return vehState(drive.veh || 'car'); }   /* the vehicle in hand: the one being driven, else the one last touched */
@@ -3205,7 +3206,7 @@
     if (drive.shut) { drive.shut.t -= dt; if (drive.shut.t <= 0) { var sid = drive.shut.id; drive.shut = null; carPartSet(sid, false); } }
     var o = carState().open;
     ['doorL', 'doorR', 'boot', 'bonnet', 'hatch', 'counter', 'rail'].forEach(function (id) { var P = drive.parts[id]; if (!P) return; var want = o[id] ? 1 : 0; if (Math.abs(P.t - want) < 0.002) return; P.t = lerp(P.t, want, 1 - Math.pow(0.004, dt)); if (Math.abs(P.t - want) < 0.005) P.t = want; P.g.rotation[P.axis] = P.max * P.t; });
-    var load = trunkCount() + Object.keys(S.car.cigs || {}).reduce(function (a, k) { return a + S.car.cigs[k]; }, 0), step = Math.max(1, Math.round(trunkCap() / (drive.parts.cargo.children.length + 1)));
+    var cg = carState().cigs, load = trunkCount() + Object.keys(cg).reduce(function (a, k) { return a + cg[k]; }, 0), step = Math.max(1, Math.round(trunkCap() / (drive.parts.cargo.children.length + 1)));
     drive.parts.cargo.children.forEach(function (c, i) { var v = load > i * step; if (c.visible !== v) c.visible = v; });
     carLamps();
   }
@@ -3342,7 +3343,7 @@
   // ── doing business in town ──
   function carNear(x, z, r) { return Math.hypot(drive.g.position.x - x, drive.g.position.z - z) < r; }
   function trunkCount() { var tr = carState().trunk; return Object.keys(tr).reduce(function (a, k) { return a + tr[k]; }, 0); }
-  function unloadTrunk() { var tr = carState().trunk, n = trunkCount(); if (!n) { toast('The trunk is empty', ''); return; } carPopBoot(); storageAdd(tr); S.car.trunk = {}; if (typeof syncStorage === 'function') syncStorage(); sfx('crate'); toast('📦 Unloaded the trunk into the storage room (' + n + ' items) — Jo or you can shelve it from there', 'good'); logEvent('📦 Unloaded a car run from RF Supply Co.', ''); save(); }
+  function unloadTrunk() { var cs = carState(), tr = cs.trunk, n = trunkCount(); if (!n) { toast('The trunk is empty', ''); return; } carPopBoot(); storageAdd(tr); cs.trunk = {};   /* empty the trunk that was unloaded: clearing S.car while the van was in hand let the van's load be unloaded again and again */ if (typeof syncStorage === 'function') syncStorage(); sfx('crate'); toast('📦 Unloaded the trunk into the storage room (' + n + ' items) — Jo or you can shelve it from there', 'good'); logEvent('📦 Unloaded a car run from RF Supply Co.', ''); save(); }
   function cityPoiMenu(poi) {
     var h = held(), lines = [];
     if (poi === 'bank') {
@@ -3746,7 +3747,7 @@
   }
   function driverRuns(j) {   // the hired driver clears jobs himself, for a thinner cut
     var X = xs();
-    if (j.via === 'tablet') { var T = tob(), have = T.packs[j.sku] + (S.car.cigs[j.sku] || 0); if (have < j.qty) return false; var fromCar = Math.min(S.car.cigs[j.sku] || 0, j.qty); if (fromCar > 0) S.car.cigs[j.sku] -= fromCar; T.packs[j.sku] -= (j.qty - fromCar); syncTobRack();   /* never touch a key that is not there: undefined -= 0 is NaN, and a NaN pack count poisons the trunk and the wholesale counter */ X.jobs = X.jobs.filter(function (o) { return o !== j; }); var p = Math.round(j.pay * 0.65); S.bank += p; S.stats.deliveries = (S.stats.deliveries || 0) + 1; toast('🚚 Your driver ran ' + j.addr + ' — ' + money(p) + ' banked (his cut taken)', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true; }
+    if (j.via === 'tablet') { var T = tob(), cc = carState().cigs, have = T.packs[j.sku] + (cc[j.sku] || 0); if (have < j.qty) return false; var fromCar = Math.min(cc[j.sku] || 0, j.qty); if (fromCar > 0) cc[j.sku] -= fromCar; T.packs[j.sku] -= (j.qty - fromCar); syncTobRack();   /* never touch a key that is not there: undefined -= 0 is NaN, and a NaN pack count poisons the trunk and the wholesale counter */ X.jobs = X.jobs.filter(function (o) { return o !== j; }); var p = Math.round(j.pay * 0.65); S.bank += p; S.stats.deliveries = (S.stats.deliveries || 0) + 1; toast('🚚 Your driver ran ' + j.addr + ' — ' + money(p) + ' banked (his cut taken)', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true; }
     var got = 0, val = 0; Object.keys(S.lots[j.kind]).forEach(function (sid) { if (got >= j.qty) return; var l = S.lots[j.kind][sid]; if (l.n <= 0) return; var dd = lotDraw(j.kind, sid, j.qty - got); got += dd.n; val += unitPrice(j.kind, dd.q, dd.thc) * dd.n; });
     if (got <= 0) return false;
     X.jobs = X.jobs.filter(function (o) { return o !== j; }); var pay = Math.round(val * 1.25); S.bank += pay; S.rep += 1; S.stats.deliveries = (S.stats.deliveries || 0) + 1; syncGoods();
@@ -3762,9 +3763,9 @@
   function jobHandOver(idx) {
     var X = xs(), j = X.jobs[idx], h = held(); if (!j) return true;
     if (j.via === 'tablet') {
-      var near = drive.on || carNear(player.pos.x, player.pos.z, 11), inCar = near ? (S.car.cigs[j.sku] || 0) : 0, inHand = (h && h.kind === 'cigs' && h.sku === j.sku) ? h.n : 0;
+      var near = drive.on || carNear(player.pos.x, player.pos.z, 11), cc = carState().cigs, inCar = near ? (cc[j.sku] || 0) : 0, inHand = (h && h.kind === 'cigs' && h.sku === j.sku) ? h.n : 0;
       if (inCar + inHand < j.qty) { toast('They ordered ' + j.qty + ' × ' + CIG_SKUS[j.sku].name + ' — ' + (near ? 'only ' + (inCar + inHand) + ' between the car and your hands' : 'bring the car round, or carry them in') , 'bad'); return true; }
-      var fromCar = Math.min(inCar, j.qty); if (fromCar > 0) S.car.cigs[j.sku] -= fromCar;
+      var fromCar = Math.min(inCar, j.qty); if (fromCar > 0) cc[j.sku] -= fromCar;
       var rest = j.qty - fromCar; if (rest > 0) { h.n -= rest; if (h.n <= 0) S.held = null; }
       jobDone(j, j.pay, fromCar > 0 ? (rest > 0 ? ' — out of the car and your hands' : ' — straight out of the boot') : '');
       return true;
@@ -3803,7 +3804,7 @@
     var pos = drive.on ? drive.g.position : player.pos;
     list.forEach(function (j) {
       var n = X.jobs.indexOf(j) + 1, left = Math.max(0, Math.round((j.until - now()) / 1000)), km = Math.round(Math.hypot(j.x - pos.x, j.z - pos.z)) + ' m';
-      var have = j.via === 'tablet' ? ((S.car.cigs[j.sku] || 0) + ' in the car · ' + tob().packs[j.sku] + ' on the rack') : (S.pkg[j.kind].n + ' packed');
+      var have = j.via === 'tablet' ? ((carState().cigs[j.sku] || 0) + ' in the car · ' + tob().packs[j.sku] + ' on the rack') : (S.pkg[j.kind].n + ' packed');
       rows.push('<tr><td><b>#' + n + '</b></td><td><b>' + j.addr + '</b><br><small>' + km + ' away · ' + have + '</small></td>' +
         '<td>' + j.qty + ' × ' + jobGoods(j) + '</td>' +
         '<td class="' + (left < 60 ? 'bad' : '') + '">' + Math.floor(left / 60) + 'm ' + (left % 60) + 's</td>' +
@@ -3823,9 +3824,9 @@
     if (!offline && weekend()) toast('📅 It is the weekend — expect more people through the door', ''); if (!offline && (S.day % 28) === 25) toast('🎉 Holiday week starts — footfall is up by half', 'rare');
   }
   function carMenu() {
-    var X = xs(), T = tob(), inBay = carNear(7.7, -15.3, 6), lines = [], packs = CIG_KEYS.reduce(function (a, k) { return a + T.packs[k]; }, 0), loaded = Object.keys(S.car.cigs).reduce(function (a, k) { return a + S.car.cigs[k]; }, 0);
+    var X = xs(), T = tob(), inBay = carNear(7.7, -15.3, 6), lines = [], packs = CIG_KEYS.reduce(function (a, k) { return a + T.packs[k]; }, 0), cc = carState().cigs, loaded = Object.keys(cc).reduce(function (a, k) { return a + cc[k]; }, 0);
     lines.push({ label: '📦 Unload supplies into storage <small>' + trunkCount() + ' of ' + trunkCap() + ' items in the trunk</small>', cls: inBay && trunkCount() ? '' : 'muted', act: inBay && trunkCount() ? unloadTrunk : null });
-    lines.push({ label: '🚬 Load every finished carton from the basement rack <small>' + packs + ' packs on the rack · ' + loaded + ' already in the car</small>', cls: inBay && packs ? '' : 'muted', act: inBay && packs ? function () { CIG_KEYS.forEach(function (k) { S.car.cigs[k] = (S.car.cigs[k] || 0) + T.packs[k]; T.packs[k] = 0; }); syncTobRack(); carPopBoot(); sfx('crate'); toast('🚬 ' + packs + ' packs in the car — the Corner Tobacconist buys wholesale', 'good'); save(); } : null });
+    lines.push({ label: '🚬 Load every finished carton from the basement rack <small>' + packs + ' packs on the rack · ' + loaded + ' already in the car</small>', cls: inBay && packs ? '' : 'muted', act: inBay && packs ? function () { CIG_KEYS.forEach(function (k) { cc[k] = (cc[k] || 0) + T.packs[k]; T.packs[k] = 0; }); syncTobRack(); carPopBoot(); sfx('crate'); toast('🚬 ' + packs + ' packs in the car — the Corner Tobacconist buys wholesale', 'good'); save(); } : null });
     lines.push({ label: (carState().open.boot ? '🔒 Close the boot' : '🔓 Open the boot') + ' <small>or press E on the boot lid itself</small>', act: function () { carPartToggle('boot'); } });
     lines.push({ label: (carState().brake ? '🅿️ Release the handbrake' : '🅿️ Put the handbrake on') + ' <small>' + (carInBay() ? 'parked square in your bay' : 'parked outside the bay') + '</small>', act: function () { parkBrake(); } });
     [['trunk', '🧰 Bigger trunk', 800, 'holds 120 items, up from 40'], ['engine', '🏎️ Tuned engine', 1200, 'a third more top speed'], ['bar', '🛡️ Bull bar', 700, 'stops a getaway car from further off']].forEach(function (u) { var own = X.garage[u[0]]; lines.push({ label: u[1] + ' · ' + money(u[2]) + ' <small>' + (own ? 'fitted' : u[3]) + '</small>', cls: own || !inBay || S.bank < u[2] ? 'muted' : '', act: own || !inBay || S.bank < u[2] ? null : function () { S.bank -= u[2]; X.garage[u[0]] = true; sfx('cash'); toast(u[1] + ' fitted', 'good'); hud(); save(); } }); });
@@ -3864,8 +3865,8 @@
   function expPoiMenu(poi) {
     var X = xs(), lines = [];
     if (wsPlaceMenu(poi)) return true;
-    if (poi === 'tobac') { var near = carNear(40, 14, 30), n = 0, val = 0; Object.keys(S.car.cigs).forEach(function (k) { n += S.car.cigs[k]; val += S.car.cigs[k] * CIG_SKUS[k].price * 0.7; }); val = Math.round(val);
-      lines.push({ label: '🚬 Sell the ' + n + ' packs in your car · ' + money(val) + ' <small>70% of shop price, paid straight to the bank' + (near ? '' : ' · bring the car round') + '</small>', cls: n && near ? '' : 'muted', act: n && near ? function () { S.bank += val; S.car.cigs = {}; S.stats.wholesale = (S.stats.wholesale || 0) + val; sfx('cash'); toast('🚬 Wholesaled ' + n + ' packs for ' + money(val), 'good'); logEvent('🚬 Wholesaled ' + n + ' packs to the Corner Tobacconist for ' + money(val), 'good'); hud(); save(); } : null });
+    if (poi === 'tobac') { var near = carNear(40, 14, 30), n = 0, val = 0, vs = carState(); Object.keys(vs.cigs).forEach(function (k) { n += vs.cigs[k]; val += vs.cigs[k] * CIG_SKUS[k].price * 0.7; }); val = Math.round(val);
+      lines.push({ label: '🚬 Sell the ' + n + ' packs in your car · ' + money(val) + ' <small>70% of shop price, paid straight to the bank' + (near ? '' : ' · bring the car round') + '</small>', cls: n && near ? '' : 'muted', act: n && near ? function () { S.bank += val; vs.cigs = {}; S.stats.wholesale = (S.stats.wholesale || 0) + val; sfx('cash'); toast('🚬 Wholesaled ' + n + ' packs for ' + money(val), 'good'); logEvent('🚬 Wholesaled ' + n + ' packs to the Corner Tobacconist for ' + money(val), 'good'); hud(); save(); } : null });
       lines.push({ label: 'Load cartons at your garage bay: E with Shift on the car.', cls: 'muted' }); ctxOpen('🚬 Corner Tobacconist', 'he takes as many RF Smoking cartons as you can bring', lines); return true; }
     if (poi === 'police') { var h = Math.round(X.heat), cost = 100 + h * 8; lines.push({ label: '🌡️ Your heat: ' + h + ' / 100 <small>' + (h >= 60 ? 'inspections are coming' : h >= 30 ? 'they have noticed you' : 'nobody is looking at you') + ' · park deals, fines and shootings raise it, time lowers it</small>', cls: 'muted' });
       lines.push({ label: '🤝 Donate ' + money(cost) + ' to the benevolent fund <small>heat -30</small>', cls: h > 0 && S.bank >= cost ? '' : 'muted', act: h > 0 && S.bank >= cost ? function () { S.bank -= cost; X.heat = Math.max(0, X.heat - 30); exp.heatBand = 0; sfx('cash'); toast('🤝 A generous citizen. Heat down to ' + Math.round(X.heat), 'good'); hud(); save(); } : null }); ctxOpen('🚔 Police precinct', 'front desk', lines); return true; }
