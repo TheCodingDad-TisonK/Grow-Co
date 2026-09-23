@@ -820,6 +820,7 @@
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(75, 1, 0.2, 200);   // near 0.2: the hands sit at -0.5, and a nearer plane makes distant decals z-fight
   camera.rotation.order = 'YXZ';
+  var TOWN_LAYER = 1; camera.layers.enable(TOWN_LAYER);   /* town facades and greenery live on layer 1 only: the player's camera sees them, the indoor security feeds and the TV grow cam skip them */
   var clock = new THREE.Clock();
 
   var ROOM = { x: 12, z: 9, h: 3.4 }; // half extents
@@ -1298,6 +1299,7 @@
   function buildSecCams() {
     SEC_CAMS.forEach(function (c, i) {
       var cam = new THREE.PerspectiveCamera(70, 16 / 9, 0.1, 40); cam.position.set(c.pos[0], c.pos[1], c.pos[2]); cam.lookAt(c.look[0], c.look[1], c.look[2]); scene.add(cam); sec.cams.push(cam);
+      if (c.name === 'STREET' || c.name === 'YARD') cam.layers.enable(TOWN_LAYER); else cam.layers.disable(TOWN_LAYER);   /* the two outdoor cameras still show the town; the indoor ones skip it */
       var rt = new THREE.WebGLRenderTarget(320, 180); rt.texture.encoding = THREE.sRGBEncoding; sec.rts.push(rt);
       // housing: a dome bracket with a lens and a blinking red LED, mounted where the camera looks from
       var hg = new THREE.Group(); hg.position.copy(cam.position); hg.quaternion.copy(cam.quaternion); world.group.add(hg);
@@ -1310,14 +1312,19 @@
   }
   function secCamName(i) { return 'CAM ' + (i + 1) + ' · ' + SEC_CAMS[i].name; }
   // the monitors only draw while somebody can see them (player in the security room) or in cam view; one feed per pass to keep it cheap
+  function pipRender(rt, cam) {   /* a picture-in-picture pass never redraws the sun's shadow map: the main pass owns it, and only the main camera sees the town layer */
+    var sm = renderer.shadowMap, nu = sm.needsUpdate; sm.needsUpdate = false;
+    renderer.setRenderTarget(rt); renderer.render(scene, cam); renderer.setRenderTarget(null);
+    sm.needsUpdate = nu;
+  }
   function updateSecurity(dt) {
     if (!sec.cams.length) return; var t = now();
     if (world.secLeds) { var blink = Math.floor(t / 600) % 2 === 0; world.secLeds.forEach(function (l) { l.material.emissiveIntensity = blink ? 2 : 0.2; }); }
     var inRoom = player.floor === 0 && roomOf(player.pos.x, player.pos.z) === 'security';
-    if (!inRoom && !sec.view.on) return;
+    if (!inRoom || sec.view.on) return;   /* the monitors are only seen from the room, and the full-screen camera view is drawn by the main pass */
     if (t - sec.lastT < 120) return; sec.lastT = t;
     var i = sec.next; sec.next = (sec.next + 1) % sec.cams.length;
-    renderer.setRenderTarget(sec.rts[i]); renderer.render(scene, sec.cams[i]); renderer.setRenderTarget(null);
+    pipRender(sec.rts[i], sec.cams[i]);
     var m = world.secMonitors && world.secMonitors[i]; if (m && m.mat.map !== sec.rts[i].texture) { m.mat.map = sec.rts[i].texture; m.mat.color.setHex(0xffffff); m.mat.needsUpdate = true; }
   }
   function secHud() { if (sec.hud) return sec.hud; var d = document.createElement('div'); d.id = 'g3-camview'; d.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:30;font-family:var(--mono);color:#dfe8ff;text-shadow:0 1px 2px #000'; d.innerHTML = '<div style="position:absolute;left:24px;top:22px;font-size:20px;font-weight:700"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ff3a3a;margin-right:8px;animation:g3blink 1s steps(2) infinite"></span><span id="g3-cam-name"></span></div><div style="position:absolute;right:24px;top:22px;font-size:16px" id="g3-cam-time"></div><div style="position:absolute;left:24px;bottom:22px;font-size:14px;opacity:.85">1 to 6 or ← → switch camera · E or Esc back to the desk</div><div style="position:absolute;inset:0;border:2px solid rgba(223,232,255,.35);margin:12px;pointer-events:none"></div>'; var st = document.createElement('style'); st.textContent = '@keyframes g3blink{50%{opacity:.15}}'; d.appendChild(st); document.body.appendChild(d); sec.hud = d; return d; }
@@ -2792,7 +2799,7 @@
   function cardGeo(w, h) { var a = new THREE.PlaneGeometry(w, h), b = new THREE.PlaneGeometry(w, h); return [{ g: mergeGeo([{ g: a, m: new THREE.Matrix4().makeTranslation(0, h / 2, 0) }, { g: b, m: new THREE.Matrix4().makeRotationY(Math.PI / 2).setPosition(0, h / 2, 0) }]), mat: null, tint: true }]; }
   function floraSet(kind, variants, cap, shadow, mat) {
     var set = { variants: [] };
-    variants.forEach(function (parts) { var v = { n: 0, cap: cap, parts: [] }; parts.forEach(function (p) { var im = new THREE.InstancedMesh(p.g, p.mat || mat, cap); im.count = 0; im.frustumCulled = false; im.castShadow = shadow; im.receiveShadow = true; im.name = 'flora-' + kind; if (p.tint) im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3).fill(1), 3); scene.add(im); v.parts.push(im); }); set.variants.push(v); });
+    variants.forEach(function (parts) { var v = { n: 0, cap: cap, parts: [] }; parts.forEach(function (p) { var im = new THREE.InstancedMesh(p.g, p.mat || mat, cap); im.layers.set(TOWN_LAYER); im.count = 0; im.frustumCulled = false; im.castShadow = shadow; im.receiveShadow = true; im.name = 'flora-' + kind; if (p.tint) im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3).fill(1), 3); scene.add(im); v.parts.push(im); }); set.variants.push(v); });
     FLORA.sets[kind] = set; return set;
   }
   function buildFlora() {
@@ -2894,7 +2901,7 @@
   function facadeBox(w, h, d, mat, x, y, z, storey, bay) {   /* a box whose side faces repeat the tile once per storey and once per bay, so buildings share one texture */
     var g = new THREE.BoxGeometry(w, h, d), uv = g.attributes.uv, ry = h / (storey || 3.2);
     for (var i = 0; i < uv.count; i++) { var face = Math.floor(i / 4), rx = (face < 2 ? d : w) / (bay || 6); uv.setXY(i, uv.getX(i) * rx, uv.getY(i) * ry); }
-    var m = new THREE.Mesh(g, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; world.group.add(m); return m;
+    var m = new THREE.Mesh(g, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; m.layers.set(TOWN_LAYER); world.group.add(m); return m;
   }
   function cityWinMat(hex, rx, ry) {
     if (!WIN_TEX) WIN_TEX = makeTex(128, 128, function (ctx, w, h) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h); for (var y = 0; y < 4; y++) for (var x = 0; x < 4; x++) { ctx.fillStyle = Math.random() < 0.3 ? '#ffe9a8' : Math.random() < 0.5 ? '#3a4652' : '#56687a'; ctx.fillRect(x * 32 + 7, y * 32 + 8, 18, 17); } }, [1, 1]);
@@ -4008,7 +4015,7 @@
   }
   function doorPrompt(d) { if (d.kind !== 'door') return ''; var o = doorById[d.id]; if (!o) return ''; var k = hasKeys(); if (o.locked) return '🔒 ' + o.name + ' <small>' + (k ? 'Shift+E unlocks it' : 'locked · the keyring hangs in the office') + '</small>'; return (o.open ? 'Slide the ' + o.label + ' shut' : 'Slide the ' + o.label + ' open') + (k ? ' <small>Shift+E locks it</small>' : ''); }
   // ── Fixtures: wall-hung things (every sign, the desk screen, the staff roster) that F2 edit mode can carry. Unlike furniture they move in 3D and snap flat onto whatever surface you look at ──
-  var FIXTURES = [], fxById = {}, fxSignCount = {}, fxRay = new THREE.Raycaster(), fxTick = 0;
+  var FIXTURES = [], fxById = {}, fxSignCount = {}, fxRay = new THREE.Raycaster(), fxTick = 0; fxRay.layers.enable(TOWN_LAYER);
   function fixtureAdd(id, label, objs, baseYaw) {
     objs.forEach(function (o) { var old = o.userData.fxId; if (old && fxById[old]) { FIXTURES.splice(FIXTURES.indexOf(fxById[old]), 1); delete fxById[old]; } });   // a sign that belongs to a bigger fixture stops being its own
     var root = objs[0], grouped = objs.length > 1; if (grouped) { root = new THREE.Group(); root.position.copy(objs[0].getWorldPosition(new THREE.Vector3())); world.group.add(root); objs.forEach(function (o) { root.attach(o); }); }
@@ -4173,7 +4180,7 @@
   }
   function robberFlee(r) { r.state = 'flee'; r.t = 0; r.path = routeTo(r.g.position, 0.4, 7.9).concat([{ x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]); }
   // can the player see this figure? walls, doors and furniture block; glass, signs' hit boxes and the figure itself do not
-  var losRay = new THREE.Raycaster();
+  var losRay = new THREE.Raycaster(); losRay.layers.enable(TOWN_LAYER);   /* rays still hit the town layer */
   function sightLine(tg) {
     losRay.camera = camera; var o = new THREE.Vector3(player.pos.x, player.pos.y - 0.1, player.pos.z), t = new THREE.Vector3(tg.position.x, 1.3, tg.position.z); var dir = t.clone().sub(o); var d = dir.length(); if (d < 0.5) return true; losRay.set(o, dir.normalize()); losRay.far = d - 0.35;
     var hits = losRay.intersectObjects(world.group.children, true);
@@ -5260,7 +5267,7 @@
   var TV_CHANNELS = ['off', 'desk', 'growcam', 'news'];
   function buildGrowCam() {
     tv.rt = new THREE.WebGLRenderTarget(640, 360); tv.rt.texture.encoding = THREE.sRGBEncoding;
-    tv.cam = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 40); tv.cam.position.set(TENT_ORIGIN.x + 3.2, 2.3, TENT_ORIGIN.z + 4.2); tv.cam.lookAt(TENT_ORIGIN.x, 0.8, TENT_ORIGIN.z); scene.add(tv.cam);
+    tv.cam = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 40); tv.cam.position.set(TENT_ORIGIN.x + 3.2, 2.3, TENT_ORIGIN.z + 4.2); tv.cam.lookAt(TENT_ORIGIN.x, 0.8, TENT_ORIGIN.z); scene.add(tv.cam); tv.cam.layers.disable(TOWN_LAYER);
     if (typeof S.tv === 'number') tv.channel = S.tv;
   }
   function tvCycle() { tv.channel = (tv.channel + 1) % TV_CHANNELS.length; S.tv = tv.channel; sfx('click'); toast('📺 ' + { off: 'TV off', desk: 'Shop dashboard', growcam: 'Grow cam', news: 'RF House News' }[TV_CHANNELS[tv.channel]], ''); drawTv(); save(); }
@@ -5284,10 +5291,16 @@
     ctx.fillStyle = '#c94a3a'; ctx.fillRect(0, H - 50, W, 50); ctx.fillStyle = '#fff'; ctx.font = '600 22px "Segoe UI",sans-serif'; var ticker = 'BREAKING: ' + (S.customer ? S.customer.who + ' is waiting at the service window' : 'quiet at the counter') + '   ·   ' + (S.plants.some(function (p) { return p.progress >= 1; }) ? 'plants ready to harvest' : 'plants growing nicely') + '   ·   next delivery van: whenever you order'; var off = (now() / 25) % (ctx.measureText(ticker).width + W); ctx.fillText(ticker, W - off, H - 38);
     tv.tex.needsUpdate = true;
   }
+  var _tvFrustum = new THREE.Frustum(), _tvPM = new THREE.Matrix4();
+  function tvInView() {   /* is the screen inside the player's view? one frustum per call, from the last frame's camera */
+    if (!tv.mesh || player.floor !== 1 || sec.view.on) return false;
+    _tvPM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _tvFrustum.setFromProjectionMatrix(_tvPM);
+    return _tvFrustum.intersectsObject(tv.mesh);
+  }
   function updateTv(dt) {
     if (!tv.mat) return; var ch = TV_CHANNELS[tv.channel]; var t = now();
-    if (ch === 'growcam' && t - tv.lastCam > 500 && player.floor === 1) { tv.lastCam = t; tv.mesh.visible = false; renderer.setRenderTarget(tv.rt); renderer.render(scene, tv.cam); renderer.setRenderTarget(null); tv.mesh.visible = true; }
-    if (ch === 'news' && t - tv.lastNews > 120) { tv.lastNews = t; drawNews(); }
+    if (ch === 'growcam' && t - tv.lastCam > 500) { tv.lastCam = t; if (tvInView()) { tv.mesh.visible = false; pipRender(tv.rt, tv.cam); tv.mesh.visible = true; } }
+    if (ch === 'news' && t - tv.lastNews > 120) { tv.lastNews = t; if (tvInView()) drawNews(); }
   }
 
   // ── Sitting, eating, sleeping ──────────────────────────────────────
@@ -6651,7 +6664,7 @@
   }
 
   // ── Interaction ───────────────────────────────────────────────────
-  var ray = new THREE.Raycaster(); ray.far = 3.4; var center = new THREE.Vector2(0, 0);
+  var ray = new THREE.Raycaster(); ray.layers.enable(TOWN_LAYER); ray.far = 3.4; var center = new THREE.Vector2(0, 0);
   var focus = null;
   function updateFocus() {
     if (edit.on || runHooks(hooks.blockFocus)) return;
@@ -7641,7 +7654,7 @@
     if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); }
     updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt);
     if (_df.t && now() - _df.t > 250) { _df.t = 0; defightScene(); }
-    if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); renderer.render(scene, vc); } else renderer.render(scene, camera);
+    if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); var vcTown = (vc.layers.mask & (1 << TOWN_LAYER)) !== 0; vc.layers.enable(TOWN_LAYER); renderer.render(scene, vc); if (!vcTown) vc.layers.disable(TOWN_LAYER); } else renderer.render(scene, camera);
     if (SET.fps) { fpsAcc += dt; fpsN++; fpsT += dt; if (fpsT > 0.5) { $('h-fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; fpsT = 0; } }
   }
   frame();
