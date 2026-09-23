@@ -16,6 +16,8 @@
 
 **The garage, dressed.** Outside: a gutter and downpipe, a lamp over the door, a door number, drums and jerry cans against the wall, a vent, a side door with a step and a window onto the yard. Inside: a workbench with a vice, a red toolbox, a trolley jack, a fire extinguisher, an oil drum, a service poster, a wall socket, painted bay lines and wheel chocks.
 
+**The van can leave.** Its first parking spot had the oil drums 25 cm off its tail and the pallets a metre off its side, so it sat pinned. Those have moved to the strip north of the garage and beside the roller door, and the van stands 70 cm further forward. The camera in the car had its pitch the wrong way round: mouse up now tilts the view up, as it does on foot.
+
 **The lane.** Fenced on both sides from the back street to the yard gate, with kerbs, centre dashes, two lamp posts, a speed bump, bollards and a private-road sign at the mouth, a camera watching the gate, and grass along the verges. A striped barrier stands at the street end: it lifts on its own when you drive up in your car and drops behind you, or E raises it on foot. That is the first gate; the swing gate into the yard is the second.
 
 **Props that do something.** The trash can lifts its lid with E and takes empties: it holds twelve, then you bag it up and carry the bag to the dumpster out back. The water cooler hands you a cup and fills it; drink it there, on the couch or at the table for a short lift, and you are left holding the empty cup, which refills at the cooler or goes in the trash. Coffee and cold drinks can be drunk the same way now, and leave an empty behind.

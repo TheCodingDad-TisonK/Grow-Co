@@ -1353,8 +1353,8 @@
       box(GX2 - GX1 + T + 0.34, 0.1, 0.12, MAT.plastic, (GX1 + GX2) / 2, GH + 0.2, GZ2 + 0.14, { cast: false }); cyl(0.05, 0.05, GH, MAT.plastic, GX2 + 0.2, GH / 2, GZ2 + 0.1, null, 8);
       box(0.16, 0.22, 0.14, MAT.black, GX1 - 0.2, 2.85, DZ, { cast: false }); box(0.1, 0.08, 0.1, glowMat(0xfff0d0, 1.2), GX1 - 0.24, 2.76, DZ, { cast: false }); var gwl = new THREE.PointLight(0xfff0d0, 0.5, 6, 1.5); gwl.position.set(GX1 - 0.8, 2.5, DZ); scene.add(gwl); (world.streetLights = world.streetLights || []).push(gwl);
       signPlane(['12A'], 0.3, 0.3, GX1 - 0.15, 2.3, DZ - 1.9, -Math.PI / 2, { size: 60, bold: true, bg: '#1b3a8a', titleColor: '#ffffff' });
-      cyl(0.3, 0.3, 0.9, colorMat(0x2f5aa8, 0.5, 0.3), GX1 - 0.5, 0.45, GZ2 - 0.6, null, 14); cyl(0.3, 0.3, 0.9, colorMat(0x8a2a2a, 0.5, 0.3), GX1 - 0.5, 0.45, GZ2 - 1.3, null, 14); world.obstacles.push({ x1: GX1 - 0.85, x2: GX1 - 0.15, z1: GZ2 - 1.65, z2: GZ2 - 0.25, tag: 'garage', floorLevel: 0 });
-      [0, 0.32].forEach(function (o) { box(0.28, 0.4, 0.16, colorMat(0x2f6b3a, 0.6), GX1 - 0.45, 0.2, GZ2 - 2.2 - o); box(0.1, 0.06, 0.08, MAT.black, GX1 - 0.45, 0.43, GZ2 - 2.2 - o, { cast: false }); });
+      cyl(0.3, 0.3, 0.9, colorMat(0x2f5aa8, 0.5, 0.3), GX1 + 4.9, 0.45, GZ2 + 0.6, null, 14); cyl(0.3, 0.3, 0.9, colorMat(0x8a2a2a, 0.5, 0.3), GX1 + 4.2, 0.45, GZ2 + 0.6, null, 14); world.obstacles.push({ x1: GX1 + 3.85, x2: GX1 + 5.25, z1: GZ2 + 0.25, z2: GZ2 + 0.95, tag: 'garage', floorLevel: 0 });   /* on the strip north of the garage, out of the van's way */
+      [0, 0.32].forEach(function (o) { box(0.28, 0.4, 0.16, colorMat(0x2f6b3a, 0.6), GX1 + 3.2 + o, 0.2, GZ2 + 0.45); box(0.1, 0.06, 0.08, MAT.black, GX1 + 3.2 + o, 0.43, GZ2 + 0.45, { cast: false }); });
       box(0.5, 0.36, 0.06, MAT.metal, GX1 + 3.0, 2.6, GZ2 + T / 2 + 0.03, { cast: false }); for (var vs = 0; vs < 5; vs++) box(0.44, 0.02, 0.05, MAT.black, GX1 + 3.0, 2.46 + vs * 0.07, GZ2 + T / 2 + 0.05, { cast: false });
       box(0.9, 2.1, 0.06, colorMat(0x3a4046, 0.5, 0.4), GX1 + 1.4, 1.05, GZ2 + T / 2 + 0.03, { cast: true }); box(0.16, 0.04, 0.06, MAT.chrome, GX1 + 1.7, 1.0, GZ2 + T / 2 + 0.07, { cast: false }); box(1.1, 0.08, 0.5, MAT.trim, GX1 + 1.4, 0.04, GZ2 + 0.35, { cast: false });
       var gwin = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.7), MAT.glass); gwin.position.set(GX1 + 4.0, 2.0, GZ2 + T / 2 + 0.01); world.group.add(gwin); box(1.2, 0.05, 0.1, MAT.trim, GX1 + 4.0, 1.62, GZ2 + T / 2 + 0.03, { cast: false }); box(1.2, 0.05, 0.1, MAT.trim, GX1 + 4.0, 2.38, GZ2 + T / 2 + 0.03, { cast: false });
@@ -1400,8 +1400,8 @@
       var dsign = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.28), new THREE.MeshBasicMaterial({ map: textTex(['GROW CO.', 'waste only'], 280, 110, { size: 34, bold: true, bg: 'rgba(0,0,0,0)', color: '#dfe8dc', titleColor: '#dfe8dc', line: 'rgba(0,0,0,0)' }), transparent: true })); dsign.position.set(0, 0.8, 0.505); dg.add(dsign);
       var dh = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.5, 1.3), MAT.none); dh.position.y = 0.75; dg.add(dh); interactable(dh, { kind: 'dumpster' });
       world.obstacles.push({ x1: YX1 + 0.4, x2: YX1 + 2.2, z1: YZ2 - 1.65, z2: YZ2 - 0.55, tag: 'yard', floorLevel: 0 });
-      for (var pl = 0; pl < 3; pl++) box(1.2, 0.14, 1.0, MAT.planks, YX2 - 1.4, 0.07 + pl * 0.16, YZ2 - 1.2, { cast: true }); world.obstacles.push({ x1: YX2 - 2.0, x2: YX2 - 0.8, z1: YZ2 - 1.7, z2: YZ2 - 0.7, tag: 'yard', floorLevel: 0 });
-      box(0.5, 0.5, 0.5, MAT.wood, YX2 - 1.5, 0.73, YZ2 - 1.2, { cast: true }); box(0.5, 0.5, 0.5, MAT.wood, YX1 + 2.9, 0.25, YZ2 - 0.9, { cast: true, solid: true, tag: 'yard' }); box(0.44, 0.44, 0.44, MAT.wood, YX1 + 2.9, 0.72, YZ2 - 0.9, { cast: true });   /* beside the dumpster, clear of the bay where the car parks */
+      for (var pl = 0; pl < 3; pl++) box(1.2, 0.14, 1.0, MAT.planks, YX1 + 6.0, 0.07 + pl * 0.16, YZ2 - 1.0, { cast: true }); world.obstacles.push({ x1: YX1 + 5.4, x2: YX1 + 6.6, z1: YZ2 - 1.5, z2: YZ2 - 0.5, tag: 'yard', floorLevel: 0 });   /* beside the roller door, clear of the van's bay */
+      box(0.5, 0.5, 0.5, MAT.wood, YX1 + 5.9, 0.73, YZ2 - 1.0, { cast: true }); box(0.5, 0.5, 0.5, MAT.wood, YX1 + 2.9, 0.25, YZ2 - 0.9, { cast: true, solid: true, tag: 'yard' }); box(0.44, 0.44, 0.44, MAT.wood, YX1 + 2.9, 0.72, YZ2 - 0.9, { cast: true });   /* beside the dumpster, clear of the bay where the car parks */
       box(0.5, 0.02, 0.5, MAT.black, 4.5, 0.012, YZ2 - 2.8, { cast: false }); for (var gr = 0; gr < 5; gr++) box(0.44, 0.006, 0.03, colorMat(0x55595e, 0.5, 0.5), 4.5, 0.024, YZ2 - 2.98 + gr * 0.09, { cast: false });   /* a drain grate in the yard */
       var wl = box(0.16, 0.22, 0.14, MAT.black, 4.5, 2.75, AZ1 - 0.2, { cast: false }); box(0.1, 0.08, 0.1, glowMat(0xfff0d0, 1.2), 4.5, 2.66, AZ1 - 0.24, { cast: false }); var wlL = new THREE.PointLight(0xfff0d0, 0.55, 7, 1.5); wlL.position.set(4.5, 2.5, AZ1 - 0.8); scene.add(wlL); (world.streetLights = world.streetLights || []).push(wlL);   /* a lamp over the roller door */
       box(0.95, 0.7, 0.36, colorMat(0xb9bec4, 0.5, 0.4), 6.6, 1.7, AZ1 - 0.3, { cast: true }); cyl(0.26, 0.26, 0.03, MAT.black, 6.6, 1.7, AZ1 - 0.5, null, 20).rotation.x = Math.PI / 2; box(0.04, 1.35, 0.04, MAT.plastic, 7.15, 0.68, AZ1 - 0.2);   /* the condenser and its pipe */
@@ -2714,7 +2714,7 @@
   var drive = { on: false, v: 0, g: null, wheels: [], cam: new THREE.Vector3(), gateAuto: false, eng: null, bumpT: 0, engineOn: false, braking: false, rpm: 0, dist: 6.2, look: { yaw: 0, pitch: 0.12, t: 0 }, parts: null, lamps: null, shut: null, dashT: 0, warnT: 0 };
   var traffic = [], parkFolk = [], cityMap = { el: null, cv: null, on: false, t: 0 };
   function vehState(id) {   /* S.car and S.van: where it stands, what is in the back, lights, handbrake, odometer, which parts are open */
-    var d = id === 'van' ? { x: 7.7, z: -15.3 } : { x: 12.8, z: -18.25 };
+    var d = id === 'van' ? { x: 7.0, z: -15.3 } : { x: 12.8, z: -18.25 };   /* the van is 5 m long: at 7.0 its tail clears the garage wall */
     if (!S[id] || typeof S[id].x !== 'number') S[id] = { x: d.x, z: d.z, h: Math.PI / 2, trunk: {} }; if (!S[id].trunk) S[id].trunk = {};
     if (typeof S[id].lights !== 'number') S[id].lights = 0; if (typeof S[id].brake !== 'boolean') S[id].brake = true; if (typeof S[id].odo !== 'number') S[id].odo = 0;
     if (!S[id].open) S[id].open = { doorL: false, doorR: false, boot: false, bonnet: false };
@@ -3141,9 +3141,10 @@
     // two vehicles: the car in the garage, the van in the yard bay. Whichever you last touched is the one the wheel, the trunk and the parts refer to.
     var vehicles = drive.vehicles = {};
     function spawnVehicle(id, builder, colour, spec) {
-      var cs = vehState(id), home = id === 'van' ? { x: 7.7, z: -15.3 } : { x: 12.8, z: -18.25 };
+      var cs = vehState(id), home = id === 'van' ? { x: 7.0, z: -15.3 } : { x: 12.8, z: -18.25 };
       if (!isFinite(cs.x) || !isFinite(cs.z) || Math.abs(cs.x) > CITY.x - 1 || cs.z < CITY.z1 + 1 || cs.z > CITY.z2 - 1) { cs.x = home.x; cs.z = home.z; cs.h = Math.PI / 2; }   /* saved outside the town */
-      if (id === 'car' && cs.x > 5 && cs.x < 10.5 && cs.z > -17 && cs.z < -13.5) { cs.x = home.x; cs.z = home.z; cs.h = Math.PI / 2; }   /* a save from before the garage: the car stood in the yard bay, which is the van's now */
+      if (id === 'car' && cs.x > 5 && cs.x < 10.5 && cs.z > -17 && cs.z < -13.5) { cs.x = home.x; cs.z = home.z; cs.h = Math.PI / 2; }
+      if (id === 'van' && cs.x > 7.4 && cs.x < 8.0 && Math.abs(cs.z + 15.3) < 0.3) { cs.x = home.x; }   /* the first van spot had its tail in the garage wall */   /* a save from before the garage: the car stood in the yard bay, which is the van's now */
       var g = new THREE.Group(), wheels = builder(g, colour, true); g.position.set(cs.x, 0, cs.z); g.rotation.y = cs.h; world.group.add(g);
       var lamps = g.userData.lamps; [-0.6, 0.6].forEach(function (bx) { var sl = new THREE.SpotLight(0xfff3c8, 0, 26, 0.62, 0.5, 1.4); sl.position.set(bx, 0.62, spec.nose); sl.castShadow = false; g.add(sl); var tgt = new THREE.Object3D(); tgt.position.set(bx * 2.4, -0.3, -15); g.add(tgt); sl.target = tgt; lamps.beams.push(sl); });
       var chit = new THREE.Mesh(new THREE.BoxGeometry(spec.w, spec.h, spec.l), MAT.none); chit.position.y = spec.h / 2; g.add(chit); interactable(chit, { kind: 'car', veh: id });
@@ -5910,7 +5911,7 @@
   function onMouseMove(e) {
     if (!player.locked || ui.blocked()) return;
     var sx = 0.0022 * SET.sens;
-    if (drive.on) { var lk = drive.look; lk.yaw = clamp(lk.yaw - e.movementX * sx, -2.6, 2.6); lk.pitch = clamp(lk.pitch - e.movementY * sx * (SET.invertY ? -1 : 1), -0.5, 1.1); lk.t = 1.4; return; }   /* at the wheel the mouse swings the camera round the car instead of the head */
+    if (drive.on) { var lk = drive.look; lk.yaw = clamp(lk.yaw - e.movementX * sx, -2.6, 2.6); lk.pitch = clamp(lk.pitch + e.movementY * sx * (SET.invertY ? -1 : 1), -0.5, 1.1);   /* orbit pitch lifts the camera, which tilts the view DOWN: the sign is the opposite of the on-foot look */ lk.t = 1.4; return; }   /* at the wheel the mouse swings the camera round the car instead of the head */
     player.yaw -= e.movementX * sx; player.pitch -= e.movementY * sx * (SET.invertY ? -1 : 1);
     player.pitch = clamp(player.pitch, -1.45, 1.45);
   }
