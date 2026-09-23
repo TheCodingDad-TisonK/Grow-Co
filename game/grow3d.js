@@ -2269,7 +2269,7 @@
     var d = lotDraw(l.kind, id, want); l.given.n += d.n; l.given.qSum += d.q * d.n; l.given.thcSum += d.thc * d.n; if (l === orderLines(c)[0] && l.strain && id !== l.strain) c.subbed = true; else if (l === orderLines(c)[0] && id === l.strain) c.matched = true; syncGoods(); return true;
   }
   function workerPick() {   // at the goods shelf: take what the order needs, then carry it to the window
-    var c = S.customer; if (!c || !c.arrived || c.stage) return;
+    var c = S.customer; if (!c || !c.arrived || c.stage || c.idPending) return;
     var lines = orderLines(c); var open = lines.filter(function (l) { return l.given.n < l.qty; }); var got = 0;
     open.forEach(function (l) { var before = l.given.n; if (workerFillLine(c, l)) got += l.given.n - before; });
     var still = lines.filter(function (l) { return l.given.n < l.qty; });
@@ -2277,7 +2277,7 @@
     sfx('rustle'); worker.next = { x: WP.counter.x, z: WP.counter.z, dur: 1.0, done: workerServe };
   }
   function workerServe() {
-    var c = S.customer; if (!c || !c.arrived || c.stage) return;
+    var c = S.customer; if (!c || !c.arrived || c.stage || c.idPending) return;
     var lines = orderLines(c); var still = lines.filter(function (l) { return l.given.n < l.qty; });
     if (still.length) { workerSay('here is part of it — we are out of ' + still.map(lineText).join(', ') + ', boss', '#ffc857', 3000); worker.coolT = now() + 20000; hud(); return; }
     var mult = (c.premium ? 2.2 : 1.15) * (c.subbed ? 0.85 : c.strain && c.matched ? 1.1 : 1); var total = 0;
@@ -2297,7 +2297,7 @@
   }
   function workerNextJob(task) {
     var g = worker.g; function near(x, z) { return Math.hypot(g.position.x - x, g.position.z - z) < 0.35; }
-    if (task === 'serve') { var c = S.customer; if (c && c.arrived && !c.stage && npc.state === 'wait' && now() > worker.coolT) { var gp = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: propPlacement('goodsShelf').x, z: propPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
+    if (task === 'serve') { var c = S.customer; if (c && c.arrived && !c.stage && !c.idPending && npc.state === 'wait' && now() > worker.coolT) {   /* a card still held out is yours to check: the crew waits */ var gp = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: propPlacement('goodsShelf').x, z: propPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
     if (task === 'restock') { if (Object.keys(S.storage).some(function (k) { return S.storage[k] > 0; })) return { x: WP.annex.x, z: WP.annex.z, dur: 3, done: workerRestock }; if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null; }
     if (task !== 'clean' && worker.hasBroom) return { x: ROOM.x - 0.65, z: -0.85, dur: 0.6, done: workerDropBroom };
     if (task === 'clean' && !worker.hasBroom) { if (!dustList().length) return null; return { x: ROOM.x - 0.65, z: -0.85, dur: 0.8, done: workerTakeBroom }; }
@@ -2331,7 +2331,7 @@
         var why = task === 'clean' ? 'floor is clean, boss'
           : task === 'restock' ? 'storeroom is empty, boss'
           : task === 'water' ? 'plants are all happy'
-          : task === 'serve' ? 'nobody at the window' : 'nothing for me right now';
+          : task === 'serve' ? (S.customer && S.customer.idPending ? 'check their ID first, boss' : 'nobody at the window') : 'nothing for me right now';
         workerSay(why, '#ffc857', 2600);
       }
     } else worker.nagT = 0;
@@ -6644,6 +6644,12 @@
     if (c.pay === 'card') S.bank += Math.round(total * (S.upgrades.fintech ? 1.03 : 1)); else S.till += c.tendered - c.changeGiven;   // card settles straight to the bank, cash sits in the drawer
     if (c.matched && !c.subbed && Math.random() < 0.35) { var tipAmt = randi(1, 3) * (S.upgrades.tipjar ? 2 : 1); S.tips += tipAmt; logEvent('🫙 ' + c.who + ' dropped ' + money(tipAmt) + ' in the tip jar', ''); }
     S.stats.sold += c.qty; bookSale(total); S.rep += rep; gainXp(Math.round(total / 8));
+    if (c.id && !c.id.ok && (c.idDodgy || c.idPending)) {   /* waved through on a bad card and nobody caught it: the sale is on you, same as serving it knowingly */
+      c.idDodgy = false; c.idPending = false; addHeat(12); S.rep = Math.max(0, S.rep - 4);
+      logEvent('🪪 Sold to ' + c.who + ' on an ID that was ' + ID_FLAWS[c.id.flaw].why + ' (heat +12, rep -4)', 'bad');
+      toast('🪪 ' + c.who + ' was served on a bad ID (heat +12, rep -4)', 'bad');
+      if (Math.random() < 0.3) policeFine('Serving on an invalid ID');
+    }
     logEvent('💵 Sold ' + c.qty + ' ' + c.want + ' to ' + c.who + ' — ' + money(total) + ' by ' + c.pay + (note ? ' · ' + note : '') + ' (+' + rep + ' rep)', c.premium ? 'rare' : 'good');
     toast('💵 ' + money(total) + '  +' + rep + ' rep' + (note ? ' · ' + note : ''), 'good'); sfx('cash'); registerSale(c.who + ' ' + money(total));
     burst(npc.g.position.x, 1.4, npc.g.position.z - 0.3, 0xffd766, 40, 'up');
