@@ -51,20 +51,20 @@
       ],
       tents: [ { slots: 24, price: 12000, cols: 6, rows: 4, lic: 'cult3' } ] },
     { id: 'rf.shop.counter', name: 'Counter Culture', icon: '🛍️', author: 'TheCodingDad', kind: 'Retail',
-      blurb: 'More to sell off the counter and out of the machines: rizla, trays, energy cans and flapjacks.',
+      blurb: 'More for the counter display and the machines: rolling trays, cones, energy cans and flapjacks.',
       supplies: [
-        { id: 'rtray', ico: '🪵', name: 'Rolling trays (x5)', price: 25, qty: 5, stock: 'display', sell: 12, hint: 'Counter display' },
-        { id: 'rcone', ico: '🍦', name: 'Pre-rolled cones (x20)', price: 16, qty: 20, stock: 'display', sell: 3, hint: 'Counter display' },
+        { id: 'rtray', ico: '🪵', name: 'Rolling trays (×5)', price: 25, qty: 5, stock: 'display', sell: 12, hint: 'Counter display' },
+        { id: 'rcone', ico: '🍦', name: 'Pre-rolled cones (×20)', price: 16, qty: 20, stock: 'display', sell: 3, hint: 'Counter display' },
         { id: 'energy', ico: '⚡', name: 'Energy cans (case of 12)', price: 24, qty: 12, stock: 'vend', hint: 'Restock the vending machine' },
         { id: 'flapjack', ico: '🥮', name: 'Flapjacks (box of 12)', price: 18, qty: 12, stock: 'vend', hint: 'Restock the vending machine' }
       ] },
     { id: 'rf.shop.packaging', name: 'Baggies & Boxes', icon: '🛍️', author: 'TheCodingDad', kind: 'Retail',
       blurb: 'More ways to package what you sell: mylar pouches, gift tins, half-ounce bags and jars.',
       supplies: [
-        { id: 'mylar', ico: '🥡', name: 'Mylar pouches (x20)', price: 22, qty: 20, hint: 'Smarter packaging for eighths' },
-        { id: 'bigbag', ico: '👜', name: 'Half-ounce bags (x10)', price: 18, qty: 10, hint: 'For the bigger orders' },
-        { id: 'tin', ico: '🪙', name: 'Gift tins (x6)', price: 30, qty: 6, stock: 'display', sell: 14, hint: 'Counter display' },
-        { id: 'stash', ico: '🫙', name: 'Stash jars (x4)', price: 26, qty: 4, stock: 'display', sell: 18, hint: 'Counter display' }
+        { id: 'mylar', ico: '🥡', name: 'Mylar pouches (×20)', price: 22, qty: 20, hint: 'Smarter packaging for eighths' },
+        { id: 'bigbag', ico: '👜', name: 'Half-ounce bags (×10)', price: 18, qty: 10, hint: 'For the bigger orders' },
+        { id: 'tin', ico: '🪙', name: 'Gift tins (×6)', price: 30, qty: 6, stock: 'display', sell: 14, hint: 'Counter display' },
+        { id: 'stash', ico: '🫙', name: 'Stash jars (×4)', price: 26, qty: 4, stock: 'display', sell: 18, hint: 'Counter display' }
       ] },
     { id: 'rf.city.bigger', name: 'Bigger City', icon: '🏙️', author: 'TheCodingDad', kind: 'World',
       blurb: 'The town keeps going: the map grows by half again, with more blocks out past the avenues.',
@@ -78,7 +78,7 @@
           service: { label: '🎬 Buy a ticket and sit through a film', note: 'a couple of hours out of the shop: the police lose interest and word gets round', cost: 14, heat: -12, rep: 1, daily: true } }
       ] },
     { id: 'rf.season.xmas', name: 'Christmas', icon: '🎄', author: 'TheCodingDad', kind: 'Seasonal', group: 'season',
-      blurb: 'Snow that does not let up, a festive strain and things to sell off the counter in December.',
+      blurb: 'Snow that doesn\'t let up, a festive strain and things for the counter display in December.',
       festive: { snow: true },
       strains: [ { id: 'candycane', name: 'Candy Cane Kush', emoji: '🍬', seed: 44, growMs: 900000, yield: 21, thc: 1.8, lvl: 4, bud: 0xf4dce0, hair: 0xd0201a, leaf: 0x2f7a4a } ],
       supplies: [
@@ -91,10 +91,10 @@
       strains: [ { id: 'midnightgold', name: 'Midnight Gold', emoji: '🥂', seed: 90, growMs: 1200000, yield: 25, thc: 2.5, lvl: 8, bud: 0xe8c27a, hair: 0xfff3c8, leaf: 0x3a5a3a } ],
       supplies: [
         { id: 'fizz', ico: '🍾', name: 'Fizz (case of 12)', price: 34, qty: 12, stock: 'vend', hint: 'Restock the vending machine' },
-        { id: 'sparkler', ico: '✨', name: 'Sparklers (x20)', price: 12, qty: 20, stock: 'display', sell: 4, hint: 'Counter display' }
+        { id: 'sparkler', ico: '✨', name: 'Sparklers (×20)', price: 12, qty: 20, stock: 'display', sell: 4, hint: 'Counter display' }
       ] },
     { id: 'rf.car.motorpool', name: 'Motor Pool', icon: '🚙', author: 'TheCodingDad', kind: 'Vehicle', group: 'car',
-      blurb: 'A bigger, faster estate in the bay: deep red, a much larger boot and a lot more top end.',
+      blurb: 'A bigger, faster estate in the garage: deep red, a much larger boot and a lot more top end.',
       vehicle: { name: 'RF Estate', colour: 0x8a1c1c, vmax: 30, trunk: 90 } },
     { id: 'rf.car.van', name: 'The Old Van', icon: '🚐', author: 'TheCodingDad', kind: 'Vehicle', group: 'car',
       blurb: 'Slow, cream, and it swallows an enormous load. For a shop that lives on the delivery round.',
@@ -153,7 +153,7 @@
   var NUM = function (v) { return typeof v === 'number' && isFinite(v); };
   function fail(m) { throw new Error(m); }
   function validate(p) {
-    if (!p || typeof p !== 'object') fail('That file is not a pack.');
+    if (!p || typeof p !== 'object') fail('That file isn\'t a pack.');
     if (typeof p.id !== 'string' || !/^[a-z0-9][a-z0-9._-]{2,63}$/i.test(p.id)) fail('A pack needs an "id" like "you.mypack" (letters, digits, dots, dashes).');
     if (typeof p.name !== 'string' || !p.name.trim()) fail('A pack needs a "name".');
     var out = { id: p.id, name: String(p.name).slice(0, 60), author: String(p.author || 'unknown').slice(0, 40), icon: String(p.icon || '🧩').slice(0, 4), kind: String(p.kind || 'Pack').slice(0, 20), blurb: String(p.blurb || '').slice(0, 160), user: true };
