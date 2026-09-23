@@ -494,7 +494,7 @@
   // ── Sim engine (same rules as the 2D game) ────────────────────────
   function step(dt, offline) {
     var L = lightObj(); var auto = !!S.upgrades.autowater;
-    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ while (S[dKey] >= 24) { S[dKey] -= 24; S.day = (S.day || 1) + 1; payBills(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
+    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ while (S[dKey] >= 24) { S[dKey] -= 24; S.day = (S.day || 1) + 1; S.regDay = S.day; S.regSold = 0; payBills(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
     creditPending(offline); updateLogistics(dt, offline);
     // humidity: each room drifts toward its moisture load; a running dehumidifier pulls it down to its target
     var pull = S.upgrades.hvac ? 4.0 : S.upgrades.dehumid ? 1.6 : 0.8; var wetBatches = S.batches.filter(function (b) { return !b.cured; }).length;
@@ -6599,13 +6599,19 @@
       finalizeSale(1, 'exact change');
     }
   };
-  // walk-in sale at the register: whatever is in your hands goes for the board price
+  // walk-up sale at the register: a cash sale to nobody in particular, so it pays under the board price and the till takes only so many a day
+  var WALKUP_RATE = 0.85, WALKUP_CAP = 12;
+  function walkupLeft() { return S.regDay !== (S.day || 1) ? WALKUP_CAP : Math.max(0, WALKUP_CAP - (S.regSold || 0)); }
   function sellHeld() {
     var h = held(); if (!h || (h.kind !== 'joints' && h.kind !== 'bags' && h.kind !== 'cookies')) { toast('Bring bags, joints or cookies to the register to sell', 'bad'); return; }
-    var q = h.qSum / h.n, thc = h.thcSum / h.n; var each = unitPrice(h.kind, q, thc); var total = each * h.n;
-    S.till += total; S.stats.sold += h.n; bookSale(total); S.rep += (q > 80 ? 2 : q > 60 ? 1 : 0) * Math.min(h.n, 3); gainXp(Math.round(total / 8));
-    logEvent('💵 Rang up ' + h.n + ' ' + h.kind + ' — ' + money(total), 'good'); toast('💵 ' + money(total), 'good'); sfx('cash'); registerSale(h.n + ' ' + h.kind + ' ' + money(total));
-    burst(-1.0, 1.4, 4.9, 0xffd766, 30, 'up'); S.held = null; world.dirty = true;
+    if (S.regDay !== (S.day || 1)) { S.regDay = S.day || 1; S.regSold = 0; }
+    var room = walkupLeft(); if (room <= 0) { sfx('bad'); toast('🧾 The till is closed to walk-ups until tomorrow. Serve the customers at the window instead', 'bad'); return; }
+    var kind = h.kind, n = Math.min(h.n, room), q = h.qSum / h.n, thc = h.thcSum / h.n; var each = unitPrice(kind, q, thc) * WALKUP_RATE; var total = each * n;
+    S.till += total; S.stats.sold += n; S.regSold = (S.regSold || 0) + n; bookSale(total); S.rep += (q > 80 ? 2 : q > 60 ? 1 : 0) * Math.min(n, 3); gainXp(Math.round(total / 8));
+    h.n -= n; h.qSum -= q * n; h.thcSum -= thc * n; if (h.n <= 0) S.held = null;
+    var left = walkupLeft();
+    logEvent('💵 Rang up ' + n + ' ' + kind + ' as a walk-up sale: ' + money(total), 'good'); toast('💵 ' + money(total) + ' for ' + n + ' ' + kindName(kind, n) + ' at the walk-up rate' + (h.n > 0 ? ' (no more walk-ups today, the rest stays in your hands)' : ' (' + left + ' walk-up sales left today)'), 'good'); sfx('cash'); registerSale(n + ' ' + kind + ' ' + money(total));
+    burst(-1.0, 1.4, 4.9, 0xffd766, 30, 'up'); world.dirty = true;
   }
 
   // ── Interaction ───────────────────────────────────────────────────
@@ -6660,7 +6666,7 @@
     if (d.kind === 'goodsShelf') { if (isLocked('goodsShelf')) return 'Goods shelf <small>🔒 locked · Shift+E with the keyring</small>'; if (!shutterOpen('goodsShelf')) return 'Goods shelf <small>gate down · E rolls it up' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; return 'Goods shelf <small>' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints · aim at a strain' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; }
     if (d.kind === 'register' && heistDemander()) return 'Hand over the till <small>' + money(S.till + S.tips) + ' · nobody gets hurt</small>';
     if (d.kind === 'register' && h && h.kind === 'crate') return (supplyById(h.item) && supplyById(h.item).stock === 'display') ? 'Stock the counter display with ' + h.n + ' × ' + itemName(h.item) + ' <small>' + (S.display[h.item] || 0) + ' there now</small>' : 'That does not go on the counter';
-    if (d.kind === 'register') { if (S.customer && S.customer.stage) return 'Take payment from ' + S.customer.who + ' <small>' + money(S.customer.due) + ' by ' + S.customer.pay + '</small>'; if (!h && S.till > 0) return 'Empty the till <small>' + money(S.till) + ' · Shift+E opens the register</small>'; if (h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies')) return 'Ring up ' + h.n + ' ' + h.kind + ' <small>' + money(unitPrice(h.kind, h.qSum / h.n, h.thcSum / h.n) * h.n) + '</small>'; return 'Register <small>prices & diary · bring goods to sell</small>'; }
+    if (d.kind === 'register') { if (S.customer && S.customer.stage) return 'Take payment from ' + S.customer.who + ' <small>' + money(S.customer.due) + ' by ' + S.customer.pay + '</small>'; if (!h && S.till > 0) return 'Empty the till <small>' + money(S.till) + ' · Shift+E opens the register</small>'; if (h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies')) { var wl = walkupLeft(), wn = Math.min(h.n, wl); return wl <= 0 ? 'Till closed to walk-ups <small>back tomorrow · serve the window instead</small>' : 'Ring up ' + wn + ' ' + h.kind + ' as a walk-up <small>' + money(unitPrice(h.kind, h.qSum / h.n, h.thcSum / h.n) * wn * WALKUP_RATE) + ' at 85% · ' + wl + ' left today</small>'; } return 'Register <small>prices & diary · bring goods to sell</small>'; }
     if (d.kind === 'jar') { var b = batchById(d.bid); if (!b) return 'Jar'; if (h) return 'Hands full <small>G to put down</small>'; return 'Take jar <small>' + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + ' · curing</small>'; }
     if (d.kind === 'line') { if (h && h.kind === 'harvest') return 'Hang ' + gram(h.grams) + ' to dry'; var dr = S.batches.filter(function (b) { return !b.cured; }).length; return 'Drying line <small>' + dr + ' hanging' + (dr ? ' · ' + Math.round(dryPct() * 100) + '% dry' : '') + '</small>'; }
     if (d.kind === 'shelf') { var cured = S.batches.filter(function (b) { return b.cured; }).length; return 'Curing shelf <small>' + cured + ' jar' + (cured === 1 ? '' : 's') + ' curing · look at a jar to take it</small>'; }
@@ -7148,7 +7154,7 @@
     return h;
   }
   function paneRegister() {
-    var h = '<div class="g3-grid"><div class="g3-box"><h3>💵 Price board</h3><div class="desc">Market ' + S.market.toFixed(2) + '× · reputation ' + Math.floor(S.rep) + ' (×' + repMult().toFixed(2) + ' price). Bring goods to the register (E) to ring them up, or hand them to a customer.</div>';
+    var h = '<div class="g3-grid"><div class="g3-box"><h3>💵 Price board</h3><div class="desc">Market ' + S.market.toFixed(2) + '× · reputation ' + Math.floor(S.rep) + ' (×' + repMult().toFixed(2) + ' price). Hand goods to a customer at the window for the full price. Rung up at the register (E) as a walk-up sale they fetch 85%, and the till takes ' + WALKUP_CAP + ' of those a day (' + walkupLeft() + ' left today).</div>';
     if (S.customer && S.customer.stage) h += panePayment(S.customer);
     h += '<div class="g3-chips">' + chip('in the till', money(S.till)) + chip('pocket', money(S.pocket)) + chip('lighters', S.display.lighter || 0) + chip('papers', S.display.rpaper || 0) + chip('grinders', S.display.rgrinder || 0) + '</div>' + (S.till > 0 ? '<button class="g3-btn wide" data-act="tillEmpty">👛 Empty the till into my pocket · ' + money(S.till) + '</button>' : '');
     if (S.customer && !S.customer.arrived) h += '<div class="g3-customer"><span class="avatar">' + S.customer.avatar + '</span><span style="flex:1"><span class="who">' + S.customer.who + '</span><span class="req">just walked in — security is checking ID. You will hear the order at the window.</span></span></div>';
@@ -7159,7 +7165,7 @@
     STRAINS.forEach(function (st) { var bg = lotOf('bags', st.id), jt = lotOf('joints', st.id), ck = lotOf('cookies', st.id); if (!bg.n && !jt.n && !ck.n) return; anyGoods = true;
       h += '<div class="g3-row"><span class="ico">' + st.emoji + '</span><span class="meta"><span class="n">' + st.name + '</span><span class="own">' + (bg.n ? bg.n + ' bags q' + Math.round(bg.qSum / bg.n) + ' · ' + money(bagPrice(bg.qSum / bg.n, bg.thcSum / bg.n)) + ' each' : 'no bags') + ' &nbsp;·&nbsp; ' + (jt.n ? jt.n + ' joints q' + Math.round(jt.qSum / jt.n) + ' · ' + money(jointPrice(jt.qSum / jt.n, jt.thcSum / jt.n)) + ' each' : 'no joints') + (ck.n ? ' &nbsp;·&nbsp; ' + ck.n + ' cookies q' + Math.round(ck.qSum / ck.n) + ' · ' + money(cookiePrice(ck.qSum / ck.n, ck.thcSum / ck.n)) + ' each' : '') + '</span></span></div>'; });
     if (!anyGoods) h += '<div class="g3-row"><span class="ico">🛍️</span><span class="meta"><span class="n">Board prices</span><span class="own">bags ' + money(bagPrice(curedAvgQ() || 60, curedAvgThc())) + ' · joints ' + money(jointPrice(curedAvgQ() || 60, curedAvgThc())) + ' at current stash quality — nothing packed yet</span></span></div>';
-    var hh = held(); if (hh && (hh.kind === 'joints' || hh.kind === 'bags' || hh.kind === 'cookies')) h += '<button class="g3-btn primary wide" data-act="sellHeld">💵 Ring up what I am holding (' + hh.n + ' ' + hh.kind + ')</button>';
+    var hh = held(); if (hh && (hh.kind === 'joints' || hh.kind === 'bags' || hh.kind === 'cookies')) h += '<button class="g3-btn primary wide" data-act="sellHeld"' + (walkupLeft() > 0 ? '' : ' disabled') + '>💵 Ring up what I am holding as a walk-up (' + Math.min(hh.n, walkupLeft()) + ' ' + hh.kind + ' at 85%)</button>';
     h += '</div><div class="g3-box"><h3>📜 Recent activity</h3>' + paneLogInner(14) + '</div></div>';
     return h;
   }
