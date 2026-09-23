@@ -114,7 +114,7 @@
     { id: 'lounge2',   ico: '🛋️', name: 'Lobby refit',       price: 2400, req: 'lobby', d: 'Customers wait twice as long and tip 2 rep.' },
     { id: 'genetics',  ico: '🧬', name: 'Genetics lab',      price: 12000, lvl: 8, d: 'Every new plant starts with +10 quality.' },
     { id: 'ownvan',    ico: '🚐', name: 'Own delivery van',  price: 16000, lvl: 6, d: 'Orders land in the back room within 20 seconds.' },
-    { id: 'solar',     ico: '☀️', name: 'Solar roof',        price: 9000, d: 'Supplies cost 10% less (stacks with a wholesale account).' },
+    { id: 'solar',     ico: '☀️', name: 'Solar roof',        price: 9000, d: 'Supplies cost 10% less (stacks with a wholesale account) and the power bill falls by 35%.' },
     { id: 'scale',     ico: '⚖️', name: 'Digital scale',     price: 260,  d: 'Eighths weigh out at 3.2 g instead of 3.5 g.' },
     { id: 'cones',     ico: '🍦', name: 'Pre-rolled cones',  price: 700,  d: 'Joints take 0.8 g instead of 1 g.' },
     { id: 'skylight',  ico: '🌤️', name: 'Skylight',          price: 2200, d: 'Plants grow 6% faster.' },
@@ -131,16 +131,20 @@
     { id: 'catering',  ico: '☕', name: 'Vending & catering permit', price: 450, d: 'The vending machine and coffee machine may sell.' },
     { id: 'amusement', ico: '🕹️', name: 'Amusement permit',     price: 400,  d: 'The arcade cabinet may take coins.' },
     { id: 'lounge',    ico: '🛋️', name: 'Lounge licence',       price: 700,  rep: 25, d: 'Customers may sit and smoke in the lobby.' },
-    { id: 'cult2',     ico: '🌱', name: 'Cultivation permit II', price: 900, lvl: 3, d: 'Unlocks the 9 and 12-slot tents and the roof greenhouse beds. Plants grow 5% faster.' },
-    { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 6000, lvl: 6, req: 'cult2', d: 'Unlocks the 16 and 20-slot tents.' },
+    { id: 'cult2',     ico: '🌱', name: 'Cultivation permit II', price: 900, lvl: 3, d: 'Unlocks the ' + tentSizes('cult2') + ' tents and the roof greenhouse beds. Plants grow 5% faster.' },
+    { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 6000, lvl: 6, req: 'cult2', d: 'Unlocks the ' + tentSizes('cult3') + ' tents.' },
     { id: 'wholesale', ico: '📦', name: 'Wholesale account',    price: 3600, lvl: 4, d: 'Supplies 15% cheaper and the van comes twice as fast.' },
     { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 3000, d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
     { id: 'firearm',   ico: '🔫', name: 'Firearms licence',     price: 3000, lvl: 4, rep: 30, d: 'Lets you buy and carry the pistol and shotgun from the weapon locker. Shoot a bystander and it is revoked.' },
     { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 3000, rep: 40, d: 'Connoisseurs visit and pay 2.2× for quality.' },
-    { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 50, d: 'From 20:00 to 02:00 customers come 25% more often and pay 10% more.' },
-    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 60, d: '+8% on every price.' },
+    { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 50, d: 'From 20:00 to 02:00 customers come a third more often and pay 5% more.' },
+    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 60, d: '+4% on every price.' },
     { id: 'export',    ico: '🚢', name: 'Export licence',       price: 14000, lvl: 10, rep: 120, d: 'Bulk contracts in the bank app: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
   ];
+  function tentSizes(lic) {   // '9 and 12-slot': read off the tent table, so a pack tent that needs the permit is named with the rest
+    var n = TENTS.filter(function (t) { return t.lic === lic; }).map(function (t) { return t.slots; });
+    return n.length ? (n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1] : n[0]) + '-slot' : 'bigger';
+  }
   function licById(id) { for (var i = 0; i < LICENCES.length; i++) if (LICENCES[i].id === id) return LICENCES[i]; return null; }
   function hasLic(id) { return !!(S.lic && S.lic[id]); }
   function nightNow() { var h = gameHour(); return h >= 20 || h < 2; }
@@ -175,7 +179,7 @@
   var S;
   function fresh() {
     return {
-      bank: 750, xp: 0, level: 1, rep: 0,
+      bank: 220, xp: 0, level: 1, rep: 0,
       till: 0, tips: 0, vault: 0, pocket: 0, box: { vend: 0, coffee: 0, arcade: 0 }, pending: [], courier: null,   // cash lives in places until you move it
       units: { vending: 1, lobbyCoffee: 1, arcade: 1, fridge: 1 },   // how many of each machine the shop owns
       storage: {}, vendStock: { drink: 12, snack: 12 }, coffeeStock: { cup: 40, beans: 40 }, order: null, deliveries: [],
@@ -438,7 +442,7 @@
     var hired = crewList().filter(function (w) { return !w.off; }).length + roster, need = headcount();
     var rows = [
       { k: 'Rent', v: rent, d: free ? 'fit-out period, rent free until day ' + (COST.rentFreeDays + 1) : sl + ' slots' + (X.branch ? ' + branch' : '') + (hasLic('tobacco') ? ' + basement' : '') },
-      { k: 'Power', v: power, d: L.name + ' over ' + sl + ' slots' + (S.upgrades.solar ? ', solar roof taking a third off' : '') },
+      { k: 'Power', v: power, d: L.name + ' over ' + sl + ' slots' + (S.upgrades.solar ? ', solar roof taking 35% off' : '') },
       { k: 'Water', v: S.plants.length * COST.waterPerPlant, d: S.plants.length + ' plants in the tent' },
       { k: 'Payroll', v: Math.max(0, need - hired) * COST.payRate, d: need ? need + ' staff the place needs, ' + Math.min(need, hired) + ' of them covered by people you hired' : 'just you, for now' }
     ];
@@ -4043,7 +4047,7 @@
   // ── Guided intro ─────────────────────────────────────────────────
   // Nine steps that walk a new shop from its first order to its first sale. Each step watches the save
   // for the thing it asked for, so the player can wander off, do it their own way, and still tick it off.
-  var INTRO_BONUS = 2500;
+  var INTRO_BONUS = 1200;
   function anySeed() { return Object.keys(S.supplies || {}).some(function (k) { return k.indexOf('seed_') === 0 && S.supplies[k] > 0; }); }
   function anyPotSoil() { return Object.keys(S.potSoil || {}).some(function (k) { return S.potSoil[k]; }); }
   var INTRO_STEPS = [
@@ -5347,7 +5351,7 @@
     var q = h.qSum / h.n, thc = h.thcSum / h.n; h.n -= 1; h.qSum -= q; h.thcSum -= thc; if (h.n <= 0) S.held = null; world.dirty = true;
     smoke.on = true; smoke.until = now() + 24000; smoke.nextDrag = now() + 1500; smoke.drag = 0; smoke.puffed = false; if (smoke.group) { smoke.group.visible = true; smoke.group.position.set(0.26, -0.28, -0.55); }
     S.chill = { until: now() + 10 * 60000, label: 'mellow' }; S.stats.smoked = (S.stats.smoked || 0) + 1;
-    sfx('lighter'); toast('🚬 ' + pick(['Sparked one up.', 'Ahh.', 'Quality control.']) + ' Mellow: customers pay 5% more for 10 min', 'good');
+    sfx('lighter'); toast('🚬 ' + pick(['Sparked one up.', 'Ahh.', 'Quality control.']) + ' Mellow: customers pay 2% more for 10 min', 'good');
     logEvent('🚬 Sat down and smoked a joint (q' + Math.round(q) + ')', '');
   }
   function endSmoke() { smoke.on = false; smoke.drag = 0; if (smoke.group) smoke.group.visible = false; if (smoke.light) smoke.light.intensity = 0; }
@@ -7119,7 +7123,7 @@
       var own = hasLic(L.id); var why = !own && (L.req && !hasLic(L.req) ? 'needs ' + licById(L.req).name : L.lvl && S.level < L.lvl ? 'level ' + L.lvl : L.rep && S.rep < L.rep ? 'rep ' + L.rep : '');
       h += '<div class="g3-row"><span class="ico">' + L.ico + '</span><span class="meta"><span class="n">' + L.name + '</span><span class="own">' + L.d + '</span></span>' + (own ? '<span class="g3-tier">✓ held</span>' : why ? '<span class="g3-tier">🔒 ' + why + '</span>' : '<button class="g3-btn primary" data-act="buyLic" data-id="' + L.id + '">' + money(L.price) + '</button>') + '</div>';
     });
-    h += '</div><div class="g3-box"><h3>📋 What you can do</h3><div class="g3-chips">' + chip('card payments', hasLic('retail') ? 'yes' : 'cash only') + chip('connoisseurs', hasLic('premium') ? 'visit' : 'no') + chip('lounge', hasLic('lounge') ? 'open' : 'closed') + chip('machines', hasLic('catering') ? 'selling' : 'off') + chip('arcade', hasLic('amusement') ? 'on' : 'off') + chip('tent limit', hasLic('cult3') ? '20 slots' : hasLic('cult2') ? '12 slots' : '6 slots') + chip('supply discount', Math.round((1 - supplyDisc()) * 100) + '%') + chip('export', hasLic('export') ? 'contracts open' : 'no') + '</div><div class="desc" style="margin-top:8px">Shops that were already trading when licensing arrived kept the retail, catering, amusement and lounge permits.</div></div></div>';
+    h += '</div><div class="g3-box"><h3>📋 What you can do</h3><div class="g3-chips">' + chip('card payments', hasLic('retail') ? 'yes' : 'cash only') + chip('connoisseurs', hasLic('premium') ? 'visit' : 'no') + chip('lounge', hasLic('lounge') ? 'open' : 'closed') + chip('machines', hasLic('catering') ? 'selling' : 'off') + chip('arcade', hasLic('amusement') ? 'on' : 'off') + chip('tent limit', TENTS.filter(function (t) { return !t.lic || hasLic(t.lic); }).reduce(function (m, t) { return Math.max(m, t.slots); }, 0) + ' slots') + chip('supply discount', Math.round((1 - supplyDisc()) * 100) + '%') + chip('export', hasLic('export') ? 'contracts open' : 'no') + '</div><div class="desc" style="margin-top:8px">Shops that were already trading when licensing arrived kept the retail, catering, amusement and lounge permits.</div></div></div>';
     return h;
   }
   function paneUpgrades() {
@@ -7168,8 +7172,8 @@
     return h;
   }
   function paneAtm() {
-    var fee = Math.ceil(S.pocket * 0.02);
-    var h = '<div class="g3-grid"><div class="g3-box"><h3>🏧 RF Bank · ' + money(S.bank) + '</h3><div class="desc">Deposit the cash in your pocket straight into the bank. The machine keeps a 2% handling fee; the courier is free but takes a day.</div>' + moneyRows();
+    var fee = S.upgrades.fintech ? 0 : Math.ceil(S.pocket * 0.02);   /* the payment terminal account waives it, as the deposit itself already did */
+    var h = '<div class="g3-grid"><div class="g3-box"><h3>🏧 RF Bank · ' + money(S.bank) + '</h3><div class="desc">Deposit the cash in your pocket straight into the bank. ' + (S.upgrades.fintech ? 'Your payment terminal account waives the handling fee' : 'The machine keeps a 2% handling fee') + '; the courier is free but takes a day.</div>' + moneyRows();
     h += '<button class="g3-btn primary wide" data-act="atmDeposit"' + (S.pocket > 0 ? '' : ' disabled') + '>🏧 Deposit ' + money(S.pocket) + (S.pocket > 0 ? ' <small>(fee ' + money(fee) + ', ' + money(S.pocket - fee) + ' credited)</small>' : '') + '</button>';
     h += '<div class="desc" style="margin-top:8px">Withdraw into your pocket</div><div class="g3-chips">' + [50, 100, 250, 500].map(function (a) { return '<button class="g3-btn" data-act="atmWithdraw" data-id="' + a + '"' + (S.bank >= a ? '' : ' disabled') + '>' + money(a) + '</button>'; }).join('') + '</div>';
     h += '</div><div class="g3-box"><h3>📒 Statement</h3>' + paneLogInner(10) + '</div></div>';
