@@ -6682,10 +6682,13 @@
   function isContainer(kind) { return kind === 'door' || kind === 'shelf' || kind === 'inventory' || kind === 'bench' || kind === 'line' || kind === 'goodsShelf' || kind === 'storage' || kind === 'car' || kind === 'vending' || kind === 'lobbyCoffee'; }   // a container yields to a specific target behind it (jar, bag, joint, a car door or the boot)
   function hasAnyBehind(hits, i) { for (var k = i + 1; k < hits.length; k++) { var d = hits[k].object.userData.interact; if (d && d.kind !== 'curtain' && hits[k].distance - hits[i].distance < 3.0) return true; } return false; }
   function hasSpecificBehind(hits, i) { var h = held(); for (var k = i + 1; k < hits.length; k++) { var d = hits[k].object.userData.interact; if (!d || isContainer(d.kind)) continue; if (d.kind === 'jar' && h && h.kind === 'harvest') continue; if (hits[k].distance - hits[i].distance < 1.2) return true; } return false; }
+  var focusUi = { cross: null, html: '', node: null };   /* the crosshair element, and the prompt last written with the node it made */
   function setFocus(f) {
-    focus = f; var pr = $('h-prompt'); var ch = document.querySelector('.g3-crosshair');
+    focus = f; var pr = $('h-prompt'); var ch = focusUi.cross || (focusUi.cross = document.querySelector('.g3-crosshair'));
     if (!f) { pr.hidden = true; ch.classList.remove('hot'); return; }
-    ch.classList.add('hot'); pr.hidden = false; pr.innerHTML = '<b>E</b>' + promptFor(f.data);
+    ch.classList.add('hot'); pr.hidden = false;
+    var html = '<b>E</b>' + promptFor(f.data);
+    if (html !== focusUi.html || pr.firstChild !== focusUi.node) { pr.innerHTML = html; focusUi.html = html; focusUi.node = pr.firstChild; }   /* only a changed prompt is rewritten; edit and creative mode write here too, which the node check catches */
   }
   function promptFor(d) {
     var h = held();
