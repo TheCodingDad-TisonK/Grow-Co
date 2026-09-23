@@ -114,7 +114,7 @@
     { id: 'lounge2',   ico: '🛋️', name: 'Lobby refit',       price: 2400, req: 'lobby', d: 'Customers wait twice as long and tip 2 rep.' },
     { id: 'genetics',  ico: '🧬', name: 'Genetics lab',      price: 12000, lvl: 8, d: 'Every new plant starts with +10 quality.' },
     { id: 'ownvan',    ico: '🚐', name: 'Own delivery van',  price: 16000, lvl: 6, d: 'Orders land in the back room within 20 seconds.' },
-    { id: 'solar',     ico: '☀️', name: 'Solar roof',        price: 9000, d: 'Supplies cost 10% less (stacks with a wholesale account).' },
+    { id: 'solar',     ico: '☀️', name: 'Solar roof',        price: 9000, d: 'Supplies cost 10% less (stacks with a wholesale account) and the power bill falls by 35%.' },
     { id: 'scale',     ico: '⚖️', name: 'Digital scale',     price: 260,  d: 'Eighths weigh out at 3.2 g instead of 3.5 g.' },
     { id: 'cones',     ico: '🍦', name: 'Pre-rolled cones',  price: 700,  d: 'Joints take 0.8 g instead of 1 g.' },
     { id: 'skylight',  ico: '🌤️', name: 'Skylight',          price: 2200, d: 'Plants grow 6% faster.' },
@@ -131,16 +131,20 @@
     { id: 'catering',  ico: '☕', name: 'Vending & catering permit', price: 450, d: 'The vending machine and coffee machine may sell.' },
     { id: 'amusement', ico: '🕹️', name: 'Amusement permit',     price: 400,  d: 'The arcade cabinet may take coins.' },
     { id: 'lounge',    ico: '🛋️', name: 'Lounge licence',       price: 700,  rep: 25, d: 'Customers may sit and smoke in the lobby.' },
-    { id: 'cult2',     ico: '🌱', name: 'Cultivation permit II', price: 900, lvl: 3, d: 'Unlocks the 9 and 12-slot tents. Plants grow 5% faster.' },
-    { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 6000, lvl: 6, req: 'cult2', d: 'Unlocks the 16 and 20-slot tents.' },
+    { id: 'cult2',     ico: '🌱', name: 'Cultivation permit II', price: 900, lvl: 3, d: 'Unlocks the ' + tentSizes('cult2') + ' tents and the roof greenhouse beds. Plants grow 5% faster.' },
+    { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 6000, lvl: 6, req: 'cult2', d: 'Unlocks the ' + tentSizes('cult3') + ' tents.' },
     { id: 'wholesale', ico: '📦', name: 'Wholesale account',    price: 3600, lvl: 4, d: 'Supplies 15% cheaper and the van comes twice as fast.' },
     { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 3000, d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
     { id: 'firearm',   ico: '🔫', name: 'Firearms licence',     price: 3000, lvl: 4, rep: 30, d: 'Lets you buy and carry the pistol and shotgun from the weapon locker. Shoot a bystander and it is revoked.' },
     { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 3000, rep: 40, d: 'Connoisseurs visit and pay 2.2× for quality.' },
-    { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 50, d: 'From 20:00 to 02:00 customers come 25% more often and pay 10% more.' },
-    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 60, d: '+8% on every price.' },
+    { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 50, d: 'From 20:00 to 02:00 customers come a third more often and pay 5% more.' },
+    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 60, d: '+4% on every price.' },
     { id: 'export',    ico: '🚢', name: 'Export licence',       price: 14000, lvl: 10, rep: 120, d: 'Bulk contracts in the bank app: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
   ];
+  function tentSizes(lic) {   // '9 and 12-slot': read off the tent table, so a pack tent that needs the permit is named with the rest
+    var n = TENTS.filter(function (t) { return t.lic === lic; }).map(function (t) { return t.slots; });
+    return n.length ? (n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1] : n[0]) + '-slot' : 'bigger';
+  }
   function licById(id) { for (var i = 0; i < LICENCES.length; i++) if (LICENCES[i].id === id) return LICENCES[i]; return null; }
   function hasLic(id) { return !!(S.lic && S.lic[id]); }
   function nightNow() { var h = gameHour(); return h >= 20 || h < 2; }
@@ -176,7 +180,7 @@
   var SAVE_V = 2;   /* the save's shape version: when the shape of S changes, bump this and add a step to migrate() */
   function fresh() {
     return {
-      v: SAVE_V, bank: 750, xp: 0, level: 1, rep: 0,
+      v: SAVE_V, bank: 220, xp: 0, level: 1, rep: 0,
       till: 0, tips: 0, vault: 0, pocket: 0, box: { vend: 0, coffee: 0, arcade: 0 }, pending: [], courier: null,   // cash lives in places until you move it
       units: { vending: 1, lobbyCoffee: 1, arcade: 1, fridge: 1 },   // how many of each machine the shop owns
       storage: {}, vendStock: { drink: 12, snack: 12 }, coffeeStock: { cup: 40, beans: 40 }, order: null, deliveries: [],
@@ -470,7 +474,7 @@
     var hired = crewList().filter(function (w) { return !w.off; }).length + roster, need = headcount();
     var rows = [
       { k: 'Rent', v: rent, d: free ? 'fit-out period, rent free until day ' + (COST.rentFreeDays + 1) : sl + ' slots' + (X.branch ? ' + branch' : '') + (hasLic('tobacco') ? ' + basement' : '') },
-      { k: 'Power', v: power, d: L.name + ' over ' + sl + ' slots' + (S.upgrades.solar ? ', solar roof taking a third off' : '') },
+      { k: 'Power', v: power, d: L.name + ' over ' + sl + ' slots' + (S.upgrades.solar ? ', solar roof taking 35% off' : '') },
       { k: 'Water', v: S.plants.length * COST.waterPerPlant, d: S.plants.length + ' plants in the tent' },
       { k: 'Payroll', v: Math.max(0, need - hired) * COST.payRate, d: need ? need + ' staff the place needs, ' + Math.min(need, hired) + ' of them covered by people you hired' : 'just you, for now' }
     ];
@@ -532,7 +536,7 @@
   // ── Sim engine (same rules as the 2D game) ────────────────────────
   function step(dt, offline) {
     var L = lightObj(); var auto = !!S.upgrades.autowater;
-    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ var rolled = 0; while (S[dKey] >= 24) { if (offline && rolled >= 1) { S[dKey] %= 24; break; }   /* time away turns the calendar one day at most: the bills fall once, not once for every day the window was shut */ rolled++; S[dKey] -= 24; S.day = (S.day || 1) + 1; S.regDay = S.day; S.regSold = 0; payBills(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
+    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ var rolled = 0; while (S[dKey] >= 24) { if (offline && rolled >= 1) { S[dKey] %= 24; break; }   /* time away turns the calendar one day at most: the bills fall once, not once for every day the window was shut */ rolled++; S[dKey] -= 24; S.day = (S.day || 1) + 1; S.regDay = S.day; S.regSold = 0; payBills(offline); expansionNewDay(offline); if (binsFull()) { S.rep = Math.max(0, S.rep - 1); logEvent('🗑️ A full bin stood all night and the place smells of it (rep -1)', 'bad'); } if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
     creditPending(offline); updateLogistics(dt, offline);
     // humidity: each room drifts toward its moisture load; a running dehumidifier pulls it down to its target
     var pull = S.upgrades.hvac ? 4.0 : S.upgrades.dehumid ? 1.6 : 0.8; var wetBatches = S.batches.filter(function (b) { return !b.cured; }).length;
@@ -2116,21 +2120,22 @@
   var ROOM_DOORS = { grow: ['growDoor'], dry: ['dryDoor'], annex: ['dryDoor', 'annexDoor'], security: ['dryDoor', 'annexDoor'], office: ['officeDoor'], proc: ['procDoor'], lobby: ['procDoor', 'staffIn', 'staffDoor'], hall: [] };
   // ── Ground-floor pathfinding: A* over a 25 cm grid built from the obstacle boxes, then string-pulled so staff cut clean corners but never walls ──
   var NAV = { cell: 0.2, x0: -13, z0: -19, w: 0, h: 0, grid: null, raw: null, key: '', pad: 0.2 };   /* grid: locked doors are walls. raw: every door is open, which is how a man with a crowbar sees the place */
-  function navKey() { var k = world.obstacles.length, s = 0; for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (o.tag === 'guard') continue; s += o.x1 * 3.1 + o.z2 * 1.7; if (o.doorId) { var dk = doorById[o.doorId]; if (dk && dk.locked) s += 91.7; } }   /* doors count now, and locking one changes the key, so the grid is rebuilt the moment it matters */
+  function navKey() { var k = world.obstacles.length, s = 0; for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (o.tag === 'guard') continue; s += o.x1 * 3.1 + o.z2 * 1.7; if (o.doorId) { var dk = doorById[o.doorId]; if (dk && dk.locked) s += 91.7 + (staffKey(dk.id) ? 0 : 13.3); } }   /* doors count now, and locking one changes the key, so the grid is rebuilt the moment it matters */
     return k + ':' + s.toFixed(2); }
   function navBuild() {
     var cs = NAV.cell; NAV.w = Math.ceil(26 / cs) + 1; NAV.h = Math.ceil(33 / cs) + 1;
-    var grid = new Uint8Array(NAV.w * NAV.h), raw = new Uint8Array(NAV.w * NAV.h), pad = NAV.pad;
+    var grid = new Uint8Array(NAV.w * NAV.h), raw = new Uint8Array(NAV.w * NAV.h), staff = new Uint8Array(NAV.w * NAV.h), pad = NAV.pad;
     world.obstacles.forEach(function (o) {
       if ((o.floorLevel || 0) === 1 || o.floorLevel === -1 || o.tag === 'guard') return;
       var isDoor = !!o.doorId || o.tag === 'staffdoor' || o.tag === 'frontdoor';
       var dd = o.doorId ? doorById[o.doorId] : null;
       var blocks = !isDoor || !!(dd && dd.locked);   /* a shut door you can open is not a wall; a locked one is */
+      var staffBlocks = !isDoor || !!(dd && dd.locked && !staffKey(dd.id));   /* unless your crew hold a key to it */
       var x1 = Math.max(0, Math.round((o.x1 - pad - NAV.x0) / cs)), x2 = Math.min(NAV.w - 1, Math.round((o.x2 + pad - NAV.x0) / cs));
       var z1 = Math.max(0, Math.round((o.z1 - pad - NAV.z0) / cs)), z2 = Math.min(NAV.h - 1, Math.round((o.z2 + pad - NAV.z0) / cs));
-      for (var cz = z1; cz <= z2; cz++) for (var cx = x1; cx <= x2; cx++) { var ix = cz * NAV.w + cx; if (blocks) grid[ix] = 1; if (!isDoor) raw[ix] = 1; }
+      for (var cz = z1; cz <= z2; cz++) for (var cx = x1; cx <= x2; cx++) { var ix = cz * NAV.w + cx; if (blocks) grid[ix] = 1; if (staffBlocks) staff[ix] = 1; if (!isDoor) raw[ix] = 1; }
     });
-    NAV.grid = grid; NAV.raw = raw; NAV.key = navKey();
+    NAV.grid = grid; NAV.raw = raw; NAV.staff = staff; NAV.key = navKey();
   }
   var navG = null;   /* which of the two grids the walk being planned right now is using */
   function navFree(cx, cz) { return cx >= 0 && cz >= 0 && cx < NAV.w && cz < NAV.h && !(navG || NAV.grid)[cz * NAV.w + cx]; }
@@ -2139,7 +2144,7 @@
   function navLos(a, b) { var d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.ceil(d / 0.1); for (var i = 0; i <= n; i++) { var t = n ? i / n : 0; if (!navFreeAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return false; } return true; }
   function navPath(from, to, thruDoors) {
     if (!NAV.grid || navKey() !== NAV.key) navBuild();
-    navG = thruDoors ? NAV.raw : NAV.grid;
+    navG = thruDoors === 'staff' ? NAV.staff : thruDoors ? NAV.raw : NAV.grid;   /* 'staff': locked doors they hold a key for are open to them */
     var W = NAV.w, H = NAV.h, cs = NAV.cell;
     var s = navNearest(Math.round((from.x - NAV.x0) / cs), Math.round((from.z - NAV.z0) / cs)), t = navNearest(Math.round((to.x - NAV.x0) / cs), Math.round((to.z - NAV.z0) / cs));
     if (!s || !t) return [{ x: to.x, z: to.z }];
@@ -2174,10 +2179,10 @@
     }
     return best;
   }
-  function npcDoors(g, floorLevel) {   // walk up to a door you can open and you open it
+  function npcDoors(g, floorLevel, keyholder) {   // walk up to a door you can open and you open it; staff with a key to a locked one let themselves through
     var d = doorAt(g.position, floorLevel); if (!d) return null;
-    if (d.locked) return d;
-    setDoor(d.id, true); return null;
+    if (d.locked) { if (keyholder && staffKey(d.id)) { staffPass(d); return null; } return d; }
+    setDoor(d.id, true); d.auto = 1; d.autoT = 0; return null;
   }
   var WORKER_HIRE = 400, WORKER_WAGE = COST.payRate, CREW_MAX = 3;
   // who turns up when you hire. Each hire costs more than the last and draws the same wage.
@@ -2372,10 +2377,10 @@
     worker = crew[0] || WORKER_NONE;
   }
   function updateOneWorker(dt) {
-    if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = now() + 6000; workerSay('that one is locked', '#ffc857', 2600); } }   /* a locked door is the end of that errand, not something to walk through */
+    if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0, true); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = now() + 6000; workerSay('that one is locked', '#ffc857', 2600); } }   /* a locked door is the end of that errand, not something to walk through */
     if (!worker.g) buildWorker(); var g = worker.g, spd = 1.5;
     if (worker.state === 'walk') { if (walkAlong(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animateHuman(worker.h, dt, 'walk', spd, null); return; }
-    if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z); worker.state = 'walk'; } } return; }
+    if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z, 'staff'); worker.state = 'walk'; } } return; }
     animateHuman(worker.h, dt, 'idle', 0, player.pos); worker.idleT += dt; if (worker.idleT < 0.7) return; worker.idleT = 0;
     var task = (crewList()[worker.idx] || {}).task || 'idle';
     var job = workerNextJob(task);
@@ -2390,10 +2395,10 @@
         workerSay(why, '#ffc857', 2600);
       }
     } else worker.nagT = 0;
-    if (job) { worker.job = job; worker.path = routeTo(g.position, job.x, job.z); worker.state = 'walk'; }
+    if (job) { worker.job = job; worker.path = routeTo(g.position, job.x, job.z, 'staff'); worker.state = 'walk'; }
   }
   // the guard walks with the same router; the door post keeps its obstacle only while he stands there
-  function guardGo(x, z, fn) { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); guard.path = routeTo(guard.h.position, x, z); guard.walking = true; guard.onArrive = fn || null; guard.toPost = Math.abs(x - WP.post.x) < 0.01 && Math.abs(z - WP.post.z) < 0.01; }
+  function guardGo(x, z, fn) { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); guard.path = routeTo(guard.h.position, x, z, 'staff'); guard.walking = true; guard.onArrive = fn || null; guard.toPost = Math.abs(x - WP.post.x) < 0.01 && Math.abs(z - WP.post.z) < 0.01; }
   function updateGuardTasks(dt) {   // returns true when it handled this frame
     var gt = S.staff && S.staff.guardTask || 'door';
     var wantPost = gt === 'door' || npc.state === 'enter' || npc.state === 'check' || guard.state === 'check';
@@ -3986,7 +3991,7 @@
     if (d.kind === 'zoneClerk') return (d.poi === 'bank' ? 'Teller' : 'Clerk') + ' <small>E to do business</small>';
     if (d.kind === 'labRig') return 'Lab equipment <small>' + (X.lab.job ? 'batch running' : 'idle') + ' · E for the batch sheet</small>';
     if (d.kind === 'roofUp') return 'Ladder to the roof <small>greenhouse</small>'; if (d.kind === 'roofDown') return 'Back down into the flat';
-    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; return 'Roof bed ' + (d.idx + 1) + ' <small>' + (b.stage === 'empty' ? 'sow outdoor mix · ' + money(10) : b.stage === 'ready' ? 'harvest about 25 g' : 'growing ' + Math.round(b.t / 260 * 100) + '%' + (nightNow() ? ' · asleep until daylight' : '')) + '</small>'; }
+    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; return 'Roof bed ' + (d.idx + 1) + ' <small>' + (b.stage === 'empty' ? (hasLic('cult2') ? 'sow outdoor mix · ' + money(10) : 'needs the Cultivation permit II from the laptop') : b.stage === 'ready' ? 'harvest about 25 g' : 'growing ' + Math.round(b.t / 260 * 100) + '%' + (nightNow() ? ' · asleep until daylight' : '')) + '</small>'; }
     if (d.kind === 'generator') return S.upgrades.generator ? 'Generator <small>fuelled and on standby</small>' : 'Generator <small>buy it for ' + money(1400) + ' · power cuts stop touching you</small>';
     if (d.kind === 'roster') return 'Staff roster <small>hire a driver, a basement operator, a night guard</small>';
     if (d.kind === 'bagLine') return S.upgrades.bagline ? 'Trim & bag line <small>' + (X.bagline.on ? 'running' : 'off') + ' · ' + (S.supplies.bag || 0) + ' baggies</small>' : 'Trim & bag line <small>install for ' + money(900) + '</small>';
@@ -4001,7 +4006,7 @@
     if (d.kind === 'zoneClerk') { cityPoiMenu(d.poi); return true; } if (d.kind === 'labRig') { labMenu(); return true; } if (d.kind === 'roster') { rosterMenu(); return true; }
     if (d.kind === 'roofUp') { tobFade(function () { player.floor = 2; player.pos.set(-9.4, ROOF_Y + 1.65, -3.0); player.vel.set(0, 0, 0); player.yaw = -Math.PI / 2; }); return true; }
     if (d.kind === 'roofDown') { tobFade(function () { player.floor = 1; player.pos.set(-10.6, UP.y + 1.65, -3.0); player.vel.set(0, 0, 0); }); return true; }
-    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; if (b.stage === 'empty') { if (S.bank < 10) { toast('Seedlings cost ' + money(10), 'bad'); return true; } S.bank -= 10; b.stage = 'grow'; b.t = 0; sfx('plant'); toast('🌱 Sown — sunlight does the rest, for free', 'good'); } else if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; var q = randi(42, 60) + (X.weather.kind === 'rain' ? -4 : 0); stashAdd('sunflower', 25, q, 1.0); sfx('harvest'); toast('🌿 25 g of outdoor bud (q' + q + ') into the stash — rough stuff, perfect for the lab', 'good'); } else toast('Still growing', ''); hud(); save(); return true; }
+    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; if (b.stage === 'empty') { if (!hasLic('cult2')) { sfx('bad'); toast('🌱 Growing on the roof needs the Cultivation permit II (licences, on the laptop)', 'bad'); return true; } if (S.bank < 10) { toast('Seedlings cost ' + money(10), 'bad'); return true; } S.bank -= 10; b.stage = 'grow'; b.t = 0; sfx('plant'); toast('🌱 Sown — sunlight does the rest, for free', 'good'); } else if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; var q = randi(42, 60) + (X.weather.kind === 'rain' ? -4 : 0); stashAdd('sunflower', 25, q, 1.0); var rproc = 25 * COST.processPerGram; spendOp(rproc); logEvent('Trim, testing and compliance on the roof harvest: ' + money(rproc), ''); sfx('harvest'); toast('🌿 25 g of outdoor bud (q' + q + ') into the stash — rough stuff, perfect for the lab', 'good'); } else toast('Still growing', ''); hud(); save(); return true; }
     if (d.kind === 'generator') { if (S.upgrades.generator) toast('It will start itself on the next power cut', ''); else if (S.bank < 1400) toast('The generator costs ' + money(1400), 'bad'); else { S.bank -= 1400; S.upgrades.generator = true; sfx('cash'); toast('⚡ Generator installed — power cuts will not stop you again', 'good'); applyShopState(); hud(); save(); } return true; }
     if (d.kind === 'bagLine') { if (!S.upgrades.bagline) { if (S.bank < 900) toast('The trim & bag line costs ' + money(900), 'bad'); else { S.bank -= 900; S.upgrades.bagline = true; sfx('cash'); toast('Trim & bag line installed', 'good'); hud(); save(); } } else { X.bagline.on = !X.bagline.on; sfx('click'); toast(X.bagline.on ? '▶ Bag line running: an eighth every 4 seconds from your biggest stash, trimmed a little cleaner (+3 quality), one baggie each' : '⏹ Bag line stopped', ''); save(); } return true; }
     if (d.kind === 'dropoff') return jobHandOver(d.idx);
@@ -4027,24 +4032,35 @@
   function doorPose(d) { var off = d.t * 1.2; d.g.position.x = d.x + (d.alongX ? off : 0); d.g.position.z = d.z + (d.alongX ? 0 : off); }
   function doorObstacle(d) { world.obstacles = world.obstacles.filter(function (o) { return o.doorId !== d.id; }); if (!d.open) world.obstacles.push({ x1: d.x - (d.alongX ? 0.62 : 0.12), x2: d.x + (d.alongX ? 0.62 : 0.12), z1: d.z - (d.alongX ? 0.12 : 0.62), z2: d.z + (d.alongX ? 0.12 : 0.62), tag: 'door', doorId: d.id, floorLevel: d.floor }); }
   function doorLed(d) { var c = d.locked ? 0xff3030 : 0x39d353; d.led.material.color.setHex(c); d.led.material.emissive.setHex(c); }
-  function setDoor(id, open, locked) { var d = doorById[id]; if (!d) return; if (locked !== undefined) d.locked = locked; if (d.locked) open = false; d.open = open; if (!S.doors) S.doors = {}; if (!S.doorLocks) S.doorLocks = {}; S.doors[id] = d.open; S.doorLocks[id] = d.locked; doorObstacle(d); doorLed(d); }
+  function setDoor(id, open, locked) { var d = doorById[id]; if (!d) return; if (locked !== undefined) { d.locked = locked; d.relock = false; } else if (!open && d.relock) { d.locked = true; d.relock = false; } if (d.locked) open = false; d.open = open; d.auto = 0; d.autoT = 0; if (!S.doors) S.doors = {}; if (!S.doorLocks) S.doorLocks = {}; S.doors[id] = d.open; S.doorLocks[id] = d.locked; doorObstacle(d); doorLed(d); }
   function doorsAll(what) { DOORS.forEach(function (d) { if (what === 'open') setDoor(d.id, true, false); else if (what === 'close') setDoor(d.id, false); else if (what === 'lock') setDoor(d.id, false, true); else setDoor(d.id, d.open, false); }); sfx('curtain'); save(); }
-  function toggleDoor(id) { var d = doorById[id]; if (!d) return; if (d.locked) { sfx('bad'); toast('🔒 Locked — unlock it at the shop control box', 'bad'); return; } if (d.open && player.floor === d.floor && Math.hypot(player.pos.x - d.x, player.pos.z - d.z) < 0.55) { toast('Step out of the doorway first', ''); return; } d.open = !d.open; if (!S.doors) S.doors = {}; S.doors[id] = d.open; doorObstacle(d); sfx('curtain'); save(); }
+  function toggleDoor(id) { var d = doorById[id]; if (!d) return; if (d.locked) { sfx('bad'); toast('🔒 Locked — unlock it at the shop control box', 'bad'); return; } if (d.open && player.floor === d.floor && Math.hypot(player.pos.x - d.x, player.pos.z - d.z) < 0.55) { toast('Step out of the doorway first', ''); return; } d.open = !d.open; d.auto = 0; if (!S.doors) S.doors = {}; S.doors[id] = d.open; if (!d.open && d.relock) { d.locked = true; d.relock = false; if (!S.doorLocks) S.doorLocks = {}; S.doorLocks[id] = true; doorLed(d); } doorObstacle(d); sfx('curtain'); save(); }
+  function staffKey(id) { return !(S.staffKeys && S.staffKeys[id] === false); }   // the crew and the guard carry a key to every door unless you take it back at the control box
+  function staffPass(d) { setDoor(d.id, true, false); d.relock = true; d.auto = 1; d.autoT = 0; if (!S.doorLocks) S.doorLocks = {}; S.doorLocks[d.id] = true; sfx('curtain'); }   /* a keyholder unlocks it, walks through and it locks again when it shuts; the save keeps it locked */
+  function folkNear(folk, x, z, r) { if (player.floor === 0 && Math.hypot(player.pos.x - x, player.pos.z - z) < r) return true; for (var i = 0; i < folk.length; i++) if (Math.hypot(folk[i].x - x, folk[i].z - z) < r) return true; return false; }
+  var staffDoorAuto = false, staffDoorClearT = 0;   // the staff door was opened by someone walking through, so it shuts itself again
   function updateDoors(dt) {
     var folk = []; crew.forEach(function (r) { if (r.g) folk.push(r.g.position); }); if (guard.h) folk.push(guard.h.position);
+    var keyed = folk.slice();   /* the crew and the guard: the only ones with keys */
     if (npc.g && npc.state !== 'away') folk.push(npc.g.position);
     loungers.forEach(function (l) { if (l.g) folk.push(l.g.position); });
     robbers.forEach(function (r) { if (r.g && r.state !== 'away' && r.state !== 'force') folk.push(r.g.position); });   /* a robber mid-break is handled by his own state, not by standing close */
     if (!shop().staffDoor && folk.length) {
       for (var sdi = 0; sdi < folk.length; sdi++) {
-        if (Math.abs(folk[sdi].x - 10) < 1.3 && Math.abs(folk[sdi].z - 4) < 1.1) { shop().staffDoor = true; syncStaffDoorObstacle(); sfx('curtain'); save(); break; }
+        if (Math.abs(folk[sdi].x - 10) < 1.3 && Math.abs(folk[sdi].z - 4) < 1.1) { shop().staffDoor = true; staffDoorAuto = true; staffDoorClearT = 0; syncStaffDoorObstacle(); sfx('curtain'); save(); break; }
       }
+    } else if (shop().staffDoor && staffDoorAuto) {   /* shuts 4 s after the last person is clear of it */
+      if (folkNear(folk, 10, 4, 1.4)) staffDoorClearT = 0; else if ((staffDoorClearT += dt) >= 4) { staffDoorAuto = false; staffDoorClearT = 0; shop().staffDoor = false; syncStaffDoorObstacle(); sfx('curtain'); save(); }
     }
     DOORS.forEach(function (d) {
       if (!d.open && !d.locked && d.floor === 0) {
         for (var i = 0; i < folk.length; i++) {   /* staff and visitors let themselves through anything that is not locked */
-          if (Math.hypot(folk[i].x - d.x, folk[i].z - d.z) < 1.1) { setDoor(d.id, true); sfx('curtain'); break; }
+          if (Math.hypot(folk[i].x - d.x, folk[i].z - d.z) < 1.1) { setDoor(d.id, true); d.auto = 1; d.autoT = 0; sfx('curtain'); break; }
         }
+      } else if (!d.open && d.locked && d.floor === 0 && staffKey(d.id)) {
+        for (var ki = 0; ki < keyed.length; ki++) if (Math.hypot(keyed[ki].x - d.x, keyed[ki].z - d.z) < 1.1) { staffPass(d); break; }
+      } else if (d.open && d.auto) {   /* opened by someone walking through: it slides shut 4 s after the last person is clear */
+        if (folkNear(folk, d.x, d.z, 1.4)) d.autoT = 0; else if ((d.autoT = (d.autoT || 0) + dt) >= 4) { setDoor(d.id, false); sfx('curtain'); }
       }
       var want = d.open ? 1 : 0;
       if (Math.abs(d.t - want) < 0.002) return;
@@ -4102,7 +4118,7 @@
   // ── Guided intro ─────────────────────────────────────────────────
   // Nine steps that walk a new shop from its first order to its first sale. Each step watches the save
   // for the thing it asked for, so the player can wander off, do it their own way, and still tick it off.
-  var INTRO_BONUS = 2500;
+  var INTRO_BONUS = 1200;
   function anySeed() { return Object.keys(S.supplies || {}).some(function (k) { return k.indexOf('seed_') === 0 && S.supplies[k] > 0; }); }
   function anyPotSoil() { return Object.keys(S.potSoil || {}).some(function (k) { return S.potSoil[k]; }); }
   var INTRO_STEPS = [
@@ -5076,7 +5092,7 @@
     applyShopState();
   }
   function syncStaffDoorObstacle() { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'staffdoor'; }); if (!shop().staffDoor) world.obstacles.push(staffDoor.obstacle); }
-  function toggleStaffDoor() { shop().staffDoor = !shop().staffDoor; syncStaffDoorObstacle(); sfx('door'); toast(shop().staffDoor ? 'Staff door open' : 'Staff door closed', ''); applyShopState(); save(); }
+  function toggleStaffDoor() { shop().staffDoor = !shop().staffDoor; staffDoorAuto = false; syncStaffDoorObstacle(); sfx('door'); toast(shop().staffDoor ? 'Staff door open' : 'Staff door closed', ''); applyShopState(); save(); }
   function updateStaffDoor(dt) { if (!staffDoor.g) return; var staffNear = crew.some(function (r) { return r.g && Math.hypot(r.g.position.x - 10, r.g.position.z - 4) < 1.1; }) || (guard.h && guard.walking && Math.hypot(guard.h.position.x - 10, guard.h.position.z - 4) < 1.1); var target = (shop().staffDoor || staffNear) ? 1 : 0; staffDoor.t = lerp(staffDoor.t, target, 1 - Math.pow(0.01, dt)); staffDoor.g.rotation.y = -staffDoor.t * 1.75;
     if (world.frontDoor) { var fd = world.frontDoor; var ft = shop().open ? 1 : 0; fd.t = lerp(fd.t, ft, 1 - Math.pow(0.01, dt)); fd.g.rotation.y = fd.t * 1.6; } }
   function drawCtlScreen() {
@@ -5194,7 +5210,7 @@
       '<button class="g3-btn wide" data-act="staffDoorToggle">' + (sh.staffDoor ? '🚪 Close the staff door' : '🚪 Open the staff door') + '</button>' +
       '<h3 style="margin-top:12px">💡 Lights by room</h3><div class="g3-chips">' + Object.keys(ROOM_NAMES).map(function (r) { return '<button class="g3-btn' + (sh.lights && powerOn() && roomLit(r) ? ' primary' : '') + '" data-act="roomLight" data-id="' + r + '">' + ROOM_NAMES[r] + '</button>'; }).join('') + '</div>' +
       '<h3 style="margin-top:12px">🚪 Doors</h3><div class="g3-chips"><button class="g3-btn' + (world.rollerOpen ? ' primary' : '') + '" data-act="rollerToggle">Roller door ' + (world.rollerOpen ? 'open' : 'closed') + '</button><button class="g3-btn' + (world.gateOpen ? ' primary' : '') + '" data-act="gateToggle">Yard gate ' + (world.gateOpen ? 'open' : 'closed') + '</button><button class="g3-btn" data-act="tvNext">📺 TV: next channel</button></div>' +
-      '<div class="desc" style="margin-top:8px">Sliding doors: shut or open each one from here, and lock it. Staff carry keys; a locked door has to be forced by anyone else.</div>' + DOORS.map(function (d) { return '<div class="inv-row" style="display:flex;gap:6px;align-items:center;margin-top:4px"><span style="flex:1">' + (d.locked ? '🔒 ' : '🚪 ') + esc(d.name) + '</span><button class="g3-btn' + (d.open ? ' primary' : '') + '" data-act="doorToggle" data-id="' + d.id + '">' + (d.open ? 'open' : 'shut') + '</button><button class="g3-btn' + (d.locked ? ' primary' : '') + '" data-act="doorLock" data-id="' + d.id + '">' + (d.locked ? 'locked' : 'lock') + '</button></div>'; }).join('') +
+      '<div class="desc" style="margin-top:8px">Sliding doors: shut, open or lock each one from here. Your crew and the guard hold a key to every door marked staff key: they unlock it, walk through and it locks again behind them. Take a key back and they stop at that door. Anyone else has to force a locked door, and a door someone walks through slides shut 4 s after they are clear.</div>' + DOORS.map(function (d) { return '<div class="inv-row" style="display:flex;gap:6px;align-items:center;margin-top:4px"><span style="flex:1">' + (d.locked ? '🔒 ' : '🚪 ') + esc(d.name) + '</span><button class="g3-btn' + (d.open ? ' primary' : '') + '" data-act="doorToggle" data-id="' + d.id + '">' + (d.open ? 'open' : 'shut') + '</button><button class="g3-btn' + (d.locked ? ' primary' : '') + '" data-act="doorLock" data-id="' + d.id + '">' + (d.locked ? 'locked' : 'lock') + '</button><button class="g3-btn' + (staffKey(d.id) ? ' primary' : '') + '" data-act="doorKey" data-id="' + d.id + '">' + (staffKey(d.id) ? '🔑 staff key' : 'no staff key') + '</button></div>'; }).join('') +
       '<div class="inv-row" style="display:flex;gap:6px;margin-top:6px"><button class="g3-btn" data-act="doorsAll" data-id="open">Open all</button><button class="g3-btn" data-act="doorsAll" data-id="close">Shut all</button><button class="g3-btn" data-act="doorsAll" data-id="lock">🔒 Lock all</button><button class="g3-btn" data-act="doorsAll" data-id="unlock">Unlock all</button></div>' +
       '<h3 style="margin-top:12px">💲 Pricing</h3><div class="g3-slider"><label>Markup</label><input type="range" data-ctl="markup" min="0.8" max="1.3" step="0.05" value="' + (sh.markup || 1) + '"><small>' + Math.round((sh.markup || 1) * 100) + '%</small></div><div class="desc">Above 100% every price rises but customers come less often; below it the reverse.</div>' +
       '<h3 style="margin-top:12px">≡ Curtains</h3><div class="g3-chips">' + Object.keys(curtains).map(function (k) { return '<button class="g3-btn' + (curtainOpen(k) ? ' primary' : '') + '" data-act="curtainToggle" data-id="' + k + '">' + esc(curtains[k].label) + ' <b>' + (curtainOpen(k) ? 'open' : 'closed') + '</b></button>'; }).join('') + '</div>' +
@@ -5220,6 +5236,7 @@
   var DUST_MAT = new THREE.MeshBasicMaterial({ map: DUST_TEX, transparent: true, depthWrite: false, opacity: 1.0 });
   var DUST_RING = new THREE.MeshBasicMaterial({ color: 0xffc857, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
   var DUST_ZONES = [[-11, -1.5, -8.5, -2.5], [0, 11, -8.5, -2.5], [-11, -4.5, -1.5, 3.5], [-3.5, 3.5, -1.5, 3.5], [4.5, 11, -1.5, 3.5], [-11, 11, 4.5, 8.5]]; // x1,x2,z1,z2 per room
+  function binsFull() { var M = xs().mach || {}; return Object.keys(M).some(function (k) { return M[k] && typeof M[k] === 'object' && (M[k].trash || 0) >= 12; }); }   // any trash can at 12 of 12
   function dustList() { if (!S.dust) S.dust = []; if (typeof S.lastDust !== 'number') S.lastDust = now(); return S.dust; }
   function spawnDust(n) {
     var d = dustList(); var tries = 120; for (var i = 0; i < n && d.length < 14; i++) { var z = pick(DUST_ZONES); var x = randf(z[0], z[1]), zz = randf(z[2], z[3]); if (!dustSpotFree(x, zz)) { i--; if (--tries < 0) break; continue; } d.push({ id: 'd' + now() + randi(0, 999), x: Math.round(x * 100) / 100, z: Math.round(zz * 100) / 100, s: randf(0.8, 1.25), r: Math.random() * 6.28 }); }
@@ -5235,7 +5252,7 @@
     return true;
   }
   function updateDust() {
-    var d = dustList(); var interval = S.upgrades.robovac ? 150000 : 75000; // a new patch every ~75 s of play (offline time counts at a quarter rate)
+    var d = dustList(); var interval = (S.upgrades.robovac ? 150000 : 75000) / (binsFull() ? 1.5 : 1);   /* a full bin spills: half as much dust again until it is emptied */ // a new patch every ~75 s of play (offline time counts at a quarter rate)
     if (now() - S.lastDust > interval) { var k = Math.floor((now() - S.lastDust) / interval); S.lastDust = now(); spawnDust(Math.min(k, 3)); if (d.length >= 8 && !S.dustNagged) { S.dustNagged = true; logEvent('🧹 The floors are getting dusty — grab the broom', 'bad'); } }
     if (world.dustDirty) syncDust();
     // ring markers pulse while the broom is in hand so the patches are easy to spot from across the room
@@ -5412,7 +5429,7 @@
     var q = h.qSum / h.n, thc = h.thcSum / h.n; h.n -= 1; h.qSum -= q; h.thcSum -= thc; if (h.n <= 0) S.held = null;
     smoke.on = true; smoke.until = now() + 24000; smoke.nextDrag = now() + 1500; smoke.drag = 0; smoke.puffed = false; if (smoke.group) { smoke.group.visible = true; smoke.group.position.set(0.26, -0.28, -0.55); }
     S.chill = { until: now() + 10 * 60000, label: 'mellow' }; S.stats.smoked = (S.stats.smoked || 0) + 1;
-    sfx('lighter'); toast('🚬 ' + pick(['Sparked one up.', 'Ahh.', 'Quality control.']) + ' Mellow: customers pay 5% more for 10 min', 'good');
+    sfx('lighter'); toast('🚬 ' + pick(['Sparked one up.', 'Ahh.', 'Quality control.']) + ' Mellow: customers pay 2% more for 10 min', 'good');
     logEvent('🚬 Sat down and smoked a joint (q' + Math.round(q) + ')', '');
   }
   function endSmoke() { smoke.on = false; smoke.drag = 0; if (smoke.group) smoke.group.visible = false; if (smoke.light) smoke.light.intensity = 0; }
@@ -6954,7 +6971,7 @@
     else if ((d.kind === 'couch' || d.kind === 'eatspot') && isDrink(h)) drinkHeld();
     else if (d.kind === 'trash') {
       var TB = machState(d.propId), lid = world.trashLids && world.trashLids[d.propId]; var lift = function () { if (!lid) return; lid.rotation.x = -1.35; setTimeout(function () { lid.rotation.x = 0; }, 1400); };
-      if (h && isTrash(h)) { if ((TB.trash || 0) >= 12) toast('The bin is full — take out the trash first', 'bad'); else { S.held = null; TB.trash = (TB.trash || 0) + 1; lift(); sfx('dust'); toast('🗑️ Binned it — ' + TB.trash + '/12', ''); save(); } }
+      if (h && isTrash(h)) { if ((TB.trash || 0) >= 12) toast('The bin is full — take out the trash first', 'bad'); else { S.held = null; TB.trash = (TB.trash || 0) + 1; lift(); sfx('dust'); if (TB.trash >= 12) toast('🗑️ Binned it, and now the bin is full. Dust builds faster and it costs a point of rep a day until you bag it up', 'bad'); else toast('🗑️ Binned it — ' + TB.trash + '/12', ''); save(); } }
       else if (!h && (TB.trash || 0) >= 12) { TB.trash = 0; take({ kind: 'trashbag' }); lift(); toast('Bagged up the trash — the dumpster is out back', 'good'); save(); }
       else if (h) toast('That is not trash', 'bad');
       else { lift(); sfx('click'); }
@@ -7201,7 +7218,7 @@
       var own = hasLic(L.id); var why = !own && (L.req && !hasLic(L.req) ? 'needs ' + licById(L.req).name : L.lvl && S.level < L.lvl ? 'level ' + L.lvl : L.rep && S.rep < L.rep ? 'rep ' + L.rep : '');
       h += '<div class="g3-row"><span class="ico">' + L.ico + '</span><span class="meta"><span class="n">' + L.name + '</span><span class="own">' + L.d + '</span></span>' + (own ? '<span class="g3-tier">✓ held</span>' : why ? '<span class="g3-tier">🔒 ' + why + '</span>' : '<button class="g3-btn primary" data-act="buyLic" data-id="' + L.id + '">' + money(L.price) + '</button>') + '</div>';
     });
-    h += '</div><div class="g3-box"><h3>📋 What you can do</h3><div class="g3-chips">' + chip('card payments', hasLic('retail') ? 'yes' : 'cash only') + chip('connoisseurs', hasLic('premium') ? 'visit' : 'no') + chip('lounge', hasLic('lounge') ? 'open' : 'closed') + chip('machines', hasLic('catering') ? 'selling' : 'off') + chip('arcade', hasLic('amusement') ? 'on' : 'off') + chip('tent limit', hasLic('cult3') ? '20 slots' : hasLic('cult2') ? '12 slots' : '6 slots') + chip('supply discount', Math.round((1 - supplyDisc()) * 100) + '%') + chip('export', hasLic('export') ? 'contracts open' : 'no') + '</div><div class="desc" style="margin-top:8px">Shops that were already trading when licensing arrived kept the retail, catering, amusement and lounge permits.</div></div></div>';
+    h += '</div><div class="g3-box"><h3>📋 What you can do</h3><div class="g3-chips">' + chip('card payments', hasLic('retail') ? 'yes' : 'cash only') + chip('connoisseurs', hasLic('premium') ? 'visit' : 'no') + chip('lounge', hasLic('lounge') ? 'open' : 'closed') + chip('machines', hasLic('catering') ? 'selling' : 'off') + chip('arcade', hasLic('amusement') ? 'on' : 'off') + chip('tent limit', TENTS.filter(function (t) { return !t.lic || hasLic(t.lic); }).reduce(function (m, t) { return Math.max(m, t.slots); }, 0) + ' slots') + chip('supply discount', Math.round((1 - supplyDisc()) * 100) + '%') + chip('export', hasLic('export') ? 'contracts open' : 'no') + '</div><div class="desc" style="margin-top:8px">Shops that were already trading when licensing arrived kept the retail, catering, amusement and lounge permits.</div></div></div>';
     return h;
   }
   function paneUpgrades() {
@@ -7250,8 +7267,8 @@
     return h;
   }
   function paneAtm() {
-    var fee = Math.ceil(S.pocket * 0.02);
-    var h = '<div class="g3-grid"><div class="g3-box"><h3>🏧 RF Bank · ' + money(S.bank) + '</h3><div class="desc">Deposit the cash in your pocket straight into the bank. The machine keeps a 2% handling fee; the courier is free but takes a day.</div>' + moneyRows();
+    var fee = S.upgrades.fintech ? 0 : Math.ceil(S.pocket * 0.02);   /* the payment terminal account waives it, as the deposit itself already did */
+    var h = '<div class="g3-grid"><div class="g3-box"><h3>🏧 RF Bank · ' + money(S.bank) + '</h3><div class="desc">Deposit the cash in your pocket straight into the bank. ' + (S.upgrades.fintech ? 'Your payment terminal account waives the handling fee' : 'The machine keeps a 2% handling fee') + '; the courier is free but takes a day.</div>' + moneyRows();
     h += '<button class="g3-btn primary wide" data-act="atmDeposit"' + (S.pocket > 0 ? '' : ' disabled') + '>🏧 Deposit ' + money(S.pocket) + (S.pocket > 0 ? ' <small>(fee ' + money(fee) + ', ' + money(S.pocket - fee) + ' credited)</small>' : '') + '</button>';
     h += '<div class="desc" style="margin-top:8px">Withdraw into your pocket</div><div class="g3-chips">' + [50, 100, 250, 500].map(function (a) { return '<button class="g3-btn" data-act="atmWithdraw" data-id="' + a + '"' + (S.bank >= a ? '' : ' disabled') + '>' + money(a) + '</button>'; }).join('') + '</div>';
     h += '</div><div class="g3-box"><h3>📒 Statement</h3>' + paneLogInner(10) + '</div></div>';
@@ -7375,6 +7392,7 @@
     else if (act === 'tvNext') { tvCycle(); }
     else if (act === 'curtainToggle') { toggleCurtain(id); ui.refreshOpen(); }
     else if (act === 'doorToggle') { var dd = doorById[id]; if (dd) { setDoor(id, !dd.open, dd.open ? undefined : false); sfx('curtain'); save(); } ui.refreshOpen(); }
+    else if (act === 'doorKey') { if (doorById[id]) { if (!S.staffKeys) S.staffKeys = {}; S.staffKeys[id] = !staffKey(id); sfx('click'); save(); } ui.refreshOpen(); }
     else if (act === 'doorLock') { var dl = doorById[id]; if (dl) { setDoor(id, dl.open, !dl.locked); sfx('click'); save(); } ui.refreshOpen(); }
     else if (act === 'doorsAll') { doorsAll(id); ui.refreshOpen(); }
     else if (act === 'curtainsOpen') { setAllCurtains(true); toast('Curtains open', ''); }
