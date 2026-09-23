@@ -782,8 +782,10 @@
   renderer.toneMappingExposure = 0.78;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;   // the map is redrawn on a timer in frame(), not every frame: it is a second full pass over every caster
+  var lightBudget = { point: 12,   /* set per quality in applySettings; used by updateLightBudget() next to frame() */ lights: null, scanT: 0, tickT: 0, tmp: new THREE.Vector3(), cam: new THREE.Vector3() };
   var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(75, 1, 0.05, 200);
+  var camera = new THREE.PerspectiveCamera(75, 1, 0.2, 200);   // near 0.2: the hands sit at -0.5, and a nearer plane makes distant decals z-fight
   camera.rotation.order = 'YXZ';
   var clock = new THREE.Clock();
 
@@ -5540,7 +5542,7 @@
   }
 
   // ── Player ────────────────────────────────────────────────────────
-  var player = { pos: new THREE.Vector3(0, 1.65, 1.6), yaw: Math.PI, pitch: 0, vel: new THREE.Vector3(), bobT: 0, locked: false, keys: {}, radius: 0.32, stepT: 0, floor: 0 };
+  var player = { pos: new THREE.Vector3(0, 1.65, 1.6), yaw: Math.PI, pitch: 0, vel: new THREE.Vector3(), bobT: 0, locked: false, keys: {}, radius: 0.32, stepT: 0, floor: 0, air: false, jumpV: 0, crouch: false };
   function obstacleActive(o) { var fl = o.floorLevel || 0; return fl === 'any' || fl === player.floor; }
   function moveWithCollision(dx, dz) {
     var nx = player.pos.x + dx, nz = player.pos.z + dz, r = player.radius;
@@ -5561,12 +5563,15 @@
   function updatePlayer(dt) {
     if (drive.on) { updateDrive(dt); return; }
     if (player.downT > 0) { player.downT -= dt; player.vel.set(0, 0, 0); player.pos.y = lerp(player.pos.y, groundY(player.pos.x, player.pos.z) + 0.4, 1 - Math.pow(0.001, dt)); camera.position.set(player.pos.x, player.pos.y, player.pos.z); camera.rotation.set(player.pitch, player.yaw, 0.85 * clamp(player.downT / 1.2, 0, 1)); hurtFlash(clamp(player.downT / 2.5, 0, 0.9)); if (player.downT <= 0) { hurtFlash(0); toast('You get back on your feet', ''); } return; }   // stabbed or shot: on the floor for a few seconds
-    var gy = groundY(player.pos.x, player.pos.z) + 1.65; player.pos.y = lerp(player.pos.y, sit.on ? groundY(player.pos.x, player.pos.z) + 1.15 : gy, 1 - Math.pow(0.0005, dt));
+    var pk = player.keys; player.crouch = !sit.on && player.locked && !ui.blocked() && !!(pk.ControlLeft || pk.ControlRight);   // Ctrl held: eyes drop to 1.0 m and the walk slows
+    var gy = groundY(player.pos.x, player.pos.z) + (player.crouch ? 1.0 : 1.65);
+    if (player.air) { player.jumpV -= 9.8 * dt; player.pos.y += player.jumpV * dt; if (player.jumpV < 0 && player.pos.y <= gy) { player.pos.y = gy; player.air = false; player.jumpV = 0; sfx('step', floorSurface()); } }   // a Space hop: 0.8 m at most, well under every ceiling (ground 3.4, upstairs 3.0, basement 3.2)
+    else player.pos.y = lerp(player.pos.y, sit.on ? groundY(player.pos.x, player.pos.z) + 1.15 : gy, 1 - Math.pow(0.0005, dt));
     if (!player.locked || ui.blocked()) return;
     var k = player.keys; var f = 0, s = 0;
     if (sit.on) { if (k.KeyW || k.KeyS || k.KeyA || k.KeyD) standUp(); camera.position.set(player.pos.x, player.pos.y, player.pos.z); camera.rotation.set(player.pitch, player.yaw, 0); return; }
     if (k.KeyW || k.ArrowUp) f += 1; if (k.KeyS || k.ArrowDown) f -= 1; if (k.KeyD || k.ArrowRight) s += 1; if (k.KeyA || k.ArrowLeft) s -= 1;
-    var speed = ((k.ShiftLeft || k.ShiftRight) ? 4.6 : 2.6) * buffSpeed();
+    var speed = (player.crouch ? 1.3 : (k.ShiftLeft || k.ShiftRight) ? 4.6 : 2.6) * buffSpeed();
     var moving = f !== 0 || s !== 0;
     if (moving) { var len = Math.hypot(f, s); f /= len; s /= len; }
     var sinY = Math.sin(player.yaw), cosY = Math.cos(player.yaw);
@@ -6852,11 +6857,13 @@
       '<h4>Edit mode</h4><p>Press <b>F2</b> (or Edit layout in this menu) to rearrange the place: look at any piece of furniture, <b>E</b> grabs it, carry it to a spot, <b>R</b> turns it, <b>E</b> drops it, <b>Backspace</b> puts it back where it came from. Your layout is saved.</p>' +
       '<h4>Upstairs</h4><p>The stairs in the office lead to your <b>private floor</b>: kitchen (fridge snacks, eat at the table), a couch and a <b>big TV</b> (E cycles: live desk, grow cam, house news), and a bed. Eating gives a 10 minute speed buff.</p>' +
       '<h4>The shop</h4><p>The <b>control box</b> in the office opens or closes the shop, kills the lights and picks a radio station. <b>Curtains</b> on every window and the door open with E. The <b>staff door</b> swings open with E. Dust settles on the floors; the <b>broom</b> hangs in the processing room.</p>' +
-      '<h4>Keys</h4><p><b>WASD</b> move · <b>Shift</b> run · <b>E</b> / click pick up, use, talk · <b>G</b> put down · <b>Tab</b> inventory · <b>Esc</b> menu</p>';
+      '<h4>Keys</h4><p><b>WASD</b> move · <b>Shift</b> run · <b>Space</b> jump · <b>Ctrl</b> crouch · <b>E</b> / click pick up, use, talk · <b>G</b> put down · <b>Tab</b> inventory · <b>Esc</b> menu</p>';
   }
   function applySettings() {
     camera.fov = SET.fov; camera.updateProjectionMatrix();
     var q = SET.quality; renderer.shadowMap.enabled = q !== 'low'; renderer.shadowMap.type = q === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+    var ms = q === 'high' ? 2048 : 1024; if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+    renderer.shadowMap.needsUpdate = true; lightBudget.point = q === 'high' ? 12 : q === 'medium' ? 8 : 5;
     renderer.setPixelRatio(q === 'low' ? Math.min(window.devicePixelRatio, 1) * 0.66 : q === 'medium' ? Math.min(window.devicePixelRatio, 1.25) : Math.min(window.devicePixelRatio, 2));
     scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; });
     $('h-fps').hidden = !SET.fps;
@@ -6965,6 +6972,7 @@
     if (ui.panelOpen || ui.menuOpen) { if (e.code === 'Tab' && ui.panelKind === 'inventory') { ui.closePanel(); e.preventDefault(); } return; }
     player.keys[e.code] = true;
     if (runHooks(hooks.keydown, e)) { e.preventDefault(); return; }
+    if (e.code === 'Space' && !e.repeat && !drive.on && !sit.on && !player.air && !(player.downT > 0) && player.locked && !ui.blocked()) { player.air = true; player.jumpV = player.crouch ? 2.6 : 4.0; e.preventDefault(); return; }   // jump; a crouched hop is smaller
     if (drive.on && !e.repeat) {   /* at the wheel the letter keys belong to the car */
       if (e.code === 'KeyE') { var ja = jobAtCar(), jn = xs().jobs.length; if (ja >= 0) jobHandOver(ja); if (ja < 0 || xs().jobs.length === jn) exitCar(); e.preventDefault(); return; }   /* pulled up at a drop: E hands it over, and only gets you out once the drop is done */
       if (e.code === 'KeyI') { ignition(); e.preventDefault(); return; }
@@ -7040,6 +7048,27 @@
     if (focus) setFocus(focus);
   }, 1000);
 
+  // ── Light budget ──
+  // Three.js lights every pixel with every point light in the scene, whether or not the light can reach it, so
+  // forty-odd lamps mean forty-odd light evaluations per pixel. Only the nearest few stay visible; the rest are
+  // hidden. The visible count is held constant so the shaders are not recompiled (see the roomLamps note).
+  function updateLightBudget() {
+    var t = now();
+    if (!lightBudget.lights || t - lightBudget.scanT > 2000) { var list = []; scene.traverse(function (o) { if (o.isPointLight) list.push(o); }); lightBudget.lights = list; lightBudget.scanT = t; }
+    if (t - lightBudget.tickT < 100) return; lightBudget.tickT = t;
+    camera.getWorldPosition(lightBudget.cam);
+    var cand = [];
+    lightBudget.lights.forEach(function (l) {
+      for (var p = l.parent; p; p = p.parent) if (p.visible === false) return;   /* inside a hidden group: not counted by the renderer either way, leave it alone */
+      l.getWorldPosition(lightBudget.tmp); var d = lightBudget.tmp.distanceTo(lightBudget.cam);
+      l.userData.budgetScore = (l.intensity > 0 ? 0 : 1e6) + Math.max(0, d - (l.distance || 40) * 0.25); cand.push(l);
+    });
+    cand.sort(function (a, b) { return a.userData.budgetScore - b.userData.budgetScore; });
+    for (var i = 0; i < cand.length; i++) cand[i].visible = i < lightBudget.point;
+  }
+  var shadowT = 0;
+  function updateShadowTimer() { var t = now(); if (renderer.shadowMap.enabled && t - shadowT > 250) { renderer.shadowMap.needsUpdate = true; shadowT = t; } }
+
   // render loop
   var fpsAcc = 0, fpsN = 0, fpsT = 0;
   function frame() {
@@ -7048,7 +7077,7 @@
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
     if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); }
-    updateDayNight(); updateSecurity(dt);
+    updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt);
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); renderer.render(scene, vc); } else renderer.render(scene, camera);
     if (SET.fps) { fpsAcc += dt; fpsN++; fpsT += dt; if (fpsT > 0.5) { $('h-fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; fpsT = 0; } }
   }

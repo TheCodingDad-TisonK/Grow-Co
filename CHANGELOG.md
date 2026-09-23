@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.18
+
+**Frame rate.** The town and the shop had fifty-odd lamps in the scene at once, and the renderer lit every pixel with every one of them whether or not the light could reach it. Only the nearest twelve stay on now (eight on Medium, five on Low); the rest are switched off until you walk towards them, and the count is held steady so the shaders are not rebuilt as you move. Shadows were redrawn from scratch every frame as well, a second full pass over every object in the game: they are refreshed four times a second instead, which nobody can see and the graphics card can. Medium quality also drops to a 1024 shadow map. On the machine this was measured on the old build could not keep up at all and the new one holds 60.
+
+**Flickering buildings.** Distant walls, roads and shopfronts shimmered because the camera's depth range started five centimetres from your eyes and ran out two hundred metres away, which left the far end of Main Street with about a centimetre of depth precision, less than the gap between a road and its paint. The near plane now starts at twenty centimetres, four times the precision at distance, and nothing you carry sits closer than half a metre so nothing is clipped.
+
+**Jump and crouch.** Space hops you about eighty centimetres into the air and Ctrl drops you to a crouch, which slows the walk. A crouched hop is smaller. Neither works while you are seated, at the wheel or on the floor. Ctrl+E still sends a crew member home as before.
+
 ## v1.17.1
 
 **A cold read of the whole game.** Ten fresh reviewers went through every line with no idea how any of it was meant to work, and this release fixes what they found that could cost you a save, a session or an honest day's takings.
