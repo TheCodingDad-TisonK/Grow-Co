@@ -36,7 +36,7 @@ window.RF_GUIDE = [
   { id: 'staff', icon: '🧑‍🔧', title: 'Staff', html:
     '<ul><li><b>Crew</b>: up to three on the shop floor, <b>Jo</b>, <b>Mika</b> and <b>Sam</b>. Hire them at the laptop under <b>Staff</b>. Each one costs more than the last. They serve the window, restock the supply rack and the machines, sweep, or tend the plants.</li>' +
     '<li><b>The guard</b> is on the door from day one. He checks IDs. Send him on patrol to put robbers off and break up fights sooner, or give him a chore. He\'s back on the door whenever someone walks in.</li>' +
-    '<li>The <b>staff roster</b> board in the office hires three more: a <b>driver</b> (wholesales your cartons every morning and runs phone deliveries), a <b>basement operator</b> (keeps the line running) and a <b>night guard</b> (stops break-ins).</li><li>Wages come out at the start of each day: the bank first, then the vault, then the till.</li></ul>' },
+    '<li>The <b>staff roster</b> board in the office hires three more: a <b>driver</b> (wholesales your cartons every morning and runs phone deliveries), a <b>basement operator</b> (keeps the line running) and a <b>night guard</b> (stops break-ins).</li><li>Wages come out at the start of each day: the bank first, then the vault, then the till. A crew member you can\'t pay walks out.</li></ul>' },
   { id: 'crew', icon: '🧑‍🔧', title: 'Your crew day to day', html:
     '<p>Each crew member has their own look, their own job and their own wage.</p>' +
     '<ul>' +

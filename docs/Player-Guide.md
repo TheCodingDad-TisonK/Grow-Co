@@ -109,7 +109,7 @@ Money sits in places: the **till**, the **tip jar**, the machine cash boxes, you
 - **Crew**: up to three on the shop floor, **Jo**, **Mika** and **Sam**. Hire them at the laptop under **Staff**. Each one costs more than the last. They serve the window, restock the supply rack and the machines, sweep, or tend the plants.
 - **The guard** is on the door from day one. He checks IDs. Send him on patrol to put robbers off and break up fights sooner, or give him a chore. He's back on the door whenever someone walks in.
 - The **staff roster** board in the office hires three more: a **driver** (wholesales your cartons every morning and runs phone deliveries), a **basement operator** (keeps the line running) and a **night guard** (stops break-ins).
-- Wages come out at the start of each day: the bank first, then the vault, then the till.
+- Wages come out at the start of each day: the bank first, then the vault, then the till. A crew member you can't pay walks out.
 
 ## Your crew day to day
 
