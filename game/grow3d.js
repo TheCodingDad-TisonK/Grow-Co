@@ -586,13 +586,14 @@
     labTick(secs); roofTick(secs * 0.75, true);   /* the beds only grow in daylight, and night runs 20:00 to 02:00 */
     if (busy) logEvent('🏭 The basement line kept running while you were away', '');
   }
+  function cupRep(rep, q) { return S.event && S.event.type === 'cup' && q >= 70 ? rep * 2 : rep; }   // the Cup is in town: top-shelf sales count twice for your name
   function maybeEvent() {
     if (S.event || now() - S.lastEvent < randi(70000, 140000)) return;
     S.lastEvent = now();
     var roll = Math.random();
     if (roll < (S.staff && S.staff.guardTask === 'patrol' ? 0.03 : 0.07) && shop().open && !heist.on && S.till + S.tips >= 30) { startRobbery(); return; }
     if (roll < 0.3) { S.event = { type: '420', label: '420 rush — prices are up!', mult: 1.20, until: now() + 35000 }; logEvent('🔥 420 rush! The market spikes for a bit.', 'good'); toast('🔥 420 rush!', 'rare'); }
-    else if (roll < 0.5) { S.event = { type: 'cup', label: 'Cannabis Cup in town — quality sells for extra rep', mult: 1.08, until: now() + 60000 }; logEvent('🏆 Cannabis Cup! Quality sales earn bonus rep.', 'rare'); }
+    else if (roll < 0.5) { S.event = { type: 'cup', label: 'Cannabis Cup in town: sales at quality 70+ earn double rep', mult: 1.08, until: now() + 60000 }; logEvent('🏆 Cannabis Cup in town. For the next minute, sales at quality 70+ earn double rep', 'rare'); }
     else if (roll < 0.7) { var gift = randi(30, 90) * (S.upgrades.tipjar ? 2 : 1); S.tips += gift; logEvent('💰 A grateful regular left ' + money(gift) + ' in the tip jar.', 'good'); sfx('cash'); }
     else if (roll < 0.85 && S.plants.length) { var v = pick(S.plants); if (!v.hazard) { v.hazard = pick(['pest', 'mold']); logEvent('🐛 Pest outbreak on a ' + strainById(v.strain).name + '!', 'bad'); } }
     else if (!S.customer && shop().open && now() >= (S.noCustomersUntil || 0)) spawnCustomer(hasLic('premium'));   // connoisseurs only come once you hold the permit, never while someone is already at the window, and never through a locked front door
@@ -658,7 +659,7 @@
     var price = kind === 'bags' ? bagPrice(q, thc) : jointPrice(q, thc);
     stack.qSum -= q; stack.thcSum -= thc; stack.n--;
     S.bank += price; S.stats.sold++; bookSale(price);
-    S.rep += q > 80 ? 2 : q > 60 ? 1 : 0; gainXp(Math.round(price / 8));
+    S.rep += cupRep(q > 80 ? 2 : q > 60 ? 1 : 0, q); gainXp(Math.round(price / 8));
     if (!quiet) { toast('💵 ' + money(price), 'good'); sfx('cash'); }
   }
   var actions = {
@@ -4660,7 +4661,12 @@
   function nextStep(l) {
     l.step++; var st = l.plan[l.step]; var from = { x: l.g.position.x, z: l.g.position.z }; l.t = 0;
     if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = [{ x: from.x, z: 6.6 }, { x: 0.4, z: 7.9 }, { x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]; return; }
-    if (st.kind === 'bench') { l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
+    if (st.kind === 'bench') {   /* a smoke in the lounge starts with buying the joint, off the goods shelf at the board price; no joints, no sit */
+      var jid = Object.keys(S.lots.joints).filter(function (k) { return S.lots.joints[k].n > 0; })[0];
+      if (!jid) { l.seat = null; loungerSay(l, 'no joints left? another time', '#ffc857', 2400); logEvent('🪑 ' + l.who + ' wanted a joint for the lounge, but the shelf had none', ''); nextStep(l); return; }
+      var jd = lotDraw('joints', jid, 1), jp = Math.max(1, Math.round(jointPrice(jd.q, jd.thc))); S.till += jp; bookSale(jp); S.stats.sold++; syncGoods();
+      logEvent('🪑 ' + l.who + ' bought a ' + strainById(jid).name + ' joint to smoke in the lounge (' + money(jp) + ' in the till)', '');
+      l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
     else { var s = lobbyStop(st.kind, st.unit); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useUnit = st.unit; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
   }
   // the machine does its thing: you get paid, they get something to hold
@@ -6729,6 +6735,7 @@
   function finalizeSale(extraRep, note) {
     var c = S.customer; if (!c || !c.stage) return;
     var total = c.due; var rep = Math.max(0, c.rep + (extraRep || 0));
+    var cq = orderLines(c).reduce(function (a, l) { a.q += l.given.qSum; a.n += l.given.n; return a; }, { q: 0, n: 0 }); if (cq.n && cupRep(1, cq.q / cq.n) > 1) { rep *= 2; note = (note ? note + ' · ' : '') + 'the Cup doubles the rep'; }
     if (c.pay === 'card') S.bank += Math.round(total * (S.upgrades.fintech ? 1.03 : 1)); else S.till += c.tendered - c.changeGiven;   // card settles straight to the bank, cash sits in the drawer
     if (c.matched && !c.subbed && Math.random() < 0.35) { var tipAmt = randi(1, 3) * (S.upgrades.tipjar ? 2 : 1); S.tips += tipAmt; logEvent('🫙 ' + c.who + ' dropped ' + money(tipAmt) + ' in the tip jar', ''); }
     S.stats.sold += c.qty; bookSale(total); S.rep += rep; gainXp(Math.round(total / 8));
@@ -6765,7 +6772,7 @@
     if (S.regDay !== (S.day || 1)) { S.regDay = S.day || 1; S.regSold = 0; }
     var room = walkupLeft(); if (room <= 0) { sfx('bad'); toast('🧾 The till is closed to walk-ups until tomorrow. Serve the customers at the window instead', 'bad'); return; }
     var kind = h.kind, n = Math.min(h.n, room), q = h.qSum / h.n, thc = h.thcSum / h.n; var each = unitPrice(kind, q, thc) * WALKUP_RATE; var total = each * n;
-    S.till += total; S.stats.sold += n; S.regSold = (S.regSold || 0) + n; bookSale(total); S.rep += (q > 80 ? 2 : q > 60 ? 1 : 0) * Math.min(n, 3); gainXp(Math.round(total / 8));
+    S.till += total; S.stats.sold += n; S.regSold = (S.regSold || 0) + n; bookSale(total); S.rep += cupRep((q > 80 ? 2 : q > 60 ? 1 : 0) * Math.min(n, 3), q); gainXp(Math.round(total / 8));
     h.n -= n; h.qSum -= q * n; h.thcSum -= thc * n; if (h.n <= 0) S.held = null;
     var left = walkupLeft();
     logEvent('💵 Rang up ' + n + ' ' + kind + ' as a walk-up sale: ' + money(total), 'good'); toast('💵 ' + money(total) + ' for ' + n + ' ' + kindName(kind, n) + ' at the walk-up rate' + (h.n > 0 ? ' (no more walk-ups today, the rest stays in your hands)' : ' (' + left + ' walk-up sales left today)'), 'good'); sfx('cash'); registerSale(n + ' ' + kind + ' ' + money(total));
