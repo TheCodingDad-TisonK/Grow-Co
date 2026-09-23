@@ -1,6 +1,6 @@
 # Save format
 
-The whole game is one JSON object, `S`, written to `localStorage` a fraction of a second after anything changes.
+The whole game is one JSON object, `S`, written to `localStorage` a fraction of a second after anything changes, and again as the page closes.
 
 - Key: `rfgrowco-slot1`, `rfgrowco-slot2` or `rfgrowco-slot3`. Which one is loaded is remembered in `rfgrowco-slot`; the main menu writes it and reloads the page, because the game reads its save once at boot.
 - `?save=<name>` loads `rfgrowco-<name>` instead: a developer slot outside the three, which is how a reporter's savegame is opened without touching your own.
@@ -20,10 +20,10 @@ The whole game is one JSON object, `S`, written to `localStorage` a fraction of 
 | `lots[kind][strain]` | packed goods on the shelf: `{ n, qSum, thcSum }`; kinds are `bags`, `joints`, `cookies` |
 | `stock` | packed goods locked in the stock cabinet |
 | `cured`, `pkg` | totals derived from `stash` and `lots` by `syncTotals()`; do not edit by hand |
-| `supplies`, `storage`, `order`, `deliveries` | what is on the rack, in the back room, on order |
-| `display`, `vendStock`, `coffeeStock` | counter extras and the machines |
+| `supplies`, `storage`, `order`, `deliveries` | what is on the supply rack, in the back room, on order |
+| `display`, `vendStock`, `coffeeStock` | the counter display and the machines |
 | `upgrades`, `lic` | what you own, by id |
-| `staff` | Jo and the guard's job |
+| `staff` | the crew (`crew`, up to three, each with a job and whether they're off), the guard's job (`guardTask`) and whether he's off shift (`guardOff`) |
 | `hotbar`, `slot` | the six things you carry and which is active |
 | `customer`, `courier`, `vip` | who is being served right now |
 | `layout[propId]` | moved furniture: `{ x, z, rot }` |
@@ -32,8 +32,8 @@ The whole game is one JSON object, `S`, written to `localStorage` a fraction of 
 | `custom`, `designs` | creative mode objects and saved designs |
 | `armory` | weapons owned and ammunition |
 | `tob` | the cigarette line: bays, kiln, stocks between machines, finished packs |
-| `cigStock`, `cigShutter` | the cabinet behind the counter |
-| `car` | `{ x, z, h, trunk, cigs }` |
+| `cigStock`, `cigShutter` | the cigarette cabinet behind the counter |
+| `car`, `van` | each vehicle: where it stands (`x`, `z`, `h`), its `trunk`, `lights`, handbrake (`brake`), odometer (`odo`) and which parts are `open`. The car also carries `cigs`, the cartons in its boot. The van keeps its shop: `rack`, `shopOpen`, `sales` |
 | `x` | the expansion bag, see below |
 | `stats`, `log` | lifetime numbers and the event feed |
 
@@ -63,5 +63,10 @@ In the desktop app press `Ctrl+Shift+I` for the developer tools, then in the con
 ```js
 RFGROW.S.bank += 5000;          // the live object; it saves itself
 JSON.stringify(RFGROW.S);       // export
-localStorage.setItem('rfgrowco-v1', '<pasted json>'); location.reload();   // import
+```
+
+To import, do it from the main menu, before you press Continue. A running game writes its own save as the page closes, which would put the old one straight back.
+
+```js
+localStorage.setItem('rfgrowco-slot1', '<pasted json>'); location.reload();   // import into slot 1
 ```

@@ -66,7 +66,7 @@ var P = X.press.job; if (P) { P.t += dt; if (P.t >= 30) { X.press.out += 5; X.pr
 
 Gate it on `powerOn()` if a power cut should stop it.
 
-## Add a product the cabinet sells
+## Add a product the cigarette cabinet sells
 
 Add an entry to `CIG_SKUS` with `type: 'side'`. Customers will start asking for it once it is in stock, the cabinet menu lists it, and it goes on the bill through `cigTotal`. Put stock into the player's hands with `take({ kind: 'cigs', sku: 'yourSku', n: 6 })`. If you add more than four side products, extend the shelf position array in `syncCigCab`.
 
@@ -96,7 +96,7 @@ Everything the function adds to the world becomes one fixture that F2 can carry 
 
 ## Add a door
 
-`doorFrame(x, z, alongX)` builds the frame and hangs a sliding door in it. For a door without a frame, call `slideDoor(id, x, floorY, z, alongX, floorLevel, label, startsOpen)`. Give it a nice name in `DOOR_NAMES` and it appears in the shop control panel with its own lock.
+`doorFrame(x, z, alongX)` builds the frame and hangs a sliding door in it. For a door without a frame, call `slideDoor(id, x, floorY, z, alongX, floorLevel, label, startsOpen)`. Give it a nice name in `DOOR_NAMES` and it appears on the control box with its own lock.
 
 ## Rules of thumb
 
@@ -105,3 +105,4 @@ Everything the function adds to the world becomes one fixture that F2 can carry 
 - **Staff walk on a grid** built from `world.obstacles` on the ground floor. Tag an obstacle `door` and the grid ignores it.
 - **Animate, do not pop.** Doors slide, shutters roll, the player fades between levels.
 - **Keep the guide honest.** If you change how something works, change `game/guide.js` and run `npm run guide`.
+- **Write in the house style.** Every string a player reads follows [House style](House-Style.md): the voice, the punctuation and the word list.

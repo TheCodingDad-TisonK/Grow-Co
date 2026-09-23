@@ -10,12 +10,12 @@ A form opens. Give it a short title, say what happened, and pick from the dropdo
 
 - What you typed, and the choices you made.
 - What the game knows: version, your system and screen size, your settings, which room you were in, your money and day, and any script errors the game recorded.
-- Your **savegame**, if you leave that box ticked. It is compressed and lets the developer load your exact shop, which is by far the fastest way to get something fixed. Untick it if you would rather not.
+- Your **savegame**, if you leave that box ticked. It's compressed and lets the developer load your exact shop, which is by far the fastest way to get something fixed. Untick it if you'd rather not.
 - Your lifetime stats and the last 25 events, if you leave that box ticked.
 
 **What never gets sent:** your name, your email, or any file from your PC. Press **Preview what will be sent** to read the whole thing first.
 
-**Why it takes two steps.** A game running on your PC cannot file a GitHub issue on its own without carrying a secret key, and a key shipped inside a game can be taken out and abused. So instead the game copies the report to your clipboard, saves a copy as a `.txt` file, and opens the GitHub bug form with your answers already filled in. You click into the "Report data" box, press **Ctrl + V**, and submit. You need a free GitHub account.
+**Why it takes two steps.** A game running on your PC can't file a GitHub issue on its own without carrying a secret key, and a key shipped inside a game can be taken out and abused. So instead the game copies the report to your clipboard, saves a copy as a `.txt` file, and opens the GitHub bug form with your answers already filled in. You click into the "Report data" box, press **Ctrl+V**, and submit. You need a free GitHub account.
 
 **No GitHub account?** The report was also saved to your Downloads as a `.txt` file. Post it on [Discord](https://discord.gg/8FcgxwJ3dM).
 
@@ -40,10 +40,10 @@ localStorage.setItem('rfgrowco-bug', JSON.stringify(/* paste report.save.json he
 
 ## Optional: one-click reporting without GitHub
 
-If you would rather players never see GitHub, deploy the small relay in [`tools/report-relay/`](https://github.com/TheCodingDad-TisonK/Grow-Co/tree/main/tools/report-relay) (a single Cloudflare Worker) and set its address in `game/version.js`:
+If you'd rather players never see GitHub, deploy the small relay in [`tools/report-relay/`](https://github.com/TheCodingDad-TisonK/Grow-Co/tree/main/tools/report-relay) (a single Cloudflare Worker) and set its address in `game/version.js`:
 
 ```js
 window.RF_REPORT_ENDPOINT = 'https://your-worker.workers.dev/report';
 ```
 
-The game then posts the report to the relay, which files the issue with a token that stays on the server, and the player sees "Report sent". The relay holds the only copy of the token; nothing secret ships with the game. It has a rate limit and a size cap. Without the endpoint set, the game uses the clipboard route described above.
+The game then posts the report to the relay, which files the issue with a token that stays on the server, and the player sees "Report sent". The relay holds the only copy of the token, so nothing secret ships with the game. It has a rate limit and a size cap. Without the endpoint set, the game uses the clipboard route described above.

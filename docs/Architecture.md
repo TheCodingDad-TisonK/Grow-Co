@@ -31,7 +31,7 @@ Sections are marked with banner comments: `// ── Robberies: … ──`. Sea
 | Sound | `SFX` table of synthesised sounds, `sfx(name)` |
 | Textures, materials | `TEX`, `MAT`, `colorMat`, `glowMat`, `textTex` (text to texture) |
 | World building helpers | `box`, `cyl`, `wallX`, `wallZ`, `doorFrame`, `floorPlane`, `signPlane`, `interactable` |
-| People | `makeHuman(spec)`, `animateHuman`, the guard, Jo the worker, customers, loungers |
+| People | `makeHuman(spec)`, `animateHuman`, the guard, the crew (Jo, Mika and Sam), customers, loungers |
 | Pathfinding | a grid A* over the obstacle boxes: `navBuild`, `navPath`, `routeTo` |
 | RF Smoking, The city, Upstairs, Expansion, Sliding doors, Fixtures, Robberies | the large feature blocks, each self-contained |
 | Props | `defProp(id, {…})`, `buildProp`, `propWorld`, the edit mode |
@@ -43,7 +43,7 @@ Sections are marked with banner comments: `// ── Robberies: … ──`. Sea
 
 Coordinates are metres. `+x` is east, `+z` is toward the street, yaw 0 faces `-z`.
 
-- The shop is `x -12..12`, `z -9..9`. The back room and security room sit behind it, the fenced yard behind those, the gate at `z -18`.
+- The shop is `x -12..12`, `z -9..9`. The back room and security room sit behind it, and the fenced yard behind those, with the garage on its east side and the yard gate at `z -18`. A fenced lane runs from the gate to the back street, with a barrier at the street end.
 - **Levels** are an integer `player.floor`: `0` ground (the whole town), `1` upstairs, `2` the roof, `-1` everything underground. Level `-1` holds the basement and the walk-in interiors ("zones") of the bank, the gun store and the lab, placed far apart at the same depth and reached by a fade, not by stairs.
 - **Collision** is a flat list of axis-aligned boxes, `world.obstacles`, each with a `floorLevel`. The player, the car and the path grid all read it.
 - **Interaction** is a raycast from the screen centre against `world.interact`. Each hit mesh carries `userData.interact = { kind, … }`. One function turns a `kind` into a prompt, one turns it into an action.

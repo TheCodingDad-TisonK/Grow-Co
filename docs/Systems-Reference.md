@@ -20,7 +20,7 @@ Quality `q` runs 20 to 100. `thc` is a multiplier of roughly 1.0 to 1.9, not a p
 | System | State | Entry points |
 |---|---|---|
 | Customers | `S.customer` | `maybeCustomer`, `spawnCustomer`, `orderLines`, `handOver`, `finalizeSale`, `updateNpc` |
-| Counter extras | `S.display` | `ACC`, `syncDisplay` |
+| Counter display | `S.display` | `ACC`, `syncDisplay` |
 | Cabinet goods (cigarettes, carts, hash, gummies, chocolate) | `S.cigStock`, `S.cigShutter`, the side order `customer.cig` | `CIG_SKUS`, `cigCabInteract`, `handCigs`, `cigTotal`, `syncCigCab` |
 | Connoisseur lounge | `S.vip` | `startVip`, `serveVip`, `updateVip` |
 | Street deals | | `parkDeal` |
@@ -35,8 +35,8 @@ Quality `q` runs 20 to 100. `thc` is a multiplier of roughly 1.0 to 1.9, not a p
 
 | Who | State | Entry points |
 |---|---|---|
-| Jo | `S.staff.worker`, `S.staff.task` | `WORKER_TASKS`, `workerNextJob`, `workerPick`, `workerServe` |
-| Guard | `S.staff.guardTask` | `GUARD_TASKS`, `updateGuard` |
+| Crew (Jo, Mika, Sam) | `S.staff.crew` (the old `S.staff.worker` is migrated by `crewList`) | `CREW_MAX`, `crewList`, `crewHireCost`, `WORKER_TASKS`, `workerNextJob`, `workerPick`, `workerServe` |
+| Guard | `S.staff.guardTask`, `S.staff.guardOff` | `GUARD_TASKS`, `updateGuard` |
 | Driver, operator, night guard | `S.x.staff` | `rosterMenu`, `expansionNewDay`, the operator block in `updateExpansion` |
 | Lobby visitors | | `updateLoungers`, `startFight`, `endFight` |
 | Wages | | `payWages`, `expansionNewDay` |
@@ -71,7 +71,9 @@ Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `d
 | Streets and buildings | `CITY` | `buildCity`, `cityRoad`, `cityBldg`, `cityDoor` |
 | Places | `CITY.pois` | `cityPoiMenu(poi)`, `expPoiMenu(poi)` |
 | Walk-in interiors | `ZONES` | `enterZone`, `leaveZone`, the shared `exp.zoneLight` |
-| Car | `S.car`, `drive` | `carBody`, `enterCar`, `exitCar`, `updateDrive`, `carBlocked`, `carMenu` |
+| Car and van | `S.car`, `S.van`, `drive` | `vehState`, `selectVehicle`, `carBody`, `enterCar`, `exitCar`, `updateDrive`, `carBlocked`, `carMenu` |
+| Shop van | `S.van.rack`, `S.van.shopOpen`, `S.van.sales` | `vanShopSet`, `vanClimb`, `vanRack`, `vanRackStock`, `vanServe`, `updateVanShop`, `vanSell` |
+| Yard gate, garage door, lane barrier | `world.gateOpen`, `world.garageOpen`, `world.barrierOpen` | `gateSet`, `garageSet`, `barrierSet`, `updateTruck` |
 | Traffic | `traffic` | `updateCity` |
 | Map | `cityMap` | `toggleCityMap`, `drawCityMap`, `drawMapExtras` |
 | Weather and seasons | `S.x.weather` | `season`, `weekend`, the weather block in `updateExpansion` |
@@ -84,7 +86,8 @@ Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `d
 | Fixtures (signs, screens, boards) | `S.fixtures[id]` | `fixtureAdd`, `fixtureFromBuild`, `fixtureSign`, `fxCarry`, `applyFixtures` |
 | Edit mode | `edit` | `editToggle`, `editUpdate`, `editGrab`, `editDrop`, `editRotate`, `editReset` |
 | Creative mode | `S.custom`, `S.designs` | `grow3d-creative.js`, through `RFGROW.hooks` and `RFGROW.internal` |
-| Shop controls | `shop()` | `applyShopState`, the `controls` panel |
+| Shop controls | `shop()` | `applyShopState`, the `controls` panel, `MINI_CTL` and `paneMiniCtl` for the front panel and the office panel |
+| Drinks and bins | `S.buff`, each bin's count in `machState(propId).trash` | `drinkHeld`, `isDrink`, `isTrash`, the `cooler`, `trash` and `dumpster` kinds |
 
 ## The console handle
 
