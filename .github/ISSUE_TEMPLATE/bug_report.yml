@@ -8,7 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for reporting. **Tip:** press **F7** in the game. It opens a form, gathers your version, system and savegame, and brings you here with everything filled in. All you do is paste into "Report data" and submit.
+        Thanks for reporting. The quick way is **F7** in the game. It opens a form, gathers your version, system and savegame, and brings you here with everything filled in. Then you just paste into "Report data" and submit.
   - type: dropdown
     id: category
     attributes:
@@ -81,19 +81,19 @@ body:
     id: version
     attributes:
       label: Game version
-      placeholder: "1.1.0 (shown in the main menu)"
+      placeholder: "1.20.0 (it's at the bottom of the main menu)"
   - type: textarea
     id: what
     attributes:
       label: What happened?
-      description: What did you see, and what were you doing right before?
+      description: What did you see, and what were you doing just before?
     validations:
       required: true
   - type: textarea
     id: data
     attributes:
       label: Report data
-      description: "If you used the in-game form: click here and press Ctrl+V. It pastes the full report, including your savegame if you chose to attach it. If the game told you the save was too large, drag the downloaded .txt file in here instead."
+      description: "If you used the in-game form, click here and press Ctrl+V. That pastes the full report, with your savegame if you chose to attach it. If the game said the save was too big to paste, drag the downloaded .txt file in here instead."
       render: text
   - type: textarea
     id: extra

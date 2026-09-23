@@ -45,7 +45,7 @@
       out.push('Upgrades: ' + Object.keys(S.upgrades || {}).filter(function (k) { return S.upgrades[k]; }).join(', '));
       try { var hs = g.heistState && g.heistState(); if (hs && hs.heist.on) out.push('Robbery in progress: ' + hs.heist.kind + ' · ' + hs.robbers.map(function (r) { return r.state; }).join(', ')); } catch (e3) {}
       if (S.x) out.push('Extras: heat ' + Math.round(S.x.heat || 0) + ' · weather ' + (S.x.weather && S.x.weather.kind) + ' · staff ' + JSON.stringify(S.x.staff || {}) + ' · delivery ' + (S.x.delivery ? 'open' : 'none'));
-    } else out.push('The game world was not running (report filed from the main menu or before load).');
+    } else out.push('The game world wasn\'t running (filed from the main menu or before loading).');
     return out;
   }
   function buildText(f) {
@@ -72,15 +72,15 @@
   function select(id, opts, val) { return '<select id="rfr-' + id + '">' + opts.map(function (o) { return '<option' + (o === val ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>'; }
   function form() {
     var running = !!(G() && G().ui && G().ui.started);
-    view('<h2>🐞 Report a bug</h2><p class="rfr-lead">Thank you. The more you fill in, the faster it gets fixed. Nothing is sent until you press the button at the bottom, and you will see everything that goes out.</p>' +
+    view('<h2>🐞 Report a bug</h2><p class="rfr-lead">Thanks. The more you fill in, the faster it gets fixed. Nothing goes anywhere until you press <b>Send the report</b>, and the preview shows you every word first.</p>' +
       '<label>A short title <span>required</span><input id="rfr-title" maxlength="110" placeholder="e.g. Jo walks through the counter when serving"></label>' +
       '<div class="rfr-grid"><label>What kind of problem is it?' + select('category', FIELDS.category, 'Gameplay and balance') + '</label><label>How bad is it?' + select('severity', FIELDS.severity, FIELDS.severity[2]) + '</label>' +
       '<label>How often does it happen?' + select('frequency', FIELDS.frequency, 'Sometimes') + '</label><label>Where were you?' + select('where', FIELDS.where, guessWhere()) + '</label></div>' +
-      '<label>What happened? <span>required</span><textarea id="rfr-what" rows="4" placeholder="Describe what you saw. What were you doing right before?"></textarea></label>' +
+      '<label>What happened? <span>required</span><textarea id="rfr-what" rows="4" placeholder="What did you see? What were you doing just before?"></textarea></label>' +
       '<label>What did you expect to happen instead?<textarea id="rfr-expected" rows="2"></textarea></label>' +
       '<label>Steps to make it happen again, if you know them<textarea id="rfr-steps" rows="3" placeholder="1. Open the shop&#10;2. Wait for a customer&#10;3. ..."></textarea></label>' +
       '<label>Discord name or other contact, if you want a reply <span>optional</span><input id="rfr-contact" maxlength="80"></label>' +
-      '<div class="rfr-checks"><label class="rfr-check"><input type="checkbox" id="rfr-save"' + (running ? ' checked' : ' disabled') + '> Attach my savegame <small>lets the developer load your exact shop. It contains only game data.</small></label>' +
+      '<div class="rfr-checks"><label class="rfr-check"><input type="checkbox" id="rfr-save"' + (running ? ' checked' : ' disabled') + '> Attach my savegame <small>so the developer can load your exact shop. It\'s game data only.</small></label>' +
       '<label class="rfr-check"><input type="checkbox" id="rfr-stats" checked> Attach lifetime stats and the last 25 events</label></div>' +
       '<div class="rfr-note">Always included: game version, your system and screen size, your settings, where you were standing, and any script errors the game recorded. No name, no email, no files from your PC.</div>' +
       '<div class="rfr-btns"><button class="primary" data-rfr="send">Send the report</button><button data-rfr="preview">Preview what will be sent</button><button data-rfr="close">Cancel</button></div><div class="rfr-err" id="rfr-err"></div>');
@@ -96,31 +96,31 @@
   }
   function send(previewOnly) {
     var f = read(), err = document.getElementById('rfr-err'); last = f;
-    if (!previewOnly && (f.title.length < 6 || f.what.length < 10)) { err.textContent = 'Please give it a short title and say what happened (a sentence is enough).'; return; }
+    if (!previewOnly && (f.title.length < 6 || f.what.length < 10)) { err.textContent = 'It needs a short title and a line on what happened. A sentence is enough.'; return; }
     assemble(f).then(function (r) {
       if (previewOnly) { view('<h2>What will be sent</h2><p class="rfr-lead">This exact text. The long block at the end is your savegame, compressed.</p><textarea class="rfr-preview" readonly rows="18">' + esc(r.text) + '</textarea><div class="rfr-btns"><button data-rfr="back">← Back to the form</button></div>'); return; }
       var name = 'Grow-Co-bug-report-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt';
       if (window.RF_REPORT_ENDPOINT) { relay(f, r, name); return; }
-      var tooBig = r.text.length > 60000, clip = tooBig ? r.text.slice(0, r.text.indexOf('----- SAVE')) + '(the savegame was too large to paste: please attach the downloaded file ' + name + ' to the issue)\n===== END =====' : r.text;
+      var tooBig = r.text.length > 60000, clip = tooBig ? r.text.slice(0, r.text.indexOf('----- SAVE')) + '(the savegame was too big to paste, so attach the downloaded file ' + name + ' to the issue)\n===== END =====' : r.text;
       copy(clip).then(function (copied) {
         var saved = download(name, r.text), url = issueUrl(f, f.what.slice(0, 600));
         window.open(url, '_blank', 'noopener');
         view('<h2>✅ Almost done: one paste</h2><ol class="rfr-steps"><li>Your browser just opened a <b>GitHub bug form</b> with your answers already filled in. You need a free GitHub account to submit it.</li>' +
-          '<li>Click into the big box called <b>"Report data"</b> and press <b>Ctrl + V</b>. ' + (copied ? 'The whole report' + (r.saveIncluded && !tooBig ? ', savegame included,' : '') + ' is on your clipboard.' : '<b>Copying failed</b>: use the button below to copy it again.') + '</li>' +
-          (tooBig ? '<li>Your savegame is large. <b>Drag the file ' + esc(name) + '</b> (it was just saved to your Downloads) into that same box to attach it.</li>' : '') +
-          '<li>Press <b>Submit new issue</b>. It is labelled and assigned to the developer automatically.</li></ol>' +
+          '<li>Click into the big box called <b>"Report data"</b> and press <b>Ctrl+V</b>. ' + (copied ? 'The whole report' + (r.saveIncluded && !tooBig ? ', savegame included,' : '') + ' is on your clipboard.' : '<b>Copying failed.</b> Use the button below to try again.') + '</li>' +
+          (tooBig ? '<li>Your savegame\'s too big to paste. <b>Drag ' + esc(name) + '</b> from your Downloads into that same box instead.</li>' : '') +
+          '<li>Press <b>Submit new issue</b>. It\'s labelled and assigned to the developer by itself.</li></ol>' +
           '<div class="rfr-note">' + (saved ? 'A copy was also saved as <b>' + esc(name) + '</b>. ' : '') + 'No GitHub account? Send that file on <a href="#" data-rfr="discord">Discord</a> instead.</div>' +
           '<div class="rfr-btns"><button data-rfr="reopen">Open the GitHub form again</button><button data-rfr="recopy">Copy the report again</button><button data-rfr="refile">Save the file again</button><button class="primary" data-rfr="close">Done</button></div>');
         root._ctx = { url: url, clip: clip, text: r.text, name: name };
       });
-    }).catch(function (e) { err.textContent = 'Could not build the report: ' + (e && e.message || e); });
+    }).catch(function (e) { err.textContent = 'Couldn\'t build the report: ' + (e && e.message || e); });
   }
   function relay(f, r, name) {
     view('<h2>Sending…</h2><p class="rfr-lead">Filing your report.</p>');
     fetch(window.RF_REPORT_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: f.title, category: f.category, severity: f.severity, frequency: f.frequency, where: f.where, version: window.RF_VERSION || 'unknown', report: r.text }) })
       .then(function (res) { return res.json().then(function (j) { if (!res.ok) throw new Error(j && j.error || res.status); return j; }); })
-      .then(function (j) { view('<h2>✅ Report sent</h2><p class="rfr-lead">Thank you. It was filed as ' + (j.url ? '<a href="#" data-rfr="openurl" data-url="' + esc(j.url) + '">' + esc(j.url) + '</a>' : 'a new issue') + '.</p><div class="rfr-btns"><button class="primary" data-rfr="close">Done</button></div>'); })
-      .catch(function (e) { download(name, r.text); view('<h2>Could not send it</h2><p class="rfr-lead">' + esc(e && e.message || e) + '. The report was saved as <b>' + esc(name) + '</b>; you can attach it to a GitHub issue or post it on Discord.</p><div class="rfr-btns"><button data-rfr="back">← Back</button><button class="primary" data-rfr="close">Close</button></div>'); });
+      .then(function (j) { view('<h2>✅ Report sent</h2><p class="rfr-lead">Thanks. It was filed as ' + (j.url ? '<a href="#" data-rfr="openurl" data-url="' + esc(j.url) + '">' + esc(j.url) + '</a>' : 'a new issue') + '.</p><div class="rfr-btns"><button class="primary" data-rfr="close">Done</button></div>'); })
+      .catch(function (e) { download(name, r.text); view('<h2>Couldn\'t send it</h2><p class="rfr-lead">' + esc(e && e.message || e) + '. The report\'s saved as <b>' + esc(name) + '</b>. Attach it to a GitHub issue or post it on Discord.</p><div class="rfr-btns"><button data-rfr="back">← Back</button><button class="primary" data-rfr="close">Close</button></div>'); });
   }
 
   function show() {
