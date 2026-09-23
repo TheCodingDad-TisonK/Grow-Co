@@ -22,7 +22,7 @@
 - The branch pays $9 for every unit you stock it with, up to 60 a day, plus twice your rep. One $120 manager replaces three staff you never saw.
 - Time away moves the calendar on by one day at most, so coming back no longer means a stack of bills. The basement line, roof beds and lab catch up while you were gone.
 - Delivery rounds, the tobacconist, the driver and the branch go through the tax book like the shop does.
-- Roster hires count as staff. The guard draws $60 a day on shift. The driver keeps 6 packs of each kind for your own rounds.
+- Roster hires count as staff. The guard draws $60 a day on shift, starting when the rent does, so a new shop is not broke before its first harvest. The driver keeps 6 packs of each kind for your own rounds.
 - You start with $220, as the menu always said.
 
 **Things that did nothing now do something.**

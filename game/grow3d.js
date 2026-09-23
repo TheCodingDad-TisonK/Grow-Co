@@ -478,7 +478,7 @@
       { k: 'Water', v: S.plants.length * COST.waterPerPlant, d: S.plants.length + ' plants in the tent' },
       { k: 'Payroll', v: Math.max(0, need - hired) * COST.payRate, d: need ? need + ' staff the place needs, ' + Math.min(need, hired) + ' of them covered by people you hired' : 'just you, for now' }
     ];
-    if (!guardOff()) rows.push({ k: 'Security', v: COST.guardWage, d: 'the guard on the door; send him home and there is no wage that day' });
+    if (!guardOff() && !free) rows.push({ k: 'Security', v: COST.guardWage, d: 'the guard on the door; send him home and there is no wage that day' });   /* his wage starts with the rent: a new shop has no takings yet */
     if (X.branch) rows.push({ k: 'Branch manager', v: COST.branchManager, d: 'runs Green Leaf for you, a flat day rate' });
     return rows;
   }
