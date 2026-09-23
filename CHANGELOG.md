@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.19
+
+**Greenery.** The town's trees were stacked cones and a sphere on a stick. They are now real shapes: broadleaf trees with a trunk, three branches and a lumpy crown under a dappled leaf texture, in three variants, and ragged five-tier pines in two, each with its own shade of green. The park has a clipped hedge all the way round with gaps at the paths, flower beds either side of both paths and round the fountain, and grass you can see: several thousand tufts across every patch of open ground in town, with more in the park and none on a road, a pavement or your own plot. Bushes and a few flowers stand at the foot of most buildings, and loose trees fill the empty ground between the blocks. Every one of these is an instance of a shared shape, so the whole lot costs about a dozen draw calls and adds nothing you can measure to the frame time. The ground texture is fuller, the park lawn is grass instead of flat green, and the sun's shadow now reaches the park.
+
+**Buildings.** Every block used to wear the same tiled window pattern. There are five styles now, picked by where the building stands: concrete office grid, brick with sills and lintels, stone with tall windows, dark panel with strip windows, and glass curtain wall. Each has a proper ground floor with big shop panes and a door. About a third of the windows have a light on behind them, some with a blind, and they glow at dusk and through the night, then go out at dawn.
+
+**Measured.** Same view, same method, the render of one frame took 324 ms in v1.17.1 and 35 ms in v1.18 inside the shop, and 167 ms against 20 ms on the street. That is the v1.18 change; the greenery on top of it made no measurable difference.
+
 ## v1.18
 
 **Frame rate.** The town and the shop had fifty-odd lamps in the scene at once, and the renderer lit every pixel with every one of them whether or not the light could reach it. Only the nearest twelve stay on now (eight on Medium, five on Low); the rest are switched off until you walk towards them, and the count is held steady so the shaders are not rebuilt as you move. Shadows were redrawn from scratch every frame as well, a second full pass over every object in the game: they are refreshed four times a second instead, which nobody can see and the graphics card can. Medium quality also drops to a 1024 shadow map. On the machine this was measured on the old build could not keep up at all and the new one holds 60.
