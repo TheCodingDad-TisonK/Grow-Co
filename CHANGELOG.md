@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.20
+
+**No more flicker.** Two faces that share a plane, overlap and face the same way fight for every pixel, which is the shimmer on the ceiling, the door and window frames, the vending machines and the pavement. Instead of chasing each one, the game now checks every box and plane once the world is built, finds those pairs (about fifteen hundred of them) and moves the thinner of the two, a trim, a frame, a panel, five millimetres out. Walls and machines are never lifted off the floor. The same pass runs again after you rearrange the furniture. The ground floor ceiling now has holes over both stairwells, so going up no longer takes you through it. The three main roads were laid twice, a millimetre apart; the second copy is gone.
+
+**One brick.** Every brick panel on the shop used to stretch the same texture over its own width, so a narrow panel showed tiny bricks next to a wide panel with huge ones. Bricks are sized in metres now and match everywhere, and the dark corner piers, the fascia and the roof parapet use the same brick as the rest.
+
+**The front of the shop.** Brick pilasters between the bays with stone caps, a stone string course over the fascia, four gooseneck downlights over the sign, a striped awning on the door and on both window bays, window boxes with flowers under the shop window, a doormat, and an air-conditioning unit on the roof. Upstairs the glass band sits on a brick spandrel with a stone sill, split into bays by brick piers.
+
+**The backyard, and a garage.** The yard is half as big again, 15 by 10 metres, with a dumpster you can use, a stack of pallets and crates, a drain grate, a lamp over the roller door, the condenser and its pipe, downpipes at both rear corners, and weeds along the fence. On its east side stands a garage of its own: brick, a flat roof, a roller door that opens onto the yard with E, a lamp, a tool board, a shelf of crates, a tyre stack, an oil stain and a barred window. The car lives in there now.
+
+**The lane.** Fenced on both sides from the back street to the yard gate, with kerbs, centre dashes, two lamp posts, a speed bump, bollards and a private-road sign at the mouth, a camera watching the gate, and grass along the verges. A striped barrier stands at the street end: it lifts on its own when you drive up in your car and drops behind you, or E raises it on foot. That is the first gate; the swing gate into the yard is the second.
+
+**Props that do something.** The trash can lifts its lid with E and takes empties: it holds twelve, then you bag it up and carry the bag to the dumpster out back. The water cooler hands you a cup and fills it; drink it there, on the couch or at the table for a short lift, and you are left holding the empty cup, which refills at the cooler or goes in the trash. Coffee and cold drinks can be drunk the same way now, and leave an empty behind.
+
+**Trees off the road.** The pines around the yard could land on the back street or the lane. They check for tarmac first.
+
 ## v1.19
 
 **Greenery.** The town's trees were stacked cones and a sphere on a stick. They are now real shapes: broadleaf trees with a trunk, three branches and a lumpy crown under a dappled leaf texture, in three variants, and ragged five-tier pines in two, each with its own shade of green. The park has a clipped hedge all the way round with gaps at the paths, flower beds either side of both paths and round the fountain, and grass you can see: several thousand tufts across every patch of open ground in town, with more in the park and none on a road, a pavement or your own plot. Bushes and a few flowers stand at the foot of most buildings, and loose trees fill the empty ground between the blocks. Every one of these is an instance of a shared shape, so the whole lot costs about a dozen draw calls and adds nothing you can measure to the frame time. The ground texture is fuller, the park lawn is grass instead of flat green, and the sun's shadow now reaches the park.
