@@ -11,8 +11,8 @@ A dry friend who has worked a till. Say what happened, then what to do. Plain, w
 | Instead of | Write |
 |---|---|
 | Locked (dash) unlock it at the shop control box | It's locked. Unlock it at the control box. |
-| Hands full (dash) G to put things down | Your hands are full (G to put something down). |
-| That one was a plain-clothes officer! $200 fine, the goods are confiscated, rep -2 | 🚓 That one was plain-clothes police. $200 fine and the goods are gone (rep -2). |
+| Hands full (dash) G to put things down | Your hands are full (G puts things down) |
+| That one was a plain-clothes officer! $200 fine, the goods are confiscated, rep -2 | 🚓 "Police. Hands where I can see them." That one was plain-clothes: $200 fine and the goods are gone (heat +20, rep -2) |
 | the plants keep growing while you think | Everything waits until you come back. |
 
 - One idea per sentence. If a sentence has a "which" and an "and" and a "so", it's two sentences.
@@ -47,7 +47,7 @@ UK spelling throughout: licence (the noun), colour, catalogue, mould, centre, ar
 
 ## Numbers and units
 
-- Money: **$1,234**, with a thousands comma and no cents. $220, $2,500.
+- Money: **$1,234**, with a thousands comma and no cents. $220, $1,200.
 - Weight, time and distance take a space: **3.5 g**, **45 s**, **5 min**, **8 km/h**, **20 m**.
 - Clock times are 24-hour with two digits: **06:00**, **21:30**.
 - **%**, never "percent": 15% off, 35% over shop price.
@@ -69,6 +69,29 @@ UK spelling throughout: licence (the noun), colour, catalogue, mould, centre, ar
 - None in speech. People don't talk in emoji.
 - Never a line that is only an emoji.
 - The menus already carry one leading icon per button, per guide chapter and per panel title. Treat those like a toast: one, at the start, never inside the running text.
+
+## Voices
+
+Everybody who talks has one habit, so a line tells you who said it. Speech is in sentence case, ends with a full stop or a question mark, never shouts in capitals and never carries an emoji. In the code the lines live in `CUST_VOICE` (customers), `CREW_VOICE` (the crew) and next to each speaker's `say` call.
+
+| Who | Habit | Sounds like |
+|---|---|---|
+| The guard | Calm and clipped. Calls you boss. Knows the time of day and counts the IDs he really checked. | "ID, please." "Evening, boss." "Checked 14 IDs today." "You. Out. Now." |
+| Jo | Cheerful. Calls you boss. | "On it, boss: serve the window." "Floor's clean, boss." |
+| Mika | Says as little as possible. | "Right: sweep the floors." "Locked." "Out of 2 bags." |
+| Sam | Chats. Calls you mate. | "No bother, mate." "We're clean out of 2 bags, mate." |
+| Chill Chad | Laid back. Says man. | "Hey, man." "Close enough, man." |
+| Nurse Nadia | Brisk, on her break. Says love. | "Quick one, love. I'm on my break." |
+| Old Man Ferns | Old school. Says young'un. | "Exact money, mind." "Is that the best you've got?" |
+| Festival Fi | Sunny. Says hun. | "Hiya, hun." "The Rainbow Runtz, amazing." |
+| The Professor | Precise. | "I asked for Amber Haze, specifically." "Curious. Please try again." |
+| Skater Sam | Slang. Says bro. | "Yo." "Bro, that's short." |
+| Lounge guests | Formal, never contract. | "I am afraid that is rather ordinary." "Exquisite. Until next time." |
+| Lobby visitors | Relaxed regulars. | "Cheers, boss." "Five more minutes." |
+| Van buyers | In a hurry. | "Too slow, mate." "No joints? Forget it." |
+| The courier | Businesslike. | "Cash pickup: $500." "Signed for. Cheers." |
+| Robbers | Short and cold. No capitals, no exclamation marks: the threat is in the brevity. | "The till. Now." "Empty the till or I shoot." "Locked? Not for long." |
+| The police | Official, a line at a time. | "Police. Nobody move." "Hands behind your back. You're coming with us." |
 
 ## Names
 
@@ -106,7 +129,7 @@ Use these and only these. The left column is the word; the right is what it repl
 | pocket, tip jar, vault, bank | | Where money sits. |
 | First Harvest Bank | | The bank in town. |
 | Supplies, Seed bank, Gear, Licences, Staff, Bank | | The laptop tabs, spelled as on screen. |
-| the guard | Security (as a name) | "Security" can still head a panel section. |
+| the guard | Security (as a name) | The security room keeps its name: it is a room. |
 | crew | assistant, worker | Jo, Mika and Sam. "A crew member", "your crew". |
 | driver, basement operator, night guard | | Hired on the staff roster. |
 | snatch thief, knife robber, gunman, gang | robbery crew, armed robber | "Crew" belongs to your staff, so robbers are a gang. |
@@ -119,10 +142,10 @@ Use these and only these. The left column is the word; the right is what it repl
 
 Check these against the code before you repeat them, because they have changed before.
 
-- A new shop starts with **$220**, a small tent and one pot. **No seed.**
+- A new shop starts with **$220**, a small tent and one pot. **No seed.** The guided intro pays **$1,200** when all nine steps are done.
 - The pause menu stops everything. Nothing grows, nobody moves.
 - Since 1.20 the **car lives in the garage** and the **van in the bay under the canopy**. The car's boot loads and unloads at home with Shift+E.
-- A **locked door stops your crew**, the guard and customers. Only a robber gets through, and he has to force it.
+- A **locked door stops customers**. Your **crew and the guard carry keys**: they unlock it, walk through and it locks again behind them, unless you took that door's key back on the control box. A robber forces it. A door somebody walks through shuts itself 4 s after they're clear.
 - Up to **three crew**, hired at the laptop under Staff. The guard is there from the start. The driver, the basement operator and the night guard come off the staff roster.
 - Content packs are toggled freely and applied once. The shop rebuilds when you apply, not on every toggle.
 

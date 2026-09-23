@@ -1,6 +1,6 @@
 /* ============================================================
-   Grow Co. — Creative mode.
-   Build anything in the shop: place catalog furniture, or compose
+   Grow Co.: creative mode.
+   Build anything in the shop: place catalogue furniture, or compose
    your own objects from primitives (box / cylinder / sphere / cone /
    wedge / plank / pole), stack them on surfaces, paint, scale, rotate,
    duplicate and delete. Everything is saved in S.custom.
@@ -33,7 +33,7 @@
   };
   function mesh(geo, mat, x, y, z) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; return m; }
 
-  // ── catalog: ready-made furniture built with the game's own builders ──
+  // ── catalogue: ready-made furniture built with the game's own builders ──
   function ctxFor(g) { var c = I.propCtx(g, 'custom', 0); return c; }
   var CATALOG = [
     { cat: 'seating', id: 'chair',      name: 'Chair',           ico: '🪑', build: function (c, o) { B.chair(c, 0, 0, 0, fabricMat(o.color), MAT.darkwood); }, color: 0x3a5a3a },
@@ -141,13 +141,13 @@
   var cr = { on: false, placing: null, ghost: null, hover: null, helper: null, y: 0, grabbing: null, hitY: 0, snap: true, lastAim: null, panelTab: 'seating', prim: { type: 'box', p: { w: 0.5, h: 0.5, d: 0.5 }, color: 0xf2f2f2, finish: 'matte', text: 'YOUR TEXT' }, lastColor: null };
   var banner = document.createElement('div'); banner.className = 'g3-editbanner g3-creative'; banner.hidden = true; $('g3-hud').appendChild(banner);
   var hint = document.createElement('div'); hint.className = 'g3-creative-hint'; hint.hidden = true; $('g3-hud').appendChild(hint);
-  function bannerText() { return '🧱 CREATIVE · <b>C</b> catalog · <b>E</b>/click place or grab · <b>R</b> rotate · <b>[ ]</b> scale · <b>wheel</b> raise · <b>P</b> paint · <b>X</b> copy · <b>Del</b> remove · <b>F3</b> done'; }
+  function bannerText() { return '🧱 Creative · <b>C</b> catalogue · <b>E</b> or click to place or grab · <b>R</b> rotate · <b>[ ]</b> scale · <b>wheel</b> raise · <b>P</b> paint · <b>X</b> copy · <b>Del</b> remove · <b>F3</b> done'; }
   function toggle(on) {
     if (on === undefined) on = !cr.on; if (on === cr.on) return;
     cr.on = on; banner.hidden = !on; hint.hidden = !on; banner.innerHTML = bannerText();
     if (on && I.edit.on) I.editToggle();
     if (!on) { if (cr.propGrab) propDrop(); dropGhost(); helper(null); I.toast('Creative mode off · your build is saved', 'good'); I.save(); }
-    else { I.setFocus(null); I.toast('🧱 Creative mode: press C to open the catalog', ''); }
+    else { I.setFocus(null); I.toast('🧱 Creative mode: press C to open the catalogue', ''); }
     I.sfx('click');
   }
   function helper(obj) { if (!obj) { if (cr.helper) cr.helper.visible = false; return; } if (!cr.helper) { cr.helper = new THREE.BoxHelper(obj, 0xffc857); scene.add(cr.helper); } cr.helper.visible = true; cr.helper.setFromObject(obj); }
@@ -156,7 +156,7 @@
   function propDrop() { var id = cr.propGrab; if (!id) return; var g = R.props[id].g; var S = R.S; if (!S.layout) S.layout = {}; S.layout[id] = { x: Math.round(g.position.x * 100) / 100, z: Math.round(g.position.z * 100) / 100, rot: R.props[id].P.rot }; cr.propGrab = null; R.buildProp(id); helper(null); I.save(); I.sfx('putdown'); I.toast('Placed the ' + R.PROPS[id].label, 'good'); }
   function propCancel() { var id = cr.propGrab; if (!id) return false; cr.propGrab = null; R.buildProp(id); helper(null); I.toast('Put the ' + R.PROPS[id].label + ' back', ''); return true; }
   function propRotate() { var id = cr.propGrab || cr.propHover; if (!id) return false; var inst2 = R.props[id]; inst2.P.rot = (inst2.P.rot + 1) % 4; inst2.g.rotation.y = inst2.P.rot * Math.PI / 2; if (!cr.propGrab) { var S = R.S; if (!S.layout) S.layout = {}; S.layout[id] = { x: inst2.g.position.x, z: inst2.g.position.z, rot: inst2.P.rot }; R.buildProp(id); I.save(); } I.sfx('click'); return true; }
-  function propRemove() { var id = cr.propGrab || cr.propHover; if (!id) return false; var S = R.S; if (!S.layout) S.layout = {}; var cur = S.layout[id] || {}; cur.hidden = true; S.layout[id] = cur; cr.propGrab = null; cr.propHover = null; R.buildProp(id); helper(null); I.save(); I.sfx('bad'); I.toast('Removed the ' + R.PROPS[id].label + ' — restore it from the catalog panel (C)', ''); return true; }
+  function propRemove() { var id = cr.propGrab || cr.propHover; if (!id) return false; var S = R.S; if (!S.layout) S.layout = {}; var cur = S.layout[id] || {}; cur.hidden = true; S.layout[id] = cur; cr.propGrab = null; cr.propHover = null; R.buildProp(id); helper(null); I.save(); I.sfx('bad'); I.toast('Removed the ' + R.PROPS[id].label + '. Restore it from the catalogue (C).', ''); return true; }
   function propRestore(id) { var S = R.S; if (S.layout && S.layout[id]) { delete S.layout[id].hidden; } R.buildProp(id); I.save(); I.toast('Restored the ' + R.PROPS[id].label, 'good'); }
   function dropGhost() { if (cr.ghost) { world.group.remove(cr.ghost.g); cr.ghost = null; } cr.placing = null; cr.grabbing = null; helper(null); var pr = $('h-prompt'); if (pr) pr.hidden = true; hint.hidden = true; }
   // stop carrying: a grabbed piece goes back where it was, a fresh one is discarded
@@ -200,13 +200,13 @@
     var pid = !id && aim.obj && aim.obj.userData.propId && R.PROPS[aim.obj.userData.propId] ? aim.obj.userData.propId : null; cr.propHover = pid;
     if (pid) { helper(R.props[pid].g); pr.hidden = false; pr.innerHTML = '<b>E</b>Move the ' + R.PROPS[pid].label + ' <small>R rotate · Del remove · built-in furniture</small>'; hint.innerHTML = 'built-in · ' + R.PROPS[pid].label; }
     else if (id && inst[id]) { helper(inst[id].g); pr.hidden = false; pr.innerHTML = '<b>E</b>Grab ' + labelOf(inst[id].o) + ' <small>R rotate · [ ] scale · P paint · X copy · Del remove</small>'; hint.innerHTML = 'your build · ' + customList().length + ' objects'; }
-    else { helper(null); pr.hidden = true; hint.innerHTML = 'C catalog · ' + customList().length + ' objects placed' + (aim.obj && aim.obj.userData.propId ? ' · aiming at the ' + aim.obj.userData.propId : ''); }
+    else { helper(null); pr.hidden = true; hint.innerHTML = 'C catalogue · ' + customList().length + ' objects placed' + (aim.obj && aim.obj.userData.propId ? ' · aiming at the ' + aim.obj.userData.propId : ''); }
   }
   function labelOf(o) { if (o.kind === 'prim') return (PRIMS[o.type] || {}).name || o.type; if (o.kind === 'design') return o.type; var it = catItem(o.type); return it ? it.name : o.type; }
   function confirmPlace() {
     var o = cr.placing; if (!o) return;
     var copy = JSON.parse(JSON.stringify(o)); delete copy.onWall; if (!copy.id) copy.id = newId();
-    var price = itemPrice(copy); if (price && !o.wasGrab && !copy.paid) { if (R.S.bank < price) { I.toast('Not enough in the bank — ' + money(price) + ' needed, ' + money(R.S.bank) + ' available', 'bad'); I.sfx('bad'); return; } R.S.bank -= price; copy.paid = price; I.sfx('cash'); I.toast('💳 ' + money(price) + ' paid from the bank', ''); }
+    var price = itemPrice(copy); if (price && !o.wasGrab && !copy.paid) { if (R.S.bank < price) { I.toast('Not enough in the bank (' + money(price) + ' needed, ' + money(R.S.bank) + ' there)', 'bad'); I.sfx('bad'); return; } R.S.bank -= price; copy.paid = price; I.sfx('cash'); I.toast('💳 ' + money(price) + ' paid from the bank', ''); }
     var list = customList(); var idx = -1; for (var i = 0; i < list.length; i++) if (list[i].id === copy.id) idx = i; if (idx >= 0) list[idx] = copy; else list.push(copy);
     place(copy); I.save(); I.sfx('ok'); I.toast('Placed ' + labelOf(copy), 'good');
     var again = o.kind !== 'item' || !cr.grabbing; cr.grabbing = null;
@@ -225,7 +225,7 @@
   R.hooks.keydown.push(function (e) {
     if (e.code === 'F3') { toggle(); return true; }
     if (R.drive && R.drive.on) return false;   /* at the wheel every letter key belongs to the car, C included */
-    if (!cr.on) { if (e.code === 'KeyC' && !R.ui.blocked()) { I.toast('Press F3 for creative mode first, then C opens the catalog', ''); return true; } return false; }
+    if (!cr.on) { if (e.code === 'KeyC' && !R.ui.blocked()) { I.toast('Press F3 for creative mode first, then C opens the catalogue', ''); return true; } return false; }
     if (e.code === 'KeyC') { R.ui.openPanel('creative', cr.panelTab); return true; }
     if (e.code === 'KeyE') { if (cr.placing) confirmPlace(); else if (cr.propGrab) propDrop(); else if (cr.propHover) propGrabStart(); else grab(); return true; }
     if (e.code === 'KeyR') { if ((cr.propGrab || cr.propHover) && !cr.placing) propRotate(); else rotate(e.shiftKey ? -1 : 1); return true; }
@@ -249,7 +249,7 @@
   buildAll();
   var oldReset = R.reset; R.reset = function () { oldReset(); buildAll(); };
 
-  // ── catalog panel ─────────────────────────────────────────────────
+  // ── catalogue panel ─────────────────────────────────────────────────
   function sw(hex, sel) { return '<span class="g3-sw' + (sel ? ' sel' : '') + '" data-act="crColor" data-id="' + hex + '" style="background:#' + hex.toString(16).padStart(6, '0') + '"></span>'; }
   function money(n) { return '$' + Math.floor(n).toLocaleString('en-US'); }
   function itemPrice(o) { if (!o || o.kind !== 'item') return 0; var it = catItem(o.type); return it && it.price ? it.price : 0; }
@@ -263,7 +263,7 @@
       if (P.text) body += '<div class="g3-slider"><label>Text (| = new line)</label><input type="text" data-cr="text" value="' + I.esc(cr.prim.text) + '" style="flex:1;background:#101812;color:var(--ink);border:1px solid var(--panel-line);border-radius:6px;padding:4px 8px"></div>';
       body += '<div class="desc" style="margin-top:8px">Finish</div><div class="g3-chips">' + Object.keys(FINISH).map(function (f) { return '<span class="g3-chip' + (f === cr.prim.finish ? ' amber' : '') + '" data-act="crFinish" data-id="' + f + '" style="cursor:pointer">' + f + '</span>'; }).join('') + '</div>';
       body += '<div class="desc">Colour</div><div class="g3-swatches">' + PALETTE.map(function (h) { return sw(h, h === cr.prim.color); }).join('') + '<input type="color" data-cr="color" value="#' + cr.prim.color.toString(16).padStart(6, '0') + '" title="custom colour"></div>';
-      body += '<button class="g3-btn primary wide" data-act="crPlacePrim">🧱 Place this shape <span class="kbd">closes the catalog</span></button></div>';
+      body += '<button class="g3-btn primary wide" data-act="crPlacePrim">🧱 Place this shape <span class="kbd">closes the catalogue</span></button></div>';
       body += '<div class="g3-box"><h3>⭐ Save as a design</h3><div class="desc">Everything you built within 1.5 m of where you stand (your own shapes only) becomes one reusable piece of furniture in <b>My designs</b>.</div><div class="g3-slider"><label>Name</label><input type="text" data-cr="designName" value="' + I.esc(cr.designName || 'My furniture') + '" style="flex:1;background:#101812;color:var(--ink);border:1px solid var(--panel-line);border-radius:6px;padding:4px 8px"></div><button class="g3-btn wide" data-act="crSaveDesign">⭐ Save nearby shapes as a design</button><div class="desc" style="margin-top:12px">Tips: <b>N</b> toggles 5 cm snapping · mouse wheel raises the piece you hold · aim at a table to stack on it · <b>Shift+R</b> rotates the other way.</div></div></div>';
     } else if (tab === 'mine') {
       var d = designs();
@@ -274,13 +274,13 @@
     }
     var hid = R.hiddenProps(); if (hid.length) body += '<div class="g3-box" style="margin-top:10px"><h3>🪑 Removed built-in furniture</h3><div class="desc">Pieces you removed in creative mode. Restore any of them here.</div><div class="g3-chips">' + hid.map(function (pid) { return '<button class="g3-btn" data-act="crRestore" data-id="' + pid + '">↺ ' + R.PROPS[pid].label + '</button>'; }).join('') + '</div></div>';
     body += '<div class="g3-chips" style="margin-top:10px"><span class="g3-chip">placed <b>' + customList().length + '</b></span><span class="g3-chip">snap <b>' + (cr.snap ? 'on' : 'off') + '</b></span><button class="g3-btn" data-act="crClearAll" style="margin-left:auto">🗑 Remove all my builds</button></div>';
-    return { title: '🧱 Creative catalog', tabs: CATS, body: body };
+    return { title: '🧱 Creative catalogue', tabs: CATS, body: body };
   }
   R.hooks.panel.creative = panel;
   R.hooks.panelClick.push(function (act, el) {
     var id = el.getAttribute('data-id');
     if (act === 'crRestore') { propRestore(id); R.ui.render(); return true; }
-    if (act === 'crPick') { var it = catItem(id); if (!it) return true; if (it.price && R.S.bank < it.price) { I.toast('That costs ' + money(it.price) + ' — you have ' + money(R.S.bank) + ' in the bank', 'bad'); return true; } cr.y = 0; startPlacing({ kind: 'item', type: id, color: it.color, text: it.text ? (it.text === true ? 'OPEN' : it.text) : undefined, rot: 0, scale: 1 }); R.ui.closePanel(); I.toast('Carrying ' + it.name + ' · aim and press E', ''); return true; }
+    if (act === 'crPick') { var it = catItem(id); if (!it) return true; if (it.price && R.S.bank < it.price) { I.toast('That costs ' + money(it.price) + ', and you\'ve ' + money(R.S.bank) + ' in the bank', 'bad'); return true; } cr.y = 0; startPlacing({ kind: 'item', type: id, color: it.color, text: it.text ? (it.text === true ? 'OPEN' : it.text) : undefined, rot: 0, scale: 1 }); R.ui.closePanel(); I.toast('Carrying ' + it.name + ' · aim and press E', ''); return true; }
     if (act === 'crPrim') { cr.prim.type = id; cr.prim.p = Object.assign({}, PRIMS[id].def); R.ui.render(); return true; }
     if (act === 'crFinish') { cr.prim.finish = id; R.ui.render(); return true; }
     if (act === 'crColor') { cr.prim.color = parseInt(id, 10); R.ui.render(); return true; }
