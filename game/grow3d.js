@@ -6839,7 +6839,11 @@
   function taskCancel() { if (!task.on) return; task.on = false; ui.taskOpen = false; cancelAnimationFrame(task.loop); if (task.el) task.el.hidden = true; task.done = null; toast('Stopped', ''); lockPointer(); }
   // run several tasks one after another, collecting each result, then hand the list to the finish callback
   function taskChain(list, finish) { var results = []; (function next() { if (!list.length) { finish(results); return; } var it = list.shift(); taskStart(it.kind, it.sub, function (r) { results.push(r); next(); }); })(); }
-  function lockPointer() { if (!ui.started) return; try { var r = canvas.requestPointerLock(); if (r && r.catch) r.catch(function () {}); } catch (e) {} }
+  var lockRetryT = 0;
+  function lockPointer(retry) { if (!ui.started) return; try { var r = canvas.requestPointerLock(); if (r && r.catch) r.catch(function () { lockRetry(); }); } catch (e) { lockRetry(); } }
+  function lockRetry() {   /* Chromium refuses a lock asked for within about a second of an Esc that released it; ask once more after the cool-down, unless something opened meanwhile */
+    var t = now(); if (t - lockRetryT < 1500) return; lockRetryT = t; setTimeout(function () { if (ui.started && !player.locked && !ui.blocked() && !ui.menuOpen) { try { canvas.requestPointerLock(); } catch (e) {} } }, 1200);
+  }
 
   function paneShop() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🛒 Supplies</h3><div class="desc">Paid from the bank (' + money(S.bank) + '). Orders are boxed up and the van drops them in the back room a couple of minutes later; carry crates from there to the rack or the machines.</div>' + (S.order ? '<div class="g3-chips"><span class="g3-chip amber">open order: ' + esc(orderSummary(S.order.items)) + '</span></div>' : '') + (S.deliveries.length ? '<div class="g3-chips">' + S.deliveries.map(function (d) { return '<span class="g3-chip">🚚 ' + esc(orderSummary(d.items)) + ' · ~' + Math.max(0, Math.ceil((d.due - now()) / 1000)) + ' s</span>'; }).join('') + '</div>' : '');
@@ -7282,7 +7286,7 @@
     if (!ui.started || ui.taskOpen) return;   // a task ignores canvas clicks so a stray click can't re-lock the pointer mid-grind
     if (ui.blocked()) { if (e.button === 2) closeTopUi(); return; }   /* something is open: a click on the scene must never re-lock the pointer underneath it, and right-click closes it */
     if (e.button === 2 && cityMap.on) { toggleCityMap(); return; }
-    if (!player.locked) { lockPointer(); return; }
+    if (!player.locked) { lockPointer(); if (e.button !== 0 || drive.on) return; }   /* the click that takes the pointer back also does its job on whatever the crosshair is on: the first click after a menu or panel used to be swallowed */
     if (runHooks(hooks.mousedown, e)) return;
     if (e.button === 0) { if (drive.on) return; var hb3 = held(); if (hb3 && hb3.kind === 'bat' && !edit.on) { swingBat(); return; } if (hb3 && WEAPONS[hb3.kind] && !edit.on) { fireWeapon(); return; } if (edit.on) { if (edit.grabbed || edit.grabbedFx) editDrop(); else editGrab(); } else interact(); }
   });
@@ -7290,6 +7294,7 @@
   function closeTopUi() { if (now() - lastUiClose < 300) return; if (ui.ctxOpen) { lastUiClose = now(); ctxClose(); } else if (ui.panelOpen) { lastUiClose = now(); ui.closePanel(); } }   /* one right-click closes one layer: the mousedown and the contextmenu event of the same click must not each close something */
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); closeTopUi(); });
   document.addEventListener('pointerlockchange', function () { player.locked = document.pointerLockElement === canvas; if (!player.locked) player.keys = {}; if (!player.locked && ui.started && !ui.blocked()) { /* user pressed Esc in lock: browser exits lock; a hook may claim it (creative cancels a carried piece), else open the menu */ if (!runHooks(hooks.unlock)) openMenu(); } });
+  document.addEventListener('pointerlockerror', function () { lockRetry(); });
   window.addEventListener('resize', resize);
   function resize() { var w = window.innerWidth, h = window.innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 

@@ -2,6 +2,8 @@
 
 ## v1.20
 
+**The dead click.** After closing the pause menu, a panel, the tablet or a task, the next click on the scene only took the mouse back and did nothing else, so you clicked twice at everything. That click now does its job as well. And the browser refuses to take the mouse back within about a second of Esc letting it go; the game now asks again once the second is up instead of leaving you clicking.
+
 **No more flicker.** Two faces that share a plane, overlap and face the same way fight for every pixel, which is the shimmer on the ceiling, the door and window frames, the vending machines and the pavement. Instead of chasing each one, the game now checks every box and plane once the world is built, finds those pairs (about fifteen hundred of them) and moves the thinner of the two, a trim, a frame, a panel, five millimetres out. Walls and machines are never lifted off the floor. The same pass runs again after you rearrange the furniture. The ground floor ceiling now has holes over both stairwells, so going up no longer takes you through it. The three main roads were laid twice, a millimetre apart; the second copy is gone.
 
 **One brick.** Every brick panel on the shop used to stretch the same texture over its own width, so a narrow panel showed tiny bricks next to a wide panel with huge ones. Bricks are sized in metres now and match everywhere, and the dark corner piers, the fascia and the roof parapet use the same brick as the rest.
