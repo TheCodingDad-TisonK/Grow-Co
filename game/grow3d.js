@@ -4544,7 +4544,7 @@
   // what a paid-up customer feels like doing before leaving
   function planFor(c) {
     var plan = [];
-    if (hasLic('catering') && (S.vendStock.drink > 0 || S.vendStock.snack > 0) && Math.random() < 0.35) plan.push({ kind: 'vend' });
+    if (hasLic('catering') && vendKeys().length && Math.random() < 0.35) plan.push({ kind: 'vend' });
     if (hasLic('catering') && S.upgrades.lobby && propInst.lobbyCoffee && S.coffeeStock.cup > 0 && S.coffeeStock.beans > 0 && Math.random() < 0.4) plan.push({ kind: 'coffee' });
     if (hasLic('catering')) { var frs = lobbyFridges(); if (frs.length && Math.random() < 0.3) plan.push({ kind: 'fridge', unit: pick(frs) }); }   /* a cold can from a fridge stood out in the lobby */
     if (hasLic('amusement') && propInst.arcade && Math.random() < 0.25) plan.push({ kind: 'arcade' });
@@ -4598,12 +4598,13 @@
       return;
     }
     if (l.useKind === 'vend') {
-      var pickDrink = S.vendStock.drink > 0 && (S.vendStock.snack <= 0 || Math.random() < 0.6);
-      if (!pickDrink && S.vendStock.snack <= 0) { loungerSay(l, 'sold out?! 😒', '#ff6b6b'); logEvent('🥤 ' + l.who + ' found the vending machine empty', 'bad'); return; }
-      if (pickDrink) S.vendStock.drink--; else S.vendStock.snack--;
+      var vks = vendKeys(); if (!vks.length) { loungerSay(l, 'sold out?! 😒', '#ff6b6b'); logEvent('🥤 ' + l.who + ' found the vending machine empty', 'bad'); return; }
+      var vroll = Math.random() * vks.reduce(function (a, k) { return a + S.vendStock[k]; }, 0), vk = vks[vks.length - 1]; for (var vi = 0; vi < vks.length; vi++) { vroll -= S.vendStock[vks[vi]]; if (vroll < 0) { vk = vks[vi]; break; } }   /* whatever is on the racks, in proportion to how much of it there is */
+      var pickDrink = vk === 'drink'; S.vendStock[vk]--;
       S.box.vend += 2; S.stats.vend = (S.stats.vend || 0) + 1; sfx('vend');
       var can = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(pick([0xffd166, 0x3ad0ff, 0x6fdc8c, 0xff8c42]), 0.4, 0.3)); can.position.set(0, -0.37, 0.03); le.add(can);
-      toast('🥤 ' + l.who + (pickDrink ? ' got a drink' : ' got a snack') + ' from the machine (+$2 in the box)', ''); logEvent('🥤 ' + l.who + (pickDrink ? ' bought a drink' : ' bought a snack') + ' from the vending machine (+$2)', '');
+      var vwhat = pickDrink ? 'a drink' : vk === 'snack' ? 'a snack' : 'something from the ' + itemName(vk).toLowerCase();
+      toast('🥤 ' + l.who + ' got ' + vwhat + ' from the machine (+$2 in the box)', ''); logEvent('🥤 ' + l.who + ' bought ' + vwhat + ' from the vending machine (+$2)', '');
       if (propInst.vending) burst(ROOM.x - 1.0, 0.5, 6.8, 0xffffff, 6, 'up');
     } else {
       if (S.coffeeStock.cup <= 0 || S.coffeeStock.beans <= 0) { loungerSay(l, 'no coffee?! 😩', '#ff6b6b'); logEvent('☕ ' + l.who + ' found the coffee machine empty', 'bad'); return; }
@@ -6387,6 +6388,8 @@
     toast(M.vendDoor ? '🔧 Machine open — the racks are out, load drinks or snacks straight in' : '🔒 Machine closed', M.vendDoor ? '' : 'good');
     vendDisplay(id, M.vendDoor ? 'SERVICE' : 'READY'); save();
   }
+  function isVendItem(k) { var it = supplyById(k); return k === 'drink' || k === 'snack' || !!(it && it.stock === 'vend'); }   // anything a pack marks for the vending machine goes on its racks
+  function vendKeys() { return Object.keys(S.vendStock).filter(function (k) { return (S.vendStock[k] || 0) > 0 && isVendItem(k); }); }   // what is on the racks right now
   function vendDispense(id, item) {   // a coil turns, the item falls, and it lands in the tray
     var M = machState(id);
     if ((S.vendStock[item] || 0) <= 0) { toast('The machine is out of ' + (item === 'drink' ? 'drinks' : 'snacks'), 'bad'); vendDisplay(id, 'SOLD OUT'); return false; }
@@ -6772,7 +6775,7 @@
     if (d.kind === 'storage') return 'Storage racks <small>' + (Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }).length || 'no') + ' items · aim at a crate to take it · Shift+E for the stock list</small>';
     if (d.kind === 'vault') return S.pocket > 0 ? 'Put ' + money(S.pocket) + ' in the vault <small>holds ' + money(S.vault) + ' · Shift+E opens it</small>' : 'Open the vault <small>holds ' + money(S.vault) + '</small>';
     if (d.kind === 'tips') return S.tips > 0 ? 'Empty the tip jar <small>' + money(S.tips) + '</small>' : 'Tip jar <small>empty</small>';
-    if (d.kind === 'vending') { var MM = machState(d.propId); if (h && h.kind === 'crate') return (h.item === 'drink' || h.item === 'snack') ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That does not go in here'; if (MM.vendDoor) return 'Machine open <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks · E buys one for $2' + (S.box.vend > 0 ? ' · Shift+E opens it, the box holds ' + money(S.box.vend) : ' · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'vending') { var MM = machState(d.propId); if (h && h.kind === 'crate') return isVendItem(h.item) ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That does not go in here'; if (MM.vendDoor) return 'Machine open <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks · E buys one for $2' + (S.box.vend > 0 ? ' · Shift+E opens it, the box holds ' + money(S.box.vend) : ' · Shift+E opens it') + '</small>'; }
     if (d.kind === 'fridge') { var FM2 = machState(d.propId); if (h && h.kind === 'crate') return h.item === 'drink' ? (FM2.fridgeDoor ? 'Load ' + h.n + ' drinks into the fridge' : 'Open the fridge first <small>Shift+E</small>') : 'Only drinks go in the fridge'; return 'Drinks fridge <small>' + (FM2.fridge || 0) + ' cold' + (FM2.fridgeDoor ? ' · E takes one · Shift+E shuts it' : ' · E takes one · Shift+E opens it') + '</small>'; }
     if (d.kind === 'coffeeCup') { var CM2 = machState(d.propId); return CM2.cup > 0 ? (machAnim(d.propId).brewT > 0 ? 'Pouring… <small>give it a second</small>' : 'Fresh coffee <small>E takes the cup</small>') : ''; }
     if (d.kind === 'vendTray') { var MT = machState(d.propId); return MT.tray.length ? 'Delivery tray <small>' + MT.tray.length + ' waiting · E takes one</small>' : ''; }
@@ -6906,12 +6909,12 @@
       var MD = machState(d.propId), shift = player.keys.ShiftLeft || player.keys.ShiftRight;
       if (shift) { vendDoorToggle(d.propId); }
       else if (h && h.kind === 'crate') {
-        if (h.item !== 'drink' && h.item !== 'snack') toast('That does not go in the vending machine', 'bad');
+        if (!isVendItem(h.item)) toast('That does not go in the vending machine', 'bad');
         else if (!MD.vendDoor) toast('Open the machine first — Shift+E', 'bad');
-        else { S.vendStock[h.item] += h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; syncVending(); }
+        else { S.vendStock[h.item] = (S.vendStock[h.item] || 0) + h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + vendKeys().map(function (k) { return S.vendStock[k] + ' ' + itemName(k).toLowerCase(); }).join(' · ') + ' on the racks)', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; syncVending(); }
       }
       else if (MD.vendDoor) { var vb2 = S.box.vend; if (vb2 > 0 && takeCash(vb2, 'vending machine')) { S.box.vend = 0; vendDisplay(d.propId, 'SERVICE'); } else toast('Load drinks or snacks onto the racks, or Shift+E to shut it', ''); }
-      else { var pickV = (S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'; vendDispense(d.propId, pickV); }
+      else { var pickV = vendKeys().sort(function (a, b) { return (S.vendStock[b] || 0) - (S.vendStock[a] || 0); })[0] || ((S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'); vendDispense(d.propId, pickV); }
     }
     else if (d.kind === 'vendTray') { vendTakeTray(d.propId); }
     else if (d.kind === 'fridge') {
