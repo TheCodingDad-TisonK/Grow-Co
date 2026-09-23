@@ -8,33 +8,38 @@ This page is generated from `game/guide.js`, the same text the game shows in its
 - [Selling](#selling)
 - [Money and the bank](#money-and-the-bank)
 - [Staff](#staff)
+- [Your crew day to day](#your-crew-day-to-day)
+- [ID checks](#id-checks)
+- [Doors, locks and who gets through them](#doors-locks-and-who-gets-through-them)
 - [Robberies, weapons and the police](#robberies-weapons-and-the-police)
 - [The basement: RF Smoking](#the-basement-rf-smoking)
 - [The extraction lab](#the-extraction-lab)
 - [The town, the car and the map](#the-town-the-car-and-the-map)
 - [Deliveries: the burner and the tablet](#deliveries-the-burner-and-the-tablet)
+- [The shop van](#the-shop-van)
 - [The Workshop: content packs](#the-workshop-content-packs)
 - [Upstairs and the roof](#upstairs-and-the-roof)
 - [The keyring, doors and locking up](#the-keyring-doors-and-locking-up)
+- [Machines, drinks and the bin](#machines-drinks-and-the-bin)
 - [Making the place yours](#making-the-place-yours)
 - [I am stuck](#i-am-stuck)
 
 ## Your first ten minutes
 
-You start with **$220**, a small tent, one pot and an empty shop. The goal of the first session is one full loop: seed to sale.
+You start with **$220**, a small tent, one pot and an empty shop. There's no seed, so that's your first buy. The first session has one goal: a full loop, seed to sale.
 
-A brand new shop is walked through exactly that by the **guided intro**, a card on the left of the screen that ticks off nine steps as you do them. Finish all nine and **$2,500** goes into the bank. You can switch it off any time under **Guided intro** in the pause menu, though skipping costs you the bonus.
+A new shop gets the **guided intro**, a card on the left of the screen that ticks off nine steps as you do them. Finish all nine and **$2,500** goes into the bank. You can switch it off under **Guided intro** in the pause menu, but skipping it costs you the bonus.
 
-1. Walk to the **office laptop** (the room left of the hall). Order **soil**, a **seed**, **baggies** and, when you can afford it, a **grinder**.
-2. Orders come by van to the back. What arrives ends up on the **supply rack** beside the laptop or as crates in the back room storage; carry crates to the rack yourself, or hire Jo later to do it.
-3. Take a bag of soil to the **grow tent**, fill the pot, fetch the seed from the rack, plant it.
-4. When the plant says thirsty, grab the **watering can** next to the tent. Feed **nutrients** once for quality. Spray pests or mold quickly.
-5. A glowing **READY** plant is harvested with empty hands. Carry the bunch to the **drying line** in the dry room and hang it.
-6. Dried batches jar themselves on the **curing shelf** and keep gaining quality. Carry a jar to the **workbench** in the processing room and empty it into the stash.
-7. At the bench: **bag** eighths, **roll** joints (papers and tips), later **bake** cookies. Finished goods appear on the **goods shelf**.
-8. Open the shop at the **shop control box** (security room, or wherever you hung it). Customers come to the **service window**. Pick what they asked for off the goods shelf, hand it through the window, then take payment at the **register**.
+1. Walk to the **laptop** in the office (the room left of the hall). Order **soil** and **baggies** under **Supplies** and a **seed** in the **Seed bank**. Get a **grinder** too. The workbench won't bag or roll without one.
+2. Orders come round the back in the supplier's van. What arrives lands on the **supply rack** beside the laptop, or as crates in the **back room**. Carry crates to the supply rack yourself, or hire crew later to do it.
+3. Take a bag of soil to the **grow tent** and fill the pot. Fetch the seed from the supply rack and plant it.
+4. When the plant says it's thirsty, grab the **watering can** next to the tent. Feed it **nutrients** once for quality. Spray pests or mould straight away.
+5. A plant that's ready glows. Harvest it with empty hands, carry the bunch to the **drying line** in the dry room and hang it up.
+6. Dry batches jar themselves on the **curing shelf** and keep gaining quality. Carry a jar to the **workbench** in the processing room and empty it into your stash.
+7. At the workbench, **bag** eighths or **roll** joints (papers and tips). Later you can **bake** cookies. Finished goods go on the **goods shelf**.
+8. Open the shop at the **control box** in the security room, or the **front panel** behind the till. Customers come to **the window**. Take what they asked for off the goods shelf, press E on them to hand it over, then take the money at the **till**.
 
-That is the whole game in miniature. Everything else makes that loop bigger, faster or more dangerous.
+That's the whole game in miniature. Everything else makes the loop bigger, faster or more dangerous.
 
 ## Controls
 
@@ -42,91 +47,124 @@ That is the whole game in miniature. Everything else makes that loop bigger, fas
 |---|---|
 | **W A S D** | move |
 | **Shift** | run |
-| **E** or left click | use, pick up, talk, hand over |
-| **Shift + E** | the second action: lock or unlock a door or a cabinet with the keyring, the car trunk, a staff menu |
+| **Space** | jump |
+| **Ctrl** | crouch |
+| **E** or left-click | use, pick up, talk, hand over |
+| **Shift+E** | the second action: lock or unlock with the keyring, the vehicle menu, orders for your crew, open or close the shop van at its hatch |
+| **Ctrl+E** | send a crew member home |
 | **G** or **Q** | put back what you hold |
 | **1 to 6**, mouse wheel | hotbar slot |
 | **Tab** | inventory |
 | **M** | town map |
-| **J** | the delivery boards: the burner phone and the tablet |
+| **J** | the Deliveries screen: the burner and the tablet |
 | **P** | silent alarm (needs the upgrade) |
 | **F2** | edit mode: move furniture, signs, screens |
 | **F3** | creative build mode |
-| **Right click** | close the open menu or panel |
+| **Right-click** | close the open menu or panel |
 | **F7** | report a bug |
 | **Esc** | pause menu |
 | **F11** | fullscreen (desktop app) |
 
-**In the car:** **I** turns the key, **P** is the handbrake, **L** cycles the lights, W and S drive, A and D steer, Space is the footbrake, **T** pops the boot, **B** the bonnet, the mouse swings the camera round the car, the wheel zooms, **C** re-centres, **E** gets out once you have stopped.
+Jump and crouch don't work while you're sitting, driving or knocked down. A crouched jump is smaller.
 
-**With a weapon in hand:** left click swings or fires.
+**At the wheel:** **I** turns the key, **P** is the handbrake, **L** cycles the lights, W and S drive, A and D steer, Space is the footbrake, **T** opens the boot and **B** the bonnet. The mouse swings the camera round, the wheel zooms, **C** re-centres, and **E** gets you out once you've stopped.
+
+**With a weapon in hand:** left-click swings or fires.
 
 ## Growing and quality
 
-Quality is the number that decides your prices and whether connoisseurs buy at all.
+Quality is the number that sets your prices and decides whether connoisseurs buy at all.
 
 - **Water** on time. A thirsty plant loses quality.
 - **Nutrients** once per plant: a flat quality bonus.
-- **Pests and mold** are hazards: spray them with remedy at once.
-- **Humidity**: drying is faster below 55 percent, mold spreads above 60. The dehumidifiers are set at the shop control box.
+- **Pests and mould** are hazards. Hit them with **pest spray** at once.
+- **Humidity**: drying is faster below 55%, and mould spreads above 60%. Set the dehumidifiers at the control box.
 - **Lights and tents** are bought at the laptop. Bigger tents need the cultivation permits.
-- **Curing**: jars keep improving on the shelf. Patience is quality.
+- **Curing**: jars keep improving on the curing shelf. Patience is quality.
 
-Rough, low quality bud is not wasted. The **extraction lab** turns any quality into carts, hash, gummies and chocolate. The **roof greenhouse** grows exactly that kind of bud for free.
+Rough, low-quality bud isn't wasted. The **extraction lab** turns any quality into carts, hash, gummies and chocolate. The **roof greenhouse** grows exactly that kind of bud for free.
 
 ## Selling
 
-- An order can have several lines. Hand over each line; the customer pays when it is complete.
-- Asked for a strain you do not have? Another strain of the same kind is accepted at 15 percent off. Connoisseurs refuse substitutes and anything under their quality bar.
-- **Cash** customers need change from the register. **Card** needs the retail licence.
-- Small extras (lighters, papers, grinders) sit on the counter display and customers help themselves.
-- **Cigarettes, carts, hash, gummies and chocolate** are kept in the **cabinet behind the counter**. Roll the shutter up, take what they asked for, hand it over yourself. It goes on the same bill.
+- An order can have several lines. Hand over each one and they pay once it's complete.
+- Asked for a strain you haven't got? Another strain of the same kind goes at 15% off. Connoisseurs refuse substitutes and anything under their quality bar.
+- **Cash** customers need change from the **till**. **Card** needs the retail licence.
+- Small extras (lighters, papers, grinders) sit on the **counter display** and customers help themselves.
+- **Cigarettes, carts, hash, gummies and chocolate** live in the **cigarette cabinet** behind the counter. Roll the shutter up, take what they asked for and hand it over yourself. It goes on the same bill.
 - The **markup** slider at the control box trades price against footfall.
-- Rain, storms and snow thin the street out. Weekends are busier, and there is a holiday week.
+- Rain, storms and snow thin the street out. Weekends are busier, and there's a holiday week.
 
 ## Money and the bank
 
-Money sits in places: the **till**, the **tip jar**, machine cash boxes, your **pocket**, the **vault** and the **bank**. Only the bank is safe and only the bank pays for orders and licences.
+Money sits in places: the **till**, the **tip jar**, the machine cash boxes, your **pocket**, the **vault** and the **bank**. Only the bank is safe, and only the bank pays for orders and licences.
 
-- Empty the till into your pocket, then put it in the office **vault**.
-- Book a **courier** in the bank app: he collects from your pocket at the back door, and it clears the next day.
-- Or drive to **First Harvest Bank** in town and pay it in yourself: instant and free.
-- A robber takes what is in the till and tip jar. A gunman goes for the vault next. Pocket cash is lost if you are knocked down, and inspections fine you on it when police heat is high.
+- Empty the till into your pocket, then put it in the **vault** in the office.
+- Book a **courier** under **Bank** on the laptop. He collects from your pocket at the back door and it clears the next morning.
+- Or drive to **First Harvest Bank** in town and pay it in yourself. That's instant and free.
+- A robber takes what's in the till and the tip jar. A gunman goes for the vault next. Pocket cash is lost if you're knocked down, and inspections fine you on it when your heat is high.
+- Bills fall every morning. Anything the bank can't cover comes out of the vault, then the till.
 
 ## Staff
 
-- **Jo** (hired at the laptop): serves the window, restocks, sweeps or tends plants. Shift + E on Jo changes the job.
-- **Security guard**: checks ID at the door; send him on patrol to deter robbers and break up fights sooner.
-- The **staff roster** board in the office hires three more: a **driver** (wholesales your cartons every morning and runs phone deliveries), a **basement operator** (keeps the cigarette line running) and a **night guard** (stops break-ins).
-- Wages leave the bank at the start of each day.
+- **Crew**: up to three on the shop floor, **Jo**, **Mika** and **Sam**. Hire them at the laptop under **Staff**. Each one costs more than the last. They serve the window, restock the supply rack and the machines, sweep, or tend the plants.
+- **The guard** is on the door from day one. He checks IDs. Send him on patrol to put robbers off and break up fights sooner, or give him a chore. He's back on the door whenever someone walks in.
+- The **staff roster** board in the office hires three more: a **driver** (wholesales your cartons every morning and runs phone deliveries), a **basement operator** (keeps the line running) and a **night guard** (stops break-ins).
+- Wages come out at the start of each day: the bank first, then the vault, then the till.
+
+## Your crew day to day
+
+Each crew member has their own look, their own job and their own wage.
+
+- Set each one's job at the laptop under **Staff**, or with **Shift+E** on them: serve the window, restock, sweep, tend the plants, or take a break.
+- **Send home** takes someone off the floor for the day. They draw no wage while they're off, and **Call in** brings them back. The guard can be sent home the same way. **Ctrl+E** on a crew member sends them home on the spot.
+- **Shift+E**, then **Send them somewhere**, posts a crew member. Walk to the spot and press **E**. That's where they wait between jobs until you clear it from the same menu.
+- If they've nothing to do, they say so instead of standing there: no dust to sweep, an empty back room, plants already fine.
+
+## ID checks
+
+Every customer carries a real ID, and roughly one in seven won't stand up: underage, expired, a photo that isn't them, or a plain fake.
+
+- With **the guard on the door**, they show it to him. He's good but not perfect, and now and then he waves a bad one through.
+- With **the guard off shift**, they bring it straight to you at the window. **E** on them opens the card.
+- You can **always ask to see it yourself**: **Shift+E** on any customer, even one the guard already passed. That's how you catch his mistakes.
+- Serve on a bad ID and it's on you: heat, rep, and a decent chance of a fine. Refuse a bad one and you gain rep. Refuse a perfectly good one and you lose it.
+
+## Doors, locks and who gets through them
+
+Doors are real to everybody in the building, not just to you.
+
+- A shut door that's **not locked** is no barrier. Crew, the guard and customers push it open as they reach it, and you'll see it swing.
+- A **locked** door stops them. Send a crew member somewhere behind one and they give up the errand and tell you it's locked, rather than walking through it.
+- A **robber** doesn't care what's locked, but he can't walk through it either. He stops at the door and works on it for a few seconds. You hear it, it goes in the log, and the lock stays broken afterwards. That's time you can use.
+- So locking the back rooms is worth doing. It won't keep a determined man out, but it slows him down and tells you exactly where he is.
 
 ## Robberies, weapons and the police
 
 Robberies run in stages: someone **cases** the lobby, the **mask** comes down, the **demand** at the window, an **escalation**, sometimes a **second target** in the back, then the **getaway**.
 
-- While he is only casing, walk up and press E to confront him. Often he just leaves.
-- During the demand, E on the register hands the till over and nobody gets hurt.
-- Four kinds, growing with your shop: snatch thief, knife robber, gunman (goes for the vault), two man crew (the bagman strips your goods shelf, and the cabinet if its shutter is up).
-- **Weapons**: the bat by the counter is free. The **weapon locker** sells pepper spray, a taser, and with the firearms licence a pistol and a shotgun. Non lethal tools can fail against dangerous robbers; when they do, he hits back and you go down.
-- Shooting an armed, masked robber is self defence. Shooting a fleeing or unarmed man is a fine. Shooting a bystander costs the licence and the guns.
-- A robber who escapes with loot jumps into a **black car** on Main Street. Ram it with yours and everything comes back.
-- **Silent alarm** upgrade: press P, police arrive in about 20 seconds.
-- **Doors** can be shut and locked from the control box, or at the door itself with the keyring. Staff carry keys; a robber forces a locked door and breaks its lock.
-- **Lock your stock away.** The goods shelf, the cigarette cabinet and the weapon locker all have a roll gate and a lock. A robber who reaches a locked one gets nothing from it, so locking up before closing, or the moment a mask comes down, is the cheapest insurance in the game.
-- **Police heat** rises with park deals, fines and shootings and cools with time. At 60 and over you get inspections. The precinct in town shows your heat and takes donations.
+- While he's only casing, walk up and press E to confront him. Often he just leaves.
+- During the demand, E on the till hands it over and nobody gets hurt.
+- Four kinds, growing with your shop: the **snatch thief**, the **knife robber**, the **gunman** (goes for the vault) and the two-man **gang** (the bagman strips your goods shelf, and the cigarette cabinet if its shutter is up).
+- **Weapons**: the bat by the counter is free. The **weapon locker** sells pepper spray, a taser, and with the firearms licence a pistol and a shotgun. Non-lethal tools can fail against dangerous robbers. When they do, he hits back and you go down.
+- Shooting an armed, masked robber is self-defence. Shooting a fleeing or unarmed man gets you a fine. Shooting a bystander costs you the licence and the guns.
+- A robber who gets away with loot jumps into a **black car** on Main Street. Ram it with yours and everything comes back.
+- **Silent alarm** upgrade: press P and the police are there in about 20 s.
+- **Doors** can be shut and locked from the control box, or at the door itself with the keyring. A locked door stops your crew too. A robber forces it and breaks the lock.
+- **Lock your stock away.** The goods shelf, the cigarette cabinet and the weapon locker all have a roll gate and a lock. A robber who reaches a locked one gets nothing from it. Locking up before closing, or the moment a mask comes down, is the cheapest insurance in the game.
+- **Heat** rises with park deals, fines and shootings, and cools with time. At 60 and over you get inspections. The precinct in town shows your heat and takes donations.
 
 ## The basement: RF Smoking
 
-The steel hatch in the hall leads down to a pre installed cigarette line. You need the **tobacco manufacturing licence** to switch anything on.
+The steel hatch in the hall leads down to a pre-installed cigarette line. You need the **tobacco manufacturing licence** to switch anything on.
 
 1. **Bays**: sow ($20), wait a few minutes, cut the leaf.
-2. **Kiln**: cures up to 8 kg a load; leaf dries to a fifth of its weight. Left on, it reloads itself.
-3. **Shredder** cuts the cured leaf.
-4. **Maker** rolls Normal or Light sticks.
-5. **Packer** boxes 10s or 20s and needs paper, filters and blanks, ordered from its own menu.
-6. Take cartons from the **finished goods rack** up to the cabinet behind the counter.
+2. **Kiln**: cures up to 8 kg a load, and the leaf dries to a fifth of its weight. Left on, it reloads itself.
+3. **Shredder**: cuts the cured leaf.
+4. **Maker**: rolls Normal or Light sticks.
+5. **Packer**: boxes 10s or 20s. It needs paper, filters and blanks, ordered from its own menu.
+6. Take cartons from the **finished goods rack** up to the cigarette cabinet.
 
-The line makes far more than the window sells. Load cartons into your car at the garage bay (Shift + E on the car) and sell them to the **Corner Tobacconist** in town, or hire the driver.
+The line makes far more than the window sells. Load cartons into the car at the garage (**Shift+E** on the car) and sell them to the **Corner Tobacconist** in town, or hire the driver.
 
 ## The extraction lab
 
@@ -134,93 +172,117 @@ Its door is on the basement's left wall. It takes cured bud of **any quality** f
 
 - 10 g makes 3 vape carts, or 4 g of pressed hash.
 - 5 g plus one baking mix makes 12 gummies or 8 chocolate bars.
-- One batch at a time. Collect the result from the same equipment and stock it in the cabinet behind the counter.
+- One batch at a time. Collect the result from the same equipment and stock it in the cigarette cabinet.
 - A power cut pauses the lab unless you own the generator.
 
 ## The town, the car and the map
 
-Your car is parked in the owner bay in the yard, behind the gate. The gate opens for it. Press **M** anywhere for the map.
+You have two vehicles. The **car** lives in the **garage** on the east side of the yard. E on its roller door opens and shuts it, so open it before you drive out. The **van** stands in the bay under the canopy. Both leave through the **yard gate**, which opens for you, then down the lane to the back street, where a striped **barrier** lifts as you drive up and drops behind you. On foot, E opens the gate or raises the barrier. Press **M** anywhere for the map.
 
-**Driving it.** Press **E** on the driver door to get in. The car starts dead: **I** turns the key, **P** lets the handbrake off, then W and S drive and A and D steer. Space is the footbrake. **L** cycles dipped headlights and main beam, which you will want after dark. The dashboard at the bottom of the screen gives you speed, revs, the gear, and lamps for the handbrake, the lights, the ignition and anything left open. Moving the mouse swings the camera round the car, the wheel pulls it in and out, and **C** puts it back behind you.
+**Driving.** Press **E** on the driver's door to get in. Both start dead: **I** turns the key, **P** lets the handbrake off, then W and S drive and A and D steer. Space is the footbrake. **L** cycles dipped headlights and main beam, which you'll want after dark. The dashboard at the bottom of the screen shows speed, revs, the gear, and lamps for the handbrake, the lights, the ignition and anything left open. The mouse swings the camera round, the wheel pulls it in and out, and **C** puts it back behind you.
 
-**Doors and the boot.** Outside the car, **E** on the passenger door, the boot lid or the bonnet opens and closes it; inside, **T** is the boot and **B** the bonnet. What is in the boot sits in the boot, so you can see it. Drive off with something open and the dash warns you and the car will not go over 8 km/h. Getting out always puts the handbrake on and stops the engine.
+**Doors and the boot.** Outside, **E** on the passenger door, the boot or the bonnet opens and shuts it. Inside, **T** is the boot and **B** the bonnet. What's in the boot sits in the boot, so you can see it. Drive off with something open and the dash warns you, and you won't go over 8 km/h. Getting out always puts the handbrake on and stops the engine.
 
 - **First Harvest Bank**: pay in, withdraw.
 - **Iron and Oak Arms**: cheaper ammunition, a Kevlar vest.
-- **RF Supply Co.** on the back street: supplies 20 percent cheaper, straight into your trunk. Unload at your bay.
+- **RF Supply Co.** on the back street: supplies 20% cheaper, straight into your boot. Unload them at home with **Shift+E** on the vehicle.
 - **Corner Tobacconist**: buys cartons wholesale.
-- **Green Leaf**: the rival. Flyer them for reputation; at 150 rep you can buy them out for a daily income.
-- **Harvest Park**: street deals at 35 percent over shop price, cash in pocket, with a real risk of a bust.
+- **Green Leaf**: the rival. Flyer them for rep. At 150 rep you can buy them out for a daily income.
+- **Harvest Park**: street deals at 35% over shop price, cash in your pocket, with a real risk of a bust.
 - **Police precinct**: your heat.
 
-**Deliveries** come on two devices, and **J** opens both. See the chapter on them below. The **garage** (Shift + E on the car in its bay) fits a bigger trunk, a tuned engine and a bull bar.
+**Deliveries** come on two devices, and **J** opens both. The next chapter has them. **Shift+E** on the car at home also fits upgrades: a bigger boot, a tuned engine and a bull bar.
 
 ## Deliveries: the burner and the tablet
 
-Two devices, one key. **J** opens the board anywhere, on foot or at the wheel, and it has a tab for each.
-📱 The burner
-Always in your pocket. Somebody rings for **joints, bags or cookies** once you have a couple packed, gives an address across town and five minutes. Carry the goods **in your hands**, drive or walk to the green beacon and press **E**. The money is cash straight into your **pocket** at 60 percent over shop price, and it puts your **heat** up. No receipt, no tax, and a robber can take it off you, so bank it.
-📋 The tablet
-It sits on its dock in the office and wakes up the moment you hold the **tobacco licence**. Press **E** to take it; carry it into the car and it drops into the dash cradle, so it rides the round without eating a hotbar slot. Press **E** on the dock again to put it back.
+Two devices, one key. **J** opens the **Deliveries** screen anywhere, on foot or at the wheel, with a tab for each.
 
-The tablet lists up to four **RF Smoking** orders at once: an address, how many packs of which cigarette, what it pays and how long is left. Load the packs into the car at your bay (**Shift + E** on the car), drive the round, and pull up at the amber marker. **You do not have to get out**: stop within a few metres and the dashboard offers the drop, and **E** hands it over from the driver's seat. The packs come **out of the boot**, so you never carry them. The money is **invoiced to the bank**, no heat, and each drop is a point of reputation. Jobs further out pay more for the drive.
+**The burner.** It's always in your pocket. Once you've got a couple packed, somebody rings for **joints, bags or cookies** and gives you an address across town and 5 min. Carry the goods **in your hands**, drive or walk to the green beacon and press **E**. The money is cash straight into your **pocket** at 60% over shop price, and it puts your **heat** up. No receipt, no tax, and a robber can take it off you, so bank it.
 
-Every drop is marked on the ground with a coloured ring under its beacon, and the numbers on the board match the numbers on the **map** (M). Amber is a tablet drop, green a burner one. Miss a deadline and you lose a point of reputation. A hired **driver** clears jobs himself after about a minute, taking a cut of the tablet ones.
+**The tablet.** It sits on its dock in the office and wakes up the moment you hold the **tobacco licence**. E takes it. Carry it into the car or the van and it drops into the dash cradle, so it rides the round without taking a hotbar slot. E on the dock puts it back.
+
+The tablet lists up to four **RF Smoking** orders at once: an address, how many packs of which cigarette, what it pays and how long is left. Load the packs into the car at the garage (**Shift+E** on the car), drive the round, and pull up at the amber marker. **You don't have to get out.** Stop within a few metres and the dashboard offers the drop, and **E** hands it over from the driver's seat. The packs come **out of the boot**, so you never carry them. The money is **invoiced to the bank**, there's no heat, and each drop is worth a point of rep. Jobs further out pay more for the drive.
+
+Every drop has a coloured ring on the ground under its beacon, and the numbers on the Deliveries screen match the numbers on the **map** (M). Amber is a tablet drop, green a burner one. Miss a deadline and you lose a point of rep. A hired **driver** clears jobs himself after about a minute, and takes a cut of the tablet ones.
+
+## The shop van
+
+The van in the bay under the canopy is also a shop on wheels. It sells what you put on its rack to whoever walks up, for more than the window gets and with a little more risk.
+
+- **Shift+E on the serving hatch** opens the whole shop van. The hatch lifts, the counter folds out, the tailgate goes up with the rail latched across it, and the OPEN sign lights. Shift+E again packs it all away. E on each piece works it on its own.
+- **E at the open tailgate** climbs you into the back. The box is low, so you stoop. E at the tailgate again climbs you out.
+- The **van rack** on the left holds three joints, three bags and three cookies, no more. E on it with goods in your hands stocks it. E with empty hands takes a kind back down.
+- **E on the counter** takes the window. Passers-by walk up and ask for what's on the van rack, and E on one sells it at half again the shop price. The cash goes in your pocket, and every sale adds a little heat (heat +5).
+- Now and then a buyer is a plain-clothes officer. You're fined up to $200 and everything of that kind on the van rack is confiscated (heat +20, rep -2). The chance is small, but it grows with your heat.
+- Buyers wait about 45 s, then walk off. Move to get up from the window. The **van till** on the counter shows what the van's taken.
 
 ## The Workshop: content packs
 
-The **Workshop** is on the main menu. Content packs change what the game has in it: more strains to grow, more lamps and tents, more to sell off the counter, more town, a different car, snow at Christmas or fireworks at New Year. Turn one on and the shop reloads. Your save is not touched, because a pack only adds things you can then go and buy.
+The **Workshop** is on the main menu. Content packs change what the game has in it: more strains to grow, more lamps and tents, more for the counter display, more town, a different car, snow at Christmas or fireworks at New Year. Turn packs on or off, then press **Apply and rebuild the shop** once and the shop reloads. Your save isn't touched, because a pack only adds things you can then go and buy.
 
 **Bundles** switch several packs on at once. Packs marked one at a time (the balance, seasonal and vehicle ones) replace each other, so you always have exactly one of each.
-Making your own
-A pack is a single **.json** file. Use **Save a starter .json** in the Workshop to get one to edit, then **Import a pack** to bring it in. It can add:
+
+**Making your own.** A pack is a single **.json** file. Use **Save a starter .json** in the Workshop to get one to edit, then **Import a pack** to bring it in. It can add:
 
 - **strains**: a whole new plant, with its cost, grow time, yield, strength, unlock level and colours.
 - **lights** and **tents** for the grow room.
 - **supplies**: anything you order at the laptop, including things for the counter display or the vending machine.
-- **places**: a building and a shopfront anywhere in town, with either a counter that sells supplies at a discount, or a service you pay for that moves your heat and reputation. The grocery and the cinema in City Life are nothing more than that.
+- **places**: a building and a shopfront anywhere in town, with either a counter that sells supplies at a discount, or a service you pay for that moves your heat and rep. The grocery and the cinema in City Life are nothing more than that.
 - **city**: how much bigger the map is, and how many extra blocks fill it.
-- **vehicle**: the paint, top speed and boot size of the car in your bay.
+- **vehicle**: the paint, top speed and boot size of your car.
 - **tune**: what seeds and upgrades cost, and how busy the shop is.
 
-Models from Blender
-Make the object in Blender, then **File, Export, glTF 2.0** and choose **glTF Binary (.glb)**. One metre in Blender is one metre in the game, +Y is up, and the object should sit on the origin. Name the slot it replaces in the pack's **models** section, for example **item:joints** or **item:can**, and select the .json and the .glb files together when you import. The model then stands in for whatever the game would have built by hand.
+**Models from Blender.** Make the object in Blender, then **File, Export, glTF 2.0** and choose **glTF Binary (.glb)**. One metre in Blender is one metre in the game, +Y is up, and the object should sit on the origin. Name the slot it replaces in the pack's **models** section, for example **item:joints** or **item:can**, and select the .json and the .glb files together when you import. The model then stands in for whatever the game would have built by hand.
 
-Packs that ship with the game cannot be overwritten, so give yours your own id.
+Packs that ship with the game can't be overwritten, so give yours its own id.
 
 ## Upstairs and the roof
 
-- The **office stairs** lead to your flat: kitchen, table, couch and TV, bed. Eating gives a speed buff; the bed passes the night.
+- The **office stairs** lead to your flat: kitchen, table, couch and TV, bed. Eating gives you a speed boost, and the bed sleeps through the night.
 - The **lobby stairs** lead to the **connoisseur lounge**. With the connoisseur permit, guests book it, walk up on their own and wait to be served quality 70 or better. They pay triple and tip.
 - A ladder in the flat climbs to the **roof greenhouse**: six free beds that grow in daylight only.
 
 ## The keyring, doors and locking up
 
-A keyring hangs on a hook in the **office**, by the door to the hall. Press E to take it; G puts it back on the hook. It is yours alone, so keep hold of it when trouble starts.
+A keyring hangs on a hook in the **office**, by the door to the hall. E takes it and G puts it back on the hook. It's yours alone, so hang on to it when trouble starts.
 
-- **Shift + E on a door** locks or unlocks it, wherever you are standing. Plain **E** slides a door open or shut as usual, and a locked door will not budge.
-- **Shift + E on the goods shelf, the cigarette cabinet or the weapon locker** locks it. Locking rolls the gate down; unlocking lets you roll it up again with E.
-- Without the keyring you can still open and shut anything that is unlocked. You simply cannot lock or unlock.
-- The shop control box lists every door with its own shut and lock buttons, plus lock all and unlock all, if you would rather do it from one place.
-- Jo and the guard carry their own keys and walk through locked doors. A robber has to force one, which costs him time.
+- **Shift+E on a door** locks or unlocks it. Step out of the doorway first. Plain **E** slides a door open or shut as usual, and a locked door won't budge.
+- **Shift+E on the goods shelf, the cigarette cabinet or the weapon locker** locks it. Locking rolls the gate down. Unlock it and E rolls it back up.
+- Without the keyring you can still open and shut anything that's unlocked. You just can't lock or unlock.
+- The control box lists every door with its own shut and lock buttons, plus lock all and unlock all, if you'd rather do it from one place.
+- A locked door stops your crew and the guard too. A robber has to force it, which costs him time.
+
+## Machines, drinks and the bin
+
+Four kinds of machine earn on their own, and you can own more than one of each: up to four vending machines, four coffee machines, four arcade cabinets and three fridges. Buy extras at the laptop under **Gear**, in the **Machines** box. Each one costs more than the last.
+
+- A machine you buy lands beside the one you already have, in the first clear space along the same wall. Press **F2** and drag it where you actually want it. Where you leave it is where it stays.
+- Every machine is its own machine. Its door, its delivery tray, the cup under its spout and the cans on its shelves belong to it alone. Open one and the others stay shut.
+- Stock and money are the shop's, not the machine's. All your vending machines sell from the same drinks and snacks, all your coffee machines pour from the same cups and beans, and each kind pays into one cash box. Empty it at any of them.
+- The drinks fridge is the exception. Each fridge holds its own cans, because you load it by hand with a case of drinks.
+- Extra vending machines come in their own livery, so a row of them doesn't look like the same machine four times.
+- You need the **Lobby coffee machine** upgrade before you can buy a second coffee machine. Vending and coffee need the **Vending & catering permit**, and the arcade the **Amusement permit**.
+- Customers who stay a while use whichever machine they fancy, so more machines means shorter queues.
+
+**Drinks and the bin.** The **water cooler** hands you a cup of water. Drink it at the cooler, the couch or the table for a small speed boost (4 min). A coffee or a cold drink does the same at the couch or the table (8 min). Either way you're left holding the empty. A cup refills at the cooler, and anything else goes in the **bin**. The bin holds 12. When it's full, E with empty hands bags it up. Take the bin bag to the **dumpster** in the yard.
 
 ## Making the place yours
 
-- **F2 edit mode**: look at furniture, E grabs, R turns, E drops, Backspace resets. It also carries **signs, the dashboard screen, the staff roster, the key hook and the control box**: those stick flat to whatever surface you look at, at any height.
+- **F2 edit mode**: look at furniture, E grabs, R turns, E drops, Backspace resets. It also carries **signs, the dashboard screen, the staff roster, the key hook, the control box, the front panel and the office panel**. Those stick flat to whatever surface you look at, at any height.
 - **F3 creative mode**: a catalogue of furniture and building pieces with finishes and colours. C opens the catalogue, R rotates, the wheel raises, P paints, X copies, Del removes.
 - Every door slides with E and can be locked from the control box.
 
 ## I am stuck
 
-- **No customers.** Is the shop open at the control box? After a police fine customers stay away for a couple of minutes. Bad weather thins them out.
-- **I cannot pick something up.** Hands full: G puts things back, 1 to 6 switches slot.
-- **The customer refuses my goods.** Wrong kind, or a connoisseur below his quality bar.
-- **The machines will not start.** Tobacco line: you need the licence. Everything stops in a power cut without a generator.
-- **I cannot buy a gun.** Firearms licence first (level 4, reputation 30).
-- **My car is wedged.** Reverse with S and swing the wheel. The yard is tight: pull forward a little, then steer toward the gate.
-- **A menu will not close.** Right click, or Esc.
-- **I lost the control box, a sign or the roster.** F2, look at it, Backspace puts it back where it started.
-- **A door will not open.** It is locked: unlock it at the control box.
-- **I am broke.** Street deals in the park pay cash at once. The roof greenhouse is free. Sell the cheapest thing you can make and rebuild.
-- **Found a bug?** Press **F7**, or use Report a bug in the pause menu. Fill in the form and it collects your version, your system and your savegame for you. The more of it you fill in, the faster it gets fixed.
-- **Something is badly broken.** Pause menu, Dev tools has teleports and a "clear cooldowns" button. Your save lives in the app's local storage; "Reset save" in the pause menu starts over.
+- **No customers.** Is the shop open? The control box and the front panel both switch it. After a police fine, customers stay away for a couple of minutes. Bad weather thins them out.
+- **I can't pick something up.** Your hands are full. G puts things back, and 1 to 6 switches slot.
+- **The customer refuses my goods.** Wrong kind, or a connoisseur and it's under his quality bar.
+- **The machines won't start.** The tobacco line needs its licence. Everything stops in a power cut unless you own the generator.
+- **I can't buy a gun.** Get the firearms licence first (level 4, rep 30).
+- **My car is wedged.** Reverse with S and swing the wheel. The yard is tight, so pull forward a little, then steer towards the gate. Leaving the garage, open the roller door first (E).
+- **A menu won't close.** Right-click, or Esc.
+- **I lost the control box, a sign or the roster.** F2, look at it, and Backspace puts it back where it started.
+- **A door won't open.** It's locked. Unlock it at the control box, or with Shift+E and the keyring.
+- **I'm broke.** Street deals in the park pay cash at once. The roof greenhouse is free. Sell the cheapest thing you can make and rebuild.
+- **Found a bug?** Press **F7**, or use Report a bug in the pause menu. Fill in the form and it collects your version, your system and your savegame for you. The more you fill in, the faster it gets fixed.
+- **Something's badly broken.** Dev tools in the pause menu has teleports and a button that clears cooldowns. Your save lives in the app's local storage, and Reset save in the pause menu starts over.
