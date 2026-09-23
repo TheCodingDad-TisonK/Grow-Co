@@ -42,7 +42,7 @@
     { id: 'paper',     ico: '📄', name: 'Papers (x20)',     price: 6,  qty: 20, hint: 'Roll joints' },
     { id: 'tip',       ico: '🚬', name: 'Filter tips (x20)', price: 4, qty: 20, hint: 'Roll joints' },
     { id: 'grinder',   ico: '⚙️', name: 'Grinder',          price: 60, tool: true, hint: 'One-time — needed to process bud' },
-    { id: 'jar',       ico: '🏺', name: 'Curing jar',       price: 15, hint: 'Adds a curing slot' },
+    { id: 'jar',       ico: '🏺', name: 'Curing jar',       price: 15, hint: 'One batch cures per jar, and two always can; the rest wait on the shelf' },
     { id: 'mix',       ico: '🍪', name: 'Cookie mix (6 cookies)', price: 8, hint: 'Bake edibles at the bench: one box + 1 g of stash' },
     { id: 'lighter',   ico: '🔥', name: 'Lighters (box of 20)', price: 10, qty: 20, stock: 'display', hint: 'Counter display · sells for $3' },
     { id: 'rpaper',    ico: '📄', name: 'Retail papers (x10)', price: 12, qty: 10, stock: 'display', hint: 'Counter display · sells for $4' },
@@ -429,6 +429,9 @@
     rentPerSlot: 7,        // floor space for every tent slot
     rentBasement: 35,      // the tobacco works downstairs
     rentBranch: 90,        // the second shop
+    branchManager: 120,    // the one person who runs it, a flat day rate
+    guardWage: 60,         // the security guard on the door, for any day he is on shift
+    driverKeep: 6,         // packs of each kind the driver leaves on the rack for round jobs
     rentFreeDays: 10,      // a fit-out period before the first rent falls, as a real lease gives you
     powerBase: 6,          // shop lights, fridge, till, security
     waterPerPlant: 0.4,
@@ -438,9 +441,8 @@
     processPerGram: 0.55,  // trimming, lab testing and compliance on every gram harvested
     arrearsRep: 2          // reputation lost for every day the bills go unpaid
   };
-  function headcount() {   // nobody runs a commercial grow room and two shop floors on their own
-    var X = xs();
-    return Math.max(0, Math.ceil((slots() - COST.freeSlots) / COST.slotsPerGrower)) + (X.branch ? 3 : 0) + (hasLic('tobacco') ? 2 : 0);
+  function headcount() {   // nobody runs a commercial grow room and a basement works on their own; the branch has its own manager on the bill
+    return Math.max(0, Math.ceil((slots() - COST.freeSlots) / COST.slotsPerGrower)) + (hasLic('tobacco') ? 2 : 0);
   }
   function spendOp(n) {   // an operating cost that falls outside the morning bill
     if (n <= 0) return 0;
@@ -464,13 +466,17 @@
     var free = (S.day || 1) <= COST.rentFreeDays;
     var rent = free ? 0 : COST.rentBase + sl * COST.rentPerSlot + (hasLic('tobacco') ? COST.rentBasement : 0) + (X.branch ? COST.rentBranch : 0);
     var power = (COST.powerBase + sl * (L.draw || 0) + (S.upgrades.hvac ? 8 : 0) + (S.upgrades.security2 ? 3 : 0) + (S.upgrades.bagline ? 4 : 0)) * solar;
-    var hired = crewList().filter(function (w) { return !w.off; }).length, need = headcount();
-    return [
+    var roster = (X.staff.driver ? 1 : 0) + (X.staff.night ? 1 : 0) + (X.staff.operator ? (hasLic('tobacco') ? 2 : 1) : 0);   /* roster hires are staff too; the operator runs the basement, which covers the two it needs */
+    var hired = crewList().filter(function (w) { return !w.off; }).length + roster, need = headcount();
+    var rows = [
       { k: 'Rent', v: rent, d: free ? 'fit-out period, rent free until day ' + (COST.rentFreeDays + 1) : sl + ' slots' + (X.branch ? ' + branch' : '') + (hasLic('tobacco') ? ' + basement' : '') },
       { k: 'Power', v: power, d: L.name + ' over ' + sl + ' slots' + (S.upgrades.solar ? ', solar roof taking a third off' : '') },
       { k: 'Water', v: S.plants.length * COST.waterPerPlant, d: S.plants.length + ' plants in the tent' },
-      { k: 'Payroll', v: Math.max(0, need - hired) * COST.payRate, d: need ? need + ' staff the place needs, ' + hired + ' of them crew you hired' : 'just you, for now' }
+      { k: 'Payroll', v: Math.max(0, need - hired) * COST.payRate, d: need ? need + ' staff the place needs, ' + Math.min(need, hired) + ' of them covered by people you hired' : 'just you, for now' }
     ];
+    if (!guardOff()) rows.push({ k: 'Security', v: COST.guardWage, d: 'the guard on the door; send him home and there is no wage that day' });
+    if (X.branch) rows.push({ k: 'Branch manager', v: COST.branchManager, d: 'runs Green Leaf for you, a flat day rate' });
+    return rows;
   }
   function dailyFixed() { return billLines().reduce(function (a, r) { return a + r.v; }, 0); }
   function drawFunds(n) {   // a bill comes out of the bank first, then the vault, then the till
@@ -526,7 +532,7 @@
   // ── Sim engine (same rules as the 2D game) ────────────────────────
   function step(dt, offline) {
     var L = lightObj(); var auto = !!S.upgrades.autowater;
-    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ while (S[dKey] >= 24) { S[dKey] -= 24; S.day = (S.day || 1) + 1; payBills(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
+    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ var rolled = 0; while (S[dKey] >= 24) { if (offline && rolled >= 1) { S[dKey] %= 24; break; }   /* time away turns the calendar one day at most: the bills fall once, not once for every day the window was shut */ rolled++; S[dKey] -= 24; S.day = (S.day || 1) + 1; S.regDay = S.day; S.regSold = 0; payBills(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
     creditPending(offline); updateLogistics(dt, offline);
     // humidity: each room drifts toward its moisture load; a running dehumidifier pulls it down to its target
     var pull = S.upgrades.hvac ? 4.0 : S.upgrades.dehumid ? 1.6 : 0.8; var wetBatches = S.batches.filter(function (b) { return !b.cured; }).length;
@@ -551,9 +557,10 @@
         if (Math.random() < hc * dt) { p.hazard = !S.upgrades.ozone && Math.random() < (S.rh.grow > 60 ? 0.7 : 0.4) ? 'mold' : 'pest'; logEvent('⚠ ' + (p.hazard === 'pest' ? 'Spider mites' : 'Mold') + ' hit a ' + strainById(p.strain).name + ' — treat it!', 'bad'); toast('⚠ ' + p.hazard + ' outbreak', 'bad'); }
       }
     }
-    var rackFast = S.upgrades.rack2 ? 2.4 : S.upgrades.rack ? 1.6 : 1, cureCap = CURE_CAP_BASE + (S.upgrades.rack2 ? 20 : S.upgrades.rack ? 10 : 0);
+    var rackFast = S.upgrades.rack2 ? 2.4 : S.upgrades.rack ? 1.6 : 1, cureCap = CURE_CAP_BASE + (S.upgrades.rack2 ? 20 : S.upgrades.rack ? 10 : 0), jarsFree = cureSlots();
     for (var b = 0; b < S.batches.length; b++) {
       var batch = S.batches[b];
+      if (batch.cured && jarsFree-- <= 0) continue;   /* no jar for this one yet: it waits, oldest batches cure first */
       if (!batch.cured) { if (batch.dry === undefined) batch.dry = clamp((now() - batch.startedAt) / dryMs(), 0, 1); batch.dry = clamp(batch.dry + (dt * 1000 / dryMs()) * dryFactor(), 0, 1); if (batch.dry >= 1) { batch.cured = true; if (!offline) logEvent('🏺 A batch finished drying — it is curing on the shelf', ''); } }
       else { var gained = 0.5 * rackFast * dt; if (batch.quality < batch.baseQ + cureCap) batch.quality = clamp(batch.quality + gained, 0, Math.min(100, batch.baseQ + cureCap)); }
     }
@@ -564,6 +571,16 @@
       if (S.event && now() > S.event.until) { logEvent('Event ended: ' + S.event.label, ''); S.event = null; }
       if (S.customer && now() > S.customer.until && (S.customer.arrived || S.customer.stage || now() - (S.customer.spawnedAt || 0) > 180000)) { if (S.customer.stage) { logEvent('🚶 ' + S.customer.who + ' got tired of waiting to pay and walked (rep -2)', 'bad'); S.rep = Math.max(0, S.rep - 2); if (!offline) toast('🚶 ' + S.customer.who + ' walked out without paying', 'bad'); } S.customer = null; }
     }
+    if (offline && !ui.started && dt > 2) offlineWorks(dt);   // the boot catch-up: the step at start-up is the only offline one before the start screen is passed
+  }
+  // While the game was closed the basement line, the roof beds and a lab batch keep going for the real time that
+  // passed (the boot caps it at 6 h), each through its own tick. Nothing is sown or restarted for you.
+  function offlineWorks(secs) {
+    secs = clamp(secs, 0, 6 * 3600); if (secs <= 0) return;
+    var T = tob(), busy = T.bays.some(function (b) { return b.stage === 'grow'; }) || T.kiln.on || T.shred.on || T.maker.on || T.packer.on;
+    if (busy) { var fl = player.floor; player.floor = 0; for (var t = 0; t < secs; t += 0.25) updateTobacco(Math.min(0.25, secs - t)); player.floor = fl; }   /* a quarter second at a time, the packer's cycle is 1.2 s; off the basement floor the tick skips its animation */
+    labTick(secs); roofTick(secs * 0.75, true);   /* the beds only grow in daylight, and night runs 20:00 to 02:00 */
+    if (busy) logEvent('🏭 The basement line kept running while you were away', '');
   }
   function maybeEvent() {
     if (S.event || now() - S.lastEvent < randi(70000, 140000)) return;
@@ -606,13 +623,17 @@
     // the order: a main line, sometimes a second product, sometimes bits from the counter display
     var cu = S.customer; cu.lines = [{ kind: cu.want, strain: cu.strain, qty: cu.qty, given: { n: 0, qSum: 0, thcSum: 0 } }]; cu.given = cu.lines[0].given;
     if (Math.random() < 0.35) { var kinds2 = ['bags', 'joints', 'cookies'].filter(function (k) { return k !== cu.want && (k !== 'cookies' || S.pkg.cookies.n > 0); }); var k2 = pick(kinds2); cu.lines.push({ kind: k2, strain: known.length ? pick(known) : cu.strain, qty: k2 === 'bags' ? 1 : randi(1, 3), given: { n: 0, qSum: 0, thcSum: 0 } }); }
-    cu.acc = []; if (Math.random() < 0.45) { if (Math.random() < 0.6) cu.acc.push({ item: 'lighter', qty: 1 }); if (Math.random() < 0.5) cu.acc.push({ item: 'rpaper', qty: 1 }); if (Math.random() < 0.15) cu.acc.push({ item: 'rgrinder', qty: 1 }); } var cks = anyCigStock(); if (cks.length && Math.random() < 0.4) cu.cig = { sku: pick(cks), qty: Math.random() < 0.25 ? 2 : 1, given: 0 };
+    cu.acc = []; if (Math.random() < 0.45) {   /* one or two extras off the counter, likelier the more of it is on show; the three staples can still be asked for when the rack has run dry */
+      var accW = Object.keys(ACC).map(function (k) { return [k, (S.display[k] || 0) + (k === 'lighter' || k === 'rpaper' || k === 'rgrinder' ? 1 : 0)]; }).filter(function (w) { return w[1] > 0; });
+      for (var an = Math.random() < 0.35 ? 2 : 1; an > 0 && accW.length; an--) { var ar = Math.random() * accW.reduce(function (a, w) { return a + w[1]; }, 0), ai = accW.length - 1; for (var aj = 0; aj < accW.length; aj++) { ar -= accW[aj][1]; if (ar < 0) { ai = aj; break; } } cu.acc.push({ item: accW[ai][0], qty: 1 }); accW.splice(ai, 1); }
+    } var cks = anyCigStock(); if (cks.length && Math.random() < 0.4) cu.cig = { sku: pick(cks), qty: Math.random() < 0.25 ? 2 : 1, given: 0 };
     if (premium) { logEvent('🎩 A connoisseur (' + c.who + ') just walked in — looks like they want top-shelf', 'rare'); toast('🎩 Connoisseur walking in', 'rare'); }
     else logEvent('🚪 ' + c.who + ' walked in — security is checking ID', '');
   }
   function maybeCustomer() {
     if (!shop().open || now() < (S.noCustomersUntil || 0)) { S.lastCustomer = now(); return; }
     var gap = S.upgrades.billboard ? 0.4 : S.upgrades.sign ? 0.65 : 1; gap /= footfall(); if (hasLic('latehours') && nightNow()) gap *= 0.75; var mk = shop().markup || 1; gap *= mk > 1 ? 1 + (mk - 1) * 2.5 : mk < 1 ? 1 - (1 - mk) * 0.8 : 1;
+    gap *= clamp(1 / (1 + (S.rep || 0) / 200), 0.6, 1);   /* word of mouth: a good name shortens the wait between customers, never below 60% of it */
     if (S.customer || now() - S.lastCustomer < randi(30000, 60000) * gap) return;
     S.lastCustomer = now();
     if (Math.random() < 0.75) spawnCustomer(false);
@@ -1839,7 +1860,7 @@
       var jar = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.2, 14), MAT.jar); jar.position.set(x, y + 0.1, z); g.add(jar);
       if (filled) { var jh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.3, 0.24), MAT.none); jh.position.set(x, y + 0.12, z); g.add(jh); interactable(jh, { kind: 'jar', bid: cured[i].id }); jh.userData.dynGroup = 'shelf'; jh.userData.propId = 'cureShelf'; }
       var lid = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.025, 14), MAT.jarLid); lid.position.set(x, y + 0.21, z); g.add(lid);
-      if (filled) { var b = cured[i]; var bst2 = strainById(b.strain || 'sunflower'), fl2 = clamp(b.grams / 24, 0.3, 1); var nugM2 = prodMat('jarnug' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: bst2.bud, roughness: 0.9 }); }); var nugD2 = prodMat('jarnugd' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: mixHex(bst2.bud, 0x30401f, 0.38), roughness: 0.95 }); }); for (var nz2 = 0; nz2 < Math.round(5 + fl2 * 13); nz2++) { var na2 = nz2 * 2.399, nr2 = 0.05 * Math.sqrt(((nz2 % 7) / 7) + 0.14); var nm2 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.019 + (nz2 % 3) * 0.005, 0), nz2 % 4 === 0 ? nugD2 : nugM2); nm2.position.set(x + Math.cos(na2) * nr2, y + 0.025 + (nz2 % 5) * 0.026 * fl2, z + Math.sin(na2) * nr2); nm2.scale.set(1, 0.8, 1); nm2.rotation.set(na2, na2 * 1.7, 0.3); nm2.castShadow = false; g.add(nm2); } var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: textTex([gram(b.grams) + ' q' + Math.round(b.quality)], 160, 60, { size: 30, bg: '#f3e9cf', color: '#222', line: 'rgba(0,0,0,0)' }) })); lbl.position.set(x, y + 0.1, z + 0.095); g.add(lbl); }
+      if (filled) { var b = cured[i]; var bst2 = strainById(b.strain || 'sunflower'), fl2 = clamp(b.grams / 24, 0.3, 1); var nugM2 = prodMat('jarnug' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: bst2.bud, roughness: 0.9 }); }); var nugD2 = prodMat('jarnugd' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: mixHex(bst2.bud, 0x30401f, 0.38), roughness: 0.95 }); }); for (var nz2 = 0; nz2 < Math.round(5 + fl2 * 13); nz2++) { var na2 = nz2 * 2.399, nr2 = 0.05 * Math.sqrt(((nz2 % 7) / 7) + 0.14); var nm2 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.019 + (nz2 % 3) * 0.005, 0), nz2 % 4 === 0 ? nugD2 : nugM2); nm2.position.set(x + Math.cos(na2) * nr2, y + 0.025 + (nz2 % 5) * 0.026 * fl2, z + Math.sin(na2) * nr2); nm2.scale.set(1, 0.8, 1); nm2.rotation.set(na2, na2 * 1.7, 0.3); nm2.castShadow = false; g.add(nm2); } var waits = i >= cureSlots(); var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: textTex(waits ? [gram(b.grams) + ' q' + Math.round(b.quality), 'waiting for a jar'] : [gram(b.grams) + ' q' + Math.round(b.quality)], 160, 60, { size: waits ? 18 : 30, bg: waits ? '#f3d9b0' : '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); lbl.position.set(x, y + 0.1, z + 0.095); g.add(lbl); }
     }
     if (S.upgrades.rack) { var rack = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.02, 0.45), MAT.metal); rack.position.set(0, 2.75, 0); g.add(rack); }
     var hw = 3.25, ly = 2.1; var n = drying.length;
@@ -2291,7 +2312,7 @@
     var d = lotDraw(l.kind, id, want); l.given.n += d.n; l.given.qSum += d.q * d.n; l.given.thcSum += d.thc * d.n; if (l === orderLines(c)[0] && l.strain && id !== l.strain) c.subbed = true; else if (l === orderLines(c)[0] && id === l.strain) c.matched = true; syncGoods(); return true;
   }
   function workerPick() {   // at the goods shelf: take what the order needs, then carry it to the window
-    var c = S.customer; if (!c || !c.arrived || c.stage) return;
+    var c = S.customer; if (!c || !c.arrived || c.stage || c.idPending) return;
     var lines = orderLines(c); var open = lines.filter(function (l) { return l.given.n < l.qty; }); var got = 0;
     open.forEach(function (l) { var before = l.given.n; if (workerFillLine(c, l)) got += l.given.n - before; });
     var still = lines.filter(function (l) { return l.given.n < l.qty; });
@@ -2299,7 +2320,7 @@
     sfx('rustle'); worker.next = { x: WP.counter.x, z: WP.counter.z, dur: 1.0, done: workerServe };
   }
   function workerServe() {
-    var c = S.customer; if (!c || !c.arrived || c.stage) return;
+    var c = S.customer; if (!c || !c.arrived || c.stage || c.idPending) return;
     var lines = orderLines(c); var still = lines.filter(function (l) { return l.given.n < l.qty; });
     if (still.length) { workerSay('here is part of it — we are out of ' + still.map(lineText).join(', ') + ', boss', '#ffc857', 3000); worker.coolT = now() + 20000; hud(); return; }
     var mult = (c.premium ? 2.2 : 1.15) * (c.subbed ? 0.85 : c.strain && c.matched ? 1.1 : 1); var total = 0;
@@ -2319,7 +2340,7 @@
   }
   function workerNextJob(task) {
     var g = worker.g; function near(x, z) { return Math.hypot(g.position.x - x, g.position.z - z) < 0.35; }
-    if (task === 'serve') { var c = S.customer; if (c && c.arrived && !c.stage && npc.state === 'wait' && now() > worker.coolT) { var gp = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: propPlacement('goodsShelf').x, z: propPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
+    if (task === 'serve') { var c = S.customer; if (c && c.arrived && !c.stage && !c.idPending && npc.state === 'wait' && now() > worker.coolT) {   /* a card still held out is yours to check: the crew waits */ var gp = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: propPlacement('goodsShelf').x, z: propPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
     if (task === 'restock') { if (Object.keys(S.storage).some(function (k) { return S.storage[k] > 0; })) return { x: WP.annex.x, z: WP.annex.z, dur: 3, done: workerRestock }; if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null; }
     if (task !== 'clean' && worker.hasBroom) return { x: ROOM.x - 0.65, z: -0.85, dur: 0.6, done: workerDropBroom };
     if (task === 'clean' && !worker.hasBroom) { if (!dustList().length) return null; return { x: ROOM.x - 0.65, z: -0.85, dur: 0.8, done: workerTakeBroom }; }
@@ -2353,7 +2374,7 @@
         var why = task === 'clean' ? 'floor is clean, boss'
           : task === 'restock' ? 'storeroom is empty, boss'
           : task === 'water' ? 'plants are all happy'
-          : task === 'serve' ? 'nobody at the window' : 'nothing for me right now';
+          : task === 'serve' ? (S.customer && S.customer.idPending ? 'check their ID first, boss' : 'nobody at the window') : 'nothing for me right now';
         workerSay(why, '#ffc857', 2600);
       }
     } else worker.nagT = 0;
@@ -3408,7 +3429,7 @@
     if (poi === 'rival') {
       var theirs = Math.round(unitPrice('bags', 60, 1.2) * (0.9 + ((S.day * 7) % 5) / 20)); lines.push({ label: '👀 Their price board: an eighth at ' + money(theirs) + ' <small>yours at q60: ' + money(Math.round(unitPrice('bags', 60, 1.2))) + ' · market ' + S.market.toFixed(2) + '×</small>', cls: 'muted' });
       lines.push({ label: '📣 Pay a kid ' + money(60) + ' to hand out your flyers outside their door <small>' + (S.flyerDay === S.day ? 'done for today' : 'rep +3, once a day') + '</small>', cls: S.flyerDay === S.day || S.bank < 60 ? 'muted' : '', act: S.flyerDay === S.day || S.bank < 60 ? null : function () { S.bank -= 60; S.flyerDay = S.day; S.rep += 3; sfx('ok'); toast('📣 Flyers going round — rep +3', 'good'); logEvent('📣 Flyered the rival shop — rep +3', 'good'); hud(); save(); } });
-      if (xs().branch) lines.push({ label: '🏪 This is your branch now <small>its takings reach your bank every morning</small>', cls: 'on' }); else lines.push({ label: '🏪 Buy them out · ' + money(180000) + ' <small>' + (S.rep >= 150 ? 'they will sell: the branch pays you every morning' : 'they will not talk to you below 150 rep (you have ' + Math.round(S.rep) + ')') + '</small>', cls: S.rep >= 150 && S.bank >= 180000 ? '' : 'muted', act: S.rep >= 150 && S.bank >= 180000 ? function () { S.bank -= 180000; xs().branch = true; sfx('levelup'); toast('🏪 Green Leaf is yours — a second shop', 'rare'); logEvent('🏪 Bought out Green Leaf: you now run two shops', 'rare'); hud(); save(); } : null });
+      if (xs().branch) lines.push({ label: '🏪 This is your branch now <small>it sells what you drop at the blue beacon out front: ' + money(BRANCH_PAY) + ' a unit, up to ' + BRANCH_CAP + ' a day, plus a little for your name, paid each morning · ' + (xs().branchUnits || 0) + ' dropped off today</small>', cls: 'on' }); else lines.push({ label: '🏪 Buy them out · ' + money(180000) + ' <small>' + (S.rep >= 150 ? 'they will sell: keep the branch stocked and it pays you every morning' : 'they will not talk to you below 150 rep (you have ' + Math.round(S.rep) + ')') + '</small>', cls: S.rep >= 150 && S.bank >= 180000 ? '' : 'muted', act: S.rep >= 150 && S.bank >= 180000 ? function () { S.bank -= 180000; xs().branch = true; sfx('levelup'); toast('🏪 Green Leaf is yours — a second shop', 'rare'); logEvent('🏪 Bought out Green Leaf: you now run two shops', 'rare'); hud(); save(); } : null });
       ctxOpen('🌿 Green Leaf', xs().branch ? 'your second shop' : 'the competition, three doors down', lines); return;
     }
     if (poi === 'supply') {
@@ -3705,11 +3726,11 @@
     if (X.heat >= 60 && Math.random() < dt / 260) { var fine = 200 + Math.round((S.pocket || 0) * 0.25); fine = Math.min(fine, S.bank + S.vault + S.till + (S.pocket || 0)); var fromPocket = Math.min(S.pocket || 0, fine); S.pocket -= fromPocket; drawFunds(fine - fromPocket); X.heat = Math.max(0, X.heat - 25); sfx('siren'); toast('🚔 Inspection! Undeclared cash and paperwork: ' + money(fine) + ' in fines', 'bad'); logEvent('🚔 Police inspection — ' + money(fine) + ' in fines. Bank your pocket cash and lie low.', 'bad'); hud(); }
     // the lab and the bag line run only with power
     if (on) {
-      var J = X.lab.job; if (J) { J.t += dt; if (J.t >= J.dur) { X.lab.out[J.sku] += J.n; X.lab.job = null; sfx('ok'); toast('🧪 Lab batch done: ' + J.n + ' × ' + CIG_SKUS[J.sku].name + ' waiting on the lab shelf', 'good'); save(); } }
+      labTick(dt);
       var BL = X.bagline; if (BL.on && S.upgrades.bagline) { BL.t += dt; if (BL.t >= 4) { BL.t = 0; var sid = Object.keys(S.stash).filter(function (k) { return S.stash[k].g >= bagGrams(); }).sort(function (a, b) { return S.stash[b].g - S.stash[a].g; })[0]; if (sid && (S.supplies.bag || 0) > 0) { var d = stashDraw(sid, bagGrams()); S.supplies.bag--; lotAdd('bags', sid, 1, clamp(d.q + 3, 20, 100), d.thc); syncGoods(); world.dirty = true; } } }
     }
     // roof beds grow in daylight; rain helps, winter slows them
-    X.roof.forEach(function (b, i) { if (b.stage === 'grow' && !nightNow()) { b.t += dt * (W.kind === 'rain' ? 1.5 : 1) * (season() === 'Winter' ? 0.5 : 1); if (b.t >= 260) { b.stage = 'ready'; toast('🌿 Roof bed ' + (i + 1) + ' is ready', 'good'); } } var g = exp.roofBeds[i]; if (g) { g.visible = b.stage !== 'empty'; var sc = b.stage === 'ready' ? 1 : 0.1 + clamp(b.t / 260, 0, 1) * 0.9; g.scale.set(1, sc, 1); } });
+    roofTick(dt);
     // staff: the operator keeps the basement fed
     exp.opT += dt; if (exp.opT > 5) { exp.opT = 0; if (X.staff.operator && hasLic('tobacco')) { var T = tob(); T.bays.forEach(function (b) { if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; T.leaf += TOB.bayKg; } else if (b.stage === 'empty' && S.bank >= TOB.sowCost) { S.bank -= TOB.sowCost; b.stage = 'grow'; b.t = 0; } }); T.kiln.on = T.shred.on = T.maker.on = T.packer.on = true; if (T.mat < 20 && S.bank >= TOB.matCost) { S.bank -= TOB.matCost; T.mat += TOB.matUnits; } } }
     // night: someone tries the back if nobody is watching
@@ -3718,10 +3739,18 @@
     // the getaway car: catch it with yours and the loot comes back
     var G = exp.getaway; if (G) { G.t += dt; G.g.position.x += G.dir * 13 * dt; if (drive.on && Math.hypot(drive.g.position.x - G.g.position.x, drive.g.position.z - G.g.position.z) < (X.garage.bar ? 4.6 : 3.4)) { returnLoot(G.loot); S.rep += 4; sfx('hit'); toast('🚗💥 You ran the getaway car off the road — everything they took is back · rep +4', 'good'); logEvent('🚗 You caught the getaway car', 'good'); world.group.remove(G.g); exp.getaway = null; } else if (Math.abs(G.g.position.x) > CITY.x - 3 || G.t > 40) { logEvent('💨 The getaway car made it out of town with ' + (G.loot.grabbed > 0 ? money(G.loot.grabbed) : 'your goods'), 'bad'); world.group.remove(G.g); exp.getaway = null; } }
   }
+  function labTick(dt) {   // a lab batch runs down its timer; the caller decides whether there is power
+    var X = xs(), J = X.lab.job; if (J) { J.t += dt; if (J.t >= J.dur) { X.lab.out[J.sku] += J.n; X.lab.job = null; sfx('ok'); toast('🧪 Lab batch done: ' + J.n + ' × ' + CIG_SKUS[J.sku].name + ' waiting on the lab shelf', 'good'); save(); } }
+  }
+  function roofTick(dt, catchUp) {   // catchUp: time already scaled for the daylight share, so the hour it happens to be now does not matter
+    var X = xs(), W = X.weather;
+    X.roof.forEach(function (b, i) { if (b.stage === 'grow' && (catchUp || !nightNow())) { b.t += dt * (W.kind === 'rain' ? 1.5 : 1) * (season() === 'Winter' ? 0.5 : 1); if (b.t >= 260) { b.stage = 'ready'; toast('🌿 Roof bed ' + (i + 1) + ' is ready', 'good'); } } var g = exp.roofBeds[i]; if (g) { g.visible = b.stage !== 'empty'; var sc = b.stage === 'ready' ? 1 : 0.1 + clamp(b.t / 260, 0, 1) * 0.9; g.scale.set(1, sc, 1); } });
+  }
   // ── Delivery rounds: a burner phone for the street goods, a tablet for the RF Smoking round ──
   // Both write into one X.jobs list; `via` says which device raised it, and that decides where the
   // goods come from (your hands vs the car) and where the money lands (pocket + heat vs the bank).
-  var JOB_MAX = 6, JOB_CAP = { phone: 2, tablet: 4 };
+  var JOB_MAX = 7, JOB_CAP = { phone: 2, tablet: 4, branch: 1 };   /* the branch drop is a standing stop while you own Green Leaf: one beacon more than the two devices can fill */
+  var BRANCH_PAY = 9, BRANCH_CAP = 60;   // what Green Leaf pays next morning for each unit you drop off, and how many it can sell in a day
   var ROADS = [['Main Street', 'z', CITY.mainZ], ['Back Street', 'z', CITY.backZ], ['North Street', 'z', CITY.northZ], ['West Avenue', 'x', CITY.westX], ['East Avenue', 'x', CITY.eastX]];
   function addrFor(b) {   // the nearest road names the address; the door number is derived from the building so it never changes
     var best = ROADS[0], bd = 1e9;
@@ -3742,7 +3771,15 @@
     return null;
   }
   function jobsOf(via) { return xs().jobs.filter(function (j) { return j.via === via; }); }
-  function jobGoods(j) { return j.via === 'tablet' ? CIG_SKUS[j.sku].name : kindName(j.kind, j.qty); }
+  function jobGoods(j) { return j.via === 'branch' ? 'goods for the branch' : j.via === 'tablet' ? CIG_SKUS[j.sku].name : kindName(j.kind, j.qty); }
+  function branchRoom() { return Math.max(0, BRANCH_CAP - (xs().branchUnits || 0)); }
+  function branchJob() {   // the standing drop outside Green Leaf, clear of its front door so the counter stays reachable
+    var X = xs(); if (!X.branch) return; var j = jobsOf('branch')[0];
+    if (!j) { if (X.jobs.length >= JOB_MAX) return; var b = CITY.blds.filter(function (o) { return o.poi === 'rival'; })[0]; if (!b) return; var sp = { x: b.x + b.w / 2 - 2.5, z: b.z + b.d / 2 + 1.8 };
+      if (world.obstacles.some(function (o) { return ((o.floorLevel || 0) === 0 || o.floorLevel === 'any') && sp.x > o.x1 - 1.2 && sp.x < o.x2 + 1.2 && sp.z > o.z1 - 1.2 && sp.z < o.z2 + 1.2; })) sp = dropSpot(b) || sp;
+      j = { id: 'jbranch', via: 'branch', addr: 'Green Leaf (your branch)', x: sp.x, z: sp.z, born: now(), until: 0 }; X.jobs.push(j); }
+    j.qty = branchRoom();
+  }
   function jobSpawn(via) {
     var X = xs(), bl = CITY.blds.filter(function (b) { return !b.poi; }); if (!bl.length) return;
     if (X.jobs.length >= JOB_MAX || jobsOf(via).length >= JOB_CAP[via]) return;   /* the caps are the invariant, not the spawn timer: a job past the beacon pool would have no marker and no drop to press E on */
@@ -3767,7 +3804,7 @@
   function jobDone(j, pay, how) {
     var X = xs(); X.jobs = X.jobs.filter(function (o) { return o !== j; });
     S.stats.deliveries = (S.stats.deliveries || 0) + 1;
-    if (j.via === 'tablet') { S.bank += pay; S.rep += 1; S.stats.roundPay = (S.stats.roundPay || 0) + pay; toast('📋 Dropped at ' + j.addr + ' — ' + money(pay) + ' invoiced to the bank · rep +1' + how, 'good'); logEvent('📋 Round drop at ' + j.addr + ': ' + money(pay), 'good'); }
+    if (j.via === 'tablet') { S.bank += pay; bookSale(pay); S.rep += 1; S.stats.roundPay = (S.stats.roundPay || 0) + pay; toast('📋 Dropped at ' + j.addr + ' — ' + money(pay) + ' invoiced to the bank · rep +1' + how, 'good'); logEvent('📋 Round drop at ' + j.addr + ': ' + money(pay), 'good'); }
     else { S.pocket += pay; S.rep += 2; addHeat(6); toast('📱 Dropped at ' + j.addr + ' — ' + money(pay) + ' cash in your pocket · rep +2' + how, 'good'); logEvent('📱 Phone delivery at ' + j.addr + ': ' + money(pay), 'good'); }
     sfx('cash'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render();
   }
@@ -3780,23 +3817,25 @@
       X.jobT.ph -= dt; if (X.jobT.ph <= 0) { X.jobT.ph = randi(200, 330); jobSpawn('phone'); }
       if (hasLic('tobacco')) { X.jobT.tab -= dt; if (X.jobT.tab <= 0) { X.jobT.tab = randi(120, 220); jobSpawn('tablet'); } }
     }
+    branchJob();
     for (var i = X.jobs.length - 1; i >= 0; i--) {
       var j = X.jobs[i];
+      if (j.via === 'branch') continue;   /* the branch drop never expires and the driver leaves it to you */
       if (X.staff.driver && now() - j.born > 45000) { if (driverRuns(j)) continue; }
       if (now() > j.until) { X.jobs.splice(i, 1); S.rep = Math.max(0, S.rep - 1); toast((j.via === 'tablet' ? '📋 ' : '📱 ') + j.addr + ' gave up waiting · rep -1', 'bad'); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); }
     }
     for (var b = 0; b < exp.beacons.length; b++) {
       var jb = X.jobs[b];
-      if (jb) { var col = jb.via === 'tablet' ? 0xffc857 : 0x6fdc8c; exp.beacons[b].visible = true; exp.beacons[b].material.color.setHex(col); exp.beacons[b].position.set(jb.x, 7, jb.z); exp.rings[b].visible = true; exp.rings[b].material.color.setHex(col); exp.rings[b].position.set(jb.x, 0.07, jb.z); exp.dropHits[b].position.set(jb.x, 1.2, jb.z); }
+      if (jb) { var col = jb.via === 'branch' ? 0x7fd4ff : jb.via === 'tablet' ? 0xffc857 : 0x6fdc8c; exp.beacons[b].visible = true; exp.beacons[b].material.color.setHex(col); exp.beacons[b].position.set(jb.x, 7, jb.z); exp.rings[b].visible = true; exp.rings[b].material.color.setHex(col); exp.rings[b].position.set(jb.x, 0.07, jb.z); exp.dropHits[b].position.set(jb.x, 1.2, jb.z); }
       else { exp.beacons[b].visible = false; exp.rings[b].visible = false; exp.dropHits[b].position.y = -50; }
     }
   }
   function driverRuns(j) {   // the hired driver clears jobs himself, for a thinner cut
     var X = xs();
-    if (j.via === 'tablet') { var T = tob(), cc = carState().cigs, have = T.packs[j.sku] + (cc[j.sku] || 0); if (have < j.qty) return false; var fromCar = Math.min(cc[j.sku] || 0, j.qty); if (fromCar > 0) cc[j.sku] -= fromCar; T.packs[j.sku] -= (j.qty - fromCar); syncTobRack();   /* never touch a key that is not there: undefined -= 0 is NaN, and a NaN pack count poisons the trunk and the wholesale counter */ X.jobs = X.jobs.filter(function (o) { return o !== j; }); var p = Math.round(j.pay * 0.65); S.bank += p; S.stats.deliveries = (S.stats.deliveries || 0) + 1; toast('🚚 Your driver ran ' + j.addr + ' — ' + money(p) + ' banked (his cut taken)', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true; }
+    if (j.via === 'tablet') { var T = tob(), cc = carState().cigs, have = T.packs[j.sku] + (cc[j.sku] || 0); if (have < j.qty) return false; var fromCar = Math.min(cc[j.sku] || 0, j.qty); if (fromCar > 0) cc[j.sku] -= fromCar; T.packs[j.sku] -= (j.qty - fromCar); syncTobRack();   /* never touch a key that is not there: undefined -= 0 is NaN, and a NaN pack count poisons the trunk and the wholesale counter */ X.jobs = X.jobs.filter(function (o) { return o !== j; }); var p = Math.round(j.pay * 0.65); S.bank += p; bookSale(p); S.stats.deliveries = (S.stats.deliveries || 0) + 1; toast('🚚 Your driver ran ' + j.addr + ' — ' + money(p) + ' banked (his cut taken)', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true; }
     var got = 0, val = 0; Object.keys(S.lots[j.kind]).forEach(function (sid) { if (got >= j.qty) return; var l = S.lots[j.kind][sid]; if (l.n <= 0) return; var dd = lotDraw(j.kind, sid, j.qty - got); got += dd.n; val += unitPrice(j.kind, dd.q, dd.thc) * dd.n; });
     if (got <= 0) return false;
-    X.jobs = X.jobs.filter(function (o) { return o !== j; }); var pay = Math.round(val * 1.25); S.bank += pay; S.rep += 1; S.stats.deliveries = (S.stats.deliveries || 0) + 1; syncGoods();
+    X.jobs = X.jobs.filter(function (o) { return o !== j; }); var pay = Math.round(val * 1.25); S.bank += pay; bookSale(pay); S.rep += 1; S.stats.deliveries = (S.stats.deliveries || 0) + 1; syncGoods();
     toast('🚚 Your driver ran ' + j.addr + ' — ' + money(pay) + ' banked', 'good'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); return true;
   }
   // the round is a driving loop, so a drop you have pulled up at is reachable without getting out
@@ -3808,6 +3847,16 @@
   }
   function jobHandOver(idx) {
     var X = xs(), j = X.jobs[idx], h = held(); if (!j) return true;
+    if (j.via === 'branch') {   // stock for Green Leaf: whatever goods are in your hands, up to what it can sell today
+      var room = branchRoom(); if (room <= 0) { toast('🏪 Green Leaf has all it can sell today (' + BRANCH_CAP + ' units). Bring more tomorrow', ''); return true; }
+      if (!isGoods(h)) { toast('🏪 Bring bags, joints or cookies in your hands for the branch shelves', 'bad'); return true; }
+      var bn = Math.min(h.n, room), bq = h.qSum / h.n, bt = h.thcSum / h.n, bk = h.kind;
+      h.n -= bn; h.qSum -= bq * bn; h.thcSum -= bt * bn; if (h.n <= 0) S.held = null;
+      X.branchUnits = (X.branchUnits || 0) + bn; j.qty = branchRoom(); S.stats.branchUnits = (S.stats.branchUnits || 0) + bn;
+      sfx('crate'); toast('🏪 ' + bn + ' ' + kindName(bk, bn) + ' on the Green Leaf shelves, ' + money(bn * BRANCH_PAY) + ' in the morning (' + X.branchUnits + ' of ' + BRANCH_CAP + ' today)', 'good');
+      logEvent('🏪 Stocked Green Leaf with ' + bn + ' ' + kindName(bk, bn), ''); world.dirty = true; hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render();
+      return true;
+    }
     if (j.via === 'tablet') {
       var near = drive.on || carNear(player.pos.x, player.pos.z, 11), cc = carState().cigs, inCar = near ? (cc[j.sku] || 0) : 0, inHand = (h && h.kind === 'cigs' && h.sku === j.sku) ? h.n : 0;
       if (inCar + inHand < j.qty) { toast('They ordered ' + j.qty + ' × ' + CIG_SKUS[j.sku].name + ' — ' + (near ? 'only ' + (inCar + inHand) + ' between the car and your hands' : 'bring the car round, or carry them in') , 'bad'); return true; }
@@ -3843,11 +3892,11 @@
   }
   function jobsPanel() { ui.openPanel('jobs', hasLic('tobacco') && tabletHere() ? 'tablet' : 'phone'); }
   function paneJobs(tab) {
-    var X = xs(), list = jobsOf(tab), rows = [];
-    if (tab === 'tablet' && !hasLic('tobacco')) return '<p class="g3-empty">The RF Smoking round needs the tobacco licence. Buy it at the laptop, and the tablet on the office dock wakes up.</p>';
-    if (tab === 'tablet' && !tabletHere()) return '<p class="g3-empty">The tablet is ' + (X.tablet === 'car' ? 'in the car, and the car is not here' : 'on its dock in the office') + '. Fetch it, and it rides in the car once you drive off with it.</p>';
-    if (!list.length) return '<p class="g3-empty">' + (tab === 'tablet' ? 'No round jobs right now. They come in while the shop is open, once the basement is making packs.' : 'Nobody is ringing. Pack some joints or bags and the phone starts going.') + '</p>';
-    var pos = drive.on ? drive.g.position : player.pos;
+    var X = xs(), list = jobsOf(tab), rows = [], pos = drive.on ? drive.g.position : player.pos, bj = jobsOf('branch')[0];
+    var br = bj ? '<p class="g3-sub2">🏪 <b>Green Leaf, your branch</b> (#' + (X.jobs.indexOf(bj) + 1) + ' on the map, ' + Math.round(Math.hypot(bj.x - pos.x, bj.z - pos.z)) + ' m away): carry bags, joints or cookies to the blue beacon out front and press <b>E</b>. It pays ' + money(BRANCH_PAY) + ' a unit each morning for up to ' + BRANCH_CAP + ' a day (' + (X.branchUnits || 0) + ' dropped off today).</p>' : '';
+    if (tab === 'tablet' && !hasLic('tobacco')) return br + '<p class="g3-empty">The RF Smoking round needs the tobacco licence. Buy it at the laptop, and the tablet on the office dock wakes up.</p>';
+    if (tab === 'tablet' && !tabletHere()) return br + '<p class="g3-empty">The tablet is ' + (X.tablet === 'car' ? 'in the car, and the car is not here' : 'on its dock in the office') + '. Fetch it, and it rides in the car once you drive off with it.</p>';
+    if (!list.length) return br + '<p class="g3-empty">' + (tab === 'tablet' ? 'No round jobs right now. They come in while the shop is open, once the basement is making packs.' : 'Nobody is ringing. Pack some joints or bags and the phone starts going.') + '</p>';
     list.forEach(function (j) {
       var n = X.jobs.indexOf(j) + 1, left = Math.max(0, Math.round((j.until - now()) / 1000)), km = Math.round(Math.hypot(j.x - pos.x, j.z - pos.z)) + ' m';
       var have = j.via === 'tablet' ? ((carState().cigs[j.sku] || 0) + ' in the car · ' + tob().packs[j.sku] + ' on the rack') : (S.pkg[j.kind].n + ' packed');
@@ -3856,7 +3905,7 @@
         '<td class="' + (left < 60 ? 'bad' : '') + '">' + Math.floor(left / 60) + 'm ' + (left % 60) + 's</td>' +
         '<td><b>' + (j.via === 'tablet' ? money(j.pay) : '~' + money(Math.round(unitPrice(j.kind, 60, 1.2) * j.qty * 1.6))) + '</b><br><small>' + (j.via === 'tablet' ? 'to the bank' : 'cash, +heat') + '</small></td></tr>');
     });
-    return '<p class="g3-sub2">' + (tab === 'tablet' ? 'Load packs into the car at your bay (Shift+E on the car), drive the round, press <b>E</b> at each beacon. Numbers match the map on <b>M</b>.' : 'Carry the goods in your hands and press <b>E</b> at the beacon. Cash goes in your pocket and it raises your heat.') + '</p>' +
+    return br + '<p class="g3-sub2">' + (tab === 'tablet' ? 'Load packs into the car at your bay (Shift+E on the car), drive the round, press <b>E</b> at each beacon. Numbers match the map on <b>M</b>.' : 'Carry the goods in your hands and press <b>E</b> at the beacon. Cash goes in your pocket and it raises your heat.') + '</p>' +
       '<table class="g3-jobs"><tr><th></th><th>Address</th><th>Order</th><th>Left</th><th>Pays</th></tr>' + rows.join('') + '</table>';
   }
   function startGetaway(r) {
@@ -3865,8 +3914,8 @@
   }
   function expansionNewDay(offline) {
     var X = xs(), wages = (X.staff.driver ? 90 : 0) + (X.staff.operator ? 80 : 0) + (X.staff.night ? 70 : 0); if (wages) { var wPaid = drawFunds(wages); if (wages - wPaid > 0.5) books().arrears += wages - wPaid; if (!offline) logEvent('💼 Extra staff wages: ' + money(wages), ''); }
-    if (X.staff.driver) { var T = tob(), val = 0, n = 0; CIG_KEYS.forEach(function (k) { n += T.packs[k]; val += T.packs[k] * CIG_SKUS[k].price * 0.65; T.packs[k] = 0; }); if (n) { S.bank += Math.round(val); syncTobRack(); if (!offline) { logEvent('🚚 Your driver sold ' + n + ' packs wholesale for ' + money(Math.round(val)), 'good'); toast('🚚 Driver: ' + n + ' packs wholesaled · ' + money(Math.round(val)), 'good'); } } }
-    if (X.branch) { var inc = Math.round(randi(350, 800) * (S.market || 1)); S.bank += inc; if (!offline) { logEvent('🏪 Green Leaf (your branch) sent over ' + money(inc), 'good'); toast('🏪 Branch takings: ' + money(inc), 'good'); } }
+    if (X.staff.driver) { var T = tob(), val = 0, n = 0; CIG_KEYS.forEach(function (k) { var sell = Math.max(0, T.packs[k] - COST.driverKeep); n += sell; val += sell * CIG_SKUS[k].price * 0.65; T.packs[k] -= sell; });   /* he leaves a few of each kind on the rack so the round jobs can still be filled */ if (n) { S.bank += Math.round(val); bookSale(Math.round(val)); syncTobRack(); if (!offline) { logEvent('🚚 Your driver sold ' + n + ' packs wholesale for ' + money(Math.round(val)), 'good'); toast('🚚 Driver: ' + n + ' packs wholesaled · ' + money(Math.round(val)), 'good'); } } }
+    if (X.branch) { var bu = Math.min(BRANCH_CAP, X.branchUnits || 0), inc = Math.round(bu * BRANCH_PAY + Math.max(0, S.rep) * 2); X.branchUnits = 0; S.bank += inc; bookSale(inc); logEvent('🏪 Green Leaf (your branch) sent over ' + money(inc) + ': ' + bu + ' units you dropped off at ' + money(BRANCH_PAY) + ' each, plus ' + money(Math.max(0, S.rep) * 2) + ' on your name', inc > 0 ? 'good' : ''); if (!offline) toast('🏪 Branch takings: ' + money(inc) + (bu ? '' : ' (nothing dropped off yesterday, stock it at the blue beacon)'), bu ? 'good' : ''); }
     if (!offline && weekend()) toast('📅 It is the weekend — expect more people through the door', ''); if (!offline && (S.day % 28) === 25) toast('🎉 Holiday week starts — footfall is up by half', 'rare');
   }
   function carMenu() {
@@ -3886,7 +3935,7 @@
     ctxOpen('🧪 Extraction lab', 'carts, gummies and chocolate from bud of any quality', lines);
   }
   function rosterMenu() {
-    var X = xs(), lines = []; [['driver', '🚚 Driver', 90, 'wholesales every finished carton each morning (65%) and runs phone deliveries for you'], ['operator', '🏭 Basement operator', 80, 'sows and cuts the bays, keeps the machines on, reorders materials'], ['night', '🌙 Night guard', 70, 'nobody breaks into the basement or strips the roof beds']].forEach(function (s) { var on = X.staff[s[0]]; lines.push({ label: s[1] + ' · ' + money(s[2]) + ' a day <small>' + s[3] + '</small>', cls: on ? 'on' : '', act: function () { X.staff[s[0]] = !on; sfx('click'); toast(s[1] + (on ? ' let go' : ' hired'), on ? '' : 'good'); save(); } }); });
+    var X = xs(), lines = []; [['driver', '🚚 Driver', 90, 'wholesales every pack above ' + COST.driverKeep + ' of each kind each morning (65%), and runs phone deliveries for you · counts as staff on the payroll'], ['operator', '🏭 Basement operator', 80, 'sows and cuts the bays, keeps the machines on, reorders materials · covers the two staff the basement needs'], ['night', '🌙 Night guard', 70, 'nobody breaks into the basement or strips the roof beds · counts as staff on the payroll']].forEach(function (s) { var on = X.staff[s[0]]; lines.push({ label: s[1] + ' · ' + money(s[2]) + ' a day <small>' + s[3] + '</small>', cls: on ? 'on' : '', act: function () { X.staff[s[0]] = !on; sfx('click'); toast(s[1] + (on ? ' let go' : ' hired'), on ? '' : 'good'); save(); } }); });
     ctxOpen('💼 Staff roster', 'wages come out of the bank at the start of each day', lines);
   }
   function wsPlaceMenu(poi) {   // the generic counter behind a pack place: a discount shop list, a paid service, or both
@@ -3896,7 +3945,7 @@
       var it = supplyById(r.item); if (!it) return;
       var price = Math.max(1, Math.round(it.price * (1 - r.off)));
       lines.push({ label: it.ico + ' ' + it.name + ' · ' + money(price) + ' <small>' + Math.round(r.off * 100) + '% under the laptop price' + (it.qty ? ' · ' + it.qty + ' per box' : '') + '</small>', cls: S.bank >= price ? '' : 'muted',
-        act: S.bank >= price ? function () { S.bank -= price; S.supplies[it.id] = (S.supplies[it.id] || 0) + (it.qty || 1); sfx('cash'); toast('🛒 ' + it.name + ' · ' + money(price), 'good'); syncRack(); hud(); save(); } : null });
+        act: S.bank >= price ? function () { S.bank -= price; if (it.stock) { var crate = {}; crate[it.id] = it.qty || 1; storageAdd(crate); syncStorage(); toast('🛒 ' + it.name + ' · ' + money(price) + ' (a crate in the back room, carry it to the ' + (it.stock === 'vend' ? 'vending machine' : it.stock === 'coffee' ? 'coffee machine' : 'counter display') + ')', 'good'); } else { S.supplies[it.id] = (S.supplies[it.id] || 0) + (it.qty || 1); toast('🛒 ' + it.name + ' · ' + money(price), 'good'); syncRack(); } sfx('cash'); hud(); save(); } : null });   /* machine and counter stock arrives as crates like a laptop order; rack supplies go straight on the rack */
     });
     if (q.service) {
       var sv = q.service, day = S.day || 1, usedToday = sv.daily && X.svcDay && X.svcDay[q.id] === day;
@@ -3912,7 +3961,7 @@
     var X = xs(), lines = [];
     if (wsPlaceMenu(poi)) return true;
     if (poi === 'tobac') { var near = carNear(40, 14, 30), n = 0, val = 0, vs = carState(); Object.keys(vs.cigs).forEach(function (k) { n += vs.cigs[k]; val += vs.cigs[k] * CIG_SKUS[k].price * 0.7; }); val = Math.round(val);
-      lines.push({ label: '🚬 Sell the ' + n + ' packs in your car · ' + money(val) + ' <small>70% of shop price, paid straight to the bank' + (near ? '' : ' · bring the car round') + '</small>', cls: n && near ? '' : 'muted', act: n && near ? function () { S.bank += val; vs.cigs = {}; S.stats.wholesale = (S.stats.wholesale || 0) + val; sfx('cash'); toast('🚬 Wholesaled ' + n + ' packs for ' + money(val), 'good'); logEvent('🚬 Wholesaled ' + n + ' packs to the Corner Tobacconist for ' + money(val), 'good'); hud(); save(); } : null });
+      lines.push({ label: '🚬 Sell the ' + n + ' packs in your car · ' + money(val) + ' <small>70% of shop price, paid straight to the bank' + (near ? '' : ' · bring the car round') + '</small>', cls: n && near ? '' : 'muted', act: n && near ? function () { S.bank += val; bookSale(val); vs.cigs = {}; S.stats.wholesale = (S.stats.wholesale || 0) + val; sfx('cash'); toast('🚬 Wholesaled ' + n + ' packs for ' + money(val), 'good'); logEvent('🚬 Wholesaled ' + n + ' packs to the Corner Tobacconist for ' + money(val), 'good'); hud(); save(); } : null });
       lines.push({ label: 'Load cartons at your garage bay: E with Shift on the car.', cls: 'muted' }); ctxOpen('🚬 Corner Tobacconist', 'he takes as many RF Smoking cartons as you can bring', lines); return true; }
     if (poi === 'police') { var h = Math.round(X.heat), cost = 100 + h * 8; lines.push({ label: '🌡️ Your heat: ' + h + ' / 100 <small>' + (h >= 60 ? 'inspections are coming' : h >= 30 ? 'they have noticed you' : 'nobody is looking at you') + ' · park deals, fines and shootings raise it, time lowers it</small>', cls: 'muted' });
       lines.push({ label: '🤝 Donate ' + money(cost) + ' to the benevolent fund <small>heat -30</small>', cls: h > 0 && S.bank >= cost ? '' : 'muted', act: h > 0 && S.bank >= cost ? function () { S.bank -= cost; X.heat = Math.max(0, X.heat - 30); exp.heatBand = 0; sfx('cash'); toast('🤝 A generous citizen. Heat down to ' + Math.round(X.heat), 'good'); hud(); save(); } : null }); ctxOpen('🚔 Police precinct', 'front desk', lines); return true; }
@@ -3929,6 +3978,7 @@
     if (d.kind === 'generator') return S.upgrades.generator ? 'Generator <small>fuelled and on standby</small>' : 'Generator <small>buy it for ' + money(1400) + ' · power cuts stop touching you</small>';
     if (d.kind === 'roster') return 'Staff roster <small>hire a driver, a basement operator, a night guard</small>';
     if (d.kind === 'bagLine') return S.upgrades.bagline ? 'Trim & bag line <small>' + (X.bagline.on ? 'running' : 'off') + ' · ' + (S.supplies.bag || 0) + ' baggies</small>' : 'Trim & bag line <small>install for ' + money(900) + '</small>';
+    if (d.kind === 'dropoff' && X.jobs[d.idx] && X.jobs[d.idx].via === 'branch') { var bh = held(), brm = branchRoom(); return '🏪 Green Leaf, your branch <small>' + (brm <= 0 ? 'stocked for today · back tomorrow' : isGoods(bh) ? 'E puts ' + Math.min(bh.n, brm) + ' ' + kindName(bh.kind, Math.min(bh.n, brm)) + ' on its shelves · ' + money(BRANCH_PAY) + ' each tomorrow' : 'bring bags, joints or cookies · ' + brm + ' more today') + '</small>'; }
     if (d.kind === 'dropoff') { var J = X.jobs[d.idx]; if (!J) return ''; var lt = Math.max(0, Math.ceil((J.until - now()) / 1000)); return (J.via === 'tablet' ? '📋 Round drop · ' : '📱 Phone customer · ') + J.addr + ' <small>wants ' + J.qty + ' × ' + jobGoods(J) + ' · ' + Math.floor(lt / 60) + 'm ' + (lt % 60) + 's left' + (J.via === 'tablet' ? ' · takes them out of the car' : '') + '</small>'; }
     if (d.kind === 'tabletDock') return hasLic('tobacco') ? (X.tablet === 'dock' ? 'Delivery tablet <small>E takes it · J reads the round anywhere</small>' : 'Tablet dock <small>the tablet is ' + (X.tablet === 'car' ? 'in the car' : 'in your hands') + ' · E puts it back</small>') : 'Tablet dock <small>dead until you hold the tobacco licence</small>';
     return '';
@@ -3948,7 +3998,7 @@
   }
   function drawMapExtras(ctx, mx, mz, W, H) {
     var X = xs();
-    X.jobs.forEach(function (j, i) { var col = j.via === 'tablet' ? '#ffc857' : '#6fdc8c'; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(mx(j.x), mz(j.z), 9 + (now() / 200 % 6), 0, 6.29); ctx.stroke(); ctx.fillStyle = col; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('#' + (i + 1), mx(j.x), mz(j.z) + 4); });
+    X.jobs.forEach(function (j, i) { var col = j.via === 'branch' ? '#7fd4ff' : j.via === 'tablet' ? '#ffc857' : '#6fdc8c'; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(mx(j.x), mz(j.z), 9 + (now() / 200 % 6), 0, 6.29); ctx.stroke(); ctx.fillStyle = col; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('#' + (i + 1), mx(j.x), mz(j.z) + 4); });
     if (exp.getaway) { ctx.fillStyle = '#ff5a4a'; ctx.fillRect(mx(exp.getaway.g.position.x) - 5, mz(exp.getaway.g.position.z) - 5, 10, 10); }
     ctx.textAlign = 'left'; ctx.fillStyle = '#8fa89a'; ctx.font = '12px system-ui'; ctx.fillText(season() + ' · day ' + S.day + (weekend() ? ' (weekend)' : '') + ' · ' + X.weather.kind, W + 22, H - 90); ctx.fillStyle = X.heat >= 60 ? '#ff6b6b' : X.heat >= 30 ? '#ffc857' : '#8fa89a'; ctx.fillText('Police heat ' + Math.round(X.heat) + ' / 100', W + 22, H - 68);
   }
@@ -4522,11 +4572,15 @@
   var LOBBY_STOPS = {
     vend:   { prop: 'vending',     off: 0.85, dur: 4.5, act: 1.4 },
     arcade: { prop: 'arcade',      off: 0.85, dur: 9,   act: 1.2 },
-    coffee: { prop: 'lobbyCoffee', off: 0.8,  dur: 5.5, act: 1.8 }
+    coffee: { prop: 'lobbyCoffee', off: 0.8,  dur: 5.5, act: 1.8 },
+    fridge: { prop: 'fridge',      off: 0.8,  dur: 4,   act: 1.5 }
   };
+  function lobbyFridges() {   // drinks fridges a customer can walk up to: stood in the lobby, with something cold in them
+    return builtUnits('fridge').filter(function (u) { var P = propPlacement(u); return !P.floor && roomOf(P.x, P.z) === 'lobby' && (machState(u).fridge || 0) > 0; });
+  }
   function builtUnits(base) { return unitIds(base).filter(function (u) { return propInst[u] && !propPlacement(u).hidden; }); }
-  function lobbyStop(kind) {
-    var t = LOBBY_STOPS[kind], open = builtUnits(t.prop); if (!open.length) return null;
+  function lobbyStop(kind, unit) {
+    var t = LOBBY_STOPS[kind], open = unit ? [unit] : builtUnits(t.prop); if (!open.length) return null;
     var P = propPlacement(pick(open)), r = ((P.rot % 4) + 4) % 4;
     var dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r];   // the prop's front, in quarter turns: 0 is +z
     return { x: P.x + dx * t.off, z: P.z + dz * t.off, yaw: Math.atan2(-dx, -dz), dur: t.dur, act: t.act };
@@ -4542,11 +4596,13 @@
   // everything in the lobby is reached along a corridor at z 6.6 (clear of the posts and the guard), then straight to the spot
   function lobbyPath(from, to) { var p = []; if (Math.abs(from.z - 6.6) > 0.1) p.push({ x: from.x, z: 6.6 }); if (Math.abs(from.x - to.x) > 0.1) p.push({ x: to.x, z: 6.6 }); p.push({ x: to.x, z: to.z }); return p; }
   // what a paid-up customer feels like doing before leaving
+  function unitRoll(n, p) { for (var i = 0; i < Math.min(3, n); i++) if (Math.random() < p) return true; return false; }   // one roll per machine standing, up to three: a second machine catches people the first one missed
   function planFor(c) {
     var plan = [];
-    if (hasLic('catering') && (S.vendStock.drink > 0 || S.vendStock.snack > 0) && Math.random() < 0.35) plan.push({ kind: 'vend' });
-    if (hasLic('catering') && S.upgrades.lobby && propInst.lobbyCoffee && S.coffeeStock.cup > 0 && S.coffeeStock.beans > 0 && Math.random() < 0.4) plan.push({ kind: 'coffee' });
-    if (hasLic('amusement') && propInst.arcade && Math.random() < 0.25) plan.push({ kind: 'arcade' });
+    if (hasLic('catering') && vendKeys().length && unitRoll(builtUnits('vending').length, 0.35)) plan.push({ kind: 'vend' });
+    if (hasLic('catering') && S.upgrades.lobby && S.coffeeStock.cup > 0 && S.coffeeStock.beans > 0 && unitRoll(builtUnits('lobbyCoffee').length, 0.4)) plan.push({ kind: 'coffee' });
+    if (hasLic('catering')) { var frs = lobbyFridges(); if (unitRoll(frs.length, 0.3)) plan.push({ kind: 'fridge', unit: pick(frs) }); }   /* a cold can from a fridge stood out in the lobby */
+    if (hasLic('amusement') && unitRoll(builtUnits('arcade').length, 0.25)) plan.push({ kind: 'arcade' });
     if (hasLic('lounge') && c.want === 'joints' && Math.random() < 0.4) { var seat = freeLoungeSeat(); if (seat) plan.push({ kind: 'bench', seat: seat }); }
     return plan;
   }
@@ -4577,7 +4633,7 @@
     l.step++; var st = l.plan[l.step]; var from = { x: l.g.position.x, z: l.g.position.z }; l.t = 0;
     if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = [{ x: from.x, z: 6.6 }, { x: 0.4, z: 7.9 }, { x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]; return; }
     if (st.kind === 'bench') { l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
-    else { var s = lobbyStop(st.kind); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
+    else { var s = lobbyStop(st.kind, st.unit); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useUnit = st.unit; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
   }
   // the machine does its thing: you get paid, they get something to hold
   function lobbyServe(l) {
@@ -4587,13 +4643,23 @@
       loungerSay(l, pick(['one more go', 'high score!', 'argh, so close']), '#ffd166'); logEvent('🕹️ ' + l.who + ' played the arcade (+$1 in the coin box)', '');
       return;
     }
+    if (l.useKind === 'fridge') {   // $2 a can out of the fridge they walked up to, into the vending box
+      var FM = machState(l.useUnit || 'fridge');
+      if ((FM.fridge || 0) <= 0) { loungerSay(l, 'fridge is empty? 😒', '#ff6b6b'); logEvent('🧊 ' + l.who + ' found the drinks fridge empty', 'bad'); return; }
+      FM.fridge--; S.box.vend += 2; S.stats.fridge = (S.stats.fridge || 0) + 1; sfx('pickup'); syncFridge(l.useUnit || 'fridge');
+      var cold = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(0x3ad0ff, 0.4, 0.3)); cold.position.set(0, -0.37, 0.03); le.add(cold);
+      loungerSay(l, pick(['ice cold 🧊', 'cheers', 'just what I needed']), '#e8f1ea');
+      toast('🧊 ' + l.who + ' took a cold drink from the fridge (+$2 in the vending box)', ''); logEvent('🧊 ' + l.who + ' bought a cold drink from the fridge (+$2)', '');
+      return;
+    }
     if (l.useKind === 'vend') {
-      var pickDrink = S.vendStock.drink > 0 && (S.vendStock.snack <= 0 || Math.random() < 0.6);
-      if (!pickDrink && S.vendStock.snack <= 0) { loungerSay(l, 'sold out?! 😒', '#ff6b6b'); logEvent('🥤 ' + l.who + ' found the vending machine empty', 'bad'); return; }
-      if (pickDrink) S.vendStock.drink--; else S.vendStock.snack--;
+      var vks = vendKeys(); if (!vks.length) { loungerSay(l, 'sold out?! 😒', '#ff6b6b'); logEvent('🥤 ' + l.who + ' found the vending machine empty', 'bad'); return; }
+      var vroll = Math.random() * vks.reduce(function (a, k) { return a + S.vendStock[k]; }, 0), vk = vks[vks.length - 1]; for (var vi = 0; vi < vks.length; vi++) { vroll -= S.vendStock[vks[vi]]; if (vroll < 0) { vk = vks[vi]; break; } }   /* whatever is on the racks, in proportion to how much of it there is */
+      var pickDrink = vk === 'drink'; S.vendStock[vk]--;
       S.box.vend += 2; S.stats.vend = (S.stats.vend || 0) + 1; sfx('vend');
       var can = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(pick([0xffd166, 0x3ad0ff, 0x6fdc8c, 0xff8c42]), 0.4, 0.3)); can.position.set(0, -0.37, 0.03); le.add(can);
-      toast('🥤 ' + l.who + (pickDrink ? ' got a drink' : ' got a snack') + ' from the machine (+$2 in the box)', ''); logEvent('🥤 ' + l.who + (pickDrink ? ' bought a drink' : ' bought a snack') + ' from the vending machine (+$2)', '');
+      var vwhat = pickDrink ? 'a drink' : vk === 'snack' ? 'a snack' : 'something from the ' + itemName(vk).toLowerCase();
+      toast('🥤 ' + l.who + ' got ' + vwhat + ' from the machine (+$2 in the box)', ''); logEvent('🥤 ' + l.who + ' bought ' + vwhat + ' from the vending machine (+$2)', '');
       if (propInst.vending) burst(ROOM.x - 1.0, 0.5, 6.8, 0xffffff, 6, 'up');
     } else {
       if (S.coffeeStock.cup <= 0 || S.coffeeStock.beans <= 0) { loungerSay(l, 'no coffee?! 😩', '#ff6b6b'); logEvent('☕ ' + l.who + ' found the coffee machine empty', 'bad'); return; }
@@ -6384,6 +6450,8 @@
     toast(M.vendDoor ? '🔧 Machine open — the racks are out, load drinks or snacks straight in' : '🔒 Machine closed', M.vendDoor ? '' : 'good');
     vendDisplay(id, M.vendDoor ? 'SERVICE' : 'READY'); save();
   }
+  function isVendItem(k) { var it = supplyById(k); return k === 'drink' || k === 'snack' || !!(it && it.stock === 'vend'); }   // anything a pack marks for the vending machine goes on its racks
+  function vendKeys() { return Object.keys(S.vendStock).filter(function (k) { return (S.vendStock[k] || 0) > 0 && isVendItem(k); }); }   // what is on the racks right now
   function vendDispense(id, item) {   // a coil turns, the item falls, and it lands in the tray
     var M = machState(id);
     if ((S.vendStock[item] || 0) <= 0) { toast('The machine is out of ' + (item === 'drink' ? 'drinks' : 'snacks'), 'bad'); vendDisplay(id, 'SOLD OUT'); return false; }
@@ -6579,7 +6647,7 @@
     toast('💵 ' + c.who + ' is paying by ' + c.pay + ' — ring it up at the register', ''); hud();
   }
   // what a cash customer holds out: sometimes exact, usually the next round note above the total
-  function accIcon(id) { return { lighter: '🔥', rpaper: '📄', rgrinder: '⚙️' }[id] || '🛒'; }
+  function accIcon(id) { return { lighter: '🔥', rpaper: '📄', rgrinder: '⚙️' }[id] || (supplyById(id) && supplyById(id).ico) || '🛒'; }
   function kindIcon(k) { return { bags: '🛍️', joints: '🚬', cookies: '🍪' }[k] || '📦'; }
   // the order as separate rows: main lines with given/qty, then the counter-display extras
   function orderRows(c) {
@@ -6635,6 +6703,12 @@
     if (c.pay === 'card') S.bank += Math.round(total * (S.upgrades.fintech ? 1.03 : 1)); else S.till += c.tendered - c.changeGiven;   // card settles straight to the bank, cash sits in the drawer
     if (c.matched && !c.subbed && Math.random() < 0.35) { var tipAmt = randi(1, 3) * (S.upgrades.tipjar ? 2 : 1); S.tips += tipAmt; logEvent('🫙 ' + c.who + ' dropped ' + money(tipAmt) + ' in the tip jar', ''); }
     S.stats.sold += c.qty; bookSale(total); S.rep += rep; gainXp(Math.round(total / 8));
+    if (c.id && !c.id.ok && (c.idDodgy || c.idPending)) {   /* waved through on a bad card and nobody caught it: the sale is on you, same as serving it knowingly */
+      c.idDodgy = false; c.idPending = false; addHeat(12); S.rep = Math.max(0, S.rep - 4);
+      logEvent('🪪 Sold to ' + c.who + ' on an ID that was ' + ID_FLAWS[c.id.flaw].why + ' (heat +12, rep -4)', 'bad');
+      toast('🪪 ' + c.who + ' was served on a bad ID (heat +12, rep -4)', 'bad');
+      if (Math.random() < 0.3) policeFine('Serving on an invalid ID');
+    }
     logEvent('💵 Sold ' + c.qty + ' ' + c.want + ' to ' + c.who + ' — ' + money(total) + ' by ' + c.pay + (note ? ' · ' + note : '') + ' (+' + rep + ' rep)', c.premium ? 'rare' : 'good');
     toast('💵 ' + money(total) + '  +' + rep + ' rep' + (note ? ' · ' + note : ''), 'good'); sfx('cash'); registerSale(c.who + ' ' + money(total));
     burst(npc.g.position.x, 1.4, npc.g.position.z - 0.3, 0xffd766, 40, 'up');
@@ -6654,13 +6728,19 @@
       finalizeSale(1, 'exact change');
     }
   };
-  // walk-in sale at the register: whatever is in your hands goes for the board price
+  // walk-up sale at the register: a cash sale to nobody in particular, so it pays under the board price and the till takes only so many a day
+  var WALKUP_RATE = 0.85, WALKUP_CAP = 12;
+  function walkupLeft() { return S.regDay !== (S.day || 1) ? WALKUP_CAP : Math.max(0, WALKUP_CAP - (S.regSold || 0)); }
   function sellHeld() {
     var h = held(); if (!h || (h.kind !== 'joints' && h.kind !== 'bags' && h.kind !== 'cookies')) { toast('Bring bags, joints or cookies to the register to sell', 'bad'); return; }
-    var q = h.qSum / h.n, thc = h.thcSum / h.n; var each = unitPrice(h.kind, q, thc); var total = each * h.n;
-    S.till += total; S.stats.sold += h.n; bookSale(total); S.rep += (q > 80 ? 2 : q > 60 ? 1 : 0) * Math.min(h.n, 3); gainXp(Math.round(total / 8));
-    logEvent('💵 Rang up ' + h.n + ' ' + h.kind + ' — ' + money(total), 'good'); toast('💵 ' + money(total), 'good'); sfx('cash'); registerSale(h.n + ' ' + h.kind + ' ' + money(total));
-    burst(-1.0, 1.4, 4.9, 0xffd766, 30, 'up'); S.held = null;
+    if (S.regDay !== (S.day || 1)) { S.regDay = S.day || 1; S.regSold = 0; }
+    var room = walkupLeft(); if (room <= 0) { sfx('bad'); toast('🧾 The till is closed to walk-ups until tomorrow. Serve the customers at the window instead', 'bad'); return; }
+    var kind = h.kind, n = Math.min(h.n, room), q = h.qSum / h.n, thc = h.thcSum / h.n; var each = unitPrice(kind, q, thc) * WALKUP_RATE; var total = each * n;
+    S.till += total; S.stats.sold += n; S.regSold = (S.regSold || 0) + n; bookSale(total); S.rep += (q > 80 ? 2 : q > 60 ? 1 : 0) * Math.min(n, 3); gainXp(Math.round(total / 8));
+    h.n -= n; h.qSum -= q * n; h.thcSum -= thc * n; if (h.n <= 0) S.held = null;
+    var left = walkupLeft();
+    logEvent('💵 Rang up ' + n + ' ' + kind + ' as a walk-up sale: ' + money(total), 'good'); toast('💵 ' + money(total) + ' for ' + n + ' ' + kindName(kind, n) + ' at the walk-up rate' + (h.n > 0 ? ' (no more walk-ups today, the rest stays in your hands)' : ' (' + left + ' walk-up sales left today)'), 'good'); sfx('cash'); registerSale(n + ' ' + kind + ' ' + money(total));
+    burst(-1.0, 1.4, 4.9, 0xffd766, 30, 'up');   /* hands only: nothing on the shelves changed */
   }
 
   // ── Interaction ───────────────────────────────────────────────────
@@ -6715,7 +6795,7 @@
     if (d.kind === 'goodsShelf') { if (isLocked('goodsShelf')) return 'Goods shelf <small>🔒 locked · Shift+E with the keyring</small>'; if (!shutterOpen('goodsShelf')) return 'Goods shelf <small>gate down · E rolls it up' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; return 'Goods shelf <small>' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints · aim at a strain' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; }
     if (d.kind === 'register' && heistDemander()) return 'Hand over the till <small>' + money(S.till + S.tips) + ' · nobody gets hurt</small>';
     if (d.kind === 'register' && h && h.kind === 'crate') return (supplyById(h.item) && supplyById(h.item).stock === 'display') ? 'Stock the counter display with ' + h.n + ' × ' + itemName(h.item) + ' <small>' + (S.display[h.item] || 0) + ' there now</small>' : 'That does not go on the counter';
-    if (d.kind === 'register') { if (S.customer && S.customer.stage) return 'Take payment from ' + S.customer.who + ' <small>' + money(S.customer.due) + ' by ' + S.customer.pay + '</small>'; if (!h && S.till > 0) return 'Empty the till <small>' + money(S.till) + ' · Shift+E opens the register</small>'; if (h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies')) return 'Ring up ' + h.n + ' ' + h.kind + ' <small>' + money(unitPrice(h.kind, h.qSum / h.n, h.thcSum / h.n) * h.n) + '</small>'; return 'Register <small>prices & diary · bring goods to sell</small>'; }
+    if (d.kind === 'register') { if (S.customer && S.customer.stage) return 'Take payment from ' + S.customer.who + ' <small>' + money(S.customer.due) + ' by ' + S.customer.pay + '</small>'; if (!h && S.till > 0) return 'Empty the till <small>' + money(S.till) + ' · Shift+E opens the register</small>'; if (h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies')) { var wl = walkupLeft(), wn = Math.min(h.n, wl); return wl <= 0 ? 'Till closed to walk-ups <small>back tomorrow · serve the window instead</small>' : 'Ring up ' + wn + ' ' + h.kind + ' as a walk-up <small>' + money(unitPrice(h.kind, h.qSum / h.n, h.thcSum / h.n) * wn * WALKUP_RATE) + ' at 85% · ' + wl + ' left today</small>'; } return 'Register <small>prices & diary · bring goods to sell</small>'; }
     if (d.kind === 'jar') { var b = batchById(d.bid); if (!b) return 'Jar'; if (h) return 'Hands full <small>G to put down</small>'; return 'Take jar <small>' + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + ' · curing</small>'; }
     if (d.kind === 'line') { if (h && h.kind === 'harvest') return 'Hang ' + gram(h.grams) + ' to dry'; var dr = S.batches.filter(function (b) { return !b.cured; }).length; return 'Drying line <small>' + dr + ' hanging' + (dr ? ' · ' + Math.round(dryPct() * 100) + '% dry' : '') + '</small>'; }
     if (d.kind === 'shelf') { var cured = S.batches.filter(function (b) { return b.cured; }).length; return 'Curing shelf <small>' + cured + ' jar' + (cured === 1 ? '' : 's') + ' curing · look at a jar to take it</small>'; }
@@ -6764,7 +6844,7 @@
     if (d.kind === 'storage') return 'Storage racks <small>' + (Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }).length || 'no') + ' items · aim at a crate to take it · Shift+E for the stock list</small>';
     if (d.kind === 'vault') return S.pocket > 0 ? 'Put ' + money(S.pocket) + ' in the vault <small>holds ' + money(S.vault) + ' · Shift+E opens it</small>' : 'Open the vault <small>holds ' + money(S.vault) + '</small>';
     if (d.kind === 'tips') return S.tips > 0 ? 'Empty the tip jar <small>' + money(S.tips) + '</small>' : 'Tip jar <small>empty</small>';
-    if (d.kind === 'vending') { var MM = machState(d.propId); if (h && h.kind === 'crate') return (h.item === 'drink' || h.item === 'snack') ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That does not go in here'; if (MM.vendDoor) return 'Machine open <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks · E buys one for $2' + (S.box.vend > 0 ? ' · Shift+E opens it, the box holds ' + money(S.box.vend) : ' · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'vending') { var MM = machState(d.propId); if (h && h.kind === 'crate') return isVendItem(h.item) ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That does not go in here'; if (MM.vendDoor) return 'Machine open <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks · E buys one for $2' + (S.box.vend > 0 ? ' · Shift+E opens it, the box holds ' + money(S.box.vend) : ' · Shift+E opens it') + '</small>'; }
     if (d.kind === 'fridge') { var FM2 = machState(d.propId); if (h && h.kind === 'crate') return h.item === 'drink' ? (FM2.fridgeDoor ? 'Load ' + h.n + ' drinks into the fridge' : 'Open the fridge first <small>Shift+E</small>') : 'Only drinks go in the fridge'; return 'Drinks fridge <small>' + (FM2.fridge || 0) + ' cold' + (FM2.fridgeDoor ? ' · E takes one · Shift+E shuts it' : ' · E takes one · Shift+E opens it') + '</small>'; }
     if (d.kind === 'coffeeCup') { var CM2 = machState(d.propId); return CM2.cup > 0 ? (machAnim(d.propId).brewT > 0 ? 'Pouring… <small>give it a second</small>' : 'Fresh coffee <small>E takes the cup</small>') : ''; }
     if (d.kind === 'vendTray') { var MT = machState(d.propId); return MT.tray.length ? 'Delivery tray <small>' + MT.tray.length + ' waiting · E takes one</small>' : ''; }
@@ -6801,6 +6881,8 @@
   function moldMult() { var r = S.rh.grow; return r > 60 ? 1 + (r - 60) / 12 : r < 45 ? 0.6 : 1; }
   function dryPct() { var m = 0; S.batches.forEach(function (b) { if (!b.cured) m = Math.max(m, dryProgress(b)); }); return m; }
   function batchById(bid) { for (var i = 0; i < S.batches.length; i++) if (S.batches[i].id === bid) return S.batches[i]; return null; }
+  function cureSlots() { return Math.max(2, S.supplies.jar || 0); }   // one batch cures per jar you own, and two always can so nobody is stuck
+  function jarWaits(b) { return !!b && b.cured && S.batches.filter(function (x) { return x.cured; }).indexOf(b) >= cureSlots(); }
   function interact() {
     if (sleep.on || player.downT > 0) return;
     var ht = held(); if (ht && ht.kind === 'tablet' && (!focus || focus.data.kind === 'tabletDock')) { if (focus) tabletTake(); else jobsPanel(); return; }   /* the thing in your hands is a screen: E reads it, unless you are putting it back on its dock */
@@ -6896,12 +6978,12 @@
       var MD = machState(d.propId), shift = player.keys.ShiftLeft || player.keys.ShiftRight;
       if (shift) { vendDoorToggle(d.propId); }
       else if (h && h.kind === 'crate') {
-        if (h.item !== 'drink' && h.item !== 'snack') toast('That does not go in the vending machine', 'bad');
+        if (!isVendItem(h.item)) toast('That does not go in the vending machine', 'bad');
         else if (!MD.vendDoor) toast('Open the machine first — Shift+E', 'bad');
-        else { S.vendStock[h.item] += h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncVending(); }
+        else { S.vendStock[h.item] = (S.vendStock[h.item] || 0) + h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + vendKeys().map(function (k) { return S.vendStock[k] + ' ' + itemName(k).toLowerCase(); }).join(' · ') + ' on the racks)', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncVending(); }
       }
       else if (MD.vendDoor) { var vb2 = S.box.vend; if (vb2 > 0 && takeCash(vb2, 'vending machine')) { S.box.vend = 0; vendDisplay(d.propId, 'SERVICE'); } else toast('Load drinks or snacks onto the racks, or Shift+E to shut it', ''); }
-      else { var pickV = (S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'; vendDispense(d.propId, pickV); }
+      else { var pickV = vendKeys().sort(function (a, b) { return (S.vendStock[b] || 0) - (S.vendStock[a] || 0); })[0] || ((S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'); vendDispense(d.propId, pickV); }
     }
     else if (d.kind === 'vendTray') { vendTakeTray(d.propId); }
     else if (d.kind === 'fridge') {
@@ -6988,7 +7070,7 @@
   }
   function ctxShelf() {
     var lines = [];
-    S.batches.forEach(function (b) { var drying = !b.cured; var dp = dryProgress(b); lines.push({ label: (drying ? '🌬️ ' : '🏺 ') + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + (drying ? ' · drying ' + Math.round(dp * 100) + '%' : ' · curing, quality rising') }); });
+    S.batches.forEach(function (b) { var drying = !b.cured; var dp = dryProgress(b); lines.push({ label: (drying ? '🌬️ ' : '🏺 ') + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + (drying ? ' · drying ' + Math.round(dp * 100) + '%' : jarWaits(b) ? ' · waiting for a jar (buy one at the laptop)' : ' · curing, quality rising') }); });
     if (!lines.length) lines.push({ label: 'Nothing here yet — harvest a plant and hang it on the line' });
     lines.push({ label: 'Dried batches jar themselves on the shelf. Look at a jar and press E to carry it to the bench.', cls: 'muted' });
     ctxOpen('🏺 Drying & curing', (S.upgrades.rack ? 'rack installed · faster, higher cap' : 'quality keeps rising while a batch cures') + ' · RH ' + Math.round(S.rh.dry) + '% · drying ×' + dryFactor().toFixed(1), lines);
@@ -7118,7 +7200,7 @@
       var d = PROPS[base]; if (!d || !d.multi) return;
       var have = unitCount(base), full = have >= d.multi.max, locked = unitLock(base);
       h += '<div class="g3-row"><span class="ico">' + d.multi.ico + '</span><span class="meta"><span class="n">' + (d.multi.name || d.label.replace(/^./, function (m2) { return m2.toUpperCase(); })) + '</span><span class="own">' + have + ' of ' + d.multi.max +
-        (locked ? ' · needs the ' + locked : full ? ' · the shop is full' : '') + '</span></span>' +
+        (locked ? ' · needs the ' + locked : full ? ' · the shop is full' : '') + (base === 'fridge' ? ' · one stood in the lobby sells cold drinks to customers at $2 a can, with the catering permit' : '') + '</span></span>' +
         (full || locked ? '<span class="g3-tier">' + (full ? 'max' : '🔒') + '</span>' : '<button class="g3-btn primary" data-act="buyUnit" data-id="' + base + '">' + money(machCost(base, have + 1)) + '</button>') + '</div>';
     });
     h += '</div><div class="g3-box"><h3>📈 Business</h3><div class="g3-chips">' + chip('market', S.market.toFixed(2) + '×') + chip('rep', Math.floor(S.rep)) + chip('price mult', '×' + repMult().toFixed(2)) + chip('level', S.level) + '</div><div class="desc">Reputation adds up to 10% to a price and brings people through the door. Connoisseurs (🎩) pay 2.2× for quality 70+.</div>' + paneStatsInner() + '</div></div>';
@@ -7127,7 +7209,7 @@
   function paneProcess() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🏺 Drying &amp; curing</h3><div class="desc">Harvests hang on the line by the back wall, then jar themselves on the shelf and keep gaining quality. Carry a jar here to empty it into the stash.</div>';
     if (!S.batches.length) h += '<div class="g3-empty">Nothing drying or curing. Harvest a plant and hang it on the line.</div>';
-    S.batches.forEach(function (b) { var drying = !b.cured; var dp = dryProgress(b); h += '<div class="g3-row"><span class="ico">' + (drying ? '🌬️' : '🏺') + '</span><span class="meta"><span class="n">' + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + '</span><span class="own">' + (drying ? 'drying ' + Math.round(dp * 100) + '% on the line' : 'curing in a jar on the shelf — carry it over when you like') + '</span><div class="g3-bar' + (drying ? '' : ' q') + '"><span style="width:' + Math.round((drying ? dp : b.quality / 100) * 100) + '%"></span></div></span></div>'; });
+    S.batches.forEach(function (b) { var drying = !b.cured; var dp = dryProgress(b); h += '<div class="g3-row"><span class="ico">' + (drying ? '🌬️' : '🏺') + '</span><span class="meta"><span class="n">' + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + '</span><span class="own">' + (drying ? 'drying ' + Math.round(dp * 100) + '% on the line' : jarWaits(b) ? 'waiting for a jar: ' + cureSlots() + ' batches cure at once, buy another jar at the laptop' : 'curing in a jar on the shelf — carry it over when you like') + '</span><div class="g3-bar' + (drying ? '' : ' q') + '"><span style="width:' + Math.round((drying ? dp : b.quality / 100) * 100) + '%"></span></div></span></div>'; });
     h += '</div><div class="g3-box"><h3>✂️ Processing</h3><div class="desc">' + (S.supplies.grinder ? 'Grinder on the bench.' : '⚠ Buy a grinder at the laptop to process.') + '</div><div class="g3-chips">' + chip('stash', gram(S.cured.g) + (S.cured.g ? ' · q' + Math.round(curedAvgQ()) : '')) + chip('baggies', S.supplies.bag || 0) + chip('papers', S.supplies.paper || 0) + chip('tips', S.supplies.tip || 0) + chip('cookie mix', S.supplies.mix || 0) + '</div>' +
       '<div class="desc">' + (S.upgrades.grinder2 ? 'Electric grinder' : 'Hand grinder: you turn it') + ' · ' + (S.upgrades.bagger ? 'auto-bagging line' : S.upgrades.scale ? 'digital scale' : 'kitchen scale: you weigh each eighth') + ' · ' + (S.upgrades.roller ? (S.upgrades.roller2 ? 'industrial roller' : 'rolling machine') : 'hand rolled') + ' · ' + (S.upgrades.oven ? 'convection oven' : 'home oven: you watch the bake') + '</div>' +
       STRAINS.filter(function (st) { return stashOf(st.id).g > 0; }).map(function (st) { var s = stashOf(st.id); return '<div class="g3-row"><span class="ico">' + st.emoji + '</span><span class="meta"><span class="n">' + st.name + ' <small>' + gram(s.g) + ' · q' + Math.round(s.qSum / s.g) + '</small></span><span class="own">bags ' + lotOf('bags', st.id).n + ' · joints ' + lotOf('joints', st.id).n + ' · cookies ' + lotOf('cookies', st.id).n + ' on the shelf</span></span></div><div class="g3-chips"><button class="g3-btn primary" data-act="bagOne" data-id="' + st.id + '">🛍️ Bag ' + bagGrams() + ' g</button>' + (S.upgrades.bagger ? '<button class="g3-btn" data-act="bagAll" data-id="' + st.id + '">🛍️ Bag all</button>' : '') + '<button class="g3-btn primary" data-act="rollOne" data-id="' + st.id + '">🚬 Roll ' + (S.upgrades.roller ? (S.upgrades.roller2 ? '10' : '5') : '1') + '</button>' + (S.upgrades.roller ? '<button class="g3-btn" data-act="rollAll" data-id="' + st.id + '">🚬 Roll all</button>' : '') + '<button class="g3-btn primary" data-act="bakeOne" data-id="' + st.id + '">🍪 Bake 6</button>' + (S.upgrades.oven ? '<button class="g3-btn" data-act="bakeAll" data-id="' + st.id + '">🍪 Bake all</button>' : '') + '</div>'; }).join('') +
@@ -7211,11 +7293,11 @@
     else h += '<div class="desc">That is as many as the shop floor will take.</div>';
     h += '</div><div class="g3-box"><h3>🛡️ Security · ' + (guardOff() ? 'off shift' : 'on the door') + '</h3>' +
       '<button class="g3-btn wide' + (guardOff() ? ' primary' : '') + '" data-act="guardShift">' + (guardOff() ? '📞 Call security in' : '🏠 Send security home') + '</button>' +
-      '<div class="desc">The guard checks IDs at the door by default. Send him on a patrol to keep robbers away and break up fights faster, or give him a chore. He always comes back to the door when someone walks in. <b>Shift+E</b> on him works too.</div><div class="g3-chips">' + GUARD_TASKS.map(function (t) { return '<button class="g3-btn' + (st.guardTask === t[0] ? ' primary' : '') + '" data-act="guardTask" data-id="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div></div></div>';
+      '<div class="desc">The guard checks IDs at the door by default. Send him on a patrol to keep robbers away and break up fights faster, or give him a chore. He always comes back to the door when someone walks in. <b>Shift+E</b> on him works too. He draws ' + money(COST.guardWage) + ' a day on the morning bill while he is on shift.</div><div class="g3-chips">' + GUARD_TASKS.map(function (t) { return '<button class="g3-btn' + (st.guardTask === t[0] ? ' primary' : '') + '" data-act="guardTask" data-id="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div></div></div>';
     return h;
   }
   function paneRegister() {
-    var h = '<div class="g3-grid"><div class="g3-box"><h3>💵 Price board</h3><div class="desc">Market ' + S.market.toFixed(2) + '× · reputation ' + Math.floor(S.rep) + ' (×' + repMult().toFixed(2) + ' price). Bring goods to the register (E) to ring them up, or hand them to a customer.</div>';
+    var h = '<div class="g3-grid"><div class="g3-box"><h3>💵 Price board</h3><div class="desc">Market ' + S.market.toFixed(2) + '× · reputation ' + Math.floor(S.rep) + ' (×' + repMult().toFixed(2) + ' price). Hand goods to a customer at the window for the full price. Rung up at the register (E) as a walk-up sale they fetch 85%, and the till takes ' + WALKUP_CAP + ' of those a day (' + walkupLeft() + ' left today).</div>';
     if (S.customer && S.customer.stage) h += panePayment(S.customer);
     h += '<div class="g3-chips">' + chip('in the till', money(S.till)) + chip('pocket', money(S.pocket)) + chip('lighters', S.display.lighter || 0) + chip('papers', S.display.rpaper || 0) + chip('grinders', S.display.rgrinder || 0) + '</div>' + (S.till > 0 ? '<button class="g3-btn wide" data-act="tillEmpty">👛 Empty the till into my pocket · ' + money(S.till) + '</button>' : '');
     if (S.customer && !S.customer.arrived) h += '<div class="g3-customer"><span class="avatar">' + S.customer.avatar + '</span><span style="flex:1"><span class="who">' + S.customer.who + '</span><span class="req">just walked in — security is checking ID. You will hear the order at the window.</span></span></div>';
@@ -7226,7 +7308,7 @@
     STRAINS.forEach(function (st) { var bg = lotOf('bags', st.id), jt = lotOf('joints', st.id), ck = lotOf('cookies', st.id); if (!bg.n && !jt.n && !ck.n) return; anyGoods = true;
       h += '<div class="g3-row"><span class="ico">' + st.emoji + '</span><span class="meta"><span class="n">' + st.name + '</span><span class="own">' + (bg.n ? bg.n + ' bags q' + Math.round(bg.qSum / bg.n) + ' · ' + money(bagPrice(bg.qSum / bg.n, bg.thcSum / bg.n)) + ' each' : 'no bags') + ' &nbsp;·&nbsp; ' + (jt.n ? jt.n + ' joints q' + Math.round(jt.qSum / jt.n) + ' · ' + money(jointPrice(jt.qSum / jt.n, jt.thcSum / jt.n)) + ' each' : 'no joints') + (ck.n ? ' &nbsp;·&nbsp; ' + ck.n + ' cookies q' + Math.round(ck.qSum / ck.n) + ' · ' + money(cookiePrice(ck.qSum / ck.n, ck.thcSum / ck.n)) + ' each' : '') + '</span></span></div>'; });
     if (!anyGoods) h += '<div class="g3-row"><span class="ico">🛍️</span><span class="meta"><span class="n">Board prices</span><span class="own">bags ' + money(bagPrice(curedAvgQ() || 60, curedAvgThc())) + ' · joints ' + money(jointPrice(curedAvgQ() || 60, curedAvgThc())) + ' at current stash quality — nothing packed yet</span></span></div>';
-    var hh = held(); if (hh && (hh.kind === 'joints' || hh.kind === 'bags' || hh.kind === 'cookies')) h += '<button class="g3-btn primary wide" data-act="sellHeld">💵 Ring up what I am holding (' + hh.n + ' ' + hh.kind + ')</button>';
+    var hh = held(); if (hh && (hh.kind === 'joints' || hh.kind === 'bags' || hh.kind === 'cookies')) h += '<button class="g3-btn primary wide" data-act="sellHeld"' + (walkupLeft() > 0 ? '' : ' disabled') + '>💵 Ring up what I am holding as a walk-up (' + Math.min(hh.n, walkupLeft()) + ' ' + hh.kind + ' at 85%)</button>';
     h += '</div><div class="g3-box"><h3>📜 Recent activity</h3>' + paneLogInner(14) + '</div></div>';
     return h;
   }
