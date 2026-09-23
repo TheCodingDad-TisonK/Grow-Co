@@ -14,5 +14,6 @@
 - [Save format](Save-Format)
 - [Building and releasing](Building-and-Releasing)
 - [Roadmap and ideas](Roadmap-and-Ideas)
+- [House style](House-Style)
 
 [Discord](https://discord.gg/8FcgxwJ3dM) · [Website](https://realisticfarming.com)

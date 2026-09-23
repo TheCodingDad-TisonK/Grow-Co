@@ -1,1 +1,1 @@
-Not a Farming Simulator product. A standalone hobby project. · A game by TheCodingDad · this wiki mirrors the [docs folder](https://github.com/TheCodingDad-TisonK/Grow-Co/tree/main/docs); edit there, not here.
+Not a Farming Simulator product. A standalone hobby project. · A game by TheCodingDad · This wiki mirrors the [docs folder](https://github.com/TheCodingDad-TisonK/Grow-Co/tree/main/docs). Edit there, not here.
