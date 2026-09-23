@@ -2069,21 +2069,22 @@
   var ROOM_DOORS = { grow: ['growDoor'], dry: ['dryDoor'], annex: ['dryDoor', 'annexDoor'], security: ['dryDoor', 'annexDoor'], office: ['officeDoor'], proc: ['procDoor'], lobby: ['procDoor', 'staffIn', 'staffDoor'], hall: [] };
   // ── Ground-floor pathfinding: A* over a 25 cm grid built from the obstacle boxes, then string-pulled so staff cut clean corners but never walls ──
   var NAV = { cell: 0.2, x0: -13, z0: -19, w: 0, h: 0, grid: null, raw: null, key: '', pad: 0.2 };   /* grid: locked doors are walls. raw: every door is open, which is how a man with a crowbar sees the place */
-  function navKey() { var k = world.obstacles.length, s = 0; for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (o.tag === 'guard') continue; s += o.x1 * 3.1 + o.z2 * 1.7; if (o.doorId) { var dk = doorById[o.doorId]; if (dk && dk.locked) s += 91.7; } }   /* doors count now, and locking one changes the key, so the grid is rebuilt the moment it matters */
+  function navKey() { var k = world.obstacles.length, s = 0; for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (o.tag === 'guard') continue; s += o.x1 * 3.1 + o.z2 * 1.7; if (o.doorId) { var dk = doorById[o.doorId]; if (dk && dk.locked) s += 91.7 + (staffKey(dk.id) ? 0 : 13.3); } }   /* doors count now, and locking one changes the key, so the grid is rebuilt the moment it matters */
     return k + ':' + s.toFixed(2); }
   function navBuild() {
     var cs = NAV.cell; NAV.w = Math.ceil(26 / cs) + 1; NAV.h = Math.ceil(33 / cs) + 1;
-    var grid = new Uint8Array(NAV.w * NAV.h), raw = new Uint8Array(NAV.w * NAV.h), pad = NAV.pad;
+    var grid = new Uint8Array(NAV.w * NAV.h), raw = new Uint8Array(NAV.w * NAV.h), staff = new Uint8Array(NAV.w * NAV.h), pad = NAV.pad;
     world.obstacles.forEach(function (o) {
       if ((o.floorLevel || 0) === 1 || o.floorLevel === -1 || o.tag === 'guard') return;
       var isDoor = !!o.doorId || o.tag === 'staffdoor' || o.tag === 'frontdoor';
       var dd = o.doorId ? doorById[o.doorId] : null;
       var blocks = !isDoor || !!(dd && dd.locked);   /* a shut door you can open is not a wall; a locked one is */
+      var staffBlocks = !isDoor || !!(dd && dd.locked && !staffKey(dd.id));   /* unless your crew hold a key to it */
       var x1 = Math.max(0, Math.round((o.x1 - pad - NAV.x0) / cs)), x2 = Math.min(NAV.w - 1, Math.round((o.x2 + pad - NAV.x0) / cs));
       var z1 = Math.max(0, Math.round((o.z1 - pad - NAV.z0) / cs)), z2 = Math.min(NAV.h - 1, Math.round((o.z2 + pad - NAV.z0) / cs));
-      for (var cz = z1; cz <= z2; cz++) for (var cx = x1; cx <= x2; cx++) { var ix = cz * NAV.w + cx; if (blocks) grid[ix] = 1; if (!isDoor) raw[ix] = 1; }
+      for (var cz = z1; cz <= z2; cz++) for (var cx = x1; cx <= x2; cx++) { var ix = cz * NAV.w + cx; if (blocks) grid[ix] = 1; if (staffBlocks) staff[ix] = 1; if (!isDoor) raw[ix] = 1; }
     });
-    NAV.grid = grid; NAV.raw = raw; NAV.key = navKey();
+    NAV.grid = grid; NAV.raw = raw; NAV.staff = staff; NAV.key = navKey();
   }
   var navG = null;   /* which of the two grids the walk being planned right now is using */
   function navFree(cx, cz) { return cx >= 0 && cz >= 0 && cx < NAV.w && cz < NAV.h && !(navG || NAV.grid)[cz * NAV.w + cx]; }
@@ -2092,7 +2093,7 @@
   function navLos(a, b) { var d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.ceil(d / 0.1); for (var i = 0; i <= n; i++) { var t = n ? i / n : 0; if (!navFreeAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return false; } return true; }
   function navPath(from, to, thruDoors) {
     if (!NAV.grid || navKey() !== NAV.key) navBuild();
-    navG = thruDoors ? NAV.raw : NAV.grid;
+    navG = thruDoors === 'staff' ? NAV.staff : thruDoors ? NAV.raw : NAV.grid;   /* 'staff': locked doors they hold a key for are open to them */
     var W = NAV.w, H = NAV.h, cs = NAV.cell;
     var s = navNearest(Math.round((from.x - NAV.x0) / cs), Math.round((from.z - NAV.z0) / cs)), t = navNearest(Math.round((to.x - NAV.x0) / cs), Math.round((to.z - NAV.z0) / cs));
     if (!s || !t) return [{ x: to.x, z: to.z }];
@@ -2127,10 +2128,10 @@
     }
     return best;
   }
-  function npcDoors(g, floorLevel) {   // walk up to a door you can open and you open it
+  function npcDoors(g, floorLevel, keyholder) {   // walk up to a door you can open and you open it; staff with a key to a locked one let themselves through
     var d = doorAt(g.position, floorLevel); if (!d) return null;
-    if (d.locked) return d;
-    setDoor(d.id, true); return null;
+    if (d.locked) { if (keyholder && staffKey(d.id)) { staffPass(d); return null; } return d; }
+    setDoor(d.id, true); d.auto = 1; d.autoT = 0; return null;
   }
   var WORKER_HIRE = 400, WORKER_WAGE = COST.payRate, CREW_MAX = 3;
   // who turns up when you hire. Each hire costs more than the last and draws the same wage.
@@ -2325,10 +2326,10 @@
     worker = crew[0] || WORKER_NONE;
   }
   function updateOneWorker(dt) {
-    if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = now() + 6000; workerSay('that one is locked', '#ffc857', 2600); } }   /* a locked door is the end of that errand, not something to walk through */
+    if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0, true); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = now() + 6000; workerSay('that one is locked', '#ffc857', 2600); } }   /* a locked door is the end of that errand, not something to walk through */
     if (!worker.g) buildWorker(); var g = worker.g, spd = 1.5;
     if (worker.state === 'walk') { if (walkAlong(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animateHuman(worker.h, dt, 'walk', spd, null); return; }
-    if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z); worker.state = 'walk'; } } return; }
+    if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z, 'staff'); worker.state = 'walk'; } } return; }
     animateHuman(worker.h, dt, 'idle', 0, player.pos); worker.idleT += dt; if (worker.idleT < 0.7) return; worker.idleT = 0;
     var task = (crewList()[worker.idx] || {}).task || 'idle';
     var job = workerNextJob(task);
@@ -2343,10 +2344,10 @@
         workerSay(why, '#ffc857', 2600);
       }
     } else worker.nagT = 0;
-    if (job) { worker.job = job; worker.path = routeTo(g.position, job.x, job.z); worker.state = 'walk'; }
+    if (job) { worker.job = job; worker.path = routeTo(g.position, job.x, job.z, 'staff'); worker.state = 'walk'; }
   }
   // the guard walks with the same router; the door post keeps its obstacle only while he stands there
-  function guardGo(x, z, fn) { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); guard.path = routeTo(guard.h.position, x, z); guard.walking = true; guard.onArrive = fn || null; guard.toPost = Math.abs(x - WP.post.x) < 0.01 && Math.abs(z - WP.post.z) < 0.01; }
+  function guardGo(x, z, fn) { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); guard.path = routeTo(guard.h.position, x, z, 'staff'); guard.walking = true; guard.onArrive = fn || null; guard.toPost = Math.abs(x - WP.post.x) < 0.01 && Math.abs(z - WP.post.z) < 0.01; }
   function updateGuardTasks(dt) {   // returns true when it handled this frame
     var gt = S.staff && S.staff.guardTask || 'door';
     var wantPost = gt === 'door' || npc.state === 'enter' || npc.state === 'check' || guard.state === 'check';
@@ -3972,24 +3973,35 @@
   function doorPose(d) { var off = d.t * 1.2; d.g.position.x = d.x + (d.alongX ? off : 0); d.g.position.z = d.z + (d.alongX ? 0 : off); }
   function doorObstacle(d) { world.obstacles = world.obstacles.filter(function (o) { return o.doorId !== d.id; }); if (!d.open) world.obstacles.push({ x1: d.x - (d.alongX ? 0.62 : 0.12), x2: d.x + (d.alongX ? 0.62 : 0.12), z1: d.z - (d.alongX ? 0.12 : 0.62), z2: d.z + (d.alongX ? 0.12 : 0.62), tag: 'door', doorId: d.id, floorLevel: d.floor }); }
   function doorLed(d) { var c = d.locked ? 0xff3030 : 0x39d353; d.led.material.color.setHex(c); d.led.material.emissive.setHex(c); }
-  function setDoor(id, open, locked) { var d = doorById[id]; if (!d) return; if (locked !== undefined) d.locked = locked; if (d.locked) open = false; d.open = open; if (!S.doors) S.doors = {}; if (!S.doorLocks) S.doorLocks = {}; S.doors[id] = d.open; S.doorLocks[id] = d.locked; doorObstacle(d); doorLed(d); }
+  function setDoor(id, open, locked) { var d = doorById[id]; if (!d) return; if (locked !== undefined) { d.locked = locked; d.relock = false; } else if (!open && d.relock) { d.locked = true; d.relock = false; } if (d.locked) open = false; d.open = open; d.auto = 0; d.autoT = 0; if (!S.doors) S.doors = {}; if (!S.doorLocks) S.doorLocks = {}; S.doors[id] = d.open; S.doorLocks[id] = d.locked; doorObstacle(d); doorLed(d); }
   function doorsAll(what) { DOORS.forEach(function (d) { if (what === 'open') setDoor(d.id, true, false); else if (what === 'close') setDoor(d.id, false); else if (what === 'lock') setDoor(d.id, false, true); else setDoor(d.id, d.open, false); }); sfx('curtain'); save(); }
-  function toggleDoor(id) { var d = doorById[id]; if (!d) return; if (d.locked) { sfx('bad'); toast('🔒 Locked — unlock it at the shop control box', 'bad'); return; } if (d.open && player.floor === d.floor && Math.hypot(player.pos.x - d.x, player.pos.z - d.z) < 0.55) { toast('Step out of the doorway first', ''); return; } d.open = !d.open; if (!S.doors) S.doors = {}; S.doors[id] = d.open; doorObstacle(d); sfx('curtain'); save(); }
+  function toggleDoor(id) { var d = doorById[id]; if (!d) return; if (d.locked) { sfx('bad'); toast('🔒 Locked — unlock it at the shop control box', 'bad'); return; } if (d.open && player.floor === d.floor && Math.hypot(player.pos.x - d.x, player.pos.z - d.z) < 0.55) { toast('Step out of the doorway first', ''); return; } d.open = !d.open; d.auto = 0; if (!S.doors) S.doors = {}; S.doors[id] = d.open; if (!d.open && d.relock) { d.locked = true; d.relock = false; if (!S.doorLocks) S.doorLocks = {}; S.doorLocks[id] = true; doorLed(d); } doorObstacle(d); sfx('curtain'); save(); }
+  function staffKey(id) { return !(S.staffKeys && S.staffKeys[id] === false); }   // the crew and the guard carry a key to every door unless you take it back at the control box
+  function staffPass(d) { setDoor(d.id, true, false); d.relock = true; d.auto = 1; d.autoT = 0; if (!S.doorLocks) S.doorLocks = {}; S.doorLocks[d.id] = true; sfx('curtain'); }   /* a keyholder unlocks it, walks through and it locks again when it shuts; the save keeps it locked */
+  function folkNear(folk, x, z, r) { if (player.floor === 0 && Math.hypot(player.pos.x - x, player.pos.z - z) < r) return true; for (var i = 0; i < folk.length; i++) if (Math.hypot(folk[i].x - x, folk[i].z - z) < r) return true; return false; }
+  var staffDoorAuto = false, staffDoorClearT = 0;   // the staff door was opened by someone walking through, so it shuts itself again
   function updateDoors(dt) {
     var folk = []; crew.forEach(function (r) { if (r.g) folk.push(r.g.position); }); if (guard.h) folk.push(guard.h.position);
+    var keyed = folk.slice();   /* the crew and the guard: the only ones with keys */
     if (npc.g && npc.state !== 'away') folk.push(npc.g.position);
     loungers.forEach(function (l) { if (l.g) folk.push(l.g.position); });
     robbers.forEach(function (r) { if (r.g && r.state !== 'away' && r.state !== 'force') folk.push(r.g.position); });   /* a robber mid-break is handled by his own state, not by standing close */
     if (!shop().staffDoor && folk.length) {
       for (var sdi = 0; sdi < folk.length; sdi++) {
-        if (Math.abs(folk[sdi].x - 10) < 1.3 && Math.abs(folk[sdi].z - 4) < 1.1) { shop().staffDoor = true; syncStaffDoorObstacle(); sfx('curtain'); save(); break; }
+        if (Math.abs(folk[sdi].x - 10) < 1.3 && Math.abs(folk[sdi].z - 4) < 1.1) { shop().staffDoor = true; staffDoorAuto = true; staffDoorClearT = 0; syncStaffDoorObstacle(); sfx('curtain'); save(); break; }
       }
+    } else if (shop().staffDoor && staffDoorAuto) {   /* shuts 4 s after the last person is clear of it */
+      if (folkNear(folk, 10, 4, 1.4)) staffDoorClearT = 0; else if ((staffDoorClearT += dt) >= 4) { staffDoorAuto = false; staffDoorClearT = 0; shop().staffDoor = false; syncStaffDoorObstacle(); sfx('curtain'); save(); }
     }
     DOORS.forEach(function (d) {
       if (!d.open && !d.locked && d.floor === 0) {
         for (var i = 0; i < folk.length; i++) {   /* staff and visitors let themselves through anything that is not locked */
-          if (Math.hypot(folk[i].x - d.x, folk[i].z - d.z) < 1.1) { setDoor(d.id, true); sfx('curtain'); break; }
+          if (Math.hypot(folk[i].x - d.x, folk[i].z - d.z) < 1.1) { setDoor(d.id, true); d.auto = 1; d.autoT = 0; sfx('curtain'); break; }
         }
+      } else if (!d.open && d.locked && d.floor === 0 && staffKey(d.id)) {
+        for (var ki = 0; ki < keyed.length; ki++) if (Math.hypot(keyed[ki].x - d.x, keyed[ki].z - d.z) < 1.1) { staffPass(d); break; }
+      } else if (d.open && d.auto) {   /* opened by someone walking through: it slides shut 4 s after the last person is clear */
+        if (folkNear(folk, d.x, d.z, 1.4)) d.autoT = 0; else if ((d.autoT = (d.autoT || 0) + dt) >= 4) { setDoor(d.id, false); sfx('curtain'); }
       }
       var want = d.open ? 1 : 0;
       if (Math.abs(d.t - want) < 0.002) return;
@@ -5021,7 +5033,7 @@
     applyShopState();
   }
   function syncStaffDoorObstacle() { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'staffdoor'; }); if (!shop().staffDoor) world.obstacles.push(staffDoor.obstacle); }
-  function toggleStaffDoor() { shop().staffDoor = !shop().staffDoor; syncStaffDoorObstacle(); sfx('door'); toast(shop().staffDoor ? 'Staff door open' : 'Staff door closed', ''); applyShopState(); save(); }
+  function toggleStaffDoor() { shop().staffDoor = !shop().staffDoor; staffDoorAuto = false; syncStaffDoorObstacle(); sfx('door'); toast(shop().staffDoor ? 'Staff door open' : 'Staff door closed', ''); applyShopState(); save(); }
   function updateStaffDoor(dt) { if (!staffDoor.g) return; var staffNear = crew.some(function (r) { return r.g && Math.hypot(r.g.position.x - 10, r.g.position.z - 4) < 1.1; }) || (guard.h && guard.walking && Math.hypot(guard.h.position.x - 10, guard.h.position.z - 4) < 1.1); var target = (shop().staffDoor || staffNear) ? 1 : 0; staffDoor.t = lerp(staffDoor.t, target, 1 - Math.pow(0.01, dt)); staffDoor.g.rotation.y = -staffDoor.t * 1.75;
     if (world.frontDoor) { var fd = world.frontDoor; var ft = shop().open ? 1 : 0; fd.t = lerp(fd.t, ft, 1 - Math.pow(0.01, dt)); fd.g.rotation.y = fd.t * 1.6; } }
   function drawCtlScreen() {
@@ -5139,7 +5151,7 @@
       '<button class="g3-btn wide" data-act="staffDoorToggle">' + (sh.staffDoor ? '🚪 Close the staff door' : '🚪 Open the staff door') + '</button>' +
       '<h3 style="margin-top:12px">💡 Lights by room</h3><div class="g3-chips">' + Object.keys(ROOM_NAMES).map(function (r) { return '<button class="g3-btn' + (sh.lights && powerOn() && roomLit(r) ? ' primary' : '') + '" data-act="roomLight" data-id="' + r + '">' + ROOM_NAMES[r] + '</button>'; }).join('') + '</div>' +
       '<h3 style="margin-top:12px">🚪 Doors</h3><div class="g3-chips"><button class="g3-btn' + (world.rollerOpen ? ' primary' : '') + '" data-act="rollerToggle">Roller door ' + (world.rollerOpen ? 'open' : 'closed') + '</button><button class="g3-btn' + (world.gateOpen ? ' primary' : '') + '" data-act="gateToggle">Yard gate ' + (world.gateOpen ? 'open' : 'closed') + '</button><button class="g3-btn" data-act="tvNext">📺 TV: next channel</button></div>' +
-      '<div class="desc" style="margin-top:8px">Sliding doors: shut or open each one from here, and lock it. Staff carry keys; a locked door has to be forced by anyone else.</div>' + DOORS.map(function (d) { return '<div class="inv-row" style="display:flex;gap:6px;align-items:center;margin-top:4px"><span style="flex:1">' + (d.locked ? '🔒 ' : '🚪 ') + esc(d.name) + '</span><button class="g3-btn' + (d.open ? ' primary' : '') + '" data-act="doorToggle" data-id="' + d.id + '">' + (d.open ? 'open' : 'shut') + '</button><button class="g3-btn' + (d.locked ? ' primary' : '') + '" data-act="doorLock" data-id="' + d.id + '">' + (d.locked ? 'locked' : 'lock') + '</button></div>'; }).join('') +
+      '<div class="desc" style="margin-top:8px">Sliding doors: shut, open or lock each one from here. Your crew and the guard hold a key to every door marked staff key: they unlock it, walk through and it locks again behind them. Take a key back and they stop at that door. Anyone else has to force a locked door, and a door someone walks through slides shut 4 s after they are clear.</div>' + DOORS.map(function (d) { return '<div class="inv-row" style="display:flex;gap:6px;align-items:center;margin-top:4px"><span style="flex:1">' + (d.locked ? '🔒 ' : '🚪 ') + esc(d.name) + '</span><button class="g3-btn' + (d.open ? ' primary' : '') + '" data-act="doorToggle" data-id="' + d.id + '">' + (d.open ? 'open' : 'shut') + '</button><button class="g3-btn' + (d.locked ? ' primary' : '') + '" data-act="doorLock" data-id="' + d.id + '">' + (d.locked ? 'locked' : 'lock') + '</button><button class="g3-btn' + (staffKey(d.id) ? ' primary' : '') + '" data-act="doorKey" data-id="' + d.id + '">' + (staffKey(d.id) ? '🔑 staff key' : 'no staff key') + '</button></div>'; }).join('') +
       '<div class="inv-row" style="display:flex;gap:6px;margin-top:6px"><button class="g3-btn" data-act="doorsAll" data-id="open">Open all</button><button class="g3-btn" data-act="doorsAll" data-id="close">Shut all</button><button class="g3-btn" data-act="doorsAll" data-id="lock">🔒 Lock all</button><button class="g3-btn" data-act="doorsAll" data-id="unlock">Unlock all</button></div>' +
       '<h3 style="margin-top:12px">💲 Pricing</h3><div class="g3-slider"><label>Markup</label><input type="range" data-ctl="markup" min="0.8" max="1.3" step="0.05" value="' + (sh.markup || 1) + '"><small>' + Math.round((sh.markup || 1) * 100) + '%</small></div><div class="desc">Above 100% every price rises but customers come less often; below it the reverse.</div>' +
       '<h3 style="margin-top:12px">≡ Curtains</h3><div class="g3-chips">' + Object.keys(curtains).map(function (k) { return '<button class="g3-btn' + (curtainOpen(k) ? ' primary' : '') + '" data-act="curtainToggle" data-id="' + k + '">' + esc(curtains[k].label) + ' <b>' + (curtainOpen(k) ? 'open' : 'closed') + '</b></button>'; }).join('') + '</div>' +
@@ -7297,6 +7309,7 @@
     else if (act === 'tvNext') { tvCycle(); }
     else if (act === 'curtainToggle') { toggleCurtain(id); ui.refreshOpen(); }
     else if (act === 'doorToggle') { var dd = doorById[id]; if (dd) { setDoor(id, !dd.open, dd.open ? undefined : false); sfx('curtain'); save(); } ui.refreshOpen(); }
+    else if (act === 'doorKey') { if (doorById[id]) { if (!S.staffKeys) S.staffKeys = {}; S.staffKeys[id] = !staffKey(id); sfx('click'); save(); } ui.refreshOpen(); }
     else if (act === 'doorLock') { var dl = doorById[id]; if (dl) { setDoor(id, dl.open, !dl.locked); sfx('click'); save(); } ui.refreshOpen(); }
     else if (act === 'doorsAll') { doorsAll(id); ui.refreshOpen(); }
     else if (act === 'curtainsOpen') { setAllCurtains(true); toast('Curtains open', ''); }
