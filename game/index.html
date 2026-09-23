@@ -10,18 +10,18 @@
 </head>
 <body>
 <!-- The splash is plain markup so it is on screen from the first paint, before any script has run -->
-<div class="rf-front" id="rf-splash"><div class="rf-splash-inner"><img class="rf-splash-logo" src="wordmark.png" alt="Grow Co."><div class="rf-splash-by">a game by <b>TheCodingDad</b></div></div><div class="rf-splash-skip">click or press any key</div></div>
+<div class="rf-front" id="rf-splash"><div class="rf-splash-inner"><img class="rf-splash-logo" src="wordmark.png" alt="Grow Co."><div class="rf-splash-by">A game by <b>TheCodingDad</b></div></div><div class="rf-splash-skip">Click or press any key</div></div>
 <canvas id="g3-canvas"></canvas>
 
 <!-- ── Loading / start screen ────────────────────────────────── -->
 <div id="g3-start" class="g3-overlay show">
   <div class="g3-start-card">
-    <div class="g3-logo">🌿</div>
+    <img class="g3-logo" src="logo-256.png" alt="">
     <h1>Grow Co.</h1>
-    <p class="g3-sub">first-person grow simulator</p>
+    <p class="g3-sub">First-person shop simulator</p>
     <div class="g3-start-stats" id="g3-start-stats"></div>
-    <button class="g3-btn primary big" id="g3-start-btn">▶ Enter the grow house</button>
-    <p class="g3-hint">Click to look around · <b>WASD</b> move · <b>Shift</b> run · <b>E</b> pick up / use · <b>G</b> put down · <b>Tab</b> inventory · <b>F3</b> creative · <b>Esc</b> menu</p>
+    <button class="g3-btn primary big" id="g3-start-btn">▶ Enter the shop</button>
+    <p class="g3-hint">Click to look around · <b>WASD</b> move · <b>Shift</b> run · <b>Space</b> jump · <b>Ctrl</b> crouch · <b>E</b> use or pick up · <b>G</b> put back · <b>Tab</b> inventory · <b>F3</b> creative · <b>Esc</b> pause</p>
     <p class="g3-hint dim" id="g3-start-note"></p>
   </div>
 </div>
@@ -32,7 +32,7 @@
   <div class="g3-top">
     <div class="g3-stat cash"><span class="k">Bank</span><span class="v" id="h-cash">$0</span></div>
     <div class="g3-stat"><span class="k">Vault</span><span class="v" id="h-vault">$0</span></div>
-    <div class="g3-stat"><span class="k">Cured</span><span class="v" id="h-cured">0g</span></div>
+    <div class="g3-stat"><span class="k">Cured</span><span class="v" id="h-cured">0 g</span></div>
     <div class="g3-stat"><span class="k">Packed</span><span class="v" id="h-pkg">0 / 0</span></div>
     <div class="g3-stat"><span class="k">Rep</span><span class="v rep" id="h-rep">0</span></div>
     <div class="g3-stat"><span class="k">Market</span><span class="v" id="h-market">1.00×</span></div>
@@ -43,7 +43,7 @@
   <div class="g3-order" id="h-order" hidden></div>
   <div class="g3-prompt" id="h-prompt" hidden></div>
   <div class="g3-held" id="h-held" hidden></div>
-  <div class="g3-editbanner" id="h-edit" hidden>🛠️ EDIT MODE · E grab / drop · R rotate · Backspace reset · F2 done</div>
+  <div class="g3-editbanner" id="h-edit" hidden>🛠️ Edit mode · E grab or drop · R turn · Backspace reset · F2 done</div>
   <div class="g3-objective" id="h-objective"></div>
   <div class="g3-feed" id="h-feed"></div>
   <div class="g3-toasts" id="h-toasts"></div>
@@ -57,10 +57,10 @@
   <div class="g3-ctx-title" id="g3-ctx-title"></div>
   <div class="g3-ctx-sub" id="g3-ctx-sub"></div>
   <div class="g3-ctx-btns" id="g3-ctx-btns"></div>
-  <div class="g3-ctx-hint">Esc / right-click to close</div>
+  <div class="g3-ctx-hint">Esc or right-click closes this</div>
 </div>
 
-<!-- ── Panels (shop, bench, register, laptop, inventory) ─────── -->
+<!-- ── Panels (shop, bench, till, laptop, inventory) ─────────── -->
 <div id="g3-panel" class="g3-overlay dim" hidden>
   <div class="g3-panel-card">
     <div class="g3-panel-head">
@@ -76,7 +76,7 @@
 <div id="g3-menu" class="g3-overlay dim" hidden>
   <div class="g3-menu-card">
     <h2>Paused</h2>
-    <p class="g3-sub">the plants keep growing while you think</p>
+    <p class="g3-sub">Everything waits until you come back.</p>
     <div class="g3-menu-btns">
       <button class="g3-btn primary" data-menu="resume">▶ Resume</button>
       <button class="g3-btn" data-menu="settings">⚙ Settings</button>

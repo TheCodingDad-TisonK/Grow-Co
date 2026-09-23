@@ -20,8 +20,8 @@
   function used(s) { return !!s; }   /* any save at all counts: show its real numbers rather than guessing whether it has been played */
 
   var NOTE = '<div class="rf-disclaimer"><b>NOT a Farming Simulator product.</b> This game has nothing to do with Farming Simulator, GIANTS Software, or any Farming Simulator mod. It is a separate, standalone hobby project that exists only because its author enjoyed making it.</div>';
-  var splash = $('rf-splash') || el('<div class="rf-front" id="rf-splash"><div class="rf-splash-inner"><img class="rf-splash-logo" src="wordmark.png" alt="Grow Co."><div class="rf-splash-by">a game by <b>TheCodingDad</b></div></div><div class="rf-splash-skip">click or press any key</div></div>');
-  var menu = el('<div class="rf-front" id="rf-mainmenu" hidden><div class="rf-menu-card"><img src="logo-256.png" alt="Grow Co."><h1>Grow <span style="color:#6fdc8c">Co.</span></h1><div class="rf-menu-sub">first-person shop simulator</div>' + NOTE + '<div id="rf-menu-body"></div><div class="rf-menu-foot">a game by TheCodingDad' + (window.RF_VERSION ? ' · version ' + window.RF_VERSION : '') + (CFG.bug ? ' · F7 reports a bug' : '') + '</div></div></div>');
+  var splash = $('rf-splash') || el('<div class="rf-front" id="rf-splash"><div class="rf-splash-inner"><img class="rf-splash-logo" src="wordmark.png" alt="Grow Co."><div class="rf-splash-by">A game by <b>TheCodingDad</b></div></div><div class="rf-splash-skip">Click or press any key</div></div>');
+  var menu = el('<div class="rf-front" id="rf-mainmenu" hidden><div class="rf-menu-card"><img src="logo-256.png" alt="Grow Co."><h1>Grow <span style="color:#6fdc8c">Co.</span></h1><div class="rf-menu-sub">First-person shop simulator</div>' + NOTE + '<div id="rf-menu-body"></div><div class="rf-menu-foot">A game by TheCodingDad' + (window.RF_VERSION ? ' · version ' + window.RF_VERSION : '') + (CFG.bug ? ' · F7 reports a bug' : '') + '</div></div></div>');
   document.body.appendChild(menu); if (!splash.parentNode) document.body.appendChild(splash);
   var card = menu.querySelector('.rf-menu-card');
 
@@ -35,7 +35,7 @@
   function line(s) { return 'Day ' + (s.day || 1) + ' · level ' + (s.level || 1) + ' · ' + money(s.bank) + ' · rep ' + Math.round(s.rep || 0); }
   function slotRow(n) {
     var s = readSlot(n), has = used(s), on = !urlSave && n === active();
-    return '<div class="rf-slot' + (on ? ' on' : '') + '"><div class="rf-slot-info"><b>Slot ' + n + (on ? ' · loaded' : '') + '</b><span>' + (has ? line(s) : 'Empty slot: starts with a tent, a seed and ' + money(220)) + '</span></div>' +
+    return '<div class="rf-slot' + (on ? ' on' : '') + '"><div class="rf-slot-info"><b>Slot ' + n + (on ? ' · loaded' : '') + '</b><span>' + (has ? line(s) : 'Empty. Starts with ' + money(220) + ', a tent and one pot, but no seed.') + '</span></div>' +
       '<button class="' + (on ? 'primary' : '') + '" data-rf="slot" data-n="' + n + '">' + (has ? '▶ Continue' : '▶ Start') + '</button>' + (has ? '<button class="danger small" data-rf="del" data-n="' + n + '" title="Delete this save">🗑</button>' : '<span class="rf-slot-gap"></span>') + '</div>';
   }
   function showMain() {
@@ -43,7 +43,7 @@
     var head = '';
     if (urlSave) head = '<div class="rf-how">Developer save "' + esc(urlSave) + '" is loaded. <button data-rf="play" class="primary" style="margin-top:8px;width:100%">▶ Play it</button></div>';
     else if (SLOTS) { var rows = ''; for (var n = 1; n <= SLOTS; n++) rows += slotRow(n); head = '<div class="rf-slots">' + rows + '</div>'; }
-    else { var one = readSlot(1); head = '<div class="rf-menu-btns"><button class="primary" data-rf="play">' + (used(one) ? '▶ Continue' : '▶ Start your shop') + '</button></div><div class="rf-menu-save">' + (used(one) ? line(one) : 'No shop yet. It starts with a tent, a seed and ' + money(220)) + '</div>'; }
+    else { var one = readSlot(1); head = '<div class="rf-menu-btns"><button class="primary" data-rf="play">' + (used(one) ? '▶ Continue' : '▶ Start your shop') + '</button></div><div class="rf-menu-save">' + (used(one) ? line(one) : 'No shop yet. It starts with ' + money(220) + ', a tent and one pot, but no seed.') + '</div>'; }
     var WS = window.RF_WORKSHOP, wsn = WS ? WS.activeCount() : 0;
     body(head + '<div class="rf-menu-btns row"><button data-rf="how">📖 Guide</button>' + (WS ? '<button data-rf="shop">🧩 Workshop' + (wsn ? ' <b class="rf-pill">' + wsn + '</b>' : '') + '</button>' : '') + (CFG.bug ? '<button data-rf="bug">🐞 Report a bug</button>' : '') + '</div>' +
       '<div class="rf-menu-btns row"><button data-rf="discord">💬 Discord</button><button data-rf="site">🌐 realisticfarming.com</button><button data-rf="quit">' + (CFG.quitLabel || '⏏ Quit') + '</button></div>');
@@ -56,7 +56,7 @@
     var list = WS.packs(), groups = {};
     list.forEach(function (p) { var k = p.bundle ? 'Bundles' : (p.user ? 'Yours' : p.kind || 'Packs'); (groups[k] = groups[k] || []).push(p); });
     var order = Object.keys(groups).sort(function (a, b) { return (a === 'Yours' ? 2 : a === 'Bundles' ? 1 : 0) - (b === 'Yours' ? 2 : b === 'Bundles' ? 1 : 0); });
-    var html = '<div class="rf-ws"><p class="rf-ws-lead">Content packs change what the game has in it. Turn one on or off and the shop reloads. Your saves are not touched: a pack only adds things you can then buy.</p>';
+    var html = '<div class="rf-ws"><p class="rf-ws-lead">Content packs change what the game has in it. Turn as many on or off as you like, then apply once and the shop rebuilds. Your saves aren\'t touched. A pack only adds things you can then buy.</p>';
     if (wsMsg) html += '<div class="rf-ws-msg">' + wsMsg + '</div>';
     if (wsDirty) html += '<div class="rf-ws-msg rf-ws-pending">Changes are waiting. <button class="primary" data-rf="ws-apply">↻ Apply and rebuild the shop</button></div>';
     order.forEach(function (k) {
@@ -94,7 +94,7 @@
       '<pre class="rf-ws-code">' + esc(ex) + '</pre>' +
       '<p><b>What a pack can add.</b> <b>strains</b> (a whole new plant: cost, grow time, yield, strength, the level it unlocks at and its colours), <b>lights</b> and <b>tents</b> for the grow room, and <b>supplies</b> you order at the laptop, including things that go on the counter display or in the vending machine. <b>tune</b> scales the market, how often customers come, and what seeds and upgrades cost.</p>' +
       '<p><b>Models from Blender.</b> Export your object as <b>.glb</b> (File, Export, glTF 2.0, format glTF Binary). One metre in Blender is one metre in the game, +Y is up and the object should sit on the origin. Name the slot you want to replace in <b>models</b>: <b>item:joints</b>, <b>item:bags</b>, <b>item:cookies</b>, <b>item:cigs</b>, <b>item:can</b>, <b>item:snack</b>, <b>item:jar</b>, <b>item:soil</b>, <b>item:nutrients</b>, <b>item:remedy</b>, <b>item:seed</b>, <b>item:crate</b>, <b>item:keys</b> or <b>item:tablet</b>. Import the .json and the .glb files together.</p>' +
-      '<p>Packs that ship with the game cannot be overwritten: give yours your own id.</p>' +
+      '<p>Packs that ship with the game can\'t be overwritten, so give yours its own id.</p>' +
       '</div></div><div class="rf-menu-btns" style="margin-top:12px"><button data-rf="shop">← Back to the Workshop</button></div>');
   }
   var LINKS = { discord: 'https://discord.gg/8FcgxwJ3dM', site: 'https://realisticfarming.com' };
@@ -104,7 +104,7 @@
     body('<div class="rf-guide"><div class="rf-guide-nav">' + G.map(function (c, i) { return '<button data-rf="ch" data-i="' + i + '"' + (i === chapter ? ' class="on"' : '') + '>' + c.icon + ' ' + c.title + '</button>'; }).join('') + '</div><div class="rf-guide-page"><h2>' + (G[chapter] ? G[chapter].icon + ' ' + G[chapter].title : '') + '</h2>' + (G[chapter] ? G[chapter].html : '') + '</div></div><div class="rf-menu-btns" style="margin-top:12px"><button data-rf="back">← Back to the menu</button></div>');
   }
   function showDelete(n) {
-    var s = readSlot(n); body('<div class="rf-how"><b>Delete slot ' + n + '?</b><br>Day ' + (s && s.day || 1) + ', level ' + (s && s.level || 1) + ', ' + money(s && s.bank) + ' in the bank. This erases that shop for good: money, stock, licences, layout, everything. The other slots are not touched.</div><div class="rf-menu-btns"><button class="danger" data-rf="del-yes" data-n="' + n + '">Yes, delete slot ' + n + '</button><button data-rf="back">← Keep it</button></div>');
+    var s = readSlot(n); body('<div class="rf-how"><b>Delete slot ' + n + '?</b><br>Day ' + (s && s.day || 1) + ', level ' + (s && s.level || 1) + ', ' + money(s && s.bank) + ' in the bank. This erases that shop for good: money, stock, licences, layout, everything. The other slots aren\'t touched.</div><div class="rf-menu-btns"><button class="danger" data-rf="del-yes" data-n="' + n + '">Yes, delete slot ' + n + '</button><button data-rf="back">← Keep it</button></div>');
   }
   function play() { menu.classList.add('fade'); setTimeout(function () { menu.hidden = true; }, 700); var b = $('g3-start-btn'); if (b) b.click(); }
   var wsDirty = false;   // packs turned on or off that the running shop has not been rebuilt for

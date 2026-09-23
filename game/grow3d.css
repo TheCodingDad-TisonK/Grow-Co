@@ -1,4 +1,4 @@
-/* RF Grow Co. 3D simulator — HUD + panels. Dark by design; the 3D scene is the ground. */
+/* Grow Co.: the HUD and the panels. Dark by design, because the 3D scene is the ground. */
 :root {
   --bg: #0b0f0c; --panel: rgba(14, 20, 16, 0.92); --panel-line: rgba(120, 200, 140, 0.22);
   --ink: #e8f1ea; --muted: #8fa596; --green: #6fdc8c; --green-line: rgba(111, 220, 140, 0.35);
@@ -17,10 +17,10 @@ button { font: inherit; cursor: pointer; }
 .g3-overlay.dim { background: rgba(4, 8, 5, 0.55); backdrop-filter: blur(6px); }
 #g3-start { background: radial-gradient(1200px 700px at 50% 40%, #16261b 0%, #070a08 70%); }
 .g3-start-card { text-align: center; max-width: 560px; width: 100%; padding: 36px 28px; border: 1px solid var(--panel-line); border-radius: 18px; background: var(--panel); box-shadow: 0 30px 80px rgba(0,0,0,.6); }
-.g3-logo { font-size: 64px; filter: drop-shadow(0 0 24px rgba(111,220,140,.5)); animation: sway 4s ease-in-out infinite; }
+.g3-logo { display: inline-block; width: 88px; height: 88px; filter: drop-shadow(0 0 24px rgba(111,220,140,.5)); animation: sway 4s ease-in-out infinite; }
 @keyframes sway { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
 .g3-start-card h1 { margin: 6px 0 0; font-size: 34px; letter-spacing: .5px; }
-.g3-sub { margin: 4px 0 18px; color: var(--muted); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+.g3-sub { margin: 4px 0 18px; color: var(--muted); font-size: 13px; letter-spacing: .3px; }
 .g3-start-stats { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
 .g3-start-stats span { padding: 6px 10px; border: 1px solid var(--panel-line); border-radius: 999px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .g3-start-stats span b { color: var(--ink); }
