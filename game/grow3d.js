@@ -2950,7 +2950,7 @@
     var parts = {};
     function hinge(x, y, z) { var p = new THREE.Group(); p.position.set(x, y, z); g.add(p); return p; }
     var bon = hinge(0, 0.98, -2.45); add(1.7, 0.1, 0.5, paint, 0, 0, 0.25, bon); parts.bonnet = { g: bon, axis: 'x', max: 0.9, t: 0 };
-    var bt = hinge(0, 2.1, 2.5); add(1.86, 1.3, 0.06, paint, 0, -0.65, 0, bt); add(0.6, 0.5, 0.02, glassM, 0, -0.45, 0.035, bt); add(0.3, 0.04, 0.05, MAT.chrome, 0, -1.1, 0.04, bt); parts.boot = { g: bt, axis: 'x', max: 1.35, t: 0 };   /* the rear door lifts like a tailgate */
+    var bt = hinge(0, 2.1, 2.5); add(1.86, 1.3, 0.06, paint, 0, -0.65, 0, bt); add(0.6, 0.5, 0.02, glassM, 0, -0.45, 0.035, bt); add(0.3, 0.04, 0.05, MAT.chrome, 0, -1.1, 0.04, bt); parts.boot = { g: bt, axis: 'x', max: -1.35, t: 0 };   /* the rear door hangs below its hinge, so a negative turn lifts it outward and up */
     parts.cargo = new THREE.Group(); parts.cargo.position.set(0, 0.7, 1.7); g.add(parts.cargo);
     [[-0.5, 0], [0, 0], [0.5, 0], [-0.5, -0.6], [0, -0.6], [0.5, -0.6]].forEach(function (c, i) { var cb = add(0.42, 0.34, 0.5, colorMat([0x8a6a3a, 0x6a7a4a, 0x7a5a4a][i % 3], 0.9), c[0], 0.17, c[1], parts.cargo); cb.visible = false; });
     [-1, 1].forEach(function (sx) {
