@@ -981,13 +981,25 @@
     none: new THREE.MeshBasicMaterial({ visible: false })
   };
   // a discarded part of the scene gives its GPU buffers back. Shared tables (MAT, TEX, product materials, face textures) are left alone.
+  // What disposeTree must never free: the shared materials, textures and product materials, the cached faces, and the
+  // geometries every human and plant is built from. Gathered into a Set once, and again only when a table grows or shrinks.
+  var disposeKeep = { set: null, sig: '' };
+  function disposeShared() {
+    var tabs = [MAT, TEX, typeof PROD_M === 'object' ? PROD_M : null, typeof faceCache === 'object' ? faceCache : null, typeof HUMAN_GEO === 'object' ? HUMAN_GEO : null];
+    var geos = [typeof LEAF_GEO === 'object' ? LEAF_GEO : null, typeof LEAF_GEO_SM === 'object' ? LEAF_GEO_SM : null, typeof BUD_GEO === 'object' ? BUD_GEO : null];
+    var sig = tabs.map(function (tb) { return tb ? Object.keys(tb).length : '-'; }).join(',') + '/' + geos.map(function (g) { return g ? 1 : 0; }).join('');
+    if (disposeKeep.set && disposeKeep.sig === sig) return disposeKeep.set;
+    var set = new Set();
+    tabs.forEach(function (tb) { if (tb) for (var k in tb) { var v = tb[k]; if (v && typeof v === 'object') { set.add(v); if (v.map) set.add(v.map); } } });
+    geos.forEach(function (g) { if (g) set.add(g); });
+    disposeKeep.set = set; disposeKeep.sig = sig; return set;
+  }
   function disposeTree(root) {
-    if (!root || !root.traverse) return; var keep = [];
-    [MAT, TEX, typeof PROD_M === 'object' ? PROD_M : null, typeof faceCache === 'object' ? faceCache : null].forEach(function (tb) { if (tb) for (var k in tb) keep.push(tb[k]); });
+    if (!root || !root.traverse) return; var keep = disposeShared();
     root.traverse(function (o) {
-      if (o.geometry && o.geometry.dispose) o.geometry.dispose();
+      if (o.geometry && o.geometry.dispose && !o.isSprite && !keep.has(o.geometry)) o.geometry.dispose();   /* every sprite shares three.js's one quad */
       var ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
-      ms.forEach(function (m) { if (!m || keep.indexOf(m) >= 0) return; if (m.map && m.map.isCanvasTexture && keep.indexOf(m.map) < 0) m.map.dispose(); if (m.dispose) m.dispose(); });
+      ms.forEach(function (m) { if (!m || keep.has(m)) return; if (m.map && m.map.isCanvasTexture && !keep.has(m.map)) m.map.dispose(); if (m.dispose) m.dispose(); });
     });
   }
   function clearKids(g) { while (g.children.length) { var ch = g.children[0]; g.remove(ch); disposeTree(ch); } }
@@ -1725,7 +1737,7 @@
       m.position.set(sp.x, 0.3, sp.z);
       m.userData.slot = p.slot;
     }
-    for (var pid in world.plants) if (!seen[pid]) { var mm = world.plants[pid]; world.tentGroup.remove(mm); world.interact = world.interact.filter(function (x) { return x !== mm.userData.hit; }); delete world.plants[pid]; }
+    for (var pid in world.plants) if (!seen[pid]) { var mm = world.plants[pid]; world.tentGroup.remove(mm); disposeTree(mm); world.interact = world.interact.filter(function (x) { return x !== mm.userData.hit; }); delete world.plants[pid]; }
   }
   var _thirstCol = new THREE.Color(0x9a8a3a), _moldCol = new THREE.Color(0x777766);
   function updatePlantVisuals(dt) {
@@ -2194,7 +2206,7 @@
   function removeWorker(rec) {
     rec = rec || worker; if (!rec.g) return;
     rec.hasBroom = false; rec.broomMesh = null; syncBroom();
-    world.group.remove(rec.g);
+    world.group.remove(rec.g); disposeTree(rec.g);
     world.interact = world.interact.filter(function (m) { var d = m.userData.interact; return !(d && d.kind === 'worker' && (d.idx || 0) === (rec.idx || 0)); });   /* this one's hit box, not everybody's */
     rec.g = null; rec.h = null; rec.bubble = null; rec.state = 'idle'; rec.job = null; rec.path = [];
   }
@@ -2251,7 +2263,7 @@
     if (!S.staff) S.staff = {};
     if (off === undefined) off = !S.staff.guardOff;
     S.staff.guardOff = !!off;
-    if (off) { if (guard.h) { world.group.remove(guard.h); world.interact = world.interact.filter(function (m) { return !(m.userData.interact && m.userData.interact.kind === 'guard'); }); guard.h = null; guard.bubble = null; } world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); }
+    if (off) { if (guard.h) { world.group.remove(guard.h); disposeTree(guard.h); world.interact = world.interact.filter(function (m) { return !(m.userData.interact && m.userData.interact.kind === 'guard'); }); guard.h = null; guard.bubble = null; } world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); }
     else if (!guard.h) buildGuard();
     sfx(off ? 'door' : 'ok');
     toast(off ? '🏠 Security has gone home' : '🛡️ Security is back on the door', off ? '' : 'good');
@@ -3569,7 +3581,7 @@
   function startVip() {
     if (S.vip || vip.state !== 'away' || !shop().open || !hasLic('premium')) return false;
     if (!vip.g) { vip.g = new THREE.Group(); world.group.add(vip.g); vip.bubble = sprite(textTex(['…'], 512, 160, { size: 40 }), 1.6, 0.5, 0, 2.3, 0, vip.g); }
-    if (vip.h) vip.g.remove(vip.h); world.interact = world.interact.filter(function (m) { return !m.userData.vipHit; });
+    if (vip.h) { vip.g.remove(vip.h); disposeTree(vip.h); } world.interact = world.interact.filter(function (m) { return !m.userData.vipHit; });
     vip.h = makeHuman({ skin: pick(SKINS), hair: pick(HAIRS), shirt: 0x1d1d26, pants: 0x15151c, coat: 0x2a2233, glasses: true, watch: true, necklace: true, longSleeve: true, shoes: 0x111111, mood: 'neutral' }); vip.g.add(vip.h);
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.7, 0.8), MAT.none); hb.position.y = 0.9; hb.userData.vipHit = true; vip.h.add(hb); interactable(hb, { kind: 'vip' });
     var kinds = ['joints', 'bags'].filter(function (k) { return S.pkg[k] && S.pkg[k].n > 0; }); var kind = kinds.length ? pick(kinds) : 'joints'; var seat = vipSeat(), S2 = STAIR2, sz = (S2.z1 + S2.z2) / 2;
@@ -3716,7 +3728,7 @@
     if (nightNow() && !X.staff.night && Math.random() < dt / 700) { var T2 = tob(), tot = CIG_KEYS.reduce(function (a, k) { return a + T2.packs[k]; }, 0), beds = X.roof.filter(function (b) { return b.stage === 'ready'; }); if (tot > 20) { CIG_KEYS.forEach(function (k) { T2.packs[k] = Math.floor(T2.packs[k] * 0.7); }); syncTobRack(); sfx('bad'); toast('🌙 Break-in! Someone got into the basement and took cartons off the rack', 'bad'); logEvent('🌙 Night break-in: about ' + Math.round(tot * 0.3) + ' packs gone from the basement. A night guard would have stopped it.', 'bad'); } else if (beds.length) { beds[0].stage = 'empty'; beds[0].t = 0; toast('🌙 Someone climbed up and stripped a roof bed', 'bad'); logEvent('🌙 A ready roof bed was stripped overnight', 'bad'); } }
     updateJobs(dt);
     // the getaway car: catch it with yours and the loot comes back
-    var G = exp.getaway; if (G) { G.t += dt; G.g.position.x += G.dir * 13 * dt; if (drive.on && Math.hypot(drive.g.position.x - G.g.position.x, drive.g.position.z - G.g.position.z) < (X.garage.bar ? 4.6 : 3.4)) { returnLoot(G.loot); S.rep += 4; sfx('hit'); toast('🚗💥 You ran the getaway car off the road — everything they took is back · rep +4', 'good'); logEvent('🚗 You caught the getaway car', 'good'); world.group.remove(G.g); exp.getaway = null; } else if (Math.abs(G.g.position.x) > CITY.x - 3 || G.t > 40) { logEvent('💨 The getaway car made it out of town with ' + (G.loot.grabbed > 0 ? money(G.loot.grabbed) : 'your goods'), 'bad'); world.group.remove(G.g); exp.getaway = null; } }
+    var G = exp.getaway; if (G) { G.t += dt; G.g.position.x += G.dir * 13 * dt; if (drive.on && Math.hypot(drive.g.position.x - G.g.position.x, drive.g.position.z - G.g.position.z) < (X.garage.bar ? 4.6 : 3.4)) { returnLoot(G.loot); S.rep += 4; sfx('hit'); toast('🚗💥 You ran the getaway car off the road — everything they took is back · rep +4', 'good'); logEvent('🚗 You caught the getaway car', 'good'); world.group.remove(G.g); disposeTree(G.g); exp.getaway = null; } else if (Math.abs(G.g.position.x) > CITY.x - 3 || G.t > 40) { logEvent('💨 The getaway car made it out of town with ' + (G.loot.grabbed > 0 ? money(G.loot.grabbed) : 'your goods'), 'bad'); world.group.remove(G.g); disposeTree(G.g); exp.getaway = null; } }
   }
   // ── Delivery rounds: a burner phone for the street goods, a tablet for the RF Smoking round ──
   // Both write into one X.jobs list; `via` says which device raised it, and that decides where the
@@ -3860,7 +3872,7 @@
       '<table class="g3-jobs"><tr><th></th><th>Address</th><th>Order</th><th>Left</th><th>Pays</th></tr>' + rows.join('') + '</table>';
   }
   function startGetaway(r) {
-    if (exp.getaway) { world.group.remove(exp.getaway.g); } var g = new THREE.Group(); carBody(g, 0x111111); var dir = r.g.position.x > 0 ? 1 : -1; g.position.set(r.g.position.x, 0, CITY.mainZ + (dir > 0 ? 2.7 : -0.3)); g.rotation.y = dir > 0 ? -Math.PI / 2 : Math.PI / 2; world.group.add(g);
+    if (exp.getaway) { world.group.remove(exp.getaway.g); disposeTree(exp.getaway.g); } var g = new THREE.Group(); carBody(g, 0x111111); var dir = r.g.position.x > 0 ? 1 : -1; g.position.set(r.g.position.x, 0, CITY.mainZ + (dir > 0 ? 2.7 : -0.3)); g.rotation.y = dir > 0 ? -Math.PI / 2 : Math.PI / 2; world.group.add(g);
     exp.getaway = { g: g, dir: dir, t: 0, loot: { grabbed: r.grabbed, goods: r.goods, disp: r.disp, cigs: r.cigs || {} } }; r.grabbed = 0; r.goods = []; r.disp = {}; r.cigs = {}; toast('🚗 They jumped into a black car heading ' + (dir > 0 ? 'east' : 'west') + ' on Main Street — catch it with yours and you get it all back!', 'bad');
   }
   function expansionNewDay(offline) {
@@ -4125,7 +4137,7 @@
   }
   function buildRobber(r, kind, weapon, role) {
     if (!r.g) { r.g = new THREE.Group(); world.group.add(r.g); r.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, r.g); }
-    if (r.h) r.g.remove(r.h); world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; });
+    if (r.h) { r.g.remove(r.h); disposeTree(r.h); } world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; });
     r.h = makeHuman({ skin: pick(SKINS), hair: 0x111111, shirt: pick([0x23262b, 0x2b2622, 0x1f2a24]), pants: 0x1c1c1c, hat: 'beanie', capColor: 0x111111, mood: 'neutral', longSleeve: true, hairStyle: 'short', shoes: 0x111111, backpack: role === 'bagman', backpackColor: 0x15171a }); r.g.add(r.h);
     var P = r.h.userData.parts; r.mask = new THREE.Group(); var hood = new THREE.Mesh(new THREE.SphereGeometry(0.182, 14, 12), colorMat(0x0c0c0e, 0.95)); hood.position.set(0, 0.24, 0); r.mask.add(hood); var slit = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.03), colorMat(0xd9a57e, 0.8)); slit.position.set(0, 0.27, 0.17); r.mask.add(slit); r.mask.visible = false; P.head.add(r.mask);
     r.gun = weapon ? robWeaponMesh(weapon) : null; if (r.gun) { r.gun.visible = false; P.rArm.userData.elbow.add(r.gun); }
@@ -6436,7 +6448,7 @@
   }
   function buildHeldMesh(h) {
     var g = new THREE.Group();
-    if (WS) { var wm = WS.model('item:' + h.kind); if (wm) { g.add(wm); return g; } }   /* a pack's Blender model stands in for the whole hand-built item */
+    if (WS) { var wm = WS.model('item:' + h.kind); if (wm) { g.add(wm); g.userData.wsModel = true; return g; } }   /* a pack's Blender model stands in for the whole hand-built item */
     function add(geo, mat, x, y, z, rx, ry, rz) { var m = new THREE.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); m.rotation.set(rx || 0, ry || 0, rz || 0); g.add(m); return m; }
     if (h.kind === 'bat') { var bw = new THREE.MeshStandardMaterial({ color: 0xb98a4a, roughness: 0.6 }); add(new THREE.CylinderGeometry(0.034, 0.022, 0.72, 10), bw, 0, 0.44, 0); add(new THREE.CylinderGeometry(0.024, 0.024, 0.16, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }), 0, 0.08, 0); add(new THREE.CylinderGeometry(0.032, 0.032, 0.02, 10), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), 0, 0.0, 0); add(new THREE.SphereGeometry(0.036, 10, 8), bw, 0, 0.81, 0); }
     if (h.kind === 'cigs') {
@@ -6513,7 +6525,7 @@
   }
   function syncHands(dt) {
     var h = held(); var key = h ? h.kind + ':' + (h.n || 0) + ':' + (h.strain || '') + ':' + (h.grams || 0) : '';
-    if (key !== heldKey) { heldKey = key; if (heldMesh) hands.remove(heldMesh); heldMesh = null; if (h) { heldMesh = buildHeldMesh(h); heldMesh.position.set(0.3, -0.3, -0.52); heldMesh.rotation.set(0.2, -0.5, 0); hands.add(heldMesh); } }
+    if (key !== heldKey) { heldKey = key; if (heldMesh) { hands.remove(heldMesh); if (!heldMesh.userData.wsModel) disposeTree(heldMesh); } heldMesh = null;   /* a pack's Blender model shares its meshes with the loaded copy, so only hand-built items are freed */ if (h) { heldMesh = buildHeldMesh(h); heldMesh.position.set(0.3, -0.3, -0.52); heldMesh.rotation.set(0.2, -0.5, 0); hands.add(heldMesh); } }
     hands.visible = ui.started && !!h && !drive.on;
     if (heldMesh && h && WEAPONS[h.kind]) { var rc = swing.t > 0 ? Math.sin((1 - clamp(swing.t / 0.35, 0, 1)) * Math.PI) : 0; if (swing.t > 0) swing.t -= dt; var kick = WEAPONS[h.kind].lethal ? 1 : 0.3; heldMesh.position.set(0.24, -0.24 + rc * 0.03 * kick, -0.5 + rc * 0.09 * kick); heldMesh.rotation.set(rc * 0.45 * kick, 0, 0); }
     if (world.muzzleT > 0) { world.muzzleT -= dt; muzzle.intensity = 3; } else muzzle.intensity = 0;
