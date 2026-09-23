@@ -4545,12 +4545,13 @@
   // everything in the lobby is reached along a corridor at z 6.6 (clear of the posts and the guard), then straight to the spot
   function lobbyPath(from, to) { var p = []; if (Math.abs(from.z - 6.6) > 0.1) p.push({ x: from.x, z: 6.6 }); if (Math.abs(from.x - to.x) > 0.1) p.push({ x: to.x, z: 6.6 }); p.push({ x: to.x, z: to.z }); return p; }
   // what a paid-up customer feels like doing before leaving
+  function unitRoll(n, p) { for (var i = 0; i < Math.min(3, n); i++) if (Math.random() < p) return true; return false; }   // one roll per machine standing, up to three: a second machine catches people the first one missed
   function planFor(c) {
     var plan = [];
-    if (hasLic('catering') && vendKeys().length && Math.random() < 0.35) plan.push({ kind: 'vend' });
-    if (hasLic('catering') && S.upgrades.lobby && propInst.lobbyCoffee && S.coffeeStock.cup > 0 && S.coffeeStock.beans > 0 && Math.random() < 0.4) plan.push({ kind: 'coffee' });
-    if (hasLic('catering')) { var frs = lobbyFridges(); if (frs.length && Math.random() < 0.3) plan.push({ kind: 'fridge', unit: pick(frs) }); }   /* a cold can from a fridge stood out in the lobby */
-    if (hasLic('amusement') && propInst.arcade && Math.random() < 0.25) plan.push({ kind: 'arcade' });
+    if (hasLic('catering') && vendKeys().length && unitRoll(builtUnits('vending').length, 0.35)) plan.push({ kind: 'vend' });
+    if (hasLic('catering') && S.upgrades.lobby && S.coffeeStock.cup > 0 && S.coffeeStock.beans > 0 && unitRoll(builtUnits('lobbyCoffee').length, 0.4)) plan.push({ kind: 'coffee' });
+    if (hasLic('catering')) { var frs = lobbyFridges(); if (unitRoll(frs.length, 0.3)) plan.push({ kind: 'fridge', unit: pick(frs) }); }   /* a cold can from a fridge stood out in the lobby */
+    if (hasLic('amusement') && unitRoll(builtUnits('arcade').length, 0.25)) plan.push({ kind: 'arcade' });
     if (hasLic('lounge') && c.want === 'joints' && Math.random() < 0.4) { var seat = freeLoungeSeat(); if (seat) plan.push({ kind: 'bench', seat: seat }); }
     return plan;
   }
