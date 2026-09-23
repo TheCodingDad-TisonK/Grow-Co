@@ -581,6 +581,7 @@
   function maybeCustomer() {
     if (!shop().open || now() < (S.noCustomersUntil || 0)) { S.lastCustomer = now(); return; }
     var gap = S.upgrades.billboard ? 0.4 : S.upgrades.sign ? 0.65 : 1; gap /= footfall(); if (hasLic('latehours') && nightNow()) gap *= 0.75; var mk = shop().markup || 1; gap *= mk > 1 ? 1 + (mk - 1) * 2.5 : mk < 1 ? 1 - (1 - mk) * 0.8 : 1;
+    gap *= clamp(1 / (1 + (S.rep || 0) / 200), 0.6, 1);   /* word of mouth: a good name shortens the wait between customers, never below 60% of it */
     if (S.customer || now() - S.lastCustomer < randi(30000, 60000) * gap) return;
     S.lastCustomer = now();
     if (Math.random() < 0.75) spawnCustomer(false);
