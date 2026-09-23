@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.21
+
+**A cold read, put right.** Three fresh readers went through the whole game as a player, an engineer and an editor. This release fixes what they found and joins up the systems that led nowhere.
+
+**The van's boot was a free stock machine.** Unloading the van emptied the car's boot instead, so the same load could be unloaded forever. Each vehicle now empties its own boot, and cartons ride in whichever vehicle you loaded them into.
+
+**Looking at a vehicle no longer picks it.** Aiming at the van used to make it the vehicle in hand, which left the van's hatch drawn shut after a reload and could jam the car's door open. Each vehicle now keeps and animates its own doors, hatch, counter and lamps.
+
+**Fewer hitches.** Picking something up or putting it down used to rebuild every plant in the tent. Now only the part of the world that changed is redrawn. The security monitors and the TV only render when you can see them, and the indoor cameras skip the town. Dragging a settings slider no longer recompiles every shader. Removed people, plants and held items free their graphics memory.
+
+**Crashes and broken saves.** The guard going home mid-sentence, or a customer leaving mid-line, could throw an error. A save that will not load now opens a fresh shop and keeps the old slot untouched, and saves carry a version number so future changes migrate cleanly.
+
+**The bookshelves are solid again.** A stray character in a comment had removed their frame and collision since 1.0.
+
+**Doors close.** Doors that people walk through shut again 4 s after they are clear, the staff door included. Crew and the guard carry keys and lock up behind themselves.
+
+**Money that means something.**
+- The till's walk-up sale pays 85% of the board price and takes 12 a day. Customers at the window are where the money is.
+- Rep brings people in: the gap between customers shrinks as rep grows, down to 60% of it.
+- The branch pays $9 for every unit you stock it with, up to 60 a day, plus twice your rep. One $120 manager replaces three staff you never saw.
+- Time away moves the calendar on by one day at most, so coming back no longer means a stack of bills. The basement line, roof beds and lab catch up while you were gone.
+- Delivery rounds, the tobacconist, the driver and the branch go through the tax book like the shop does.
+- Roster hires count as staff. The guard draws $60 a day on shift. The driver keeps 6 packs of each kind for your own rounds.
+- You start with $220, as the menu always said.
+
+**Things that did nothing now do something.**
+- Curing jars set how many batches cure at once (two at least). The rest wait for a jar.
+- The drinks fridge in the lobby sells customers a cold can for $2.
+- A second or third vending, coffee or arcade machine brings its own trade.
+- Vending machines take and sell any Workshop item made for them, and the grocery delivers as crates in the back room.
+- Customers pick their extras from everything on the counter display.
+- A full bin makes dust settle faster and costs a point of rep a day until you empty it.
+- A bad ID waved through costs heat and rep if you serve it. The crew leaves a held-out ID to you.
+- The roof greenhouse needs Cultivation permit II and pays trimming and compliance like the tent.
+- Descriptions now match the numbers: brand, late hours, solar, the mellow smoke and the ATM fee.
+
+**Words.** The guide, the menu, the pause screen and the docs are rewritten in one plain voice, with a chapter for the shop van and a house style page for anyone writing for the game. The pause screen no longer claims the plants keep growing.
+
 ## v1.20
 
 **The dead click.** After closing the pause menu, a panel, the tablet or a task, the next click on the scene only took the mouse back and did nothing else, so you clicked twice at everything. That click now does its job as well. And the browser refuses to take the mouse back within about a second of Esc letting it go; the game now asks again once the second is up instead of leaving you clicking.
