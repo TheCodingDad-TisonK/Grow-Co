@@ -4990,7 +4990,7 @@
     var X = typeof xs === 'function' ? xs() : { heat: 0, staff: {}, weather: { kind: 'clear' } }, T = typeof tob === 'function' ? tob() : null, packs = T ? CIG_KEYS.reduce(function (a, k) { return a + T.packs[k]; }, 0) : 0;
     var staffN = crewList().length + 1 + (X.staff.driver ? 1 : 0) + (X.staff.operator ? 1 : 0) + (X.staff.night ? 1 : 0);
     return {
-      overview: [['Bank', money(S.bank), 'cash on site ' + money(cashOnSite())], ['Reputation', String(Math.round(S.rep)), 'level ' + S.level], ['Market', (S.market || 1).toFixed(2) + 'x', shop().open ? 'shop is open' : 'shop is closed'], ['Day', String(S.day || 1), (typeof season === 'function' ? season() : '') + ' · ' + X.weather.kind]],
+      overview: [['Bank', money(S.bank), 'cash on site ' + money(cashOnSite())], ['Rep', String(Math.round(S.rep)), 'level ' + S.level], ['Market', (S.market || 1).toFixed(2) + '×', shop().open ? 'shop is open' : 'shop is closed'], ['Day', String(S.day || 1), (typeof season === 'function' ? season() : '') + ' · ' + X.weather.kind]],
       prs: [['Cured stash', Math.round(S.cured.g) + ' g', 'ready to pack'], ['Eighth bags', String(S.pkg.bags.n), 'on the goods shelf'], ['Joints', String(S.pkg.joints.n), 'on the goods shelf'], ['Cookies', String(S.pkg.cookies.n), 'on the goods shelf']],
       seats: [['People on the payroll', String(staffN), 'guard included'], ['Driver', X.staff.driver ? 'hired' : 'none', 'wholesale and deliveries'], ['Basement operator', X.staff.operator ? 'hired' : 'none', 'keeps the line running'], ['Night guard', X.staff.night ? 'hired' : 'none', 'stops break-ins']],
       fleet: [['Cigarette packs', String(packs), 'on the basement rack'], ['Plants growing', String(S.plants.length), 'in the tent'], ['Roof beds', String((X.roof || []).filter(function (b) { return b.stage !== 'empty'; }).length), 'sown'], ['Lab', X.lab && X.lab.job ? 'running' : 'idle', 'extraction and edibles']],
@@ -6774,7 +6774,7 @@
     if (ui.panelOpen && ui.panelKind === 'register') ui.closePanel();   // the sale is done: drop the register pane and hand the pointer back
   }
   var payActions = {
-    payCard: function () { var c = S.customer; if (!c || c.stage !== 'pay' || c.pay !== 'card') return; sfx('card'); if (!c.declined && Math.random() < 0.1) { c.declined = true; sfx('bad'); toast('💳 Declined. Try it again.', 'bad'); npc.say(custLine(c.who, 'declined'), '#ff6b6b'); return; } toast('💳 Approved', 'good'); finalizeSale(0, 'card'); },
+    payCard: function () { var c = S.customer; if (!c || c.stage !== 'pay' || c.pay !== 'card') return; sfx('card'); if (!c.declined && Math.random() < 0.1) { c.declined = true; sfx('bad'); toast('💳 Declined. Try it again.', 'bad'); npc.say(custLine(c.who, 'declined'), '#ff6b6b'); return; } toast('💳 Approved', 'good'); finalizeSale(0, ''); },
     payCash: function () { var c = S.customer; if (!c || c.stage !== 'pay' || c.pay !== 'cash') return; sfx('drawer'); if (c.tendered === c.due) { finalizeSale(1, 'exact cash'); return; } c.stage = 'change'; c.changeGiven = 0; toast('Took ' + money(c.tendered) + '. Now count out the change.', ''); },
     chg: function (d) { var c = S.customer; if (!c || c.stage !== 'change') return; c.changeGiven = Math.min(c.changeGiven + d, c.tendered); sfx(d >= 5 ? 'rustle' : 'coins'); },
     chgUndo: function () { var c = S.customer; if (!c || c.stage !== 'change') return; c.changeGiven = 0; },
@@ -7157,7 +7157,7 @@
       else if (kind === 'bench') { title = '✂️ Workbench'; body = paneProcess(); }
       else if (kind === 'register') { title = '💵 Till'; body = paneRegister(); }
       else if (kind === 'desk') { title = '📊 Shop dashboard'; body = paneDesk(); }
-      else if (kind === 'controls') { title = '🏪 Shop controls'; body = paneControls(); }
+      else if (kind === 'controls') { title = '🏪 Control box'; body = paneControls(); }
       else if (kind === 'miniFront') { title = '🏪 Front panel'; body = paneMiniCtl('front'); }
       else if (kind === 'miniOffice') { title = '🗄️ Office panel'; body = paneMiniCtl('office'); }
       else if (kind === 'jobs') { title = '🚚 Deliveries'; tabs = [['phone', '📱 Burner'], ['tablet', '📋 Tablet']]; body = paneJobs(tab === 'tablet' ? 'tablet' : 'phone'); }
