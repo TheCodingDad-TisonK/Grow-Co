@@ -173,9 +173,10 @@
 
   // ── State ─────────────────────────────────────────────────────────
   var S;
+  var SAVE_V = 2;   /* the save's shape version: when the shape of S changes, bump this and add a step to migrate() */
   function fresh() {
     return {
-      bank: 750, xp: 0, level: 1, rep: 0,
+      v: SAVE_V, bank: 750, xp: 0, level: 1, rep: 0,
       till: 0, tips: 0, vault: 0, pocket: 0, box: { vend: 0, coffee: 0, arcade: 0 }, pending: [], courier: null,   // cash lives in places until you move it
       units: { vending: 1, lobbyCoffee: 1, arcade: 1, fridge: 1 },   // how many of each machine the shop owns
       storage: {}, vendStock: { drink: 12, snack: 12 }, coffeeStock: { cup: 40, beans: 40 }, order: null, deliveries: [],
@@ -201,9 +202,28 @@
       armory: { pepper: false, taser: false, pistol: false, shotgun: false, spray: 0, rounds: 0, shells: 0 }   // what the weapon locker holds
     };
   }
+  // A save that will not read or will not normalise never stops the shop opening. The game falls back to a fresh
+  // shop in memory, keeps a copy of the save under SAVE + '-broken' for a bug report, and never writes over the slot
+  // for the rest of the session. A failure later in the boot reloads the page once with RECOVER_KEY set, which
+  // lands here and takes the same fresh path.
+  var RECOVER_KEY = 'rfgc-recover', bootIssue = '', saveBlocked = false;
+  var BOOT_FRESH_MSG = 'Your saved game would not load, so this is a fresh shop that will not be saved. The old save is untouched, and a copy is kept for a bug report (F7).';
+  function recoverTag(raw) { return SAVE + ':' + (raw ? raw.length : 0); }   /* a save that has changed since is tried again */
+  function keepBrokenSave(raw) { if (!raw) return; try { localStorage.setItem(SAVE + '-broken', raw); } catch (e) {} }
   function load() {
-    try { var raw = localStorage.getItem(SAVE); if (raw) S = JSON.parse(raw); } catch (e) {}
-    if (!S || typeof S !== 'object') S = fresh();
+    var raw = null, retry = false;
+    try { raw = localStorage.getItem(SAVE); } catch (e) {}
+    try { retry = sessionStorage.getItem(RECOVER_KEY) === recoverTag(raw); } catch (e) {}
+    if (!retry) {
+      try { S = raw ? JSON.parse(raw) : null; if (raw && (!S || typeof S !== 'object')) throw new Error('the save is not an object'); return loadNormalise(); }
+      catch (e) { console.error('Grow Co.: the save in ' + SAVE + ' would not load, starting a fresh shop in memory', e); }
+    }
+    keepBrokenSave(raw); saveBlocked = true; bootIssue = BOOT_FRESH_MSG;
+    S = fresh(); return loadNormalise();
+  }
+  function loadNormalise() {
+    var from = S && typeof S === 'object' && typeof S.v === 'number' ? S.v : 1;   /* read before the defaults below fill in v */
+    if (!S || typeof S !== 'object') { S = fresh(); from = SAVE_V; }
     if (S.cash !== undefined && S.bank === undefined) { S.bank = S.cash; delete S.cash; }   // older saves: the one cash number becomes the bank balance
     if (!S.lic && S.stats && S.stats.earned > 0) { S.lic = { retail: true, catering: true, amusement: true, lounge: true }; if (S.tent >= 2) S.lic.cult2 = true; }   // a shop that was already trading keeps what it could do before licences existed
     var f = fresh();
@@ -224,11 +244,23 @@
     var used = {}; S.plants.forEach(function (p) { if (typeof p.slot === 'number') used[p.slot] = true; });
     S.plants.forEach(function (p) { if (typeof p.slot !== 'number') { var k = 0; while (used[k]) k++; p.slot = k; used[k] = true; } });
     if (S.held && typeof S.held !== 'object') S.held = null;
-    return S;
+    return migrate(S, from);
+  }
+  // One place for save upgrades. It only ever fills in what a save is missing, never changes a value it has, and every
+  // step is safe to run twice. `from` is the version the save was written at (1 for saves from before versions).
+  function migrate(s, from) {
+    function plain(o) { return !!o && typeof o === 'object' && !Array.isArray(o); }
+    function fill(dst, src, depth) { for (var k in src) { if (dst[k] === undefined) dst[k] = src[k]; else if (depth > 0 && plain(dst[k]) && plain(src[k])) fill(dst[k], src[k], depth - 1); } }
+    fill(s, fresh(), 2);   /* the top level, then objects one and two levels down */
+    if (plain(s.tob) && s.tob.bays) fill(s.tob, tobFresh(), 2);   /* a basement line saved before a machine or a pack size existed */
+    if (plain(s.x) && plain(s.x.lab) && plain(s.x.lab.out)) { var out = s.x.lab.out; if (typeof out.gummy !== 'number') out.gummy = 0; if (typeof out.choc !== 'number') out.choc = 0; }
+    /* version steps go here, each gated on `from` (version 1 to 2 needs nothing beyond the fills above) */
+    s.v = SAVE_V;
+    return s;
   }
   var saveT = null;
   var saveFailed = false;
-  function writeSave() { try { localStorage.setItem(SAVE, JSON.stringify(S)); saveFailed = false; } catch (e) { if (!saveFailed) { saveFailed = true; try { toast('⚠ The game could not save: the storage is full or blocked', 'bad'); } catch (e2) {} } } }
+  function writeSave() { if (saveBlocked) return; try { localStorage.setItem(SAVE, JSON.stringify(S)); saveFailed = false; } catch (e) { if (!saveFailed) { saveFailed = true; try { toast('⚠ The game could not save: the storage is full or blocked', 'bad'); } catch (e2) {} } } }
   function save() { if (saveT) return; saveT = setTimeout(function () { saveT = null; writeSave(); }, 300); }
   function saveNow() { if (saveT) { clearTimeout(saveT); saveT = null; } writeSave(); }   /* the debounce would lose the last change when the window closes */
   window.addEventListener('pagehide', function () { if (ui.started) saveNow(); }); window.addEventListener('beforeunload', function () { if (ui.started) saveNow(); });
@@ -7477,12 +7509,24 @@
   function resize() { var w = window.innerWidth, h = window.innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 
   // ── Boot ──────────────────────────────────────────────────────────
+  // A failure anywhere from reading the save to the last build call reloads the page once in recovery: load() then
+  // opens a fresh shop in memory and leaves the save slot alone. A second failure only reports itself.
+  function bootFailed(e) {
+    console.error('Grow Co.: the shop could not open', e);
+    saveBlocked = true;   /* whatever state got this far is never written over the slot */
+    var raw = null, tag, again = false; try { raw = localStorage.getItem(SAVE); } catch (e2) {} tag = recoverTag(raw);
+    try { again = sessionStorage.getItem(RECOVER_KEY) === tag; } catch (e3) {}
+    if (!again) { keepBrokenSave(raw); try { sessionStorage.setItem(RECOVER_KEY, tag); if (sessionStorage.getItem(RECOVER_KEY) === tag) { location.reload(); return; } } catch (e4) {} }   /* never reload unless the flag stuck, or it would loop */
+    bootIssue = 'The shop could not open properly. Your save is untouched and nothing will be written over it. Please send a bug report with F7.';
+  }
+  try {
   loadSettings(); load();
   var elapsed = clamp((now() - (S.lastTick || now())) / 1000, 0, 6 * 3600);
   if (elapsed > 2) step(elapsed, true);
   S.lastTick = now();
   shop(); dustList(); var offlineDust = Math.min(4, Math.floor((now() - (S.lastDust || now())) / 300000)); if (offlineDust > 0) { spawnDust(offlineDust); S.lastDust = now(); }
   buildStatic(); buildProps(); buildDecor(); fixtureFromBuild('deskBoard', 'desk screen', 0, buildDeskBoard); buildShopControls(); buildBroom(); buildUpstairs(); buildVipWing(); buildBasement(); registerUnits(); buildAllProps(); buildSwitches(); buildStreet(); buildCity(); buildExpansion(); buildNpc(); buildGuard(); buildWorker(); syncKeyHook(); applyFixtures(); introDraw(); applyShopState(); syncDust(); applySettings(); resize(); updateDayNight();
+  } catch (bootErr) { bootFailed(bootErr); }
   runHooks(hooks.boot);
   defightScene(); defightScene();   /* twice: a first nudge can land a face on another */
   // Blender models come out of IndexedDB after boot, so whatever is in hand is rebuilt once they land
@@ -7499,6 +7543,7 @@
       if (held() && held().kind === 'harvest') toast('You are still holding a harvest — hang it up', '');
     });
   })();
+  if (bootIssue) { var bootNote = $('g3-start-note'); if (bootNote) bootNote.textContent = bootIssue; var bootBtn = $('g3-start-btn'); if (bootBtn) bootBtn.addEventListener('click', function () { toast('⚠ ' + bootIssue, 'bad'); try { logEvent('⚠ ' + bootIssue, 'bad'); } catch (e) {} }); }   /* the recovery says so on the start screen and again once you walk in */
 
   // sim tick (1s), independent of frame rate
   setInterval(function () {
