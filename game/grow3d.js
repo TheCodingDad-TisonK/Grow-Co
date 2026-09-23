@@ -4602,7 +4602,12 @@
   function nextStep(l) {
     l.step++; var st = l.plan[l.step]; var from = { x: l.g.position.x, z: l.g.position.z }; l.t = 0;
     if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = [{ x: from.x, z: 6.6 }, { x: 0.4, z: 7.9 }, { x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]; return; }
-    if (st.kind === 'bench') { l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
+    if (st.kind === 'bench') {   /* a smoke in the lounge starts with buying the joint, off the goods shelf at the board price; no joints, no sit */
+      var jid = Object.keys(S.lots.joints).filter(function (k) { return S.lots.joints[k].n > 0; })[0];
+      if (!jid) { l.seat = null; loungerSay(l, 'no joints left? another time', '#ffc857', 2400); logEvent('🪑 ' + l.who + ' wanted a joint for the lounge, but the shelf had none', ''); nextStep(l); return; }
+      var jd = lotDraw('joints', jid, 1), jp = Math.max(1, Math.round(jointPrice(jd.q, jd.thc))); S.till += jp; bookSale(jp); S.stats.sold++; syncGoods();
+      logEvent('🪑 ' + l.who + ' bought a ' + strainById(jid).name + ' joint to smoke in the lounge (' + money(jp) + ' in the till)', '');
+      l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
     else { var s = lobbyStop(st.kind, st.unit); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useUnit = st.unit; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
   }
   // the machine does its thing: you get paid, they get something to hold
