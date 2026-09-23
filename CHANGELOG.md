@@ -36,7 +36,7 @@
 - The roof greenhouse needs Cultivation permit II and pays trimming and compliance like the tent.
 - Descriptions now match the numbers: brand, late hours, solar, the mellow smoke and the ATM fee.
 
-**Words.** The guide, the menu, the pause screen and the docs are rewritten in one plain voice, with a chapter for the shop van and a house style page for anyone writing for the game. The pause screen no longer claims the plants keep growing.
+**Words.** Every line in the game was reread and rewritten in one plain voice. Things have one name each now: the boot, the till, the back room, the drying line, the guard. The people sound like people: the regulars each have a habit, the crew each have a way of talking, the guard keeps it short, robbers are cold, lounge guests are formal, and the police finally say something. Lines that told you something untrue are put right, the broken ones ("Jo: ake a break", "paperss", "Sold 1 bags") are fixed, and a sale now lists exactly what was handed over. Heat going up on a street sale is shown instead of happening quietly. The guide, the menu, the pause screen and the docs match the game, with a chapter for the shop van and a house style page for anyone writing for Grow Co.
 
 ## v1.20
 
