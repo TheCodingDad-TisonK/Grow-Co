@@ -3179,9 +3179,9 @@
   var CAR_PART = { doorL: "driver's door", doorR: 'passenger door', boot: 'boot', bonnet: 'bonnet' };
   function carAnyOpen() { var o = carState().open; return !!(o.doorL || o.doorR || o.boot || o.bonnet || o.hatch || o.counter); }
   function carInBay() { var p = drive.g.position, dh = Math.abs(((drive.g.rotation.y - Math.PI / 2) % Math.PI + Math.PI * 1.5) % Math.PI - Math.PI / 2); return Math.abs(p.x - 7.7) < 1.7 && Math.abs(p.z + 15.3) < 1.7 && dh < 0.5; }
-  function carPartSet(id, open, quiet) { var o = carState().open; if (!drive.parts || !drive.parts[id] || o[id] === open) return; o[id] = open; if (!quiet) { sfx('door'); save(); } }
-  function carPartToggle(id) { var o = carState().open, want = !o[id]; if (drive.shut && drive.shut.id === id) drive.shut = null; carPartSet(id, want); toast((want ? '🔓 Opened the ' : '🔒 Closed the ') + CAR_PART[id] + (want && id === 'boot' ? ' — ' + trunkCount() + ' of ' + trunkCap() + ' inside' : ''), ''); }
-  function carPopBoot() { carPartSet('boot', true); drive.shut = { id: 'boot', t: 3.5 }; }
+  function carPartSet(id, open, quiet, vid) { var V = vid && drive.vehicles ? drive.vehicles[vid] : null, parts = vid ? (V && V.parts) : drive.parts, o = (vid ? vehState(vid) : carState()).open; if (!parts || !parts[id] || o[id] === open) return; o[id] = open; if (!quiet) { sfx('door'); save(); } }   /* vid names a vehicle other than the one in hand, for a door that swings shut after you have walked to the other */
+  function carPartToggle(id) { var o = carState().open, want = !o[id]; if (drive.shut && drive.shut.id === id && drive.shut.veh === drive.veh) drive.shut = null; carPartSet(id, want); toast((want ? '🔓 Opened the ' : '🔒 Closed the ') + CAR_PART[id] + (want && id === 'boot' ? ' — ' + trunkCount() + ' of ' + trunkCap() + ' inside' : ''), ''); }
+  function carPopBoot() { carPartSet('boot', true); drive.shut = { id: 'boot', t: 3.5, veh: drive.veh }; }
   function ignition(on) {
     if (!drive.on) return;
     if (on === undefined) on = !drive.engineOn;
@@ -3193,28 +3193,34 @@
   function parkBrake(on) { var cs = carState(); if (on === undefined) on = !cs.brake; if (cs.brake === on) return; cs.brake = on; sfx('click'); toast(on ? '🅿️ Handbrake on' : '🅿️ Handbrake off', on ? '' : 'good'); save(); }
   function carLightStep() { var cs = carState(); cs.lights = (cs.lights + 1) % 3; sfx('click'); toast(['💡 Lights off', '💡 Dipped headlights', '🔦 Main beam'][cs.lights], cs.lights ? 'good' : ''); carLamps(); save(); }
   function carLamps() {
-    if (!drive.lamps) return;
-    var cs = carState(), L = cs.lights, braking = drive.on && drive.braking, rev = drive.on && drive.v < -0.3;
-    drive.lamps.headM.emissiveIntensity = L === 2 ? 3.2 : L === 1 ? 1.5 : 0.08;
-    drive.lamps.tailM.emissiveIntensity = braking ? 3.0 : L ? 1.1 : 0.08;
-    drive.lamps.revM.emissiveIntensity = rev ? 2.4 : 0.05;
-    drive.lamps.beams.forEach(function (b) { b.intensity = L === 2 ? 2.6 : L === 1 ? 1.3 : 0; b.angle = L === 2 ? 0.42 : 0.62; b.distance = L === 2 ? 55 : 26; });
+    if (!drive.vehicles) return;
+    Object.keys(drive.vehicles).forEach(function (vid) {   /* every vehicle shows its own lights; only the one being driven shows brake and reversing lamps */
+      var lamps = drive.vehicles[vid].lamps; if (!lamps) return;
+      var L = vehState(vid).lights, mine = drive.on && drive.veh === vid, braking = mine && drive.braking, rev = mine && drive.v < -0.3;
+      lamps.headM.emissiveIntensity = L === 2 ? 3.2 : L === 1 ? 1.5 : 0.08;
+      lamps.tailM.emissiveIntensity = braking ? 3.0 : L ? 1.1 : 0.08;
+      lamps.revM.emissiveIntensity = rev ? 2.4 : 0.05;
+      lamps.beams.forEach(function (b) { b.intensity = L === 2 ? 2.6 : L === 1 ? 1.3 : 0; b.angle = L === 2 ? 0.42 : 0.62; b.distance = L === 2 ? 55 : 26; });
+    });
   }
   function updateCarParts(dt) {
-    if (!drive.parts) return;
+    if (!drive.vehicles) return;
     if (!drive.on) drive.braking = false;
-    if (drive.shut) { drive.shut.t -= dt; if (drive.shut.t <= 0) { var sid = drive.shut.id; drive.shut = null; carPartSet(sid, false); } }
-    var o = carState().open;
-    ['doorL', 'doorR', 'boot', 'bonnet', 'hatch', 'counter', 'rail'].forEach(function (id) { var P = drive.parts[id]; if (!P) return; var want = o[id] ? 1 : 0; if (Math.abs(P.t - want) < 0.002) return; P.t = lerp(P.t, want, 1 - Math.pow(0.004, dt)); if (Math.abs(P.t - want) < 0.005) P.t = want; P.g.rotation[P.axis] = P.max * P.t; });
-    var cg = carState().cigs, load = trunkCount() + Object.keys(cg).reduce(function (a, k) { return a + cg[k]; }, 0), step = Math.max(1, Math.round(trunkCap() / (drive.parts.cargo.children.length + 1)));
-    drive.parts.cargo.children.forEach(function (c, i) { var v = load > i * step; if (c.visible !== v) c.visible = v; });
+    if (drive.shut) { drive.shut.t -= dt; if (drive.shut.t <= 0) { var sh = drive.shut; drive.shut = null; carPartSet(sh.id, false, false, sh.veh || drive.veh); } }   /* it closes on the vehicle it was opened on, even if you have since turned to the other */
+    Object.keys(drive.vehicles).forEach(function (vid) {   /* each vehicle's doors, lids and cargo follow its own saved state, not the one in hand */
+      var parts = drive.vehicles[vid].parts; if (!parts) return; var vs = vehState(vid), o = vs.open;
+      ['doorL', 'doorR', 'boot', 'bonnet', 'hatch', 'counter', 'rail'].forEach(function (id) { var P = parts[id]; if (!P) return; var want = o[id] ? 1 : 0; if (Math.abs(P.t - want) < 0.002) return; P.t = lerp(P.t, want, 1 - Math.pow(0.004, dt)); if (Math.abs(P.t - want) < 0.005) P.t = want; P.g.rotation[P.axis] = P.max * P.t; });
+      if (!parts.cargo) return;
+      var cg = vs.cigs, load = trunkCount(vid) + Object.keys(cg).reduce(function (a, k) { return a + cg[k]; }, 0), step = Math.max(1, Math.round(trunkCap(vid) / (parts.cargo.children.length + 1)));
+      parts.cargo.children.forEach(function (c, i) { var v = load > i * step; if (c.visible !== v) c.visible = v; });
+    });
     carLamps();
   }
   function enterCar() {
     if (drive.on) return; if (sit.on) standUp();
     drive.on = true; drive.v = 0; drive.rpm = 0; drive.engineOn = false; drive.braking = false; drive.warnT = 0; drive.dashT = 0;
     drive.look.yaw = 0; drive.look.pitch = 0.12; drive.look.t = 0; drive.cam.copy(camera.position);
-    carPartSet('doorL', true, true); drive.shut = { id: 'doorL', t: 1.2 };
+    carPartSet('doorL', true, true); drive.shut = { id: 'doorL', t: 1.2, veh: drive.veh };
     tabletStow();   /* carrying the tablet in puts it in the dash cradle for the round */
     setFocus(null); dashShow(true); sfx('door'); carLamps();
     toast('🚗 I starts the engine · P handbrake · L lights · W/S drive · A/D steer · Space brake · mouse looks · E gets out', '');
@@ -3223,7 +3229,7 @@
     if (!drive.on) return; player.inVan = false; if (Math.abs(drive.v) > 2.5) { toast('Stop the car first', 'bad'); return; }
     var p = drive.g.position, h = drive.g.rotation.y, rx = Math.cos(h), rz = -Math.sin(h); var side = carBlocked(p.x - rx * 1.7, p.z - rz * 1.7, 0.35) ? 1 : -1;
     var cs = carState(); cs.x = p.x; cs.z = p.z; cs.h = h; cs.brake = true;
-    carPartSet(side > 0 ? 'doorR' : 'doorL', true, true); drive.shut = { id: side > 0 ? 'doorR' : 'doorL', t: 1.4 };
+    carPartSet(side > 0 ? 'doorR' : 'doorL', true, true); drive.shut = { id: side > 0 ? 'doorR' : 'doorL', t: 1.4, veh: drive.veh };
     var bay = carInBay();
     drive.on = false; drive.v = 0; drive.engineOn = false; drive.braking = false; engineSound(0); dashShow(false);
     player.pos.set(p.x + rx * 1.7 * side, 1.65, p.z + rz * 1.7 * side); player.vel.set(0, 0, 0); player.yaw = h + drive.look.yaw; player.pitch = 0; player.floor = 0;
@@ -3342,7 +3348,7 @@
   }
   // ── doing business in town ──
   function carNear(x, z, r) { return Math.hypot(drive.g.position.x - x, drive.g.position.z - z) < r; }
-  function trunkCount() { var tr = carState().trunk; return Object.keys(tr).reduce(function (a, k) { return a + tr[k]; }, 0); }
+  function trunkCount(vid) { var tr = (vid ? vehState(vid) : carState()).trunk; return Object.keys(tr).reduce(function (a, k) { return a + tr[k]; }, 0); }
   function unloadTrunk() { var cs = carState(), tr = cs.trunk, n = trunkCount(); if (!n) { toast('The trunk is empty', ''); return; } carPopBoot(); storageAdd(tr); cs.trunk = {};   /* empty the trunk that was unloaded: clearing S.car while the van was in hand let the van's load be unloaded again and again */ if (typeof syncStorage === 'function') syncStorage(); sfx('crate'); toast('📦 Unloaded the trunk into the storage room (' + n + ' items) — Jo or you can shelve it from there', 'good'); logEvent('📦 Unloaded a car run from RF Supply Co.', ''); save(); }
   function cityPoiMenu(poi) {
     var h = held(), lines = [];
@@ -3457,13 +3463,14 @@
     S.pocket += got; vehState('van').sales += got; addHeat(5); S.stats.street = (S.stats.street || 0) + got; syncVanRack(); sfx('cash'); toast('🪟 Sold ' + n + ' ' + kindName(b.kind, n) + ' from the rack for ' + money(got) + ' cash — half again over the shop price, in your pocket', 'good'); vanBuyerLeave(b); hud(); save();
   }
   function cityPrompt(d, h) {
-    if ((d.kind === 'car' || d.kind === 'carPart') && !drive.on && d.veh && d.veh !== drive.veh) selectVehicle(d.veh);
-    if (d.kind === 'car') return drive.on ? '' : 'Your ' + vehName() + ' <small>E to drive · Shift+E for the trunk and the garage</small>';
+    /* a prompt only reads: the vehicle looked at is described from its own state, and it becomes the one in hand only when E is pressed on it */
+    var vid = d.veh || drive.veh || 'car';
+    if (d.kind === 'car') return drive.on ? '' : 'Your ' + (vid === 'van' ? 'van' : 'car') + ' <small>E to drive · Shift+E for the trunk and the garage</small>';
     if (d.kind === 'carPart') {
-      if (drive.on) return ''; var o = carState().open, shut = !o[d.part];
-      if (d.part === 'doorL') return 'Get in behind the wheel <small>' + (carState().brake ? 'handbrake on' : 'handbrake off') + ' · Shift+E for the trunk and the garage</small>';
-      if (d.part === 'boot' && drive.veh === 'van' && !shut) return player.inVan ? 'Climb out of the back <small>Shift+E closes the tailgate</small>' : 'Climb into the back <small>' + trunkCount() + ' of ' + trunkCap() + ' in the trunk · Shift+E closes the tailgate</small>';
-      if (d.part === 'boot') return (shut ? 'Open the boot' : 'Close the boot') + ' <small>' + trunkCount() + ' of ' + trunkCap() + ' inside · Shift+E to load or unload</small>';
+      if (drive.on) return ''; var vs = vehState(vid), o = vs.open, shut = !o[d.part];
+      if (d.part === 'doorL') return 'Get in behind the wheel <small>' + (vs.brake ? 'handbrake on' : 'handbrake off') + ' · Shift+E for the trunk and the garage</small>';
+      if (d.part === 'boot' && vid === 'van' && !shut) return player.inVan ? 'Climb out of the back <small>Shift+E closes the tailgate</small>' : 'Climb into the back <small>' + trunkCount(vid) + ' of ' + trunkCap(vid) + ' in the trunk · Shift+E closes the tailgate</small>';
+      if (d.part === 'boot') return (shut ? 'Open the boot' : 'Close the boot') + ' <small>' + trunkCount(vid) + ' of ' + trunkCap(vid) + ' inside · Shift+E to load or unload</small>';
       if (d.part === 'bonnet') return (shut ? 'Open the bonnet' : 'Close the bonnet') + ' <small>a look at the engine</small>';
       if (d.part === 'hatch') return (shut ? 'Lift the serving hatch' : 'Close the serving hatch') + ' <small>Shift+E ' + (vehState('van').shopOpen ? 'closes' : 'opens') + ' the whole shop van</small>';
       if (d.part === 'rail') return !o.boot ? 'Open the tailgate <small>the rail is behind it</small>' : (shut ? 'Unlatch the rail <small>to climb in or out</small>' : 'Latch the rail <small>leave the tailgate up, nothing falls out</small>');
@@ -3575,7 +3582,7 @@
   function weekend() { var d = (S.day || 1) % 7; return d === 6 || d === 0; }
   function footfall() { var w = xs().weather.kind, f = WSTUNE.footfall * (w === 'storm' ? 0.6 : w === 'rain' ? 0.8 : w === 'snow' ? 0.75 : 1); if (weekend()) f *= 1.3; if ((S.day || 1) % 28 >= 25) f *= 1.5; return f; }
   function addHeat(n, why) { var X = xs(); X.heat = clamp(X.heat + n, 0, 100); var band = X.heat >= 90 ? 3 : X.heat >= 60 ? 2 : X.heat >= 30 ? 1 : 0; if (band > exp.heatBand) toast(['', '🚔 The police have started to notice you', '🚔 You are being watched — expect an inspection', '🚔 You are the talk of the precinct'][band] + ' (heat ' + Math.round(X.heat) + ')', 'bad'); exp.heatBand = band; }
-  function trunkCap() { var b = WSCAR && WSCAR.trunk ? WSCAR.trunk : 40; if (drive.veh === 'van') b = Math.round(b * 2.5); return xs().garage.trunk ? Math.round(b * 3) : b; }
+  function trunkCap(vid) { var b = WSCAR && WSCAR.trunk ? WSCAR.trunk : 40; if ((vid || drive.veh) === 'van') b = Math.round(b * 2.5); return xs().garage.trunk ? Math.round(b * 3) : b; }
   function carVmax() { var b = WSCAR && WSCAR.vmax ? WSCAR.vmax : 24; return xs().garage.engine ? Math.round(b * 4 / 3) : b; }
   // walk-in rooms sit on the basement level, far apart, and share one lamp that follows you
   function enterZone(id) { var Z = ZONES[id]; if (!Z) return; if (sit.on) standUp(); tobFade(function () { player.floor = -1; player.pos.set(Z.spawn[0], BASE.y + 1.65, Z.z2 - Z.spawn[1] - 0.6); player.vel.set(0, 0, 0); player.yaw = Z.spawn[2] === Math.PI ? 0 : 0; player.pitch = 0; exp.zone = id; exp.zoneLight.position.set((Z.x1 + Z.x2) / 2, BASE.y + 2.7, (Z.z1 + Z.z2) / 2); exp.zoneLight.intensity = 1.1; toast('🚪 ' + Z.name, ''); }); }
