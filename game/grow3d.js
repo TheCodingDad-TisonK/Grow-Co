@@ -276,7 +276,7 @@
   function stockOf(kind, id) { if (!S.stock[kind]) S.stock[kind] = {}; return S.stock[kind][id] || (S.stock[kind][id] = { n: 0, qSum: 0, thcSum: 0 }); }
   function stockCount() { var n = 0; ['bags', 'joints', 'cookies'].forEach(function (k) { Object.keys(S.stock[k] || {}).forEach(function (id) { n += S.stock[k][id].n; }); }); return n; }
   function isGoods(h) { return !!h && (h.kind === 'bags' || h.kind === 'joints' || h.kind === 'cookies'); }
-  function stockStore(h) { var l = stockOf(h.kind, h.strain || 'sunflower'); l.n += h.n; l.qSum += h.qSum; l.thcSum += h.thcSum; toast('🗄️ ' + h.n + ' ' + kindName(h.kind, h.n) + ' locked in the stock cabinet', 'good'); S.held = null; sfx('putdown'); world.dirty = true; ui.refreshOpen(); }
+  function stockStore(h) { var l = stockOf(h.kind, h.strain || 'sunflower'); l.n += h.n; l.qSum += h.qSum; l.thcSum += h.thcSum; toast('🗄️ ' + h.n + ' ' + kindName(h.kind, h.n) + ' locked in the stock cabinet', 'good'); S.held = null; sfx('putdown'); ui.refreshOpen(); }
   function stockDraw(kind, id, n) { var l = stockOf(kind, id); n = Math.min(n, l.n); if (n <= 0) return null; var q = l.qSum / l.n, thc = l.thcSum / l.n; l.n -= n; l.qSum -= q * n; l.thcSum -= thc * n; if (l.n <= 0) { l.n = 0; l.qSum = 0; l.thcSum = 0; } return { n: n, qSum: q * n, thcSum: thc * n }; }
   function stockTake(kind, id, n) { if (hotbarFull()) { toast('Hands full — G to put things down', 'bad'); return; } var d = stockDraw(kind, id, n); if (!d) return; take({ kind: kind, strain: id, n: d.n, qSum: d.qSum, thcSum: d.thcSum }); toast('Took ' + d.n + ' ' + strainById(id).name + ' ' + kindName(kind, d.n), ''); ui.refreshOpen(); }
   function stockToShelf(kind, id) { var d = stockDraw(kind, id, 9999); if (!d) return; var l = lotOf(kind, id); l.n += d.n; l.qSum += d.qSum; l.thcSum += d.thcSum; syncTotals(); syncGoods(); }
@@ -698,14 +698,14 @@
       var h = held(); if (!h || h.kind !== 'harvest') { toast('Nothing to hang', 'bad'); return; }
       if (!S.upgrades.trimmer && !h.trimmed) { taskStart('trim', gram(h.grams) + ' of ' + strainById(h.strain).name, function (r) { var hh = held(); if (!hh || hh.kind !== 'harvest') return; hh.trimmed = true; var keep = 0.82 + 0.18 * r.score; hh.grams = Math.round(hh.grams * keep * 10) / 10; toast('✂️ ' + r.note + (r.score < 1 ? ' — ' + gram(hh.grams) + ' left' : ''), r.score >= 1 ? 'good' : ''); actions.hang(); }); return; }
       S.batches.push({ id: 'b' + now() + randi(0, 999), grams: h.grams, quality: h.quality, baseQ: h.quality, thc: h.thc, startedAt: now(), cured: false, strain: h.strain });
-      S.held = null; world.dirty = true; sfx('hang');
+      S.held = null; world.dirtyShelf = true; sfx('hang');
       logEvent('🌬️ Hung ' + gram(h.grams) + ' of ' + strainById(h.strain).name + ' to dry', '');
       toast('🌬️ Hung to dry — jars itself on the shelf when done', 'good');
     },
     collectHeld: function () {
       var h = held(); if (!h || h.kind !== 'jar') { toast('Carry a cured jar here', 'bad'); return; }
       stashAdd(h.strain || 'sunflower', h.grams, h.quality, h.thc);
-      S.held = null; world.dirty = true; sfx('pour');
+      S.held = null; world.dirtyShelf = true; sfx('pour');
       toast('🏺 Emptied ' + gram(h.grams) + ' of ' + strainById(h.strain || 'sunflower').name + ' into the stash', 'good');
     },
     collect: function (bid) {
@@ -714,15 +714,15 @@
       if (!b.cured) { toast('Still drying', 'bad'); return; }
       stashAdd(b.strain || 'sunflower', b.grams, b.quality, b.thc);
       S.batches.splice(idx, 1);
-      toast('🏺 Added ' + gram(b.grams) + ' to the cured stash', 'good'); world.dirty = true;
+      toast('🏺 Added ' + gram(b.grams) + ' to the cured stash', 'good'); world.dirtyShelf = true;
     },
-    collectAll: function () { var any = false; for (var i = S.batches.length - 1; i >= 0; i--) if (S.batches[i].cured) { var b = S.batches[i]; stashAdd(b.strain || 'sunflower', b.grams, b.quality, b.thc); S.batches.splice(i, 1); any = true; } if (any) { toast('🏺 Collected all cured batches', 'good'); world.dirty = true; } else toast('Nothing cured yet', 'bad'); },
+    collectAll: function () { var any = false; for (var i = S.batches.length - 1; i >= 0; i--) if (S.batches[i].cured) { var b = S.batches[i]; stashAdd(b.strain || 'sunflower', b.grams, b.quality, b.thc); S.batches.splice(i, 1); any = true; } if (any) { toast('🏺 Collected all cured batches', 'good'); world.dirtyShelf = true; } else toast('Nothing cured yet', 'bad'); },
     bagUp: function (sid) {
       sid = sid || firstStashStrain(); var st = strainById(sid);
       if (!S.supplies.grinder) { toast('Buy a grinder first', 'bad'); return; }
       if (stashOf(sid).g < bagGrams()) { toast('Need ' + bagGrams() + 'g of ' + st.name + ' cured', 'bad'); return; }
       if ((S.supplies.bag || 0) < 1) { toast('No baggies', 'bad'); return; }
-      function finish(dq, note) { var d = stashDraw(sid, bagGrams()); S.supplies.bag--; lotAdd('bags', sid, 1, clamp(d.q + dq, 20, 100), d.thc); world.dirty = true; sfx('bag'); toast('🛍️ Bagged an eighth of ' + st.name + (note ? ' — ' + note : '') + ' — on the goods shelf', 'good'); }
+      function finish(dq, note) { var d = stashDraw(sid, bagGrams()); S.supplies.bag--; lotAdd('bags', sid, 1, clamp(d.q + dq, 20, 100), d.thc); world.dirtyShelf = world.dirtyRack = true; sfx('bag'); toast('🛍️ Bagged an eighth of ' + st.name + (note ? ' — ' + note : '') + ' — on the goods shelf', 'good'); }
       if (S.upgrades.bagger) { finish(0, 'auto-bagger'); return; }
       var chain = []; if (!S.upgrades.grinder2) chain.push({ kind: 'grind', sub: st.name + ' · ' + gram(stashOf(sid).g) + ' in the stash' }); if (!S.upgrades.scale) chain.push({ kind: 'weigh', sub: st.name + ' · aim for 3.5 g' });
       if (!chain.length) { finish(0, 'digital scale'); return; }
@@ -735,7 +735,7 @@
       var machine = !!S.upgrades.roller; var count = machine ? (S.upgrades.roller2 ? 10 : 5) : 1;
       if (stashOf(sid).g < count * jointGrams()) { toast('Need ' + (count * jointGrams()) + 'g of ' + st.name + ' cured', 'bad'); return; }
       if (!machine && ((S.supplies.paper || 0) < 1 || (S.supplies.tip || 0) < 1)) { toast('Need a paper + tip', 'bad'); return; }
-      function finish(dq, note) { var d = stashDraw(sid, count * jointGrams()); if (!machine) { S.supplies.paper--; S.supplies.tip--; } lotAdd('joints', sid, count, clamp(d.q + dq, 20, 100), d.thc); world.dirty = true; sfx('roll'); toast('🚬 Rolled ' + count + ' ' + st.name + ' joint' + (count > 1 ? 's' : '') + (note ? ' — ' + note : '') + ' — on the goods shelf', 'good'); }
+      function finish(dq, note) { var d = stashDraw(sid, count * jointGrams()); if (!machine) { S.supplies.paper--; S.supplies.tip--; } lotAdd('joints', sid, count, clamp(d.q + dq, 20, 100), d.thc); world.dirtyShelf = world.dirtyRack = true; sfx('roll'); toast('🚬 Rolled ' + count + ' ' + st.name + ' joint' + (count > 1 ? 's' : '') + (note ? ' — ' + note : '') + ' — on the goods shelf', 'good'); }
       var chain = []; if (!S.upgrades.grinder2) chain.push({ kind: 'grind', sub: st.name }); if (!machine) chain.push({ kind: 'roll', sub: st.name + ' · paper and tip ready' });
       if (!chain.length) { finish(0, 'machine rolled'); return; }
       ui.closePanel(); taskChain(chain, function (rs) { var last = rs[rs.length - 1]; finish(last.kind === undefined && last.score >= 1 ? 2 : last.score >= 1 ? 2 : last.score >= 0.6 ? 0 : -5, last.note); });
@@ -745,7 +745,7 @@
       sid = sid || firstStashStrain(); var st = strainById(sid);
       if ((S.supplies.mix || 0) < 1) { toast('Need a box of cookie mix from the rack', 'bad'); return; }
       if (stashOf(sid).g < 1) { toast('Need 1 g of ' + st.name + ' cured', 'bad'); return; }
-      function finish(dq, note) { var d = stashDraw(sid, 1); S.supplies.mix--; lotAdd('cookies', sid, 6, clamp(d.q + dq, 20, 100), d.thc); world.dirty = true; sfx('ok'); toast('🍪 Baked 6 ' + st.name + ' cookies' + (note ? ' — ' + note : '') + ' — on the goods shelf', 'good'); logEvent('🍪 Baked 6 ' + st.name + ' cookies', ''); }
+      function finish(dq, note) { var d = stashDraw(sid, 1); S.supplies.mix--; lotAdd('cookies', sid, 6, clamp(d.q + dq, 20, 100), d.thc); world.dirtyShelf = world.dirtyRack = true; sfx('ok'); toast('🍪 Baked 6 ' + st.name + ' cookies' + (note ? ' — ' + note : '') + ' — on the goods shelf', 'good'); logEvent('🍪 Baked 6 ' + st.name + ' cookies', ''); }
       if (S.upgrades.oven) { finish(0, 'convection oven'); return; }
       ui.closePanel(); taskStart('bake', st.name + ' · one box of mix, 1 g of stash', function (r) { finish(r.score >= 1 ? 4 : r.score >= 0.5 ? -2 : -8, r.note); });
     },
@@ -2457,7 +2457,7 @@
   var ORDER_WAIT = 15000, VAN_TRIP = 75000;
   function orderAdd(id, n) { if (!S.order) S.order = { items: {}, at: now() }; S.order.items[id] = (S.order.items[id] || 0) + n; S.order.at = now(); }
   function orderSummary(items) { return Object.keys(items).map(function (k) { return items[k] + '× ' + itemName(k); }).join(', '); }
-  function storageAdd(items) { Object.keys(items).forEach(function (k) { S.storage[k] = (S.storage[k] || 0) + items[k]; }); world.dirty = true; }
+  function storageAdd(items) { Object.keys(items).forEach(function (k) { S.storage[k] = (S.storage[k] || 0) + items[k]; }); world.dirtyStorage = true; }
   var truck = { g: null, state: 'away', t: 0, delivery: null, z: -32 };
   var courier = { g: null, h: null, state: 'away', path: [], t: 0, bubble: null };
   function updateLogistics(dt, offline) {
@@ -2715,7 +2715,7 @@
     if (player.keys.ShiftLeft || player.keys.ShiftRight) { toggleLock('cigCabinet'); return; }
     if (lockedStop('cigCabinet')) return;
     if (!S.cigShutter) { toggleCigShutter(); return; }
-    if (h && h.kind === 'cigs') { S.cigStock[h.sku] = cigStock(h.sku) + h.n; S.held = null; syncCigCab(); sfx('putdown'); toast('🚬 ' + h.n + ' × ' + CIG_SKUS[h.sku].name + ' into the cabinet', 'good'); world.dirty = true; save(); return; }
+    if (h && h.kind === 'cigs') { S.cigStock[h.sku] = cigStock(h.sku) + h.n; S.held = null; syncCigCab(); sfx('putdown'); toast('🚬 ' + h.n + ' × ' + CIG_SKUS[h.sku].name + ' into the cabinet', 'good'); save(); return; }
     var c = S.customer, lines = []; var want = c && c.cig && c.cig.given < c.cig.qty ? c.cig : null;
     function takeLine(k, n, label) { return { label: label, cls: cigStock(k) >= 1 ? '' : 'muted', act: cigStock(k) >= 1 ? function () { if (hotbarFull()) { toast('Hands full — G to put things down', 'bad'); return; } var m = Math.min(n, cigStock(k)); S.cigStock[k] -= m; take({ kind: 'cigs', sku: k, n: m }); syncCigCab(); save(); } : null }; }
     if (want) lines.push(takeLine(want.sku, want.qty - want.given, '🛎️ ' + c.who + ' asked for ' + (want.qty - want.given) + ' × ' + CIG_SKUS[want.sku].name + ' <small>' + cigStock(want.sku) + ' in the cabinet</small>'));
@@ -2735,7 +2735,7 @@
   function handCigs(c, h) {
     var q = c.cig; if (!q || q.given >= q.qty) { toast(c.who + ' did not ask for cigarettes', 'bad'); npc.say('no smokes for me, thanks', '#ffc857'); return; }
     if (q.sku !== h.sku) { toast(c.who + ' asked for ' + CIG_SKUS[q.sku].name + ', not that', 'bad'); npc.say('no… the ' + CIG_SKUS[q.sku].name, '#ff6b6b'); return; }
-    var give = Math.min(q.qty - q.given, h.n); q.given += give; h.n -= give; if (h.n <= 0) S.held = null; S.stats.cigs = (S.stats.cigs || 0) + give; sfx('rustle'); world.dirty = true;
+    var give = Math.min(q.qty - q.given, h.n); q.given += give; h.n -= give; if (h.n <= 0) S.held = null; S.stats.cigs = (S.stats.cigs || 0) + give; sfx('rustle');
     if (c.stage === 'pay') { c.due += CIG_SKUS[q.sku].price * give; if (c.pay === 'cash' && !c.changeGiven) c.tendered = tenderFor(c.due); }   // handed over after the rest was already rung up
     npc.say(q.given >= q.qty ? 'and the smokes, cheers' : 'one more of those', '#6fdc8c'); toast('🚬 Handed over ' + give + ' × ' + CIG_SKUS[q.sku].name, 'good'); hud();
   }
@@ -3415,7 +3415,7 @@
     var f = parkFolk[idx], h = held(); if (!f) return; if (!h || (h.kind !== 'joints' && h.kind !== 'bags' && h.kind !== 'cookies')) { toast('Nothing to offer — bring joints, bags or cookies in your hands', ''); return; }
     if (f.coolT > 0) { toast('"I am good for now, maybe later"', ''); return; }
     if (Math.random() < 0.12 + xs().heat / 300) { addHeat(25); var fine = Math.min(S.bank, 250); S.bank -= fine; S.rep = Math.max(0, S.rep - 3); S.held = null; f.coolT = 120; sfx('siren'); toast('🚓 Plain-clothes officer! ' + money(fine) + ' fine, the goods are confiscated, rep -3', 'bad'); logEvent('🚓 Busted dealing in Harvest Park — ' + money(fine) + ' fine, rep -3', 'bad'); hud(); save(); return; }
-    var n = Math.min(h.n, f.want), q = h.qSum / h.n, thc = h.thcSum / h.n, got = Math.round(unitPrice(h.kind, q, thc) * n * 1.35); h.n -= n; h.qSum -= q * n; h.thcSum -= thc * n; if (h.n <= 0) S.held = null; S.pocket += got; addHeat(8); S.stats.street = (S.stats.street || 0) + got; f.coolT = 90; f.want = randi(1, 3); sfx('cash'); toast('🤝 Sold ' + n + ' ' + kindName(h.kind, n) + ' for ' + money(got) + ' cash — in your pocket, no rep, no receipt', 'good'); world.dirty = true; hud(); save();
+    var n = Math.min(h.n, f.want), q = h.qSum / h.n, thc = h.thcSum / h.n, got = Math.round(unitPrice(h.kind, q, thc) * n * 1.35); h.n -= n; h.qSum -= q * n; h.thcSum -= thc * n; if (h.n <= 0) S.held = null; S.pocket += got; addHeat(8); S.stats.street = (S.stats.street || 0) + got; f.coolT = 90; f.want = randi(1, 3); sfx('cash'); toast('🤝 Sold ' + n + ' ' + kindName(h.kind, n) + ' for ' + money(got) + ' cash — in your pocket, no rep, no receipt', 'good'); hud(); save();
   }
   var VAN_KINDS = ['joints', 'bags', 'cookies'], VAN_RACK_CAP = 3;
   function vanRack() { var v = vehState('van'); if (!v.rack) v.rack = {}; VAN_KINDS.forEach(function (k) { if (!v.rack[k]) v.rack[k] = { n: 0, qSum: 0, thcSum: 0 }; }); if (typeof v.sales !== 'number') v.sales = 0; return v.rack; }
@@ -3575,7 +3575,7 @@
     var v = S.vip; if (!v || vip.state !== 'sit') { toast('They are still on their way up', ''); return; }
     if (!h || h.kind !== v.kind) { toast(v.who + ' is waiting for ' + (v.qty - v.given) + ' ' + kindName(v.kind, v.qty - v.given) + ' at quality ' + v.minQ + '+', ''); return; }
     var q = h.qSum / h.n, thc = h.thcSum / h.n; if (q < v.minQ) { vipSay('that is… ordinary', '#ff6b6b'); toast(v.who + ' will not touch anything under quality ' + v.minQ, 'bad'); return; }
-    var give = Math.min(v.qty - v.given, h.n); v.given += give; v.paid = (v.paid || 0) + unitPrice(v.kind, q, thc) * give * 3; h.n -= give; h.qSum -= q * give; h.thcSum -= thc * give; if (h.n <= 0) S.held = null; sfx('rustle'); world.dirty = true;
+    var give = Math.min(v.qty - v.given, h.n); v.given += give; v.paid = (v.paid || 0) + unitPrice(v.kind, q, thc) * give * 3; h.n -= give; h.qSum -= q * give; h.thcSum -= thc * give; if (h.n <= 0) S.held = null; sfx('rustle');
     if (v.given < v.qty) { vipSay('lovely. ' + (v.qty - v.given) + ' more', '#e8c27a'); return; }
     var pay = Math.round(v.paid), tip = Math.round(pay * 0.2); S.till += pay; S.tips += tip; S.rep += 8; S.stats.vip = (S.stats.vip || 0) + 1; bookSale(pay); sfx('cash'); toast('🥂 ' + v.who + ' paid ' + money(pay) + ' and left ' + money(tip) + ' on the table — rep +8', 'good'); logEvent('🥂 Lounge service for ' + v.who + ': ' + money(pay) + ' + ' + money(tip) + ' tip, rep +8', 'good'); hud(); vipLeave('exquisite. until next time', '#6fdc8c');
   }
@@ -3762,7 +3762,7 @@
     S.stats.deliveries = (S.stats.deliveries || 0) + 1;
     if (j.via === 'tablet') { S.bank += pay; S.rep += 1; S.stats.roundPay = (S.stats.roundPay || 0) + pay; toast('📋 Dropped at ' + j.addr + ' — ' + money(pay) + ' invoiced to the bank · rep +1' + how, 'good'); logEvent('📋 Round drop at ' + j.addr + ': ' + money(pay), 'good'); }
     else { S.pocket += pay; S.rep += 2; addHeat(6); toast('📱 Dropped at ' + j.addr + ' — ' + money(pay) + ' cash in your pocket · rep +2' + how, 'good'); logEvent('📱 Phone delivery at ' + j.addr + ': ' + money(pay), 'good'); }
-    sfx('cash'); world.dirty = true; hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render();
+    sfx('cash'); hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render();
   }
   function updateJobs(dt) {
     var X = xs(); if (!exp.beacons) return;
@@ -5318,7 +5318,7 @@
   function sparkUp() {
     var h = held(); if (!h || h.kind !== 'joints') { toast('Bring a joint from the bench first', 'bad'); return; }
     if (smoke.on) { toast('One at a time', ''); return; }
-    var q = h.qSum / h.n, thc = h.thcSum / h.n; h.n -= 1; h.qSum -= q; h.thcSum -= thc; if (h.n <= 0) S.held = null; world.dirty = true;
+    var q = h.qSum / h.n, thc = h.thcSum / h.n; h.n -= 1; h.qSum -= q; h.thcSum -= thc; if (h.n <= 0) S.held = null;
     smoke.on = true; smoke.until = now() + 24000; smoke.nextDrag = now() + 1500; smoke.drag = 0; smoke.puffed = false; if (smoke.group) { smoke.group.visible = true; smoke.group.position.set(0.26, -0.28, -0.55); }
     S.chill = { until: now() + 10 * 60000, label: 'mellow' }; S.stats.smoked = (S.stats.smoked || 0) + 1;
     sfx('lighter'); toast('🚬 ' + pick(['Sparked one up.', 'Ahh.', 'Quality control.']) + ' Mellow: customers pay 5% more for 10 min', 'good');
@@ -6509,7 +6509,7 @@
     hands.position.set(sway, -dip, 0);
     handL.visible = !!h && (h.kind === 'harvest' || h.kind === 'jar' || h.kind === 'soil');
   }
-  function take(item) { var i = freeSlot(); if (i < 0) { toast('Hands full — G puts something down, 1 to 6 picks a slot', 'bad'); return false; } S.hotbar[i] = item; S.slot = i; world.dirty = true; sfx(item.kind === 'crate' ? 'crate' : 'pickup'); return true; }
+  function take(item) { var i = freeSlot(); if (i < 0) { toast('Hands full — G puts something down, 1 to 6 picks a slot', 'bad'); return false; } S.hotbar[i] = item; S.slot = i; sfx(item.kind === 'crate' ? 'crate' : 'pickup'); return true; }   /* hands only: the hand mesh follows the hotbar every frame, and a caller that takes from a shelf, the rack or storage flags that part itself */
   function putBack() {
     var h = held(); if (!h) return;
     if (h.kind === 'joints') { lotAdd('joints', h.strain || 'sunflower', h.n, h.qSum / h.n, h.thcSum / h.n); toast('Put the joints back on the shelf', ''); }
@@ -6523,11 +6523,12 @@
     else if (h.kind === 'broom') { toast('Broom back on the hook', ''); }
     else if (h.kind === 'snack') { toast('Left the snack for later', ''); }
     else if (h.kind === 'crate') { S.storage[h.item] = (S.storage[h.item] || 0) + h.n; toast('Crate back in storage', ''); }
-    else if (h.kind === 'keys') { toast('🔑 Keyring back on its hook in the office', ''); setTimeout(syncKeyHook, 0); world.dirty = true; }   /* the hotbar slot clears just after this, so re-read it on the next tick */
+    else if (h.kind === 'keys') { toast('🔑 Keyring back on its hook in the office', ''); setTimeout(syncKeyHook, 0); }   /* the hotbar slot clears just after this, so re-read it on the next tick */
     else if (h.kind === 'bat') { toast('Bat back by the counter', ''); if (world.batMesh) world.batMesh.visible = true; }
     else if (WEAPONS[h.kind]) { toast('The ' + WEAPONS[h.kind].name + ' is back in the weapon locker', ''); }
     else if (h.kind === 'cigs') { S.cigStock[h.sku] = cigStock(h.sku) + h.n; syncCigCab(); toast('Packs back in the cigarette cabinet', ''); }
-    S.held = null; world.dirty = true; sfx('putdown');
+    S.held = null; sfx('putdown');
+    if (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies' || h.kind === 'jar') world.dirtyShelf = true; else if (h.kind === 'soil' || h.kind === 'nutrients' || h.kind === 'remedy' || h.kind === 'seed') world.dirtyRack = true; else if (h.kind === 'crate') world.dirtyStorage = true;   /* only the place it went back to is redrawn */
   }
   // give the customer what is in your hands; pays when the order is complete
   function orderLines(c) { if (!c.lines) { c.lines = [{ kind: c.want, strain: c.strain, qty: c.qty, given: c.given || { n: 0, qSum: 0, thcSum: 0 } }]; c.given = c.lines[0].given; } return c.lines; }
@@ -6548,7 +6549,7 @@
     line.given.n += give; line.given.qSum += q * give; line.given.thcSum += thc * give;
     h.n -= give; h.qSum -= q * give; h.thcSum -= thc * give; if (h.n <= 0) S.held = null;
     sfx('rustle'); var left = lines.filter(function (l) { return l.given.n < l.qty; });
-    if (left.length) { toast('Handed over ' + give + ' — still needs ' + left.map(lineText).join(' and '), ''); npc.say('and ' + left.map(lineText).join(' + ') + '…', '#6fdc8c'); world.dirty = true; return; }
+    if (left.length) { toast('Handed over ' + give + ' — still needs ' + left.map(lineText).join(' and '), ''); npc.say('and ' + left.map(lineText).join(' + ') + '…', '#6fdc8c'); return; }
     // everything handed over: price the lines, add whatever they wanted from the counter display, then they pay
     var mult = (c.premium ? 2.2 : 1.15) * (c.subbed ? 0.85 : c.strain && c.matched ? 1.1 : 1); var total = 0;
     lines.forEach(function (l) { var aq2 = l.given.qSum / l.given.n, at2 = l.given.thcSum / l.given.n; total += unitPrice(l.kind, aq2, at2) * l.qty * mult; });
@@ -6562,7 +6563,7 @@
     c.due = Math.max(1, Math.round(total)); c.rep = rep; c.stage = 'pay'; c.changeGiven = 0; c.until = now() + 60000; if (!c.pay) c.pay = 'cash';
     if (c.pay === 'cash') c.tendered = tenderFor(c.due);
     npc.say(c.pay === 'card' ? 'card ok? 💳 ' + money(c.due) : 'here you go 💵 ' + money(c.tendered), '#ffc857');
-    toast('💵 ' + c.who + ' is paying by ' + c.pay + ' — ring it up at the register', ''); hud(); world.dirty = true;
+    toast('💵 ' + c.who + ' is paying by ' + c.pay + ' — ring it up at the register', ''); hud();
   }
   // what a cash customer holds out: sometimes exact, usually the next round note above the total
   function accIcon(id) { return { lighter: '🔥', rpaper: '📄', rgrinder: '⚙️' }[id] || '🛒'; }
@@ -6625,7 +6626,7 @@
     toast('💵 ' + money(total) + '  +' + rep + ' rep' + (note ? ' · ' + note : ''), 'good'); sfx('cash'); registerSale(c.who + ' ' + money(total));
     burst(npc.g.position.x, 1.4, npc.g.position.z - 0.3, 0xffd766, 40, 'up');
     if (!npc.goLobby(planFor(c))) npc.leaveHappy();   // maybe a drink, a coffee or a smoke on the bench first
-    S.customer = null; world.dirty = true;
+    S.customer = null;
     if (ui.panelOpen && ui.panelKind === 'register') ui.closePanel();   // the sale is done: drop the register pane and hand the pointer back
   }
   var payActions = {
@@ -6646,7 +6647,7 @@
     var q = h.qSum / h.n, thc = h.thcSum / h.n; var each = unitPrice(h.kind, q, thc); var total = each * h.n;
     S.till += total; S.stats.sold += h.n; bookSale(total); S.rep += (q > 80 ? 2 : q > 60 ? 1 : 0) * Math.min(h.n, 3); gainXp(Math.round(total / 8));
     logEvent('💵 Rang up ' + h.n + ' ' + h.kind + ' — ' + money(total), 'good'); toast('💵 ' + money(total), 'good'); sfx('cash'); registerSale(h.n + ' ' + h.kind + ' ' + money(total));
-    burst(-1.0, 1.4, 4.9, 0xffd766, 30, 'up'); S.held = null; world.dirty = true;
+    burst(-1.0, 1.4, 4.9, 0xffd766, 30, 'up'); S.held = null;
   }
 
   // ── Interaction ───────────────────────────────────────────────────
@@ -6809,10 +6810,10 @@
       if (hotbarFull()) { toast('Hands full — G to put things down', 'bad'); return; }
       if ((S.supplies[d.item] || 0) < 1) { toast('None left — order more at the laptop', 'bad'); return; }
       S.supplies[d.item]--;
-      if (d.item.indexOf('seed_') === 0) take({ kind: 'seed', strain: d.item.slice(5) }); else take({ kind: d.item });
+      if (d.item.indexOf('seed_') === 0) take({ kind: 'seed', strain: d.item.slice(5) }); else take({ kind: d.item }); dirtySupply(d.item);
       toast('Took ' + d.label, 'good');
     }
-    else if (d.kind === 'inventory') { if (h && h.kind === 'crate') { var okRack = h.item.indexOf('seed_') === 0 || (supplyById(h.item) && !supplyById(h.item).stock); if (!okRack) { toast('That goes in a machine, not on the rack', 'bad'); return; } S.supplies[h.item] = (S.supplies[h.item] || 0) + h.n; sfx('putdown'); toast('🧰 Stocked the rack: ' + h.n + ' × ' + itemName(h.item), 'good'); logEvent('🧰 Rack stocked: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; } else ui.openPanel('inventory'); }
+    else if (d.kind === 'inventory') { if (h && h.kind === 'crate') { var okRack = h.item.indexOf('seed_') === 0 || (supplyById(h.item) && !supplyById(h.item).stock); if (!okRack) { toast('That goes in a machine, not on the rack', 'bad'); return; } S.supplies[h.item] = (S.supplies[h.item] || 0) + h.n; sfx('putdown'); toast('🧰 Stocked the rack: ' + h.n + ' × ' + itemName(h.item), 'good'); logEvent('🧰 Rack stocked: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; dirtySupply(h.item); } else ui.openPanel('inventory'); }
     else if (d.kind === 'laptop') ui.openPanel('laptop');
     else if (d.kind === 'bench') { if (h && h.kind === 'jar') actions.collectHeld(); else if (h && h.kind === 'harvest') toast('Hang it on the drying line first (back-right)', 'bad'); else ui.openPanel('bench'); }
     else if (d.kind === 'lot' && !shutterOpen('goodsShelf')) { if (player.keys.ShiftLeft || player.keys.ShiftRight) toggleLock('goodsShelf'); else if (!lockedStop('goodsShelf')) setShutter('goodsShelf', true); }
@@ -6821,15 +6822,15 @@
       if (h && (h.kind !== d.item || (h.strain && h.strain !== d.strain))) { var other = S.hotbar.map(function (x, i2) { return x && x.kind === d.item && (!x.strain || x.strain === d.strain) ? i2 : -1; }).filter(function (i2) { return i2 >= 0; })[0]; if (other !== undefined) { S.slot = other; h = held(); } else if (hotbarFull()) { toast('Hands full — G to put things down first', 'bad'); return; } else h = null; }
       var n = (player.keys.ShiftLeft || player.keys.ShiftRight) ? pileLot(d.item, h, d.strain) : 1; var dr = lotDraw(d.item, d.strain, n);
       if (h) { h.n += dr.n; h.qSum += dr.q * dr.n; h.thcSum += dr.thc * dr.n; h.strain = d.strain; } else take({ kind: d.item, n: dr.n, qSum: dr.q * dr.n, thcSum: dr.thc * dr.n, strain: d.strain });
-      world.dirty = true; toast('Took ' + dr.n + ' ' + strainById(d.strain).name + ' ' + d.item, 'good');
+      world.dirtyShelf = true; toast('Took ' + dr.n + ' ' + strainById(d.strain).name + ' ' + d.item, 'good');
     }
     else if (d.kind === 'goodsShelf') { if (player.keys.ShiftLeft || player.keys.ShiftRight) toggleLock('goodsShelf'); else if (lockedStop('goodsShelf')) { } else if (!shutterOpen('goodsShelf')) setShutter('goodsShelf', true); else { setShutter('goodsShelf', false); toast('Gate rolled down over the goods shelf', ''); } }
     else if (d.kind === 'switch') { toggleRoomLight(d.room); }
     else if (d.kind === 'dehum') { dehumCycle(d.zone); }
     else if (d.kind === 'register' && heistDemander()) complyHeist();
-    else if (d.kind === 'register' && h && h.kind === 'crate') { if (supplyById(h.item) && supplyById(h.item).stock === 'display') { S.display[h.item] = (S.display[h.item] || 0) + h.n; sfx('putdown'); toast('🧾 Counter display: +' + h.n + ' ' + itemName(h.item) + ' — ' + S.display.lighter + ' lighters · ' + S.display.rpaper + ' papers · ' + S.display.rgrinder + ' grinders', 'good'); logEvent('🧾 Stocked the counter display: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; } else toast('That does not go on the counter', 'bad'); }
+    else if (d.kind === 'register' && h && h.kind === 'crate') { if (supplyById(h.item) && supplyById(h.item).stock === 'display') { S.display[h.item] = (S.display[h.item] || 0) + h.n; sfx('putdown'); toast('🧾 Counter display: +' + h.n + ' ' + itemName(h.item) + ' — ' + S.display.lighter + ' lighters · ' + S.display.rpaper + ' papers · ' + S.display.rgrinder + ' grinders', 'good'); logEvent('🧾 Stocked the counter display: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirtyDisplay = true; } else toast('That does not go on the counter', 'bad'); }
     else if (d.kind === 'register') { if (S.customer && S.customer.stage) ui.openPanel('register'); else if (h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies')) sellHeld(); else if (!h && S.till > 0 && !(player.keys.ShiftLeft || player.keys.ShiftRight)) { var tl = S.till; if (takeCash(tl, 'till')) S.till = 0; } else ui.openPanel('register'); }
-    else if (d.kind === 'jar') { if (hotbarFull()) { toast('Hands full — G to put things down', 'bad'); return; } var b = batchById(d.bid); if (!b || !b.cured) return; S.batches = S.batches.filter(function (x) { return x.id !== d.bid; }); take({ kind: 'jar', bid: b.id, grams: b.grams, quality: b.quality, baseQ: b.baseQ, thc: b.thc, startedAt: b.startedAt, strain: b.strain }); toast('Took the jar — empty it at the bench', 'good'); }
+    else if (d.kind === 'jar') { if (hotbarFull()) { toast('Hands full — G to put things down', 'bad'); return; } var b = batchById(d.bid); if (!b || !b.cured) return; S.batches = S.batches.filter(function (x) { return x.id !== d.bid; }); world.dirtyShelf = true; take({ kind: 'jar', bid: b.id, grams: b.grams, quality: b.quality, baseQ: b.baseQ, thc: b.thc, startedAt: b.startedAt, strain: b.strain }); toast('Took the jar — empty it at the bench', 'good'); }
     else if (d.kind === 'line') { if (h && h.kind === 'harvest') actions.hang(); else ctxShelf(); }
     else if (d.kind === 'shelf') ctxShelf();
     else if (d.kind === 'customer') { if (!S.customer) return; var hb2 = held(); if (hb2 && hb2.kind === 'bat') { swingBat(); return; }
@@ -6873,7 +6874,7 @@
       if (h && (h.kind !== 'crate' || h.item !== d.item)) { var other2 = S.hotbar.map(function (x, i2) { return x && x.kind === 'crate' && x.item === d.item ? i2 : -1; }).filter(function (i2) { return i2 >= 0; })[0]; if (other2 !== undefined) { S.slot = other2; h = held(); } else if (hotbarFull()) { toast('Hands full — G to put things down', 'bad'); return; } else h = null; }
       var take_n = (player.keys.ShiftLeft || player.keys.ShiftRight) ? have : Math.min(have, itemPack(d.item)); S.storage[d.item] = have - take_n;
       if (h) h.n += take_n; else take({ kind: 'crate', item: d.item, n: take_n });
-      world.dirty = true; toast('📦 Took ' + take_n + ' × ' + itemName(d.item), 'good');
+      world.dirtyStorage = true; toast('📦 Took ' + take_n + ' × ' + itemName(d.item), 'good');
     }
     else if (d.kind === 'storage') { if (player.keys.ShiftLeft || player.keys.ShiftRight) ui.openPanel('storage'); else toast('Aim at a crate to take it · Shift+E for the stock list', ''); }
     else if (d.kind === 'vault') { if (S.pocket > 0 && !(player.keys.ShiftLeft || player.keys.ShiftRight)) { var dep = S.pocket; S.vault += dep; S.pocket = 0; sfx('vault'); toast('🔒 ' + money(dep) + ' into the vault — now ' + money(S.vault), 'good'); logEvent('🔒 Vault deposit: ' + money(dep) + ' (vault ' + money(S.vault) + ')', ''); } else ui.openPanel('vault'); }
@@ -6884,7 +6885,7 @@
       else if (h && h.kind === 'crate') {
         if (h.item !== 'drink' && h.item !== 'snack') toast('That does not go in the vending machine', 'bad');
         else if (!MD.vendDoor) toast('Open the machine first — Shift+E', 'bad');
-        else { S.vendStock[h.item] += h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; syncVending(); }
+        else { S.vendStock[h.item] += h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncVending(); }
       }
       else if (MD.vendDoor) { var vb2 = S.box.vend; if (vb2 > 0 && takeCash(vb2, 'vending machine')) { S.box.vend = 0; vendDisplay(d.propId, 'SERVICE'); } else toast('Load drinks or snacks onto the racks, or Shift+E to shut it', ''); }
       else { var pickV = (S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'; vendDispense(d.propId, pickV); }
@@ -6896,7 +6897,7 @@
       else if (h && h.kind === 'crate') {
         if (h.item !== 'drink') toast('Only drinks go in the fridge', 'bad');
         else if (!FI.fridgeDoor) toast('Open the fridge first — Shift+E', 'bad');
-        else { FI.fridge = (FI.fridge || 0) + h.n; sfx('putdown'); toast('🧊 ' + h.n + ' drinks chilling — ' + FI.fridge + ' in the fridge', 'good'); S.held = null; world.dirty = true; syncFridge(d.propId); save(); }
+        else { FI.fridge = (FI.fridge || 0) + h.n; sfx('putdown'); toast('🧊 ' + h.n + ' drinks chilling — ' + FI.fridge + ' in the fridge', 'good'); S.held = null; syncFridge(d.propId); save(); }
       }
       else fridgeTake(d.propId);
     }
@@ -6907,7 +6908,7 @@
       else if (h && h.kind === 'crate') {
         if (h.item !== 'cup' && h.item !== 'beans') toast('That does not go in the coffee machine', 'bad');
         else if (!CI.coffDoor) toast('Lift the hopper lid first — Shift+E', 'bad');
-        else { S.coffeeStock[h.item] += h.n; sfx('putdown'); toast('☕ Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' beans', 'good'); logEvent('☕ Restocked the coffee machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirty = true; syncCoffee(); save(); }
+        else { S.coffeeStock[h.item] += h.n; sfx('putdown'); toast('☕ Loaded ' + h.n + ' × ' + itemName(h.item) + ' — ' + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' beans', 'good'); logEvent('☕ Restocked the coffee machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncCoffee(); save(); }
       }
       else if (CI.coffDoor) { var cb2 = S.box.coffee; if (cb2 > 0 && takeCash(cb2, 'coffee machine')) S.box.coffee = 0; else toast('Load cups or beans, or Shift+E to close the hopper', ''); }
       else coffBrew(d.propId);
@@ -6934,11 +6935,23 @@
       if (player.keys.ControlLeft || player.keys.ControlRight) { crewShift(wi, true); return; }   /* Ctrl+E sends this one home */ var wr = crew.filter(function (x) { return x.idx === wi; })[0]; if (wr) worker = wr; if (player.keys.ShiftLeft || player.keys.ShiftRight) workerMenu(wi); else workerSay(pick(['on it, boss', workerTaskLabel(wi), 'all good here', 'need me somewhere?']), '#e8f1ea'); }
     else if (d.kind === 'guard' && (player.keys.ShiftLeft || player.keys.ShiftRight)) { guardMenu(); }
     else if (d.kind === 'guard') { guard.say(pick(['all quiet, boss', 'checked ' + (S.stats.sold + 3) + ' IDs today', 'no trouble tonight', 'want me to lock up later?']), '#e8f1ea', 2600); }
-    else if (d.kind === 'water') { if (h && h.kind === 'can') { S.held = null; world.dirty = true; toast('Can back on the reel', ''); } else if (hotbarFull()) toast('Hands full — G to put things down', 'bad'); else { take({ kind: 'can' }); toast('💧 Grabbed the watering can — E on a plant to water', 'good'); } }
+    else if (d.kind === 'water') { if (h && h.kind === 'can') { S.held = null; toast('Can back on the reel', ''); } else if (hotbarFull()) toast('Hands full — G to put things down', 'bad'); else { take({ kind: 'can' }); toast('💧 Grabbed the watering can — E on a plant to water', 'good'); } }
     afterAction();
   }
-  function afterAction() { save(); if (world.dirty) { rebuildDynamic(); } ui.refreshOpen(); hud(); if (focus) setFocus(focus); }
-  function rebuildDynamic() { world.dirty = false; defightSoon(); buildTent(); if (world.tentGroup) world.tentGroup.traverse(function (o) { if (o.isMesh) o.userData.propId = 'tent'; }); syncShelf(); syncRack(); }
+  function afterAction() { save(); if (world.dirty || dirtyAny()) { rebuildDynamic(); } ui.refreshOpen(); hud(); if (focus) setFocus(focus); }
+  // world.dirty means something changed and nobody said what: the whole old rebuild runs, as it does when rebuildDynamic()
+  // is called with nothing flagged. The specific flags rebuild only their part, so picking up a jar no longer regrows every
+  // plant. dirtyShelf covers the storage room and counter display too, since syncShelf redraws both.
+  function dirtyAny() { return !!(world.dirtyPlants || world.dirtyShelf || world.dirtyStorage || world.dirtyRack || world.dirtyDisplay); }
+  function dirtySupply(id) { world.dirtyRack = true; if (id === 'jar' || id === 'bag' || id === 'paper' || id === 'grinder') world.dirtyShelf = true; if (id === 'pot') world.dirtyPlants = true; }   /* the rack shows every supply, the bench and cure shelf show these four, and the tent's pots are the pot count */
+  function rebuildDynamic() {
+    var all = world.dirty || !dirtyAny(), plants = all || world.dirtyPlants, shelf = all || world.dirtyShelf, storage = world.dirtyStorage, display = world.dirtyDisplay, rack = all || world.dirtyRack;
+    world.dirty = false; world.dirtyPlants = world.dirtyShelf = world.dirtyStorage = world.dirtyRack = world.dirtyDisplay = false;
+    defightSoon();
+    if (plants) { buildTent(); if (world.tentGroup) world.tentGroup.traverse(function (o) { if (o.isMesh) o.userData.propId = 'tent'; }); }
+    if (shelf) syncShelf(); else { if (storage) syncStorage(); if (display) syncDisplay(); }
+    if (rack) syncRack();
+  }
 
   // context card: plant inspection / shelf overview (information, the hands do the work)
   function ctxOpen(title, sub, lines) {
@@ -7238,7 +7251,7 @@
     else if (act === 'atmWithdraw') { var wa = Math.min(+id, S.bank); if (wa > 0) { S.bank -= wa; S.pocket += wa; sfx('atm'); toast('🏧 Withdrew ' + money(wa) + ' — pocket ' + money(S.pocket), 'good'); logEvent('🏧 ATM withdrawal ' + money(wa), ''); } }
     else if (act === 'courierCall') { callCourier(id === 'all' ? Math.floor(S.vault + S.pocket) : +id); }
     else if (act === 'sellHeld') sellHeld();
-    else if (act === 'bagOne' || act === 'rollOne' || act === 'bakeOne') { actions[act === 'bagOne' ? 'bagUp' : act === 'rollOne' ? 'roll' : 'bake'](id); world.dirty = true; return; }
+    else if (act === 'bagOne' || act === 'rollOne' || act === 'bakeOne') { actions[act === 'bagOne' ? 'bagUp' : act === 'rollOne' ? 'roll' : 'bake'](id); world.dirtyShelf = world.dirtyRack = true; return; }
     else if (payActions[act]) payActions[act](act === 'chg' ? +id : undefined);
     else if (act === 'deskRefresh') { fetchDesk(); setTimeout(function () { if (ui.panelOpen && ui.panelKind === 'desk') ui.render(); }, 1500); toast('Refreshing…', ''); return; }
     else if (act === 'deskOpen') { window.open('/', 'rf-desk'); return; }
@@ -7258,7 +7271,7 @@
     else if (act === 'curtainsClose') { setAllCurtains(false); toast('Curtains closed', ''); }
     else if (act === 'radioSet') { radio.set(id); applyShopState(); toast('♪ ' + STATIONS[id].name, ''); save(); }
     else if (act === 'dehumSet') { var zp = id.split(':'); dehumSet(zp[0], +zp[1]); }
-    else if (actions[act]) { actions[act](id); if (act === 'bagUp' || act === 'bagAll' || act === 'roll' || act === 'rollAll' || act === 'bake' || act === 'bakeAll') world.dirty = true; }
+    else if (actions[act]) { actions[act](id); if (act === 'bagUp' || act === 'bagAll' || act === 'roll' || act === 'rollAll' || act === 'bake' || act === 'bakeAll') world.dirtyShelf = world.dirtyRack = true; }
     afterAction();
   });
   $('g3-panel-tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-tab]'); if (!b) return; ui.panelTab = b.getAttribute('data-tab'); ui.render(); sfx('click'); });
