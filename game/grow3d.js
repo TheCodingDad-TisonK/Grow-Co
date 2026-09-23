@@ -504,7 +504,7 @@
   // ── Sim engine (same rules as the 2D game) ────────────────────────
   function step(dt, offline) {
     var L = lightObj(); var auto = !!S.upgrades.autowater;
-    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ var rolled = 0; while (S[dKey] >= 24) { if (offline && rolled >= 1) { S[dKey] %= 24; break; }   /* time away turns the calendar one day at most: the bills fall once, not once for every day the window was shut */ rolled++; S[dKey] -= 24; S.day = (S.day || 1) + 1; S.regDay = S.day; S.regSold = 0; payBills(offline); expansionNewDay(offline); if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
+    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ var rolled = 0; while (S[dKey] >= 24) { if (offline && rolled >= 1) { S[dKey] %= 24; break; }   /* time away turns the calendar one day at most: the bills fall once, not once for every day the window was shut */ rolled++; S[dKey] -= 24; S.day = (S.day || 1) + 1; S.regDay = S.day; S.regSold = 0; payBills(offline); expansionNewDay(offline); if (binsFull()) { S.rep = Math.max(0, S.rep - 1); logEvent('🗑️ A full bin stood all night and the place smells of it (rep -1)', 'bad'); } if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar — empty them into the vault', ''); } }
     creditPending(offline); updateLogistics(dt, offline);
     // humidity: each room drifts toward its moisture load; a running dehumidifier pulls it down to its target
     var pull = S.upgrades.hvac ? 4.0 : S.upgrades.dehumid ? 1.6 : 0.8; var wetBatches = S.batches.filter(function (b) { return !b.cured; }).length;
@@ -5177,6 +5177,7 @@
   var DUST_MAT = new THREE.MeshBasicMaterial({ map: DUST_TEX, transparent: true, depthWrite: false, opacity: 1.0 });
   var DUST_RING = new THREE.MeshBasicMaterial({ color: 0xffc857, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
   var DUST_ZONES = [[-11, -1.5, -8.5, -2.5], [0, 11, -8.5, -2.5], [-11, -4.5, -1.5, 3.5], [-3.5, 3.5, -1.5, 3.5], [4.5, 11, -1.5, 3.5], [-11, 11, 4.5, 8.5]]; // x1,x2,z1,z2 per room
+  function binsFull() { var M = xs().mach || {}; return Object.keys(M).some(function (k) { return M[k] && typeof M[k] === 'object' && (M[k].trash || 0) >= 12; }); }   // any trash can at 12 of 12
   function dustList() { if (!S.dust) S.dust = []; if (typeof S.lastDust !== 'number') S.lastDust = now(); return S.dust; }
   function spawnDust(n) {
     var d = dustList(); var tries = 120; for (var i = 0; i < n && d.length < 14; i++) { var z = pick(DUST_ZONES); var x = randf(z[0], z[1]), zz = randf(z[2], z[3]); if (!dustSpotFree(x, zz)) { i--; if (--tries < 0) break; continue; } d.push({ id: 'd' + now() + randi(0, 999), x: Math.round(x * 100) / 100, z: Math.round(zz * 100) / 100, s: randf(0.8, 1.25), r: Math.random() * 6.28 }); }
@@ -5192,7 +5193,7 @@
     return true;
   }
   function updateDust() {
-    var d = dustList(); var interval = S.upgrades.robovac ? 150000 : 75000; // a new patch every ~75 s of play (offline time counts at a quarter rate)
+    var d = dustList(); var interval = (S.upgrades.robovac ? 150000 : 75000) / (binsFull() ? 1.5 : 1);   /* a full bin spills: half as much dust again until it is emptied */ // a new patch every ~75 s of play (offline time counts at a quarter rate)
     if (now() - S.lastDust > interval) { var k = Math.floor((now() - S.lastDust) / interval); S.lastDust = now(); spawnDust(Math.min(k, 3)); if (d.length >= 8 && !S.dustNagged) { S.dustNagged = true; logEvent('🧹 The floors are getting dusty — grab the broom', 'bad'); } }
     if (world.dustDirty) syncDust();
     // ring markers pulse while the broom is in hand so the patches are easy to spot from across the room
@@ -6900,7 +6901,7 @@
     else if ((d.kind === 'couch' || d.kind === 'eatspot') && isDrink(h)) drinkHeld();
     else if (d.kind === 'trash') {
       var TB = machState(d.propId), lid = world.trashLids && world.trashLids[d.propId]; var lift = function () { if (!lid) return; lid.rotation.x = -1.35; setTimeout(function () { lid.rotation.x = 0; }, 1400); };
-      if (h && isTrash(h)) { if ((TB.trash || 0) >= 12) toast('The bin is full — take out the trash first', 'bad'); else { S.held = null; TB.trash = (TB.trash || 0) + 1; lift(); sfx('dust'); toast('🗑️ Binned it — ' + TB.trash + '/12', ''); save(); } }
+      if (h && isTrash(h)) { if ((TB.trash || 0) >= 12) toast('The bin is full — take out the trash first', 'bad'); else { S.held = null; TB.trash = (TB.trash || 0) + 1; lift(); sfx('dust'); if (TB.trash >= 12) toast('🗑️ Binned it, and now the bin is full. Dust builds faster and it costs a point of rep a day until you bag it up', 'bad'); else toast('🗑️ Binned it — ' + TB.trash + '/12', ''); save(); } }
       else if (!h && (TB.trash || 0) >= 12) { TB.trash = 0; take({ kind: 'trashbag' }); lift(); toast('Bagged up the trash — the dumpster is out back', 'good'); save(); }
       else if (h) toast('That is not trash', 'bad');
       else { lift(); sfx('click'); }
