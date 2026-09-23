@@ -397,6 +397,7 @@
     rentPerSlot: 7,        // floor space for every tent slot
     rentBasement: 35,      // the tobacco works downstairs
     rentBranch: 90,        // the second shop
+    branchManager: 120,    // the one person who runs it, a flat day rate
     rentFreeDays: 10,      // a fit-out period before the first rent falls, as a real lease gives you
     powerBase: 6,          // shop lights, fridge, till, security
     waterPerPlant: 0.4,
@@ -406,9 +407,8 @@
     processPerGram: 0.55,  // trimming, lab testing and compliance on every gram harvested
     arrearsRep: 2          // reputation lost for every day the bills go unpaid
   };
-  function headcount() {   // nobody runs a commercial grow room and two shop floors on their own
-    var X = xs();
-    return Math.max(0, Math.ceil((slots() - COST.freeSlots) / COST.slotsPerGrower)) + (X.branch ? 3 : 0) + (hasLic('tobacco') ? 2 : 0);
+  function headcount() {   // nobody runs a commercial grow room and a basement works on their own; the branch has its own manager on the bill
+    return Math.max(0, Math.ceil((slots() - COST.freeSlots) / COST.slotsPerGrower)) + (hasLic('tobacco') ? 2 : 0);
   }
   function spendOp(n) {   // an operating cost that falls outside the morning bill
     if (n <= 0) return 0;
@@ -433,12 +433,14 @@
     var rent = free ? 0 : COST.rentBase + sl * COST.rentPerSlot + (hasLic('tobacco') ? COST.rentBasement : 0) + (X.branch ? COST.rentBranch : 0);
     var power = (COST.powerBase + sl * (L.draw || 0) + (S.upgrades.hvac ? 8 : 0) + (S.upgrades.security2 ? 3 : 0) + (S.upgrades.bagline ? 4 : 0)) * solar;
     var hired = crewList().filter(function (w) { return !w.off; }).length, need = headcount();
-    return [
+    var rows = [
       { k: 'Rent', v: rent, d: free ? 'fit-out period, rent free until day ' + (COST.rentFreeDays + 1) : sl + ' slots' + (X.branch ? ' + branch' : '') + (hasLic('tobacco') ? ' + basement' : '') },
       { k: 'Power', v: power, d: L.name + ' over ' + sl + ' slots' + (S.upgrades.solar ? ', solar roof taking a third off' : '') },
       { k: 'Water', v: S.plants.length * COST.waterPerPlant, d: S.plants.length + ' plants in the tent' },
       { k: 'Payroll', v: Math.max(0, need - hired) * COST.payRate, d: need ? need + ' staff the place needs, ' + hired + ' of them crew you hired' : 'just you, for now' }
     ];
+    if (X.branch) rows.push({ k: 'Branch manager', v: COST.branchManager, d: 'runs Green Leaf for you, a flat day rate' });
+    return rows;
   }
   function dailyFixed() { return billLines().reduce(function (a, r) { return a + r.v; }, 0); }
   function drawFunds(n) {   // a bill comes out of the bank first, then the vault, then the till
@@ -3363,7 +3365,7 @@
     if (poi === 'rival') {
       var theirs = Math.round(unitPrice('bags', 60, 1.2) * (0.9 + ((S.day * 7) % 5) / 20)); lines.push({ label: '👀 Their price board: an eighth at ' + money(theirs) + ' <small>yours at q60: ' + money(Math.round(unitPrice('bags', 60, 1.2))) + ' · market ' + S.market.toFixed(2) + '×</small>', cls: 'muted' });
       lines.push({ label: '📣 Pay a kid ' + money(60) + ' to hand out your flyers outside their door <small>' + (S.flyerDay === S.day ? 'done for today' : 'rep +3, once a day') + '</small>', cls: S.flyerDay === S.day || S.bank < 60 ? 'muted' : '', act: S.flyerDay === S.day || S.bank < 60 ? null : function () { S.bank -= 60; S.flyerDay = S.day; S.rep += 3; sfx('ok'); toast('📣 Flyers going round — rep +3', 'good'); logEvent('📣 Flyered the rival shop — rep +3', 'good'); hud(); save(); } });
-      if (xs().branch) lines.push({ label: '🏪 This is your branch now <small>its takings reach your bank every morning</small>', cls: 'on' }); else lines.push({ label: '🏪 Buy them out · ' + money(180000) + ' <small>' + (S.rep >= 150 ? 'they will sell: the branch pays you every morning' : 'they will not talk to you below 150 rep (you have ' + Math.round(S.rep) + ')') + '</small>', cls: S.rep >= 150 && S.bank >= 180000 ? '' : 'muted', act: S.rep >= 150 && S.bank >= 180000 ? function () { S.bank -= 180000; xs().branch = true; sfx('levelup'); toast('🏪 Green Leaf is yours — a second shop', 'rare'); logEvent('🏪 Bought out Green Leaf: you now run two shops', 'rare'); hud(); save(); } : null });
+      if (xs().branch) lines.push({ label: '🏪 This is your branch now <small>it sells what you drop at the blue beacon out front: ' + money(BRANCH_PAY) + ' a unit, up to ' + BRANCH_CAP + ' a day, plus a little for your name, paid each morning · ' + (xs().branchUnits || 0) + ' dropped off today</small>', cls: 'on' }); else lines.push({ label: '🏪 Buy them out · ' + money(180000) + ' <small>' + (S.rep >= 150 ? 'they will sell: keep the branch stocked and it pays you every morning' : 'they will not talk to you below 150 rep (you have ' + Math.round(S.rep) + ')') + '</small>', cls: S.rep >= 150 && S.bank >= 180000 ? '' : 'muted', act: S.rep >= 150 && S.bank >= 180000 ? function () { S.bank -= 180000; xs().branch = true; sfx('levelup'); toast('🏪 Green Leaf is yours — a second shop', 'rare'); logEvent('🏪 Bought out Green Leaf: you now run two shops', 'rare'); hud(); save(); } : null });
       ctxOpen('🌿 Green Leaf', xs().branch ? 'your second shop' : 'the competition, three doors down', lines); return;
     }
     if (poi === 'supply') {
@@ -3675,7 +3677,8 @@
   // ── Delivery rounds: a burner phone for the street goods, a tablet for the RF Smoking round ──
   // Both write into one X.jobs list; `via` says which device raised it, and that decides where the
   // goods come from (your hands vs the car) and where the money lands (pocket + heat vs the bank).
-  var JOB_MAX = 6, JOB_CAP = { phone: 2, tablet: 4 };
+  var JOB_MAX = 7, JOB_CAP = { phone: 2, tablet: 4, branch: 1 };   /* the branch drop is a standing stop while you own Green Leaf: one beacon more than the two devices can fill */
+  var BRANCH_PAY = 9, BRANCH_CAP = 60;   // what Green Leaf pays next morning for each unit you drop off, and how many it can sell in a day
   var ROADS = [['Main Street', 'z', CITY.mainZ], ['Back Street', 'z', CITY.backZ], ['North Street', 'z', CITY.northZ], ['West Avenue', 'x', CITY.westX], ['East Avenue', 'x', CITY.eastX]];
   function addrFor(b) {   // the nearest road names the address; the door number is derived from the building so it never changes
     var best = ROADS[0], bd = 1e9;
@@ -3696,7 +3699,15 @@
     return null;
   }
   function jobsOf(via) { return xs().jobs.filter(function (j) { return j.via === via; }); }
-  function jobGoods(j) { return j.via === 'tablet' ? CIG_SKUS[j.sku].name : kindName(j.kind, j.qty); }
+  function jobGoods(j) { return j.via === 'branch' ? 'goods for the branch' : j.via === 'tablet' ? CIG_SKUS[j.sku].name : kindName(j.kind, j.qty); }
+  function branchRoom() { return Math.max(0, BRANCH_CAP - (xs().branchUnits || 0)); }
+  function branchJob() {   // the standing drop outside Green Leaf, clear of its front door so the counter stays reachable
+    var X = xs(); if (!X.branch) return; var j = jobsOf('branch')[0];
+    if (!j) { if (X.jobs.length >= JOB_MAX) return; var b = CITY.blds.filter(function (o) { return o.poi === 'rival'; })[0]; if (!b) return; var sp = { x: b.x + b.w / 2 - 2.5, z: b.z + b.d / 2 + 1.8 };
+      if (world.obstacles.some(function (o) { return ((o.floorLevel || 0) === 0 || o.floorLevel === 'any') && sp.x > o.x1 - 1.2 && sp.x < o.x2 + 1.2 && sp.z > o.z1 - 1.2 && sp.z < o.z2 + 1.2; })) sp = dropSpot(b) || sp;
+      j = { id: 'jbranch', via: 'branch', addr: 'Green Leaf (your branch)', x: sp.x, z: sp.z, born: now(), until: 0 }; X.jobs.push(j); }
+    j.qty = branchRoom();
+  }
   function jobSpawn(via) {
     var X = xs(), bl = CITY.blds.filter(function (b) { return !b.poi; }); if (!bl.length) return;
     if (X.jobs.length >= JOB_MAX || jobsOf(via).length >= JOB_CAP[via]) return;   /* the caps are the invariant, not the spawn timer: a job past the beacon pool would have no marker and no drop to press E on */
@@ -3734,14 +3745,16 @@
       X.jobT.ph -= dt; if (X.jobT.ph <= 0) { X.jobT.ph = randi(200, 330); jobSpawn('phone'); }
       if (hasLic('tobacco')) { X.jobT.tab -= dt; if (X.jobT.tab <= 0) { X.jobT.tab = randi(120, 220); jobSpawn('tablet'); } }
     }
+    branchJob();
     for (var i = X.jobs.length - 1; i >= 0; i--) {
       var j = X.jobs[i];
+      if (j.via === 'branch') continue;   /* the branch drop never expires and the driver leaves it to you */
       if (X.staff.driver && now() - j.born > 45000) { if (driverRuns(j)) continue; }
       if (now() > j.until) { X.jobs.splice(i, 1); S.rep = Math.max(0, S.rep - 1); toast((j.via === 'tablet' ? '📋 ' : '📱 ') + j.addr + ' gave up waiting · rep -1', 'bad'); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render(); }
     }
     for (var b = 0; b < exp.beacons.length; b++) {
       var jb = X.jobs[b];
-      if (jb) { var col = jb.via === 'tablet' ? 0xffc857 : 0x6fdc8c; exp.beacons[b].visible = true; exp.beacons[b].material.color.setHex(col); exp.beacons[b].position.set(jb.x, 7, jb.z); exp.rings[b].visible = true; exp.rings[b].material.color.setHex(col); exp.rings[b].position.set(jb.x, 0.07, jb.z); exp.dropHits[b].position.set(jb.x, 1.2, jb.z); }
+      if (jb) { var col = jb.via === 'branch' ? 0x7fd4ff : jb.via === 'tablet' ? 0xffc857 : 0x6fdc8c; exp.beacons[b].visible = true; exp.beacons[b].material.color.setHex(col); exp.beacons[b].position.set(jb.x, 7, jb.z); exp.rings[b].visible = true; exp.rings[b].material.color.setHex(col); exp.rings[b].position.set(jb.x, 0.07, jb.z); exp.dropHits[b].position.set(jb.x, 1.2, jb.z); }
       else { exp.beacons[b].visible = false; exp.rings[b].visible = false; exp.dropHits[b].position.y = -50; }
     }
   }
@@ -3762,6 +3775,16 @@
   }
   function jobHandOver(idx) {
     var X = xs(), j = X.jobs[idx], h = held(); if (!j) return true;
+    if (j.via === 'branch') {   // stock for Green Leaf: whatever goods are in your hands, up to what it can sell today
+      var room = branchRoom(); if (room <= 0) { toast('🏪 Green Leaf has all it can sell today (' + BRANCH_CAP + ' units). Bring more tomorrow', ''); return true; }
+      if (!isGoods(h)) { toast('🏪 Bring bags, joints or cookies in your hands for the branch shelves', 'bad'); return true; }
+      var bn = Math.min(h.n, room), bq = h.qSum / h.n, bt = h.thcSum / h.n, bk = h.kind;
+      h.n -= bn; h.qSum -= bq * bn; h.thcSum -= bt * bn; if (h.n <= 0) S.held = null;
+      X.branchUnits = (X.branchUnits || 0) + bn; j.qty = branchRoom(); S.stats.branchUnits = (S.stats.branchUnits || 0) + bn;
+      sfx('crate'); toast('🏪 ' + bn + ' ' + kindName(bk, bn) + ' on the Green Leaf shelves, ' + money(bn * BRANCH_PAY) + ' in the morning (' + X.branchUnits + ' of ' + BRANCH_CAP + ' today)', 'good');
+      logEvent('🏪 Stocked Green Leaf with ' + bn + ' ' + kindName(bk, bn), ''); world.dirty = true; hud(); save(); if (ui.panelOpen && ui.panelKind === 'jobs') ui.render();
+      return true;
+    }
     if (j.via === 'tablet') {
       var near = drive.on || carNear(player.pos.x, player.pos.z, 11), inCar = near ? (S.car.cigs[j.sku] || 0) : 0, inHand = (h && h.kind === 'cigs' && h.sku === j.sku) ? h.n : 0;
       if (inCar + inHand < j.qty) { toast('They ordered ' + j.qty + ' × ' + CIG_SKUS[j.sku].name + ' — ' + (near ? 'only ' + (inCar + inHand) + ' between the car and your hands' : 'bring the car round, or carry them in') , 'bad'); return true; }
@@ -3797,11 +3820,11 @@
   }
   function jobsPanel() { ui.openPanel('jobs', hasLic('tobacco') && tabletHere() ? 'tablet' : 'phone'); }
   function paneJobs(tab) {
-    var X = xs(), list = jobsOf(tab), rows = [];
-    if (tab === 'tablet' && !hasLic('tobacco')) return '<p class="g3-empty">The RF Smoking round needs the tobacco licence. Buy it at the laptop, and the tablet on the office dock wakes up.</p>';
-    if (tab === 'tablet' && !tabletHere()) return '<p class="g3-empty">The tablet is ' + (X.tablet === 'car' ? 'in the car, and the car is not here' : 'on its dock in the office') + '. Fetch it, and it rides in the car once you drive off with it.</p>';
-    if (!list.length) return '<p class="g3-empty">' + (tab === 'tablet' ? 'No round jobs right now. They come in while the shop is open, once the basement is making packs.' : 'Nobody is ringing. Pack some joints or bags and the phone starts going.') + '</p>';
-    var pos = drive.on ? drive.g.position : player.pos;
+    var X = xs(), list = jobsOf(tab), rows = [], pos = drive.on ? drive.g.position : player.pos, bj = jobsOf('branch')[0];
+    var br = bj ? '<p class="g3-sub2">🏪 <b>Green Leaf, your branch</b> (#' + (X.jobs.indexOf(bj) + 1) + ' on the map, ' + Math.round(Math.hypot(bj.x - pos.x, bj.z - pos.z)) + ' m away): carry bags, joints or cookies to the blue beacon out front and press <b>E</b>. It pays ' + money(BRANCH_PAY) + ' a unit each morning for up to ' + BRANCH_CAP + ' a day (' + (X.branchUnits || 0) + ' dropped off today).</p>' : '';
+    if (tab === 'tablet' && !hasLic('tobacco')) return br + '<p class="g3-empty">The RF Smoking round needs the tobacco licence. Buy it at the laptop, and the tablet on the office dock wakes up.</p>';
+    if (tab === 'tablet' && !tabletHere()) return br + '<p class="g3-empty">The tablet is ' + (X.tablet === 'car' ? 'in the car, and the car is not here' : 'on its dock in the office') + '. Fetch it, and it rides in the car once you drive off with it.</p>';
+    if (!list.length) return br + '<p class="g3-empty">' + (tab === 'tablet' ? 'No round jobs right now. They come in while the shop is open, once the basement is making packs.' : 'Nobody is ringing. Pack some joints or bags and the phone starts going.') + '</p>';
     list.forEach(function (j) {
       var n = X.jobs.indexOf(j) + 1, left = Math.max(0, Math.round((j.until - now()) / 1000)), km = Math.round(Math.hypot(j.x - pos.x, j.z - pos.z)) + ' m';
       var have = j.via === 'tablet' ? ((S.car.cigs[j.sku] || 0) + ' in the car · ' + tob().packs[j.sku] + ' on the rack') : (S.pkg[j.kind].n + ' packed');
@@ -3810,7 +3833,7 @@
         '<td class="' + (left < 60 ? 'bad' : '') + '">' + Math.floor(left / 60) + 'm ' + (left % 60) + 's</td>' +
         '<td><b>' + (j.via === 'tablet' ? money(j.pay) : '~' + money(Math.round(unitPrice(j.kind, 60, 1.2) * j.qty * 1.6))) + '</b><br><small>' + (j.via === 'tablet' ? 'to the bank' : 'cash, +heat') + '</small></td></tr>');
     });
-    return '<p class="g3-sub2">' + (tab === 'tablet' ? 'Load packs into the car at your bay (Shift+E on the car), drive the round, press <b>E</b> at each beacon. Numbers match the map on <b>M</b>.' : 'Carry the goods in your hands and press <b>E</b> at the beacon. Cash goes in your pocket and it raises your heat.') + '</p>' +
+    return br + '<p class="g3-sub2">' + (tab === 'tablet' ? 'Load packs into the car at your bay (Shift+E on the car), drive the round, press <b>E</b> at each beacon. Numbers match the map on <b>M</b>.' : 'Carry the goods in your hands and press <b>E</b> at the beacon. Cash goes in your pocket and it raises your heat.') + '</p>' +
       '<table class="g3-jobs"><tr><th></th><th>Address</th><th>Order</th><th>Left</th><th>Pays</th></tr>' + rows.join('') + '</table>';
   }
   function startGetaway(r) {
@@ -3820,7 +3843,7 @@
   function expansionNewDay(offline) {
     var X = xs(), wages = (X.staff.driver ? 90 : 0) + (X.staff.operator ? 80 : 0) + (X.staff.night ? 70 : 0); if (wages) { var wPaid = drawFunds(wages); if (wages - wPaid > 0.5) books().arrears += wages - wPaid; if (!offline) logEvent('💼 Extra staff wages: ' + money(wages), ''); }
     if (X.staff.driver) { var T = tob(), val = 0, n = 0; CIG_KEYS.forEach(function (k) { n += T.packs[k]; val += T.packs[k] * CIG_SKUS[k].price * 0.65; T.packs[k] = 0; }); if (n) { S.bank += Math.round(val); syncTobRack(); if (!offline) { logEvent('🚚 Your driver sold ' + n + ' packs wholesale for ' + money(Math.round(val)), 'good'); toast('🚚 Driver: ' + n + ' packs wholesaled · ' + money(Math.round(val)), 'good'); } } }
-    if (X.branch) { var inc = Math.round(randi(350, 800) * (S.market || 1)); S.bank += inc; if (!offline) { logEvent('🏪 Green Leaf (your branch) sent over ' + money(inc), 'good'); toast('🏪 Branch takings: ' + money(inc), 'good'); } }
+    if (X.branch) { var bu = Math.min(BRANCH_CAP, X.branchUnits || 0), inc = Math.round(bu * BRANCH_PAY + Math.max(0, S.rep) * 2); X.branchUnits = 0; S.bank += inc; logEvent('🏪 Green Leaf (your branch) sent over ' + money(inc) + ': ' + bu + ' units you dropped off at ' + money(BRANCH_PAY) + ' each, plus ' + money(Math.max(0, S.rep) * 2) + ' on your name', inc > 0 ? 'good' : ''); if (!offline) toast('🏪 Branch takings: ' + money(inc) + (bu ? '' : ' (nothing dropped off yesterday, stock it at the blue beacon)'), bu ? 'good' : ''); }
     if (!offline && weekend()) toast('📅 It is the weekend — expect more people through the door', ''); if (!offline && (S.day % 28) === 25) toast('🎉 Holiday week starts — footfall is up by half', 'rare');
   }
   function carMenu() {
@@ -3883,6 +3906,7 @@
     if (d.kind === 'generator') return S.upgrades.generator ? 'Generator <small>fuelled and on standby</small>' : 'Generator <small>buy it for ' + money(1400) + ' · power cuts stop touching you</small>';
     if (d.kind === 'roster') return 'Staff roster <small>hire a driver, a basement operator, a night guard</small>';
     if (d.kind === 'bagLine') return S.upgrades.bagline ? 'Trim & bag line <small>' + (X.bagline.on ? 'running' : 'off') + ' · ' + (S.supplies.bag || 0) + ' baggies</small>' : 'Trim & bag line <small>install for ' + money(900) + '</small>';
+    if (d.kind === 'dropoff' && X.jobs[d.idx] && X.jobs[d.idx].via === 'branch') { var bh = held(), brm = branchRoom(); return '🏪 Green Leaf, your branch <small>' + (brm <= 0 ? 'stocked for today · back tomorrow' : isGoods(bh) ? 'E puts ' + Math.min(bh.n, brm) + ' ' + kindName(bh.kind, Math.min(bh.n, brm)) + ' on its shelves · ' + money(BRANCH_PAY) + ' each tomorrow' : 'bring bags, joints or cookies · ' + brm + ' more today') + '</small>'; }
     if (d.kind === 'dropoff') { var J = X.jobs[d.idx]; if (!J) return ''; var lt = Math.max(0, Math.ceil((J.until - now()) / 1000)); return (J.via === 'tablet' ? '📋 Round drop · ' : '📱 Phone customer · ') + J.addr + ' <small>wants ' + J.qty + ' × ' + jobGoods(J) + ' · ' + Math.floor(lt / 60) + 'm ' + (lt % 60) + 's left' + (J.via === 'tablet' ? ' · takes them out of the car' : '') + '</small>'; }
     if (d.kind === 'tabletDock') return hasLic('tobacco') ? (X.tablet === 'dock' ? 'Delivery tablet <small>E takes it · J reads the round anywhere</small>' : 'Tablet dock <small>the tablet is ' + (X.tablet === 'car' ? 'in the car' : 'in your hands') + ' · E puts it back</small>') : 'Tablet dock <small>dead until you hold the tobacco licence</small>';
     return '';
@@ -3902,7 +3926,7 @@
   }
   function drawMapExtras(ctx, mx, mz, W, H) {
     var X = xs();
-    X.jobs.forEach(function (j, i) { var col = j.via === 'tablet' ? '#ffc857' : '#6fdc8c'; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(mx(j.x), mz(j.z), 9 + (now() / 200 % 6), 0, 6.29); ctx.stroke(); ctx.fillStyle = col; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('#' + (i + 1), mx(j.x), mz(j.z) + 4); });
+    X.jobs.forEach(function (j, i) { var col = j.via === 'branch' ? '#7fd4ff' : j.via === 'tablet' ? '#ffc857' : '#6fdc8c'; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(mx(j.x), mz(j.z), 9 + (now() / 200 % 6), 0, 6.29); ctx.stroke(); ctx.fillStyle = col; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('#' + (i + 1), mx(j.x), mz(j.z) + 4); });
     if (exp.getaway) { ctx.fillStyle = '#ff5a4a'; ctx.fillRect(mx(exp.getaway.g.position.x) - 5, mz(exp.getaway.g.position.z) - 5, 10, 10); }
     ctx.textAlign = 'left'; ctx.fillStyle = '#8fa89a'; ctx.font = '12px system-ui'; ctx.fillText(season() + ' · day ' + S.day + (weekend() ? ' (weekend)' : '') + ' · ' + X.weather.kind, W + 22, H - 90); ctx.fillStyle = X.heat >= 60 ? '#ff6b6b' : X.heat >= 30 ? '#ffc857' : '#8fa89a'; ctx.fillText('Police heat ' + Math.round(X.heat) + ' / 100', W + 22, H - 68);
   }
