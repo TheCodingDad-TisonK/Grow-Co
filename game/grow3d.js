@@ -3891,7 +3891,7 @@
       var it = supplyById(r.item); if (!it) return;
       var price = Math.max(1, Math.round(it.price * (1 - r.off)));
       lines.push({ label: it.ico + ' ' + it.name + ' · ' + money(price) + ' <small>' + Math.round(r.off * 100) + '% under the laptop price' + (it.qty ? ' · ' + it.qty + ' per box' : '') + '</small>', cls: S.bank >= price ? '' : 'muted',
-        act: S.bank >= price ? function () { S.bank -= price; S.supplies[it.id] = (S.supplies[it.id] || 0) + (it.qty || 1); sfx('cash'); toast('🛒 ' + it.name + ' · ' + money(price), 'good'); syncRack(); hud(); save(); } : null });
+        act: S.bank >= price ? function () { S.bank -= price; if (it.stock) { var crate = {}; crate[it.id] = it.qty || 1; storageAdd(crate); syncStorage(); toast('🛒 ' + it.name + ' · ' + money(price) + ' (a crate in the back room, carry it to the ' + (it.stock === 'vend' ? 'vending machine' : it.stock === 'coffee' ? 'coffee machine' : 'counter display') + ')', 'good'); } else { S.supplies[it.id] = (S.supplies[it.id] || 0) + (it.qty || 1); toast('🛒 ' + it.name + ' · ' + money(price), 'good'); syncRack(); } sfx('cash'); hud(); save(); } : null });   /* machine and counter stock arrives as crates like a laptop order; rack supplies go straight on the rack */
     });
     if (q.service) {
       var sv = q.service, day = S.day || 1, usedToday = sv.daily && X.svcDay && X.svcDay[q.id] === day;
