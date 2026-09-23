@@ -37,8 +37,8 @@ It's one HTML page and plain JavaScript on top of [three.js](https://threejs.org
 | **The shop van** | Shift+E on the hatch opens it up. Stock its rack with three joints, three bags and three cookies, take the window, and sell to passers-by at half again the shop price. Now and then one is plain-clothes police. |
 | **Upstairs** | Your own flat, a connoisseur lounge with its own staircase from the lobby, and a roof greenhouse. |
 | **Make it yours** | F2 moves every piece of furniture, every sign and every wall screen. F3 is a full creative build mode. |
-| **Guided intro** | A new shop is walked from its first order to its first sale in nine steps. Finish them for a $2,500 bonus, or switch it off in the pause menu. |
-| **Keys and locks** | A keyring in the office. Shift+E locks any door, the goods shelf, the cigarette cabinet or the weapon locker. Locked stock survives a robbery. |
+| **Guided intro** | A new shop is walked from its first order to its first sale in nine steps. Finish them for a $1,200 bonus, or switch it off in the pause menu. |
+| **Keys and locks** | A keyring in the office. Shift+E locks any door, the goods shelf, the cigarette cabinet or the weapon locker. Locked stock survives a robbery. Your crew and the guard carry keys and lock up behind them. |
 | **Three save slots** | Three shops, side by side, each deleted on its own. |
 | **Bug reports** | F7 opens a form that gathers your version, system and savegame and files a labelled GitHub issue. |
 | **Living world** | Day and night, seasons, rain, storms and snow, weekends, a holiday week, power cuts and a generator. |

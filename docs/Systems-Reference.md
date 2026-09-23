@@ -20,6 +20,8 @@ Quality `q` runs 20 to 100. `thc` is a multiplier of roughly 1.0 to 1.9, not a p
 | System | State | Entry points |
 |---|---|---|
 | Customers | `S.customer` | `maybeCustomer`, `spawnCustomer`, `orderLines`, `handOver`, `finalizeSale`, `updateNpc` |
+| Walk-up sales at the till | `S.regDay`, `S.regSold` | `sellHeld`, `walkupLeft`, `WALKUP_RATE` (85%), `WALKUP_CAP` (12 a day) |
+| Who says what | `S.idDay`, `S.idsToday` | `CUST_VOICE` and `custLine`, `CREW_VOICE` and `crewLine`, `guardIdLine`; see [House style](House-Style.md) |
 | Counter display | `S.display` | `ACC`, `syncDisplay` |
 | Cabinet goods (cigarettes, carts, hash, gummies, chocolate) | `S.cigStock`, `S.cigShutter`, the side order `customer.cig` | `CIG_SKUS`, `cigCabInteract`, `handCigs`, `cigTotal`, `syncCigCab` |
 | Connoisseur lounge | `S.vip` | `startVip`, `serveVip`, `updateVip` |
@@ -49,7 +51,7 @@ Quality `q` runs 20 to 100. `thc` is a multiplier of roughly 1.0 to 1.9, not a p
 | Weapons | `S.armory` | `WEAPONS`, `fireWeapon`, `strikeRobber`, `shootRobber`, `shotBystander`, `sightLine`, `lockerMenu` |
 | Getting hurt | `player.downT` | `hurtPlayer`, `robberAttack`, `robberShoot` |
 | Police | `S.x.heat` | `addHeat`, `policeFine`, `panicButton`, `policeArrive`, the inspection in `updateExpansion` |
-| Doors and locks | `S.doors`, `S.doorLocks` | `slideDoor`, `setDoor`, `doorsAll`, `updateDoors` |
+| Doors and locks | `S.doors`, `S.doorLocks`, `S.staffKeys` | `slideDoor`, `setDoor`, `doorsAll`, `updateDoors`, `staffKey`, `staffPass` (a keyholder lets themselves through and it relocks) |
 | Cameras | | `SEC_CAMS`, `buildSecCams`, `updateSecurity`, `camEnter` |
 
 Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `down`, `out`, `away`.

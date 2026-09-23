@@ -33,8 +33,11 @@ The whole game is one JSON object, `S`, written to `localStorage` a fraction of 
 | `armory` | weapons owned and ammunition |
 | `tob` | the cigarette line: bays, kiln, stocks between machines, finished packs |
 | `cigStock`, `cigShutter` | the cigarette cabinet behind the counter |
-| `car`, `van` | each vehicle: where it stands (`x`, `z`, `h`), its `trunk`, `lights`, handbrake (`brake`), odometer (`odo`) and which parts are `open`. The car also carries `cigs`, the cartons in its boot. The van keeps its shop: `rack`, `shopOpen`, `sales` |
+| `car`, `van` | each vehicle: where it stands (`x`, `z`, `h`), its `trunk`, `lights`, handbrake (`brake`), odometer (`odo`) and which parts are `open`. Each also carries `cigs`, the cartons loaded into its boot. The van keeps its shop: `rack`, `shopOpen`, `sales` |
 | `x` | the expansion bag, see below |
+| `staffKeys[id]` | doors whose key you took back from the crew and the guard (`false`); missing means they hold one |
+| `regDay`, `regSold` | walk-up sales at the till: the day and how many were rung up (12 a day) |
+| `idDay`, `idsToday` | how many IDs the guard has checked today, for what he tells you |
 | `stats`, `log` | lifetime numbers and the event feed |
 
 Averages are stored as sums: a lot's quality is `qSum / n`, a stash's is `qSum / g`. That way mixing two batches is just addition.

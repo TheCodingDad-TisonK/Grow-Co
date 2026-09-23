@@ -15,6 +15,9 @@ Press **F7** in the game, or use Report a bug in the pause menu. See [Reporting 
 **Where is my save?**
 In the app's local storage inside your user profile (`%APPDATA%\Grow Co`). It survives updates and reinstalls. (The game was called RF Grow Co. before version 1.4. That older folder is carried over by itself the first time you run 1.4.) See [Save format](Save-Format).
 
+**I was away for a week. Did the shop run up a week of bills?**
+No. Time away turns the calendar one day at most, so the morning bills fall once. The basement line, the roof beds and the lab catch up when you come back.
+
 **Can I play in a browser?**
 Yes. `npm run serve`, or host the `game/` folder anywhere that serves static files.
 
