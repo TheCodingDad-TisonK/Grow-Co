@@ -59,6 +59,10 @@ Created and defaulted by `xs()`.
 | `branch` | true once you own Green Leaf |
 | `blackoutUntil` | timestamp the power comes back |
 
+## Export and import
+
+The pause menu has a **Save file** button. **Export** writes the loaded slot to `growco-slot<N>-day<D>.json`. **Import** reads one back: the game shows the day, level and bank it holds and asks before it replaces the shop in the loaded slot. The other slots are not touched. A file from a newer version of the game loads with a warning; a file that is not a save is refused.
+
 ## Editing a save
 
 In the desktop app press `Ctrl+Shift+I` for the developer tools, then in the console:
@@ -68,7 +72,7 @@ RFGROW.S.bank += 5000;          // the live object; it saves itself
 JSON.stringify(RFGROW.S);       // export
 ```
 
-To import, do it from the main menu, before you press Continue. A running game writes its own save as the page closes, which would put the old one straight back.
+To put an edited save back, use **Import** in the pause menu, which stops the running game from writing its own save over yours as the page reloads.
 
 ```js
 localStorage.setItem('rfgrowco-slot1', '<pasted json>'); location.reload();   // import into slot 1

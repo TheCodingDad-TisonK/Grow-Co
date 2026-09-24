@@ -10,9 +10,8 @@ The game is feature rich and lightly balanced. What it needs most is play and tu
 - **Traffic is polite and dumb.** Cars keep their lane, stop for you, and don't turn at junctions. They block your car but pass through you on foot.
 - **Pedestrians only walk Main Street.**
 - **The crew, the guard and robbers only know the shop.** Apart from you, the police and a robber's getaway car, nobody uses the town.
-- **Status screens in the basement and lab can't be moved** in F2, unlike every other sign.
 - **No controller support, no key rebinding, no localisation.**
-- **Saves are local only.** There's no export button. See [Save format](Save-Format) for the console way.
+- **Saves are local.** The pause menu exports and imports them as files; there is no cloud.
 
 ## Good next steps
 
@@ -22,10 +21,9 @@ In rough order of value:
 2. **Robbers who use the town**: arrive by car, case the shop from across the street.
 3. **Turning traffic and crossing pedestrians.**
 4. **A proper door into the basement and the interiors**, replacing the fades.
-5. **A save export and import button** in the pause menu.
-6. **Key rebinding and a controller layout.**
-7. **More to do in the branch shop** than collect its takings.
-8. **Sound**: everything is synthesised, which is charming and thin. A few real samples would go a long way.
+5. **Key rebinding and a controller layout.**
+6. **More to do in the branch shop** than collect its takings.
+7. **Sound**: everything is synthesised, which is charming and thin. A few real samples would go a long way.
 
 ## Ideas that were considered and left out
 

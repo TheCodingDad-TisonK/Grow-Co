@@ -2654,7 +2654,7 @@
     function bb(w, h, d, m, x, y, z, o) { o = o || {}; o.floorLevel = -1; return box(w, h, d, m, x, Y + y, z, o); }
     function bc(rt, rb, h, m, x, y, z, seg) { return cyl(rt, rb, h, m, x, Y + y, z, null, seg); }
     function hit(w, h, d, x, y, z, data) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), MAT.none); m.position.set(x, Y + y, z); world.group.add(m); interactable(m, data); return m; }
-    function sign(key, w, h, x, y, z, rotY, lines, opts) { opts = Object.assign({ size: w < 1 ? 40 : 24, bg: '#0b1a12', titleColor: '#6fdc8c', color: '#c9e8d0', line: 'rgba(111,220,140,.5)' }, opts || {}); var res = opts.res || (w < 1 ? 620 : 300); var pw = Math.round(w * res), ph = Math.round(h * res); var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: textTex(lines, pw, ph, opts) })); m.position.set(x, Y + y, z); m.rotation.y = rotY || 0; world.group.add(m); if (key) tobUI.signs[key] = { mesh: m, w: pw, h: ph, opts: opts, txt: lines.join('|') }; return m; }
+    function sign(key, w, h, x, y, z, rotY, lines, opts) { opts = Object.assign({ size: w < 1 ? 40 : 24, bg: '#0b1a12', titleColor: '#6fdc8c', color: '#c9e8d0', line: 'rgba(111,220,140,.5)' }, opts || {}); var res = opts.res || (w < 1 ? 620 : 300); var pw = Math.round(w * res), ph = Math.round(h * res); var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: textTex(lines, pw, ph, opts) })); m.position.set(x, Y + y, z); m.rotation.y = rotY || 0; world.group.add(m); fixtureSign(m, lines); if (key) tobUI.signs[key] = { mesh: m, w: pw, h: ph, opts: opts, txt: lines.join('|') }; return m; }
     function beacon(key, x, y, z) { bc(0.05, 0.05, 0.05, dark, x, y, z, 12); var m = bc(0.045, 0.045, 0.1, glowMat(0xff8a1c, 0.1), x, y + 0.075, z, 12); tobUI.beacons[key] = m; return m; }
     function spinner(g, axis, speed, key) { tobUI.spin.push({ g: g, axis: axis, speed: speed, key: key }); }
     // shell: slab, walls, ceiling that also shades the room from the sun, hazard lines, drain
@@ -3958,7 +3958,7 @@
   }
   function expansionNewDay(offline) {
     var X = xs(), wages = (X.staff.driver ? 90 : 0) + (X.staff.operator ? 80 : 0) + (X.staff.night ? 70 : 0); if (wages) { var wPaid = drawFunds(wages); if (wages - wPaid > 0.5) books().arrears += wages - wPaid; if (!offline) logEvent('💼 Extra staff wages: ' + money(wages), ''); }
-    if (X.staff.driver) { var T = tob(), val = 0, n = 0; CIG_KEYS.forEach(function (k) { var sell = Math.max(0, T.packs[k] - COST.driverKeep); n += sell; val += sell * CIG_SKUS[k].price * 0.65; T.packs[k] -= sell; });   /* he leaves a few of each kind on the rack so the round jobs can still be filled */ if (n) { S.bank += Math.round(val); bookSale(Math.round(val)); syncTobRack(); if (!offline) { logEvent('🚚 Your driver sold ' + n + ' packs wholesale for ' + money(Math.round(val)), 'good'); toast('🚚 Driver: ' + n + ' packs wholesaled · ' + money(Math.round(val)), 'good'); } } }
+    if (X.staff.driver) { var T = tob(), val = 0, n = 0; CIG_KEYS.forEach(function (k) { var sell = Math.max(0, T.packs[k] - COST.driverKeep); n += sell; val += sell * CIG_SKUS[k].price * 0.55; T.packs[k] -= sell; });   /* he leaves a few of each kind on the rack so the round jobs can still be filled */ if (n) { S.bank += Math.round(val); bookSale(Math.round(val)); syncTobRack(); if (!offline) { logEvent('🚚 Your driver sold ' + n + ' packs wholesale for ' + money(Math.round(val)), 'good'); toast('🚚 Driver: ' + n + ' packs wholesaled · ' + money(Math.round(val)), 'good'); } } }
     if (X.branch) { var bu = Math.min(BRANCH_CAP, X.branchUnits || 0), inc = Math.round(bu * BRANCH_PAY + Math.max(0, S.rep) * 2); X.branchUnits = 0; S.bank += inc; bookSale(inc); logEvent('🏪 Green Leaf (your branch) sent over ' + money(inc) + ': ' + bu + ' units you dropped off at ' + money(BRANCH_PAY) + ' each, plus ' + money(Math.max(0, S.rep) * 2) + ' on your name', inc > 0 ? 'good' : ''); if (!offline) toast('🏪 Branch takings: ' + money(inc) + (bu ? '' : ' (nothing dropped off yesterday, stock it at the blue beacon)'), bu ? 'good' : ''); }
     if (!offline && weekend()) toast('📅 It\'s the weekend. Expect more people through the door.', ''); if (!offline && (S.day % 28) === 25) toast('🎉 Holiday week starts. Footfall is up by half.', 'rare');
   }
@@ -3979,7 +3979,7 @@
     ctxOpen('🧪 Extraction lab', 'carts, gummies and chocolate from bud of any quality', lines);
   }
   function rosterMenu() {
-    var X = xs(), lines = []; [['driver', '🚚 Driver', 90, 'wholesales every pack above ' + COST.driverKeep + ' of each kind each morning (65%), and runs phone deliveries for you · counts as staff on the payroll'], ['operator', '🏭 Basement operator', 80, 'sows and cuts the bays, keeps the machines on, reorders materials · covers the two staff the basement needs'], ['night', '🌙 Night guard', 70, 'nobody breaks into the basement or strips the roof beds · counts as staff on the payroll']].forEach(function (s) { var on = X.staff[s[0]]; lines.push({ label: s[1] + ' · ' + money(s[2]) + ' a day <small>' + s[3] + '</small>', cls: on ? 'on' : '', act: function () { X.staff[s[0]] = !on; sfx('click'); toast(s[1] + (on ? ' let go' : ' hired'), on ? '' : 'good'); save(); } }); });
+    var X = xs(), lines = []; [['driver', '🚚 Driver', 90, 'wholesales every pack above ' + COST.driverKeep + ' of each kind each morning (55%), and runs phone deliveries for you · counts as staff on the payroll'], ['operator', '🏭 Basement operator', 80, 'sows and cuts the bays, keeps the machines on, reorders materials · covers the two staff the basement needs'], ['night', '🌙 Night guard', 70, 'nobody breaks into the basement or strips the roof beds · counts as staff on the payroll']].forEach(function (s) { var on = X.staff[s[0]]; lines.push({ label: s[1] + ' · ' + money(s[2]) + ' a day <small>' + s[3] + '</small>', cls: on ? 'on' : '', act: function () { X.staff[s[0]] = !on; sfx('click'); toast(s[1] + (on ? ' let go' : ' hired'), on ? '' : 'good'); save(); } }); });
     ctxOpen('💼 Staff roster', 'wages come out at the start of each day', lines);
   }
   function wsPlaceMenu(poi) {   // the generic counter behind a pack place: a discount shop list, a paid service, or both
@@ -4004,8 +4004,8 @@
   function expPoiMenu(poi) {
     var X = xs(), lines = [];
     if (wsPlaceMenu(poi)) return true;
-    if (poi === 'tobac') { var near = carNear(40, 14, 30), n = 0, val = 0, vs = carState(); Object.keys(vs.cigs).forEach(function (k) { n += vs.cigs[k]; val += vs.cigs[k] * CIG_SKUS[k].price * 0.7; }); val = Math.round(val);
-      lines.push({ label: '🚬 Sell the ' + n + ' packs in your car · ' + money(val) + ' <small>70% of shop price, paid straight to the bank' + (near ? '' : ' · bring the car round') + '</small>', cls: n && near ? '' : 'muted', act: n && near ? function () { S.bank += val; bookSale(val); vs.cigs = {}; S.stats.wholesale = (S.stats.wholesale || 0) + val; sfx('cash'); toast('🚬 Wholesaled ' + n + ' packs for ' + money(val), 'good'); logEvent('🚬 Wholesaled ' + n + ' packs to the Corner Tobacconist for ' + money(val), 'good'); hud(); save(); } : null });
+    if (poi === 'tobac') { var near = carNear(40, 14, 30), n = 0, val = 0, vs = carState(); Object.keys(vs.cigs).forEach(function (k) { n += vs.cigs[k]; val += vs.cigs[k] * CIG_SKUS[k].price * 0.6; }); val = Math.round(val);
+      lines.push({ label: '🚬 Sell the ' + n + ' packs in your car · ' + money(val) + ' <small>60% of shop price, paid straight to the bank' + (near ? '' : ' · bring the car round') + '</small>', cls: n && near ? '' : 'muted', act: n && near ? function () { S.bank += val; bookSale(val); vs.cigs = {}; S.stats.wholesale = (S.stats.wholesale || 0) + val; sfx('cash'); toast('🚬 Wholesaled ' + n + ' packs for ' + money(val), 'good'); logEvent('🚬 Wholesaled ' + n + ' packs to the Corner Tobacconist for ' + money(val), 'good'); hud(); save(); } : null });
       lines.push({ label: 'Load cartons at home: Shift+E on the car or the van.', cls: 'muted' }); ctxOpen('🚬 Corner Tobacconist', 'he takes as many RF Smoking cartons as you can bring', lines); return true; }
     if (poi === 'police') { var h = Math.round(X.heat), cost = 100 + h * 8; lines.push({ label: '🌡️ Your heat: ' + h + ' / 100 <small>' + (h >= 60 ? 'inspections are coming' : h >= 30 ? 'they have noticed you' : 'nobody is looking at you') + ' · park deals, fines and shootings raise it, time lowers it</small>', cls: 'muted' });
       lines.push({ label: '🤝 Donate ' + money(cost) + ' to the benevolent fund <small>heat -30</small>', cls: h > 0 && S.bank >= cost ? '' : 'muted', act: h > 0 && S.bank >= cost ? function () { S.bank -= cost; X.heat = Math.max(0, X.heat - 30); exp.heatBand = 0; sfx('cash'); toast('🤝 A generous citizen. Heat down to ' + Math.round(X.heat), 'good'); hud(); save(); } : null }); ctxOpen('🚔 Police precinct', 'front desk', lines); return true; }
@@ -5144,10 +5144,12 @@
       if (on) { deskRay.setFromCamera(center, camera); deskRay.far = 4.5; var hs = deskRay.intersectObject(sc.mesh, false); if (hs.length && hs[0].uv) { cur = { x: hs[0].uv.x * sc.w, y: (1 - hs[0].uv.y) * sc.h }; for (var i = sc.zones.length - 1; i >= 0; i--) { var z = sc.zones[i]; if (cur.x >= z.x && cur.x <= z.x + z.w && cur.y >= z.y && cur.y <= z.y + z.h) { hot = z; break; } } } }
       var hk = hot ? hot.key : null, moved = !!cur !== !!sc.cur || (cur && (Math.abs(cur.x - sc.cur.x) > 2 || Math.abs(cur.y - sc.cur.y) > 2));
       sc.cur = cur; sc.hotZone = hot;
+      if (on && cur && !xs().touchHint) touchHint();
       if (hk !== sc.hot) { sc.hot = hk; tDraw(sc); }
       else if ((moved || (sc.tapAt && now() - sc.tapAt < 400) || (on && sc.live && now() - sc.drawAt > sc.live)) && now() - sc.drawAt > 66) tDraw(sc);
     }
   }
+  function touchHint() { xs().touchHint = 1; toast('👆 Screens are touch screens: look at a control and press E or click. The mouse wheel flips pages.', ''); save(); }
   function touchTap(sc) { var z = sc.hotZone, c = sc.cur; if (c) { sc.tapAt = now(); sc.tapX = c.x; sc.tapY = c.y; } sc.tap(z); tDraw(sc); }
   function touchFor(kind) { for (var i = 0; i < TOUCH.list.length; i++) if (TOUCH.list[i].kind === kind) return TOUCH.list[i]; return null; }
   function touchPrompt(sc, title, idle) { var hz = sc.hotZone; return title + ' <small>' + (hz ? 'tap: ' + esc(hz.label) : idle) + '</small>'; }
@@ -6553,7 +6555,7 @@
     if (edit.grabbed || edit.grabbedFx) editDrop();
     edit.on = !edit.on; $('h-edit').hidden = !edit.on;
     if (!edit.on && edit.helper) { scene.remove(edit.helper); edit.helper = null; }
-    if (edit.on) { setFocus(null); toast('🛠️ Edit mode: furniture, signs, the desk screen and the roster · E grab or drop · R turn · Backspace reset · F2 done', ''); } else { toast('Layout saved', 'good'); save(); }
+    if (edit.on) { setFocus(null); toast('🛠️ Edit mode: furniture, signs (the basement ones too), the desk screen and the roster · E grab or drop · R turn · Backspace reset · F2 done', ''); } else { toast('Layout saved', 'good'); save(); }
     sfx('click');
   }
   function editHelper(obj) { if (!obj) { if (edit.helper) edit.helper.visible = false; return; } if (!edit.helper) { edit.helper = new THREE.BoxHelper(obj, 0x6fdc8c); scene.add(edit.helper); } edit.helper.visible = true; edit.helper.setFromObject(obj); }
@@ -7954,6 +7956,36 @@
   $('g3-panel-tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-tab]'); if (!b) return; ui.panelTab = b.getAttribute('data-tab'); ui.render(); sfx('click'); });
   $('g3-panel-close').addEventListener('click', function () { ui.closePanel(); });
 
+  // screenshots: the scene as it is, without the HUD. The desktop app files them under Pictures\Grow Co, a browser downloads them.
+  function screenshot() {
+    var url; try { renderer.render(scene, camera); url = canvas.toDataURL('image/png'); } catch (e) { toast('⚠ Could not take a screenshot', 'bad'); return; }
+    var d = new Date(), p2 = function (n) { return (n < 10 ? '0' : '') + n; };
+    var name = 'growco-day' + (S.day || 1) + '-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '-' + p2(d.getHours()) + p2(d.getMinutes()) + p2(d.getSeconds()) + '.png';
+    var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 1000);
+    sfx('click'); toast('📸 ' + name + (/Electron/i.test(navigator.userAgent) ? ' saved in Pictures\\Grow Co' : ' downloaded'), 'good');
+  }
+  // save file: export writes the slot as .json, import replaces it after a look at what is in the file
+  var pendingImport = null;
+  function saveSlotName() { return SAVE.replace(/^rf-?grow(co)?-/, '') || 'save'; }
+  function savesHtml() { return '<h4>Save file</h4><p>Export writes this shop to a .json file you can keep, or carry to another PC. Import loads one in its place: the shop in this slot is replaced, the other slots are not touched.</p><div class="g3-menu-btns"><button class="g3-btn" data-menu="save-export">⬇ Export this save</button><button class="g3-btn" data-menu="save-import">📂 Import a save file</button></div><input type="file" id="g3-save-file" accept=".json,application/json" hidden>'; }
+  function saveExport() {
+    saveNow(); var name = 'growco-' + saveSlotName() + '-day' + (S.day || 1) + '.json';
+    var bl = new Blob([JSON.stringify(S)], { type: 'application/json' }); var a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    toast('💾 Exported ' + name, 'good');
+  }
+  function saveImportRead(file) {
+    var rd = new FileReader(); rd.onload = function () {
+      var raw = String(rd.result || ''), s = null; try { s = JSON.parse(raw); } catch (e) {}
+      if (!s || typeof s !== 'object' || typeof s.bank !== 'number' || typeof s.day !== 'number') { toast('⚠ That is not a Grow Co. save file', 'bad'); return; }
+      pendingImport = raw; var body = $('g3-menu-body'); body.hidden = false;
+      body.innerHTML = '<h4>Load this save?</h4><p>Day ' + (s.day || 1) + ', level ' + (s.level || 1) + ', ' + money(s.bank) + ' in the bank' + (typeof s.v === 'number' && s.v > SAVE_V ? '. It comes from a newer version of the game, so parts of it may not load' : '') + '. It replaces the shop in this slot.</p><div class="g3-menu-btns"><button class="g3-btn danger" data-menu="save-import-yes">Yes, load it</button><button class="g3-btn" data-menu="saves">← Keep mine</button></div>';
+    }; rd.readAsText(file);
+  }
+  function saveImportApply() {
+    if (!pendingImport) return; saveBlocked = true;   /* the running shop must not autosave over the file between here and the reload */
+    try { localStorage.setItem(SAVE, pendingImport); sessionStorage.setItem('rfgc-skip-splash', '1'); sessionStorage.setItem('rfgc-autoplay', '1'); } catch (e) { saveBlocked = false; toast('⚠ Could not store the save', 'bad'); return; }
+    toast('📂 Loading the save…', ''); setTimeout(function () { location.reload(); }, 250);
+  }
   // pause menu
   function openMenu() { if (!ui.menuOpen) sfx('panel'); ui.menuOpen = true; $('g3-menu').hidden = false; $('g3-menu-body').hidden = true; document.exitPointerLock(); }
   function closeMenu() { if (ui.menuOpen) sfx('close'); ui.menuOpen = false; $('g3-menu').hidden = true; if (!ui.panelOpen) lockPointer(); }
@@ -7964,6 +7996,10 @@
     else if (m === 'guide') { body.hidden = false; body.innerHTML = guideHtml(); }
     else if (m === 'intro') { body.hidden = false; body.innerHTML = introMenuHtml(); }
     else if (m === 'stats') { body.hidden = false; body.innerHTML = '<h4>Lifetime</h4>' + paneStatsInner(); }
+    else if (m === 'saves') { body.hidden = false; body.innerHTML = savesHtml(); var fi = $('g3-save-file'); if (fi) fi.addEventListener('change', function () { if (fi.files[0]) saveImportRead(fi.files[0]); fi.value = ''; }); }
+    else if (m === 'save-export') saveExport();
+    else if (m === 'save-import') { var fi2 = $('g3-save-file'); if (fi2) fi2.click(); }
+    else if (m === 'save-import-yes') saveImportApply();
     else if (m === 'reset') { if (confirm('Reset Grow Co.? All progress is lost.')) { S = fresh(); bindHotbar(); save(); world.dirty = true; rebuildDynamic(); hud(); closeMenu(); toast('Fresh start', ''); } }
     else if (m === 'edit') { closeMenu(); if (!edit.on) editToggle(); }
     else if (m === 'dev') { body.hidden = false; body.innerHTML = devHtml(); }
@@ -8178,6 +8214,7 @@
       if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }
     }
     if (e.code === 'F2') { editToggle(); e.preventDefault(); return; }
+    if (e.code === 'F12' || e.code === 'F9') { screenshot(); e.preventDefault(); return; }
     if (edit.on) { if (e.code === 'KeyE') { if (edit.grabbed || edit.grabbedFx) editDrop(); else editGrab(); } else if (e.code === 'KeyR') editRotate(); else if (e.code === 'Backspace') editReset(); if (e.code === 'KeyE' || e.code === 'KeyR' || e.code === 'Backspace') { e.preventDefault(); return; } }
     if (/^Digit[1-6]$/.test(e.code)) { selectSlot(+e.code.charAt(5) - 1); sfx('click'); e.preventDefault(); return; }
     if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }

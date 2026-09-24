@@ -57,6 +57,14 @@ function createWindow() {
   const openWeb = (url) => { try { if (/^https?:$/.test(new URL(url).protocol)) shell.openExternal(url); } catch (e) {} };
   win.webContents.setWindowOpenHandler(({ url }) => { openWeb(url); return { action: 'deny' }; });
   win.webContents.on('will-navigate', (event, url) => { if (!url.startsWith('file:')) { event.preventDefault(); openWeb(url); } });
+  // F12 in the game saves a screenshot: it arrives here as a download, and goes under Pictures\Grow Co without a dialog.
+  // A save export (.json) keeps the ordinary Save As dialog, so the player picks where it goes.
+  win.webContents.session.on('will-download', (event, item) => {
+    const name = item.getFilename();
+    if (!/\.png$/i.test(name)) return;
+    const dir = path.join(app.getPath('pictures'), 'Grow Co');
+    try { fs.mkdirSync(dir, { recursive: true }); item.setSavePath(path.join(dir, name)); } catch (e) { /* no Pictures folder: the dialog appears instead */ }
+  });
   win.on('closed', () => { win = null; });
 }
 

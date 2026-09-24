@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.24
+
+**Small things that were in the way.**
+
+- **Save file.** The pause menu exports the loaded slot as a .json file and imports one back. Import shows the day, level and bank in the file and asks before it replaces the shop. The other slots are not touched.
+- **Screenshots.** F12 (or F9) saves the scene without the HUD. The desktop app files it under Pictures, Grow Co; a browser downloads it.
+- **The basement signs move.** Every status sign in the basement works, the bay signs, the kiln, the packer and the rest, can now be carried in F2 like the signs upstairs.
+- **A hint about the screens.** The first time a touch screen is under the crosshair, one line says how they work. It shows once per save.
+- **The wholesalers pay less.** The Corner Tobacconist pays 60% of the board price instead of 70%, and the driver 55% instead of 65%. The line still makes more than the window sells, but the window is now clearly where the money is.
+
 ## v1.23.1
 
 The cabinet tablet is drawn from the start instead of staying black until you point at it, the security desk's recorder, key rack and walkie-talkie sit where you can see them, and the README carries new screenshots.

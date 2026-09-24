@@ -65,7 +65,8 @@ That's the whole game in miniature. Everything else makes the loop bigger, faste
 | **F3** | creative build mode |
 | **Right-click** | close the open menu or panel |
 | **F7** | report a bug |
-| **Esc** | pause menu |
+| **F12** or **F9** | screenshot, without the HUD. The desktop app files it under Pictures, Grow Co; a browser downloads it |
+| **Esc** | pause menu. **Save file** there exports this slot as a .json file, or imports one in its place |
 | **F11** | fullscreen (desktop app) |
 
 Jump and crouch don't work while you're sitting, driving or knocked down. A crouched jump is smaller.
@@ -174,7 +175,7 @@ The steel hatch in the hall leads down to a pre-installed cigarette line. You ne
 5. **Packer**: boxes 10s or 20s. It needs paper, filters and blanks, ordered from its own menu.
 6. Take cartons from the **finished goods rack** up to the cigarette cabinet.
 
-The line makes far more than the window sells. Load cartons into the car or the van at home (**Shift+E** on it). They ride in whichever you loaded. Sell them to the **Corner Tobacconist** in town, or hire the driver.
+The line makes far more than the window sells. Load cartons into the car or the van at home (**Shift+E** on it). They ride in whichever you loaded. Sell them to the **Corner Tobacconist** in town for 60% of the board price, or hire the driver, who gets 55%. The window pays full price, so keep the cabinet stocked first.
 
 ## The extraction lab
 
