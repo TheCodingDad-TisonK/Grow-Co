@@ -4951,7 +4951,7 @@
 
   // ── Shop dashboard (office wall screen) ──
   // ── Shop dashboard: a rotating five-page screen fed by the save itself (standalone build: no network) ──
-  var deskBoard = { canvas: null, tex: null, mesh: null, lastFetch: 0, busy: false, page: 0, pageAt: 0, hold: 0,
+  var deskBoard = { canvas: null, tex: null, mesh: null, lastFetch: 0, busy: false, page: 0, pageAt: 0, hold: 0, zones: [], cur: null, hot: null, hotZone: null, card: null, scroll: {}, pinned: (function () { try { return localStorage.getItem('rf-grow-desk-manual') === '1'; } catch (e) { return false; } })(), drawAt: 0, tapAt: 0, tapX: 0, tapY: 0,
     data: { prs: [], seats: [], checks: [], feed: [], activity: [], fleet: null, notif: null, inbox: null, health: null, at: 0, err: '' } };
   var DESK_PAGES = ['overview', 'prs', 'seats', 'fleet', 'watch'];
   var DESK_PAGE_LABEL = { overview: 'Overview', prs: 'Stock', seats: 'Staff', fleet: 'Production', watch: 'Security' };
@@ -4962,16 +4962,17 @@
     var scr = new THREE.Mesh(new THREE.PlaneGeometry(2.56, 1.44), new THREE.MeshBasicMaterial({ map: deskBoard.tex })); scr.position.set(-9.0, 1.95, -1.86); world.group.add(scr); deskBoard.mesh = scr;
     var hit = box(2.7, 1.55, 0.2, MAT.none, -9.0, 1.95, -1.85, { cast: false, receive: false }); interactable(hit, { kind: 'deskboard' });
     var glow = new THREE.PointLight(0x6fdc8c, 0.25, 4); glow.position.set(-9.0, 1.9, -1.4); scene.add(glow); deskBoard.glow = glow;
-    signPlane(['SHOP DASHBOARD', 'money · stock · staff · production · security'], 1.8, 0.4, -9.0, 2.95, -1.88, 0, { titleColor: '#6fdc8c' });
+    signPlane(['SHOP DASHBOARD', 'touch screen · look at it and press E'], 1.8, 0.4, -9.0, 2.95, -1.88, 0, { titleColor: '#6fdc8c' });
     deskBoard.pageAt = now(); drawDeskBoard();
   }
   function fetchDesk() { deskBoard.lastFetch = now(); drawDeskBoard(); }   /* standalone: nothing is fetched, the dashboard reads the save */
   // page rotation: every 12 s, unless the panel is open (then the panel's choice sticks)
   function updateDeskBoard() {
     if (ui.panelOpen && ui.panelKind === 'desk') return;
+    if (deskBoard.pinned || deskBoard.card || now() < deskBoard.hold) { deskBoard.pageAt = now(); return; }   /* touched lately, pinned, or reading a card: the page stays */
     if (now() - deskBoard.pageAt > 12000) { deskBoard.page = (deskBoard.page + 1) % DESK_PAGES.length; deskBoard.pageAt = now(); drawDeskBoard(); }
   }
-  function deskSetPage(i) { deskBoard.page = ((i % DESK_PAGES.length) + DESK_PAGES.length) % DESK_PAGES.length; deskBoard.pageAt = now(); drawDeskBoard(); }
+  function deskSetPage(i) { deskBoard.page = ((i % DESK_PAGES.length) + DESK_PAGES.length) % DESK_PAGES.length; deskBoard.pageAt = now(); deskBoard.card = null; drawDeskBoard(); }
   var DESK_INK = '#e8f1ea', DESK_DIM = '#8fa596', DESK_MUTE = '#4d5e52', DESK_OK = '#6fdc8c', DESK_WARN = '#ffc857', DESK_BAD = '#ff6b6b';
   function deskAge(iso) { if (!iso) return ''; var ms = now() - new Date(iso).getTime(); if (ms < 0) return 'now'; var m = Math.floor(ms / 60000); if (m < 1) return 'just now'; if (m < 60) return m + 'm'; var h = Math.floor(m / 60); if (h < 48) return h + 'h'; return Math.floor(h / 24) + 'd'; }
   function deskTrim(ctx, text, maxW) { text = String(text || ''); if (ctx.measureText(text).width <= maxW) return text; while (text.length > 4 && ctx.measureText(text + '…').width > maxW) text = text.slice(0, -2); return text + '…'; }
@@ -4997,14 +4998,102 @@
       watch: [['Heat', Math.round(X.heat) + ' / 100', X.heat >= 60 ? 'inspections likely' : X.heat >= 30 ? 'noticed' : 'quiet'], ['Robberies', String(S.stats.heists || 0), (S.stats.foiled || 0) + ' foiled'], ['Lost to robbers', money(S.stats.robbed || 0), 'all time'], ['Power', typeof powerOn === 'function' && !powerOn() ? 'CUT' : 'on', S.upgrades.generator ? 'generator standing by' : 'no generator']]
     };
   }
+
+  // ── Touch screen: the board is worked by looking at it and pressing E (or clicking). Controls register themselves as zones while the page is drawn; the crosshair's spot on the screen is found from the ray's UV. ──
+  var DESK_TAB_X = 470, DESK_TAB_W = 170, DESK_TAB_H = 44, DESK_TAB_Y = 30, DESK_FONT = '"Segoe UI",system-ui,sans-serif';
+  var deskRay = new THREE.Raycaster();
+  function deskZone(x, y, w, h, act, id, label, quiet) {
+    var z = { x: x, y: y, w: w, h: h, act: act, id: id, label: label || '', key: act + ':' + (id === undefined ? '' : id) };
+    deskBoard.zones.push(z);
+    if (deskBoard.hot === z.key && !quiet) { var ctx = deskBoard.canvas.getContext('2d'); ctx.fillStyle = 'rgba(111,220,140,.16)'; roundRect(ctx, x, y, w, h, 10); ctx.fill(); ctx.strokeStyle = 'rgba(111,220,140,.85)'; ctx.lineWidth = 3; ctx.stroke(); }
+    return z;
+  }
+  function deskBtn(ctx, x, y, w, h, text, act, id, label, on) {
+    var z = deskZone(x, y, w, h, act, id, label, true), hot = deskBoard.hot === z.key;
+    ctx.fillStyle = on ? 'rgba(111,220,140,.28)' : hot ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.07)'; roundRect(ctx, x, y, w, h, 10); ctx.fill();
+    ctx.strokeStyle = on || hot ? DESK_OK : 'rgba(255,255,255,.14)'; ctx.lineWidth = hot ? 3 : 2; ctx.stroke();
+    ctx.fillStyle = on || hot ? DESK_OK : DESK_INK; ctx.font = '600 20px ' + DESK_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + w / 2, y + h / 2 + 1); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  }
+  function deskTabs(ctx) { DESK_PAGES.forEach(function (p, i) { deskBtn(ctx, DESK_TAB_X + i * (DESK_TAB_W + 6), DESK_TAB_Y, DESK_TAB_W, DESK_TAB_H, DESK_TAB_LABEL[p], 'page', i, DESK_PAGE_LABEL[p], i === deskBoard.page); }); }
+  function deskBar(ctx, W, H, overflow) {   /* the control strip along the bottom, right to left; returns where the feed text has to stop */
+    var y = H - 42, bh = 36, x = W - 40;
+    function b(text, act, id, label, on, w) { x -= w; deskBtn(ctx, x, y, w, bh, text, act, id, label, on); x -= 8; }
+    b(deskBoard.pinned ? '✋ manual' : '🔁 auto', 'pin', 0, deskBoard.pinned ? 'Manual: the page you pick stays · tap for auto rotation' : 'Auto rotation · tap for manual', deskBoard.pinned, 124);
+    b('↻', 'refresh', 0, 'Refresh', false, 44);
+    if (overflow) { b('▼', 'scroll', 1, 'Scroll down', false, 44); b('▲', 'scroll', -1, 'Scroll up', false, 44); }
+    return x;
+  }
+  function deskWrap(ctx, text, maxW, max) { var words = String(text || '').split(/\s+/), lines = [], cur = ''; words.forEach(function (w) { var t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }); if (cur) lines.push(cur); if (lines.length > max) { lines = lines.slice(0, max); lines[max - 1] = deskTrim(ctx, lines[max - 1] + ' …', maxW); } return lines; }
+  function deskDrawCard(ctx, W, H) {   /* a detail card over the page: tapping outside it closes it */
+    var cd = deskBoard.card; if (!cd) return;
+    deskZone(0, 0, W, H, 'closeCard', 0, 'Close', true);
+    ctx.fillStyle = 'rgba(4,10,6,.74)'; ctx.fillRect(0, 0, W, H);
+    var cw = 1060, chh = 580, cx = (W - cw) / 2, cy = (H - chh) / 2 - 16;
+    ctx.fillStyle = '#0f1a13'; roundRect(ctx, cx, cy, cw, chh, 18); ctx.fill(); ctx.strokeStyle = 'rgba(111,220,140,.5)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = cd.col || DESK_OK; ctx.fillRect(cx, cy + 24, 5, chh - 48);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = DESK_INK; ctx.font = '800 32px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, cd.title || '', cw - 60), cx + 30, cy + 26);
+    var ly = cy + 76;
+    if (cd.sub) { ctx.fillStyle = DESK_DIM; ctx.font = '20px ' + DESK_FONT; deskWrap(ctx, cd.sub, cw - 60, 2).forEach(function (l) { ctx.fillText(l, cx + 30, ly); ly += 26; }); ly += 8; }
+    var budget = 12;
+    (cd.lines || []).forEach(function (l) { if (budget <= 0) return; if (typeof l === 'string') l = ['', l]; ctx.font = '21px ' + DESK_FONT; var vs = deskWrap(ctx, l[1], cw - 290, Math.min(3, budget)); ctx.fillStyle = DESK_DIM; ctx.font = '600 17px ' + DESK_FONT; ctx.fillText(String(l[0] || '').toUpperCase(), cx + 30, ly + 3); vs.forEach(function (v) { ctx.fillStyle = l[2] || DESK_INK; ctx.font = '21px ' + DESK_FONT; ctx.fillText(v, cx + 240, ly); ly += 30; budget--; }); ly += 6; });
+    var by = cy + chh - 60; deskBtn(ctx, cx + cw - 150, by, 120, 40, 'Close', 'closeCard', 0, 'Close');
+    if (cd.url) deskBtn(ctx, cx + cw - 400, by, 236, 40, '🔗 Open on GitHub', 'open', 0, 'Open on GitHub in a new tab');
+    if (cd.foot) { ctx.fillStyle = DESK_MUTE; ctx.font = '17px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, cd.foot, cw - 460), cx + 30, by + 10); }
+  }
+  function deskDrawCursor(ctx) {
+    var c = deskBoard.cur, t = now();
+    if (deskBoard.tapAt && t - deskBoard.tapAt < 350) { var k = (t - deskBoard.tapAt) / 350; ctx.strokeStyle = 'rgba(111,220,140,' + (1 - k).toFixed(2) + ')'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(deskBoard.tapX, deskBoard.tapY, 14 + k * 50, 0, Math.PI * 2); ctx.stroke(); }
+    if (!c) return;
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c.x, c.y, 14, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = deskBoard.hotZone ? DESK_OK : 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(c.x, c.y, 5, 0, Math.PI * 2); ctx.fill();
+  }
+  function deskTouchUpdate() {   /* every frame: where on the screen is the crosshair, and which control is under it */
+    var on = focus && focus.data.kind === 'deskboard' && deskBoard.mesh, cur = null, hot = null;
+    if (on) {
+      deskRay.setFromCamera(center, camera); deskRay.far = 4.5; var hs = deskRay.intersectObject(deskBoard.mesh, false);
+      if (hs.length && hs[0].uv) { cur = { x: hs[0].uv.x * deskBoard.canvas.width, y: (1 - hs[0].uv.y) * deskBoard.canvas.height }; for (var i = deskBoard.zones.length - 1; i >= 0; i--) { var z = deskBoard.zones[i]; if (cur.x >= z.x && cur.x <= z.x + z.w && cur.y >= z.y && cur.y <= z.y + z.h) { hot = z; break; } } }
+    }
+    var hk = hot ? hot.key : null, moved = !!cur !== !!deskBoard.cur || (cur && (Math.abs(cur.x - deskBoard.cur.x) > 2 || Math.abs(cur.y - deskBoard.cur.y) > 2));
+    deskBoard.cur = cur; deskBoard.hotZone = hot;
+    if (hk !== deskBoard.hot) { deskBoard.hot = hk; drawDeskBoard(); }
+    else if ((moved || (deskBoard.tapAt && now() - deskBoard.tapAt < 400)) && now() - deskBoard.drawAt > 66) drawDeskBoard();
+  }
+  var DESK_ROWS = { prs: 11, fleet: 28, watch: 6 };
+  function deskOff(page) { return deskBoard.scroll[page] || 0; }
+  function deskOverflow(page) { return DESK_ROWS[page] ? deskTotal(page) > DESK_ROWS[page] : false; }
+  function deskScroll(dir) { var page = DESK_PAGES[deskBoard.page], rows = DESK_ROWS[page]; if (!rows) return false; var max = Math.max(0, deskTotal(page) - rows); var was = deskOff(page); deskBoard.scroll[page] = clamp(was + dir * rows, 0, max); return deskBoard.scroll[page] !== was; }
+  function deskWheel(dir) { deskBoard.hold = now() + 45000; if (!deskOverflow(DESK_PAGES[deskBoard.page]) || !deskScroll(dir)) deskSetPage(deskBoard.page + dir); else drawDeskBoard(); sfx('click'); }
+  function deskTap() {
+    var z = deskBoard.hotZone, c = deskBoard.cur; deskBoard.hold = now() + 45000;
+    if (c) { deskBoard.tapAt = now(); deskBoard.tapX = c.x; deskBoard.tapY = c.y; }
+    if (!z) { if (deskBoard.card) deskBoard.card = null; drawDeskBoard(); return; }
+    if (z.act === 'page') deskSetPage(z.id);
+    else if (z.act === 'flip') deskSetPage(deskBoard.page + z.id);
+    else if (z.act === 'scroll') deskScroll(z.id);
+    else if (z.act === 'refresh') { fetchDesk(); toast('↻ Refreshing the board', ''); }
+    else if (z.act === 'pin') { deskBoard.pinned = !deskBoard.pinned; try { localStorage.setItem('rf-grow-desk-manual', deskBoard.pinned ? '1' : ''); } catch (e) {} toast(deskBoard.pinned ? '✋ Manual: the page you pick stays on the screen' : '🔁 Auto: the board rotates its pages again', ''); }
+    else if (z.act === 'closeCard') deskBoard.card = null;
+    else if (z.act === 'open') { if (deskBoard.card && deskBoard.card.url) { window.open(deskBoard.card.url, '_blank'); toast('🔗 Opened in a new browser tab', 'good'); } }
+    else deskTapItem(z, deskBoard.data);
+    drawDeskBoard();
+  }
+
+  var DESK_TAB_LABEL = DESK_PAGE_LABEL;
+  function deskTotal() { return 0; }
+  function deskTapItem(z, d) {
+    if (z.act === 'tile') { var r = (dashRows()[DESK_PAGES[deskBoard.page]] || [])[z.id]; if (!r) return; deskBoard.card = { title: r[0], sub: DESK_PAGE_LABEL[DESK_PAGES[deskBoard.page]], lines: [['value', r[1], DESK_OK], ['note', r[2]]] }; }
+  }
   function drawDeskBoard() {
     var c = deskBoard.canvas; if (!c) return; var ctx = c.getContext('2d'), W = c.width, H = c.height, page = DESK_PAGES[deskBoard.page], rows = dashRows()[page] || [];
+    deskBoard.zones = []; deskBoard.drawAt = now();
     ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, W, H); ctx.textBaseline = 'top'; ctx.textAlign = 'left';
     ctx.fillStyle = DESK_OK; ctx.font = '800 40px "Segoe UI",system-ui,sans-serif'; ctx.fillText('GROW CO.', 40, 26);
-    ctx.fillStyle = DESK_DIM; ctx.font = '26px "Segoe UI",system-ui,sans-serif'; ctx.textAlign = 'right'; ctx.fillText(DESK_PAGE_LABEL[page], W - 40, 34); ctx.textAlign = 'left';
-    DESK_PAGES.forEach(function (p, i) { deskDot(ctx, W / 2 - (DESK_PAGES.length - 1) * 14 + i * 28, 52, i === deskBoard.page ? DESK_OK : 'rgba(255,255,255,.18)', 6); });
-    rows.forEach(function (r, i) { deskTile(ctx, 40 + (i % 2) * 770, 120 + Math.floor(i / 2) * 330, 740, 300, r[0], r[1], r[2], DESK_OK); });
-    ctx.fillStyle = DESK_MUTE; ctx.font = '22px "Segoe UI",system-ui,sans-serif'; ctx.fillText('shop dashboard · E for the full sheet', 40, H - 50);
+    deskTabs(ctx);
+    rows.forEach(function (r, i) { deskZone(40 + (i % 2) * 770, 120 + Math.floor(i / 2) * 330, 740, 300, 'tile', i, r[0]); deskTile(ctx, 40 + (i % 2) * 770, 120 + Math.floor(i / 2) * 330, 740, 300, r[0], r[1], r[2], DESK_OK); });
+    ctx.fillStyle = 'rgba(111,220,140,.08)'; ctx.fillRect(0, H - 46, W, 46); deskBar(ctx, W, H, false);
+    ctx.fillStyle = DESK_MUTE; ctx.font = '20px "Segoe UI",system-ui,sans-serif'; ctx.fillText('shop dashboard · touch screen: look at a tile and press E', 40, H - 34);
+    deskDrawCard(ctx, W, H); deskDrawCursor(ctx);
     deskBoard.tex.needsUpdate = true;
   }
   function paneDesk() {
@@ -6898,7 +6987,7 @@
     if (d.kind === 'frontdoor') return shop().open ? 'Lock the front door <small>closes the shop</small>' : 'Unlock the front door <small>opens the shop</small>';
     if (d.kind === 'broom') return h && h.kind === 'broom' ? 'Hang the broom back up' : (h ? 'Hands full <small>G to put down</small>' : 'Take the broom <small>' + dustList().length + ' dusty spot' + (dustList().length === 1 ? '' : 's') + '</small>');
     if (d.kind === 'dust') return h && h.kind === 'broom' ? 'Sweep up the dirt' : 'Dirt on the floor <small>grab the broom in the processing room</small>';
-    if (d.kind === 'deskboard') return 'Shop dashboard <small>' + DESK_PAGE_LABEL[DESK_PAGES[deskBoard.page]] + ' · E for the full sheet</small>';
+    if (d.kind === 'deskboard') { var hz = deskBoard.hotZone; return 'Shop dashboard <small>' + (hz ? 'tap: ' + esc(hz.label) : DESK_PAGE_LABEL[DESK_PAGES[deskBoard.page]] + ' · touch screen: look and press E, wheel flips') + '</small>'; }
     if (d.kind === 'switch') return (roomLit(d.room) ? 'Lights off' : 'Lights on') + ' <small>' + ROOM_NAMES[d.room] + '</small>';
     if (d.kind === 'dehum') return 'Dehumidifier <small>' + dehumLabel(d.zone) + ' · RH ' + Math.round(S.rh[d.zone]) + '% · E next setting</small>';
     if (d.kind === 'storeItem') { var sn = S.storage[d.item] || 0; if (h && (h.kind !== 'crate' || h.item !== d.item) && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; return 'Take a crate of ' + itemName(d.item) + ' <small>' + sn + ' in the back room · E takes ' + Math.min(sn, itemPack(d.item)) + ' · Shift+E all' + (h ? ' · adds to the crate' : '') + '</small>'; }
@@ -7024,7 +7113,7 @@
     else if (d.kind === 'frontdoor') toggleShopOpen();
     else if (d.kind === 'broom') { if (h && h.kind === 'broom') { S.held = null; toast('Broom back on the hook', ''); } else if (hotbarFull()) toast('Your hands are full (G puts things down)', 'bad'); else { take({ kind: 'broom' }); toast('🧹 Got the broom. E on the dust sweeps it.', 'good'); } }
     else if (d.kind === 'dust') sweep(d.id);
-    else if (d.kind === 'deskboard') { fetchDesk(); ui.openPanel('desk'); }
+    else if (d.kind === 'deskboard') deskTap();
     else if (d.kind === 'storeItem') {
       var have = S.storage[d.item] || 0; if (have < 1) { toast('Nothing left there', 'bad'); return; }
       if (h && (h.kind !== 'crate' || h.item !== d.item)) { var other2 = S.hotbar.map(function (x, i2) { return x && x.kind === 'crate' && x.item === d.item ? i2 : -1; }).filter(function (i2) { return i2 >= 0; })[0]; if (other2 !== undefined) { S.slot = other2; h = held(); } else if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } else h = null; }
@@ -7659,7 +7748,7 @@
     if (e.code === 'Tab') { ui.openPanel('inventory'); e.preventDefault(); }
     if ((e.code === 'KeyG' || e.code === 'KeyQ') && !e.repeat) { putBack(); afterAction(); }
   });
-  document.addEventListener('wheel', function (e) { if (!player.locked || ui.blocked() || edit.on || sec.view.on) return; if (window.RFGROW && window.RFGROW.creative && window.RFGROW.creative.state.on) return; if (drive.on) { drive.dist = clamp(drive.dist + (e.deltaY > 0 ? 0.7 : -0.7), 3.2, 12); drive.look.t = 1.4; return; }   /* the wheel pulls the chase camera in and out at the wheel */ selectSlot(S.slot + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
+  document.addEventListener('wheel', function (e) { if (!player.locked || ui.blocked() || edit.on || sec.view.on) return; if (window.RFGROW && window.RFGROW.creative && window.RFGROW.creative.state.on) return; if (drive.on) { drive.dist = clamp(drive.dist + (e.deltaY > 0 ? 0.7 : -0.7), 3.2, 12); drive.look.t = 1.4; return; } if (focus && focus.data.kind === 'deskboard') { deskWheel(e.deltaY > 0 ? 1 : -1); return; }   /* the wheel pulls the chase camera in and out at the wheel */ selectSlot(S.slot + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
   document.addEventListener('keyup', function (e) { player.keys[e.code] = false; if (ui.taskOpen && e.code === 'Space') taskPress(false); });
   window.addEventListener('blur', function () { player.keys = {}; });
   document.addEventListener('mousemove', onMouseMove);
@@ -7796,7 +7885,7 @@
     var dt = Math.min(clock.getDelta(), 0.1);
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
-    if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); }
+    if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); deskTouchUpdate(); }
     updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt);
     if (_df.t && now() - _df.t > 250) { _df.t = 0; defightScene(); }
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); var vcTown = (vc.layers.mask & (1 << TOWN_LAYER)) !== 0; vc.layers.enable(TOWN_LAYER); renderer.render(scene, vc); if (!vcTown) vc.layers.disable(TOWN_LAYER); } else renderer.render(scene, camera);
@@ -7804,5 +7893,5 @@
   }
   frame();
   // debug / automation handle (read-only use; not part of the game loop)
-  window.RFGROW = { hooks: hooks, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision, setDoor: setDoor, doorAt: doorAt, navBuild: navBuild }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, unitIds: unitIds, unitCount: unitCount, machCost: machCost, buyUnit: buyUnit, machState: machState, syncMachines: syncMachines, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
+  window.RFGROW = { hooks: hooks, deskBoard: deskBoard, deskTap: deskTap, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision, setDoor: setDoor, doorAt: doorAt, navBuild: navBuild }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, unitIds: unitIds, unitCount: unitCount, machCost: machCost, buyUnit: buyUnit, machState: machState, syncMachines: syncMachines, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
 })();

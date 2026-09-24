@@ -52,6 +52,7 @@ That's the whole game in miniature. Everything else makes the loop bigger, faste
 | **E** or left-click | use, pick up, talk, hand over |
 | **Shift+E** | the second action: lock or unlock with the keyring, the vehicle menu, orders for your crew, open or close the shop van at its hatch |
 | **Ctrl+E** | send a crew member home |
+| **E** on the office screen | it is a touch screen: look at a tab, a tile or a button and press E; the wheel flips pages; the auto / manual button at the bottom right keeps the page you picked |
 | **G** or **Q** | put back what you hold |
 | **1 to 6**, mouse wheel | hotbar slot |
 | **Tab** | inventory |

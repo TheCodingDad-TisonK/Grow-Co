@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.22
+
+**The office screen is a touch screen.** The shop dashboard on the office wall used to open a menu when you pressed E. Now you use the screen itself: look at a tab, a tile or a button and press E (or click), the same way you use everything else. A ring on the screen shows where you are pointing, and the prompt names what you are about to tap.
+
+- Tabs along the top switch between Overview, Stock, Staff, Production and Security. The mouse wheel flips pages while you look at the screen.
+- Tapping a tile opens a card with the figure and a note. Tap Close, click anywhere outside the card, or just walk away.
+- **Auto / manual.** The button at the bottom right switches between auto rotation (the pages cycle every 12 s, as before) and manual, where the page you picked stays put. The choice is remembered. Any tap also holds the current page for 45 s.
+- Refresh redraws the figures from your save.
+
 ## v1.21
 
 **A cold read, put right.** Three fresh readers went through the whole game as a player, an engineer and an editor. This release fixes what they found and joins up the systems that led nowhere.

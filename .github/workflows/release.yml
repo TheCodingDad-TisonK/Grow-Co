@@ -25,7 +25,8 @@ jobs:
         shell: bash
         run: |
           want="v$(node -p "require('./package.json').version")"
-          if [ "$GITHUB_REF_NAME" != "$want" ]; then echo "Tag $GITHUB_REF_NAME does not match package.json ($want)"; exit 1; fi
+          short="${want%.0}"
+          if [ "$GITHUB_REF_NAME" != "$want" ] && [ "$GITHUB_REF_NAME" != "$short" ]; then echo "Tag $GITHUB_REF_NAME does not match package.json ($want)"; exit 1; fi
       - run: npm run installer
       - uses: actions/upload-artifact@v4
         with:
