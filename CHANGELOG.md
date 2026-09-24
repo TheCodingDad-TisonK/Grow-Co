@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.23.1
+
+The cabinet tablet is drawn from the start instead of staying black until you point at it, the security desk's recorder, key rack and walkie-talkie sit where you can see them, and the README carries new screenshots.
+
 ## v1.23: the interactive change
 
 **Screens you use, not menus that open.** Every screen in the shop is now a touch screen you work by looking at it and pressing E (or clicking), the same way the office wall screen went in v1.22. A ring shows where you are pointing and the prompt names the control.
