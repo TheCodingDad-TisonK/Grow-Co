@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.23: the interactive change
+
+**Screens you use, not menus that open.** Every screen in the shop is now a touch screen you work by looking at it and pressing E (or clicking), the same way the office wall screen went in v1.22. A ring shows where you are pointing and the prompt names the control.
+
+- **The till is a tablet.** A big tablet on a stand above the cash drawer replaces the old register and its menu. Payments, card runs, counting change, walk-up sales, opening the drawer and emptying the till all happen on its screen.
+- **A security screen.** A wall tablet in the security room, left of the camera feeds: tap a camera to watch it, lock or unlock any door, see heat, robberies, the guard and an incident log, and trip the silent alarm.
+- **The control cabinet.** The shop control box is now a floor-standing cabinet on the security room's right wall. Open its doors and a tablet hangs inside with the shop, room lights, curtains, doors, climate and radio pages, and under it a bank of real switches (open, lights, staff door, roller door, yard gate), levers for the two dehumidifiers, the markup and the volume, a radio knob, two little displays, a row of room-light buttons and a red silent-alarm button. The security desk lost its keyboard and mouse and gained notes, a shift sheet, a walkie-talkie on its charger and a key rack; the recorder hangs on the wall.
+- **The office PC.** The laptop is a PC. Sit at the desk and press E on it and its desktop comes up: Supplies, Seed bank, Gear, Licences, Staff, Bank, Deliveries, the dashboard, Diary, Stats, Settings and the Guide as apps in windows.
+- **Your phone on F.** You always carry it. Home screen with the time, weather and money, then Burner (street orders), Wallet (with the bank courier), People (crew and the guard), Map, Messages and Settings.
+- **The delivery tablet has its own screen.** J opens it when you have it: the round as cards with what is loaded, and the town map with the beacons beside it.
+- **Tab is a quick wheel, I is the inventory.** The wheel reaches the inventory, the phone, the map, deliveries, the broom, the keyring, put down or stand up, and opening or closing the shop. Press the number or click.
+- **A busier town.** Twice the people on the shop's street, five more cars, and people walking every pavement in town.
+
 ## v1.22
 
 **The office screen is a touch screen.** The shop dashboard on the office wall used to open a menu when you pressed E. Now you use the screen itself: look at a tab, a tile or a button and press E (or click), the same way you use everything else. A ring on the screen shows where you are pointing, and the prompt names what you are about to tap.

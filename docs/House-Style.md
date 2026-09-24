@@ -103,7 +103,7 @@ Use these and only these. The left column is the word; the right is what it repl
 | till | register, drawer | The van's is the **van till**, never "Van register". |
 | back room | storeroom, storage room | Where crates land. |
 | counter display | | The self-serve lighters, papers and grinders. |
-| supply rack | a bare "rack" | The office shelving beside the laptop. Other racks keep their full name: the finished goods rack in the basement, the van rack. |
+| supply rack | a bare "rack" | The office shelving beside the PC. Other racks keep their full name: the finished goods rack in the basement, the van rack. |
 | drying line | drying rack | |
 | curing shelf | | |
 | workbench | | "The bench" is fine once it's been named. |
@@ -128,7 +128,7 @@ Use these and only these. The left column is the word; the right is what it repl
 | quality, rep, heat | reputation, police heat | |
 | pocket, tip jar, vault, bank | | Where money sits. |
 | First Harvest Bank | | The bank in town. |
-| Supplies, Seed bank, Gear, Licences, Staff, Bank | | The laptop tabs, spelled as on screen. |
+| Supplies, Seed bank, Gear, Licences, Staff, Bank | | The office PC apps, spelled as on screen. |
 | the guard | Security (as a name) | The security room keeps its name: it is a room. |
 | crew | assistant, worker | Jo, Mika and Sam. "A crew member", "your crew". |
 | driver, basement operator, night guard | | Hired on the staff roster. |
@@ -146,7 +146,7 @@ Check these against the code before you repeat them, because they have changed b
 - The pause menu stops everything. Nothing grows, nobody moves.
 - Since 1.20 the **car lives in the garage** and the **van in the bay under the canopy**. The car's boot loads and unloads at home with Shift+E.
 - A **locked door stops customers**. Your **crew and the guard carry keys**: they unlock it, walk through and it locks again behind them, unless you took that door's key back on the control box. A robber forces it. A door somebody walks through shuts itself 4 s after they're clear.
-- Up to **three crew**, hired at the laptop under Staff. The guard is there from the start. The driver, the basement operator and the night guard come off the staff roster.
+- Up to **three crew**, hired on the office PC under Staff. The guard is there from the start. The driver, the basement operator and the night guard come off the staff roster.
 - Content packs are toggled freely and applied once. The shop rebuilds when you apply, not on every toggle.
 
 ## Before you commit

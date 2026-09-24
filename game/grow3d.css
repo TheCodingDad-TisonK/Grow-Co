@@ -228,3 +228,68 @@ button { font: inherit; cursor: pointer; }
 .g3-ctx-line.act { cursor: pointer; border-color: var(--green-line); pointer-events: auto; }
 .g3-ctx-line.act:hover { background: rgba(111,220,140,.14); }
 .g3-ctx-line.on { border-color: var(--green); background: rgba(111,220,140,.1); }
+
+/* ── the office PC's desktop ── */
+.g3-pc { width: min(1500px, 94vw); height: min(900px, 90vh); display: flex; flex-direction: column; background: radial-gradient(1200px 700px at 30% 20%, #16302a 0%, #0a1612 60%, #060b09 100%); border: 1px solid var(--panel-line); border-radius: 14px; box-shadow: 0 40px 100px rgba(0,0,0,.7); overflow: hidden; position: relative; animation: pop .2s; transform: none; }
+.g3-pc-top { display: flex; align-items: center; gap: 12px; padding: 8px 14px; background: rgba(0,0,0,.35); border-bottom: 1px solid rgba(255,255,255,.06); font-size: 13px; }
+.g3-pc-logo { font-weight: 700; color: var(--green); }
+.g3-pc-clock { margin-left: auto; font-family: var(--mono); color: var(--muted); }
+.g3-pc-desk { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, 110px); grid-auto-rows: 104px; gap: 10px; padding: 22px; align-content: start; overflow: auto; }
+.g3-pc-icon { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: transparent; border: 1px solid transparent; border-radius: 12px; color: var(--ink); transition: .12s; }
+.g3-pc-icon:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); }
+.g3-pc-icon .ico { font-size: 40px; line-height: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+.g3-pc-icon .n { font-size: 12px; text-shadow: 0 1px 2px #000; }
+.g3-pc-win { position: absolute; left: 4%; right: 4%; top: 52px; bottom: 54px; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,.7); overflow: hidden; animation: pop .15s; transform: none; }
+.g3-pc-winhead { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--panel-line); font-weight: 600; font-size: 14px; background: rgba(0,0,0,.25); }
+.g3-pc-winhead .g3-x { margin-left: auto; }
+.g3-pc-winbody { flex: 1; overflow: auto; padding: 14px 16px; }
+.g3-pc-bar { display: flex; gap: 6px; align-items: center; padding: 6px 10px; background: rgba(0,0,0,.5); border-top: 1px solid rgba(255,255,255,.06); overflow-x: auto; }
+.g3-pc-start { border: 1px solid var(--green-line); background: rgba(111,220,140,.12); color: var(--green); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.g3-pc-task { border: 1px solid transparent; background: transparent; color: var(--muted); padding: 6px 10px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+.g3-pc-task.on { background: rgba(255,255,255,.08); color: var(--ink); border-color: rgba(255,255,255,.15); }
+.g3-pc-task:hover { color: var(--ink); }
+/* ── the phone and the delivery tablet ── */
+.g3-dev { display: flex; flex-direction: column; background: #050807; border: 10px solid #15191c; border-radius: 34px; box-shadow: 0 30px 80px rgba(0,0,0,.7), inset 0 0 0 2px #2b3136; overflow: hidden; animation: pop .2s; transform: none; }
+.g3-dev.phone { width: min(420px, 94vw); height: min(820px, 92vh); }
+.g3-dev.tablet { width: min(1100px, 94vw); height: min(720px, 92vh); border-radius: 22px; }
+.g3-dev-status { display: flex; justify-content: space-between; padding: 8px 18px 4px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.g3-dev-body { flex: 1; overflow: auto; padding: 10px 14px; }
+.g3-dev-nav { display: flex; gap: 8px; justify-content: center; padding: 8px; border-top: 1px solid rgba(255,255,255,.06); background: rgba(0,0,0,.4); }
+.g3-dev-nav button { border: 1px solid var(--panel-line); background: rgba(255,255,255,.04); color: var(--muted); padding: 7px 14px; border-radius: 999px; font-size: 12px; }
+.g3-dev-nav button:hover { color: var(--ink); background: rgba(255,255,255,.09); }
+.g3-ph-widget { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px; margin: 6px 0 14px; border-radius: 16px; background: linear-gradient(135deg, rgba(111,220,140,.18), rgba(58,160,216,.12)); border: 1px solid rgba(255,255,255,.08); font-size: 12px; color: var(--muted); }
+.g3-ph-widget b { font-size: 34px; color: var(--ink); font-family: var(--mono); font-weight: 600; }
+.g3-ph-apps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.g3-ph-app { display: flex; flex-direction: column; align-items: center; gap: 6px; background: transparent; border: 0; color: var(--ink); }
+.g3-ph-app .ico { position: relative; width: 66px; height: 66px; display: flex; align-items: center; justify-content: center; font-size: 34px; border-radius: 18px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); transition: .12s; }
+.g3-ph-app:hover .ico { background: rgba(255,255,255,.16); transform: translateY(-2px); }
+.g3-ph-app .ico i { position: absolute; right: -6px; top: -6px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--red); color: #fff; font-size: 11px; font-style: normal; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.g3-ph-app .n { font-size: 11px; }
+.g3-dev-body h3 { margin: 4px 0 8px; font-size: 15px; }
+.g3-tab-head { font-size: 13px; color: var(--muted); padding: 4px 4px 10px; }
+.g3-tab-head b { color: var(--amber); font-family: var(--mono); }
+.g3-tab-cols { display: grid; grid-template-columns: 1fr 550px; gap: 14px; }
+@media (max-width: 1000px) { .g3-tab-cols { grid-template-columns: 1fr; } }
+.g3-tab-list { display: flex; flex-direction: column; gap: 8px; }
+.g3-tab-job { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--panel-line); border-radius: 12px; background: rgba(255,255,255,.03); }
+.g3-tab-job.late { border-color: var(--red-line); }
+.g3-tab-job .num { font-family: var(--mono); color: var(--amber); font-size: 18px; font-weight: 700; min-width: 34px; }
+.g3-tab-job .meta { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); }
+.g3-tab-job .meta b { color: var(--ink); font-size: 14px; }
+.g3-tab-job .meta .ok { color: var(--green); }
+.g3-tab-job .meta .bad { color: var(--red); }
+.g3-tab-job .pay { font-family: var(--mono); color: var(--cash); font-size: 16px; font-weight: 700; text-align: right; display: flex; flex-direction: column; }
+.g3-tab-job .pay small { color: var(--muted); font-size: 11px; font-weight: 400; }
+.g3-tab-map canvas { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--panel-line); }
+/* ── the quick wheel on Tab ── */
+#g3-wheel { position: fixed; inset: 0; z-index: 46; background: rgba(4,8,5,.45); backdrop-filter: blur(3px); }
+.g3-wheel-ring { position: absolute; left: 50%; top: 50%; width: 440px; height: 440px; margin: -220px 0 0 -220px; border-radius: 50%; border: 2px solid rgba(111,220,140,.25); background: radial-gradient(circle, rgba(111,220,140,.06) 0%, rgba(0,0,0,0) 70%); }
+.g3-wheel-item { position: absolute; width: 104px; height: 104px; margin: -52px 0 0 -52px; border-radius: 50%; border: 1px solid var(--panel-line); background: var(--panel); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: .12s; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.g3-wheel-item:hover { border-color: var(--green); background: rgba(111,220,140,.14); transform: scale(1.08); }
+.g3-wheel-item.dim { opacity: .45; }
+.g3-wheel-item .ico { font-size: 30px; line-height: 1; }
+.g3-wheel-item .n { font-size: 11px; text-align: center; line-height: 1.15; padding: 0 6px; }
+.g3-wheel-item .k { position: absolute; left: 10px; top: 10px; font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.g3-wheel-center { position: absolute; left: 50%; top: 50%; width: 200px; margin-left: -100px; transform: translateY(-50%); text-align: center; pointer-events: none; }
+.g3-wheel-center b { display: block; font-size: 16px; }
+.g3-wheel-center span { font-size: 11px; color: var(--muted); font-family: var(--mono); }

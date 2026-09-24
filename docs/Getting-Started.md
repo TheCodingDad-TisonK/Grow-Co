@@ -23,7 +23,7 @@ npm run serve    # or in a browser at http://127.0.0.1:8420/
 A new shop starts with $220, a small tent and one pot. There's no seed, so that's your first buy.
 
 1. From the main menu, **Start** an empty slot. Click the scene to capture the mouse.
-2. Go to the **office** (left of the hall) and use the **laptop**. Order soil and baggies under **Supplies**, a seed in the **Seed bank**, and a grinder. The workbench won't bag without one.
+2. Go to the **office** (left of the hall) and sit at the desk and use the **PC**. Order soil and baggies under **Supplies**, a seed in the **Seed bank**, and a grinder. The workbench won't bag without one.
 3. Carry the soil to the **grow tent**, fill the pot and plant the seed. Water it with the can beside the tent when it asks.
 4. A plant that's ready glows. Harvest it with empty hands and hang it on the **drying line** in the dry room.
 5. When a jar appears on the **curing shelf**, carry it to the **workbench** in the processing room and empty it. Bag some eighths.

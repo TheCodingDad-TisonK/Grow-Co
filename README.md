@@ -64,7 +64,7 @@ The game needs no server logic. Anything that can serve the `game/` folder as st
 
 ## Controls
 
-`WASD` move · `Shift` run · `Space` jump · `Ctrl` crouch · `E` use, pick up, hand over · `Shift+E` second action · `Ctrl+E` send a crew member home · `G` put back · `1 to 6` hotbar · `Tab` inventory · `M` map · `J` deliveries · `P` silent alarm · `F2` edit mode · `F3` creative mode · right-click closes menus · `F7` report a bug · `Esc` pause · `F11` fullscreen
+`WASD` move · `Shift` run · `Space` jump · `Ctrl` crouch · `E` use, pick up, hand over · `Shift+E` second action · `Ctrl+E` send a crew member home · `G` put back · `1 to 6` hotbar · `I` inventory · `Tab` quick wheel · `F` phone · `M` map · `J` deliveries · `P` silent alarm · `F2` edit mode · `F3` creative mode · right-click closes menus · `F7` report a bug · `Esc` pause · `F11` fullscreen
 
 The main menu has a guide of 21 chapters, including an "I am stuck" chapter. The same guide is in the [wiki](https://github.com/TheCodingDad-TisonK/Grow-Co/wiki/Player-Guide).
 

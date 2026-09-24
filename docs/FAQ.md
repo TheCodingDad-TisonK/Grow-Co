@@ -31,7 +31,7 @@ Right-click closes the open menu or panel. Esc opens the pause menu. Click the s
 Open it at the control box or the front panel behind the till. After a police fine, customers stay away for a couple of minutes. Storms and snow thin the street out.
 
 **The basement machines won't switch on.**
-You need the tobacco manufacturing licence, bought at the office laptop. During a power cut everything stops unless you own the generator in the yard.
+You need the tobacco manufacturing licence, bought on the office PC. During a power cut everything stops unless you own the generator in the yard.
 
 **I can't find the control box, a sign or the staff roster.**
 Press F2, look at it and press Backspace. It goes back to where it started. The control box starts on the security room's north wall.

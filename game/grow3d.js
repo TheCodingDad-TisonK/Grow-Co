@@ -139,7 +139,7 @@
     { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 3000, rep: 40, d: 'Connoisseurs visit and pay 2.2× for quality.' },
     { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 50, d: 'From 20:00 to 02:00 customers come a third more often and pay 5% more.' },
     { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 60, d: '+4% on every price.' },
-    { id: 'export',    ico: '🚢', name: 'Export licence',       price: 14000, lvl: 10, rep: 120, d: 'Bulk contracts under Bank on the laptop: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
+    { id: 'export',    ico: '🚢', name: 'Export licence',       price: 14000, lvl: 10, rep: 120, d: 'Bulk contracts under Bank on the office PC: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
   ];
   function tentSizes(lic) {   // '9 and 12-slot': read off the tent table, so a pack tent that needs the permit is named with the rest
     var n = TENTS.filter(function (t) { return t.lic === lic; }).map(function (t) { return t.slots; });
@@ -699,9 +699,9 @@
       if (!h || h.kind !== 'seed' || h.strain !== id) { toast('Bring a seed from the supply rack', 'bad'); return; }
       if (typeof slotIdx !== 'number' || slotIdx >= slots()) { toast('Look at a pot inside the tent', 'bad'); return; }
       if (plantAtSlot(slotIdx)) { toast('That pot is taken', 'bad'); return; }
-      if (slotIdx >= (S.supplies.pot || 0)) { toast('No pot in that slot. Buy one at the laptop.', 'bad'); return; }
+      if (slotIdx >= (S.supplies.pot || 0)) { toast('No pot in that slot. Buy one at the office PC.', 'bad'); return; }
       if (!S.potSoil[slotIdx]) { toast('Fill the pot with soil first', 'bad'); return; }
-      if (S.plants.length >= slots()) { toast('The tent is full. A bigger one is under Gear on the laptop.', 'bad'); return; }
+      if (S.plants.length >= slots()) { toast('The tent is full. A bigger one is under Gear on the office PC.', 'bad'); return; }
       S.held = null;
       var L = lightObj();
       var p = { id: 'p' + now() + randi(0, 999), strain: id, progress: 0, quality: 55 + L.qual, thirst: 0, fed: false, hazard: null, slot: slotIdx };
@@ -758,7 +758,7 @@
       sid = sid || firstStashStrain(); var st = strainById(sid);
       if (!S.supplies.grinder) { toast('Buy a grinder first', 'bad'); return; }
       if (stashOf(sid).g < bagGrams()) { toast('You need ' + bagGrams() + ' g of cured ' + st.name, 'bad'); return; }
-      if ((S.supplies.bag || 0) < 1) { toast('No baggies left. Order some at the laptop.', 'bad'); return; }
+      if ((S.supplies.bag || 0) < 1) { toast('No baggies left. Order some at the office PC.', 'bad'); return; }
       function finish(dq, note) { var d = stashDraw(sid, bagGrams()); S.supplies.bag--; lotAdd('bags', sid, 1, clamp(d.q + dq, 20, 100), d.thc); world.dirtyShelf = world.dirtyRack = true; sfx('bag'); toast('🛍️ Bagged an eighth of ' + st.name + (note ? ' (' + note + ')' : '') + '. It\'s on the goods shelf.', 'good'); }
       if (S.upgrades.bagger) { finish(0, 'auto-bagger'); return; }
       var chain = []; if (!S.upgrades.grinder2) chain.push({ kind: 'grind', sub: st.name + ' · ' + gram(stashOf(sid).g) + ' in the stash' }); if (!S.upgrades.scale) chain.push({ kind: 'weigh', sub: st.name + ' · aim for 3.5 g' });
@@ -827,7 +827,7 @@
     },
     buyTent: function () {
       if (S.tent + 1 >= TENTS.length) { toast('Biggest tent already', 'bad'); return; }
-      var nx = TENTS[S.tent + 1]; if (nx.lic && !hasLic(nx.lic)) { toast('Needs the ' + licById(nx.lic).name + '. It\'s under Licences on the laptop.', 'bad'); return; } if (!spend(nx.price)) return; S.tent++;
+      var nx = TENTS[S.tent + 1]; if (nx.lic && !hasLic(nx.lic)) { toast('Needs the ' + licById(nx.lic).name + '. It\'s under Licences on the office PC.', 'bad'); return; } if (!spend(nx.price)) return; S.tent++;
       logEvent('⛺ Bigger tent: ' + nx.slots + ' slots', 'good'); toast('⛺ Bigger tent: ' + nx.slots + ' slots', 'good'); world.dirty = true;
     },
     buyUpg: function (id) {
@@ -1309,9 +1309,16 @@
     // desk along the back wall, chair in front of it facing the monitors
     var cx = (x1 + x2) / 2, dz = z1 + 0.5;
     box(3.8, 0.05, 0.8, MAT.darkwood, cx, 0.75, dz, { solid: true, tag: 'secdesk' }); [[cx - 1.8, dz - 0.3], [cx + 1.8, dz - 0.3], [cx - 1.8, dz + 0.3], [cx + 1.8, dz + 0.3]].forEach(function (l) { box(0.05, 0.73, 0.05, MAT.metal, l[0], 0.365, l[1]); });
-    box(0.5, 0.35, 0.2, MAT.black, cx + 0.9, 0.925, dz - 0.15); box(0.02, 0.01, 0.04, glowMat(0x6fdc8c, 1.2), cx + 0.68, 0.93, dz - 0.05, { cast: false });   // recorder box with a green LED
-    box(0.42, 0.02, 0.14, MAT.black, cx - 0.2, 0.785, dz + 0.2, { cast: false }); box(0.08, 0.03, 0.12, MAT.black, cx + 0.25, 0.79, dz + 0.2, { cast: false });   // keyboard + mouse
-    var mug = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.09, 14), colorMat(0x2f6b9a, 0.5)); mug.position.set(cx - 0.9, 0.82, dz + 0.1); world.group.add(mug);
+    // the recorder hangs on the wall above the desk's right end, blinking; the desk itself is a guard's desk: notes, papers, a walkie-talkie on its charger, a key rack and a mug
+    box(0.5, 0.35, 0.16, MAT.black, cx + 1.45, 0.62, wallZ0 + 0.08); box(0.02, 0.01, 0.04, glowMat(0x6fdc8c, 1.2), cx + 1.23, 0.7, wallZ0 + 0.165, { cast: false }); box(0.18, 0.012, 0.04, colorMat(0xd0d3d8, 0.5), cx + 1.5, 0.7, wallZ0 + 0.165, { cast: false }); for (var rl = 0; rl < 5; rl++) box(0.006, 0.006, 0.01, glowMat(rl < 4 ? 0x6fdc8c : 0xff3030, 1.5), cx + 1.32 + rl * 0.04, 0.55, wallZ0 + 0.165, { cast: false });
+    var paperM = new THREE.MeshStandardMaterial({ color: 0xf3efe4, roughness: 0.9 }); [[cx - 0.35, dz + 0.1, 0.12], [cx - 0.3, dz + 0.16, -0.2], [cx - 0.42, dz + 0.05, 0.35]].forEach(function (p, i) { var sheet = box(0.21, 0.004, 0.29, paperM, p[0], 0.78 + i * 0.004, p[1], { cast: false }); sheet.rotation.y = p[2]; });
+    var noteTex = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.28), new THREE.MeshBasicMaterial({ map: textTex(['INCIDENT LOG', 'night 3: nothing', 'night 4: van at 02:10', 'night 5: nothing', 'check yard gate!'], 200, 280, { size: 20, bg: '#f3efe4', color: '#333', titleColor: '#1a1a1a', line: 'rgba(0,0,0,0)' }) })); noteTex.rotation.x = -Math.PI / 2; noteTex.rotation.z = -0.12; noteTex.position.set(cx - 0.35, 0.796, dz + 0.1); world.group.add(noteTex);
+    var pad = box(0.16, 0.012, 0.2, colorMat(0xffe88a, 0.9), cx + 0.35, 0.782, dz + 0.24, { cast: false }); pad.rotation.y = -0.2; var pen = cyl(0.005, 0.005, 0.14, colorMat(0x2b2f35, 0.4, 0.4), cx + 0.5, 0.79, dz + 0.2, null, 6); pen.rotation.z = Math.PI / 2; pen.rotation.y = 0.5;
+    var wtBase = box(0.09, 0.03, 0.07, MAT.black, cx + 0.05, 0.79, dz - 0.15, { cast: false }); var wt = box(0.06, 0.16, 0.035, colorMat(0x1b1f24, 0.5, 0.3), cx + 0.05, 0.885, dz - 0.15); cyl(0.004, 0.004, 0.12, MAT.black, cx + 0.03, 1.02, dz - 0.15, null, 6); box(0.04, 0.02, 0.01, glowMat(0x6fdc8c, 1), cx + 0.05, 0.95, dz - 0.13, { cast: false }); box(0.01, 0.006, 0.006, glowMat(0xff3030, 2), cx + 0.09, 0.785, dz - 0.115, { cast: false });   // walkie-talkie on its charger
+    var rack = box(0.3, 0.12, 0.02, MAT.darkwood, cx + 0.75, 1.02, wallZ0 + 0.06); [0, 1, 2, 3].forEach(function (k) { var hook = cyl(0.004, 0.004, 0.03, MAT.chrome, cx + 0.64 + k * 0.075, 0.99, wallZ0 + 0.085, null, 6); hook.rotation.x = Math.PI / 2; if (k !== 2) { var ring = new THREE.Mesh(new THREE.TorusGeometry(0.014, 0.003, 6, 12), MAT.chrome); ring.position.set(cx + 0.64 + k * 0.075, 0.965, wallZ0 + 0.095); world.group.add(ring); box(0.012, 0.03, 0.003, colorMat([0xc94a3a, 0x2f6b9a, 0xffc857][k % 3], 0.5), cx + 0.64 + k * 0.075, 0.935, wallZ0 + 0.096, { cast: false }); } });   // key rack: a hook per set, one set out
+    signPlane(['KEYS', 'sign them out'], 0.28, 0.08, cx + 0.75, 1.1, wallZ0 + 0.07, 0, { size: 16, titleColor: '#ffc857', bg: '#141a16' });
+    var mug = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.09, 14), colorMat(0x2f6b9a, 0.5)); mug.position.set(cx + 1.55, 0.82, dz + 0.18); world.group.add(mug);
+    var clip = box(0.23, 0.01, 0.32, colorMat(0x5a4632, 0.7), cx - 1.3, 0.78, dz + 0.05, { cast: false }); clip.rotation.y = 0.08; box(0.06, 0.02, 0.03, MAT.chrome, cx - 1.3, 0.795, dz - 0.09, { cast: false }); var clipTex = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.27), new THREE.MeshBasicMaterial({ map: textTex(['SHIFT SHEET', 'door  · 08-20', 'yard  · 20-02', 'cams  · 02-08', 'sign here ____'], 200, 270, { size: 20, bg: '#f3efe4', color: '#333', titleColor: '#1a1a1a', line: 'rgba(0,0,0,0)' }) })); clipTex.rotation.x = -Math.PI / 2; clipTex.rotation.z = 0.08; clipTex.position.set(cx - 1.3, 0.787, dz + 0.06); world.group.add(clipTex);   // clipboard
     var chair = new THREE.Group(); chair.position.set(cx, 0, dz + 0.85); world.group.add(chair); var cc = propCtx(chair, 'secchair', 0); officeChairBuild(cc);   // backrest sits at +z, so the chair faces the monitors on the back wall
     world.obstacles.push({ x1: cx - 0.3, x2: cx + 0.3, z1: dz + 0.55, z2: dz + 1.15, tag: 'secchair' });
     world.secSeat = { x: cx, z: dz + 0.9, yaw: 0 };
@@ -1324,7 +1331,8 @@
       var tag = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['CAM ' + (i + 1) + '  ' + SEC_CAMS[i].name], 200, 34, { size: 20, bg: '#101214', color: '#dfe8ff', titleColor: '#dfe8ff', line: 'rgba(0,0,0,0)' }), transparent: true })); tag.position.set(mx - mw / 2 + 0.17, my - mh / 2 - 0.045, wallZ0 + 0.052); world.group.add(tag);
       world.secMonitors.push({ mat: mat, mesh: scr });
     }
-    var mon = box(3.4, 1.6, 0.5, MAT.none, cx, y0 + 0.5, wallZ0 + 0.25, { cast: false, receive: false }); interactable(mon, { kind: 'secdesk' });
+    var mon = box(3.4, 1.6, 0.28, MAT.none, cx, y0 + 0.5, wallZ0 + 0.14, { cast: false, receive: false }); interactable(mon, { kind: 'secdesk' });   /* the wall of feeds: shallow, so the desk screen in front of it can be aimed at */
+    buildSecScreen(x1 + 1.5, 1.75, wallZ0 + 0.035, 0);   /* on the camera wall, left of the feeds; the right wall is the control cabinet's */
     signPlane(['SECURITY', 'E at the monitors: watch the cameras'], 1.5, 0.4, cx, 2.85, wallZ0 + 0.01, 0, { titleColor: '#ffc857', bg: '#101410' });
     signPlane(['CCTV IN OPERATION', 'you are being recorded'], 0.9, 0.36, x1 - WALL_T - 0.012, 2.05, -10.7 + 1.0, -Math.PI / 2, { titleColor: '#c94a3a', bg: '#f3e9cf', color: '#222' });
     buildSecCams();
@@ -1517,11 +1525,9 @@
     // register: body, drawer, keypad, arm-mounted screen, receipt printer, card reader
     var reg = box(0.52, 0.1, 0.44, MAT.register, -1.0, 1.11, 3.55);
     box(0.5, 0.03, 0.42, MAT.plastic, -1.0, 1.05, 3.55, { cast: false }); box(0.36, 0.02, 0.01, MAT.chrome, -1.0, 1.08, 3.335, { cast: false });
-    var keypad = box(0.44, 0.05, 0.2, MAT.black, -1.0, 1.18, 3.47); keypad.rotation.x = -0.35;
-    for (var kr = 0; kr < 3; kr++) for (var kc = 0; kc < 4; kc++) { var key = box(0.07, 0.014, 0.04, colorMat(kr === 2 && kc === 3 ? 0x3aa36a : 0x8a8f96, 0.5), -1.15 + kc * 0.1, 1.21 - kr * 0.02, 3.52 - kr * 0.055, { cast: false }); key.rotation.x = -0.35; }
-    var scrArm = box(0.3, 0.26, 0.03, MAT.register, -1.0, 1.3, 3.67); scrArm.rotation.x = 0.25;
-    world.reg = { canvas: document.createElement('canvas'), drawerT: 0, lastSale: null }; world.reg.canvas.width = 256; world.reg.canvas.height = 192; world.reg.tex = new THREE.CanvasTexture(world.reg.canvas); world.reg.tex.encoding = THREE.sRGBEncoding;
-    var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.2), new THREE.MeshBasicMaterial({ map: world.reg.tex })); scr.position.set(-1.0, 1.31, 3.653); scr.rotation.set(0.25, Math.PI, 0); world.group.add(scr); world.registerScreen = scr;
+    // the till is a tablet on a stand: its screen is a touch screen (look at it, press E), and the cash drawer sits under it
+    world.reg = { drawerT: 0, lastSale: null };
+    buildPos(-1.0, 3.62);
     var scrGlow = new THREE.PointLight(0x6fdc8c, 0.12, 1.0); scrGlow.position.set(-1.0, 1.3, 3.5); scene.add(scrGlow);
     var drawer = new THREE.Group(); drawer.position.set(-1.0, 1.07, 3.55); world.group.add(drawer); world.reg.drawer = drawer; var dbody = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.06, 0.38), colorMat(0x2a3138, 0.5, 0.3)); drawer.add(dbody); var dface = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.075, 0.02), MAT.register); dface.position.z = -0.2; drawer.add(dface); var dhandle = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.015, 0.015), MAT.chrome); dhandle.position.set(0, 0, -0.215); drawer.add(dhandle); [[-0.16, 0x9ff0b5], [-0.06, 0xe8e8ee], [0.04, 0xffd766], [0.14, 0x9ad0ff]].forEach(function (sl) { var s2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.28), colorMat(0x3a4148, 0.5)); s2.position.set(sl[0], 0.03, 0.02); drawer.add(s2); var notes = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.012, 0.15), colorMat(sl[1], 0.7)); notes.position.set(sl[0], 0.045, -0.02); drawer.add(notes); }); for (var cn = 0; cn < 4; cn++) { var cs = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.03, 12), MAT.chrome); cs.position.set(-0.16 + cn * 0.1, 0.05, 0.13); drawer.add(cs); }
     drawRegister();
@@ -2579,7 +2585,7 @@
     if (courier.state === 'away' || !courier.h) return;
     var spd = 1.4;
     if (courier.state === 'in') { if (walkAlong(courier.g, courier.path, spd, dt)) { courier.state = 'wait'; courier.t = 0; courier.g.rotation.y = 0; courierSay('Cash pickup: ' + money(S.courier ? S.courier.amount : 0) + '.', '#ffc857'); if (S.courier) S.courier.state = 'waiting'; } animateHuman(courier.h, dt, 'walk', spd, null); }
-    else if (courier.state === 'wait') { courier.t += dt; animateHuman(courier.h, dt, 'wait', 0, player.pos); if (courier.t > 180) { courierSay('Can\'t wait any longer. Book me again.', '#ff6b6b'); courier.state = 'leave'; courier.path = [{ x: 4.5, z: -16 }, { x: 4.5, z: -21 }]; if (S.courier) S.courier = null; logEvent('🏦 The courier left without a pickup', 'bad'); toast('🏦 The courier gave up waiting and left. Book another under Bank on the laptop.', 'bad'); world.interact = world.interact.filter(function (m) { return !m.userData.courier; }); } }
+    else if (courier.state === 'wait') { courier.t += dt; animateHuman(courier.h, dt, 'wait', 0, player.pos); if (courier.t > 180) { courierSay('Can\'t wait any longer. Book me again.', '#ff6b6b'); courier.state = 'leave'; courier.path = [{ x: 4.5, z: -16 }, { x: 4.5, z: -21 }]; if (S.courier) S.courier = null; logEvent('🏦 The courier left without a pickup', 'bad'); toast('🏦 The courier gave up waiting and left. Book another under Bank on the office PC.', 'bad'); world.interact = world.interact.filter(function (m) { return !m.userData.courier; }); } }
     else if (courier.state === 'leave') { if (walkAlong(courier.g, courier.path, spd, dt)) { courier.state = 'away'; courier.g.visible = false; courier.bubble.visible = false; rollerSet(false); gateSet(false); } animateHuman(courier.h, dt, 'walk', spd, null); }
   }
   function callCourier(amount) {
@@ -2639,7 +2645,7 @@
   function tob() { if (!S.tob || !S.tob.bays) S.tob = tobFresh(); return S.tob; }
   function skuOf(type, size) { return 'cig' + (type === 'light' ? 'L' : 'N') + (size === 20 ? 'B' : 'S'); }
   function kg(n) { return (Math.round(n * 100) / 100) + ' kg'; }
-  function tobLicensed() { if (hasLic('tobacco')) return true; toast('🪪 You need the tobacco manufacturing licence to run the line. It\'s under Licences on the laptop.', 'bad'); return false; }
+  function tobLicensed() { if (hasLic('tobacco')) return true; toast('🪪 You need the tobacco manufacturing licence to run the line. It\'s under Licences on the office PC.', 'bad'); return false; }
   function tobFade(fn) { if (!tobUI.fade) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:50'; document.body.appendChild(d); tobUI.fade = d; } tobUI.fade.style.opacity = '1'; setTimeout(function () { fn(); setTimeout(function () { tobUI.fade.style.opacity = '0'; }, 120); }, 230); }
   function goBasement() { if (sit.on) standUp(); tobFade(function () { player.floor = -1; player.pos.set(6.4, BASE.y + 1.65, -1.4); player.vel.set(0, 0, 0); player.yaw = Math.PI / 2; player.pitch = 0; sfx('step', 'concrete'); toast('🏭 RF Smoking: the basement works', ''); }); }
   function leaveBasement() { tobFade(function () { var v = propInst.cellarHatch ? propWorld('cellarHatch', 0, 1.0) : { x: 2.9, z: 1.6 }; player.floor = 0; player.pos.set(v.x, 1.65, v.z); player.vel.set(0, 0, 0); sfx('step', 'planks'); }); }
@@ -3266,7 +3272,7 @@
     selectVehicle('car'); if (vehicles.van.g.userData.openSign) vehicles.van.g.userData.openSign.visible = !!vehState('van').shopOpen;
     carLamps();
     // traffic: a handful of cars that keep to their lane and stop for you
-    [[C.mainZ + 2.7, 1], [C.mainZ - 0.3, -1], [C.mainZ + 2.7, 1], [C.backZ + 2.2, 1], [C.backZ - 2.2, -1], [C.northZ + 2.2, 1], [C.northZ - 2.2, -1]].forEach(function (l, i) { var g = new THREE.Group(); carBody(g, [0xb5121b, 0xe9e4d8, 0x2b2f35, 0x2e7d4f, 0xf2c21a, 0x8d949c, 0x5a3a8a][i]); g.position.set(-100 + i * 31, 0, l[0]); g.rotation.y = l[1] > 0 ? -Math.PI / 2 : Math.PI / 2; world.group.add(g); traffic.push({ g: g, z: l[0], dir: l[1], v: 9 + (i % 3) * 2, cur: 0 }); });
+    [[C.mainZ + 2.7, 1], [C.mainZ - 0.3, -1], [C.mainZ + 2.7, 1], [C.backZ + 2.2, 1], [C.backZ - 2.2, -1], [C.northZ + 2.2, 1], [C.northZ - 2.2, -1], [C.mainZ - 0.3, -1], [C.backZ + 2.2, 1], [C.northZ - 2.2, -1], [C.mainZ + 2.7, 1], [C.backZ - 2.2, -1]].forEach(function (l, i) { var g = new THREE.Group(); carBody(g, [0xb5121b, 0xe9e4d8, 0x2b2f35, 0x2e7d4f, 0xf2c21a, 0x8d949c, 0x5a3a8a, 0x3a6ea5, 0xd9d9d9, 0x7a2a2a, 0x2a2a2a, 0xc98a2a][i]); g.position.set(-100 + (i < 7 ? i * 31 : (i - 7) * 41 + 15), 0, l[0]); g.rotation.y = l[1] > 0 ? -Math.PI / 2 : Math.PI / 2; world.group.add(g); traffic.push({ g: g, z: l[0], dir: l[1], v: 9 + (i % 3) * 2, cur: 0 }); });
   }
   function carBlocked(x, z, r) {
     for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if ((o.floorLevel || 0) !== 0 && o.floorLevel !== 'any') continue; if (o.tag === 'guard') continue; var px = clamp(x, o.x1, o.x2), pz = clamp(z, o.z1, o.z2); if ((x - px) * (x - px) + (z - pz) * (z - pz) < r * r) return true; }
@@ -3473,7 +3479,7 @@
     if (poi === 'supply') {
       var near = carNear(-22, -44, 34) && trunkCount() < trunkCap(), tr = carState().trunk; if (trunkCount() >= trunkCap()) lines.push({ label: '🧰 The boot is full (' + trunkCap() + ' items). Unload it at home, or fit the bigger boot.', cls: 'muted' });
       if (!near) lines.push({ label: '🚗 Bring your car round to load up: they don\'t deliver from the trade counter', cls: 'muted' });
-      SUPPLIES.filter(function (it) { return !it.tool; }).slice(0, 9).forEach(function (it) { var price = Math.max(1, Math.round(it.price * 0.8)); lines.push({ label: it.ico + ' ' + it.name + ' · ' + money(price) + ' <small>20% under the laptop price · ' + (tr[it.id] || 0) + ' in the boot</small>', cls: near && S.bank >= price ? '' : 'muted', act: near && S.bank >= price ? function () { S.bank -= price; tr[it.id] = (tr[it.id] || 0) + (it.qty || 1); sfx('crate'); toast(it.ico + ' ' + it.name + ' into the boot. Unload it at home.', 'good'); hud(); save(); } : null }); });
+      SUPPLIES.filter(function (it) { return !it.tool; }).slice(0, 9).forEach(function (it) { var price = Math.max(1, Math.round(it.price * 0.8)); lines.push({ label: it.ico + ' ' + it.name + ' · ' + money(price) + ' <small>20% under the office PC price · ' + (tr[it.id] || 0) + ' in the boot</small>', cls: near && S.bank >= price ? '' : 'muted', act: near && S.bank >= price ? function () { S.bank -= price; tr[it.id] = (tr[it.id] || 0) + (it.qty || 1); sfx('crate'); toast(it.ico + ' ' + it.name + ' into the boot. Unload it at home.', 'good'); hud(); save(); } : null }); });
       ctxOpen('📦 RF Supply Co. trade counter', 'bank ' + money(S.bank) + ' · the boot holds ' + trunkCount() + ' items · no waiting for the van', lines); return;
     }
   }
@@ -3928,11 +3934,11 @@
     for (var i = 0; i < 6; i++) if (S.hotbar[i] && S.hotbar[i].kind === 'tablet') S.hotbar[i] = null;
     X.tablet = 'car'; toast('📋 Tablet in the cradle. J brings up the round.', ''); sfx('click'); hud();
   }
-  function jobsPanel() { ui.openPanel('jobs', hasLic('tobacco') && tabletHere() ? 'tablet' : 'phone'); }
+  function jobsPanel() { if (ui.blocked() && !(dev.open)) return; if (dev.open) { deviceClose(); return; } if (hasLic('tobacco') && tabletHere()) deviceOpen('tablet'); else deviceOpen('phone', 'burner'); }
   function paneJobs(tab) {
     var X = xs(), list = jobsOf(tab), rows = [], pos = drive.on ? drive.g.position : player.pos, bj = jobsOf('branch')[0];
     var br = bj ? '<p class="g3-sub2">🏪 <b>Green Leaf, your branch</b> (#' + (X.jobs.indexOf(bj) + 1) + ' on the map, ' + Math.round(Math.hypot(bj.x - pos.x, bj.z - pos.z)) + ' m away): carry bags, joints or cookies to the blue beacon out front and press <b>E</b>. It pays ' + money(BRANCH_PAY) + ' a unit each morning for up to ' + BRANCH_CAP + ' a day (' + (X.branchUnits || 0) + ' dropped off today).</p>' : '';
-    if (tab === 'tablet' && !hasLic('tobacco')) return br + '<p class="g3-empty">The RF Smoking round needs the tobacco licence. Buy it at the laptop, and the tablet on the office dock wakes up.</p>';
+    if (tab === 'tablet' && !hasLic('tobacco')) return br + '<p class="g3-empty">The RF Smoking round needs the tobacco licence. Buy it at the office PC, and the tablet on the office dock wakes up.</p>';
     if (tab === 'tablet' && !tabletHere()) return br + '<p class="g3-empty">The tablet is ' + (X.tablet === 'car' ? 'in the car, and the car isn\'t here' : 'on its dock in the office') + '. Fetch it, and it rides in the car once you drive off with it.</p>';
     if (!list.length) return br + '<p class="g3-empty">' + (tab === 'tablet' ? 'No round jobs right now. They come in while the shop is open, once the basement is making packs.' : 'Nobody is ringing. Pack some joints or bags and the phone starts going.') + '</p>';
     list.forEach(function (j) {
@@ -3982,7 +3988,7 @@
     (q.sells || []).forEach(function (r) {
       var it = supplyById(r.item); if (!it) return;
       var price = Math.max(1, Math.round(it.price * (1 - r.off)));
-      lines.push({ label: it.ico + ' ' + it.name + ' · ' + money(price) + ' <small>' + Math.round(r.off * 100) + '% under the laptop price' + (it.qty ? ' · ' + it.qty + ' per box' : '') + '</small>', cls: S.bank >= price ? '' : 'muted',
+      lines.push({ label: it.ico + ' ' + it.name + ' · ' + money(price) + ' <small>' + Math.round(r.off * 100) + '% under the office PC price' + (it.qty ? ' · ' + it.qty + ' per box' : '') + '</small>', cls: S.bank >= price ? '' : 'muted',
         act: S.bank >= price ? function () { S.bank -= price; if (it.stock) { var crate = {}; crate[it.id] = it.qty || 1; storageAdd(crate); syncStorage(); toast('🛒 ' + it.name + ' · ' + money(price) + ' (a crate in the back room, carry it to the ' + (it.stock === 'vend' ? 'vending machine' : it.stock === 'coffee' ? 'coffee machine' : 'counter display') + ')', 'good'); } else { S.supplies[it.id] = (S.supplies[it.id] || 0) + (it.qty || 1); toast('🛒 ' + it.name + ' · ' + money(price), 'good'); syncRack(); } sfx('cash'); hud(); save(); } : null });   /* machine and counter stock arrives as crates like a laptop order; rack supplies go straight on the rack */
     });
     if (q.service) {
@@ -4012,7 +4018,7 @@
     if (d.kind === 'zoneClerk') return (d.poi === 'bank' ? 'Teller' : 'Clerk') + ' <small>E to do business</small>';
     if (d.kind === 'labRig') return 'Lab equipment <small>' + (X.lab.job ? 'batch running' : 'idle') + ' · E for the batch sheet</small>';
     if (d.kind === 'roofUp') return 'Ladder to the roof <small>greenhouse</small>'; if (d.kind === 'roofDown') return 'Back down into the flat';
-    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; return 'Roof bed ' + (d.idx + 1) + ' <small>' + (b.stage === 'empty' ? (hasLic('cult2') ? 'sow outdoor mix · ' + money(10) : 'needs the Cultivation permit II from the laptop') : b.stage === 'ready' ? 'harvest about 25 g' : 'growing ' + Math.round(b.t / 260 * 100) + '%' + (nightNow() ? ' · asleep until daylight' : '')) + '</small>'; }
+    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; return 'Roof bed ' + (d.idx + 1) + ' <small>' + (b.stage === 'empty' ? (hasLic('cult2') ? 'sow outdoor mix · ' + money(10) : 'needs the Cultivation permit II from the office PC') : b.stage === 'ready' ? 'harvest about 25 g' : 'growing ' + Math.round(b.t / 260 * 100) + '%' + (nightNow() ? ' · asleep until daylight' : '')) + '</small>'; }
     if (d.kind === 'generator') return S.upgrades.generator ? 'Generator <small>fuelled and on standby</small>' : 'Generator <small>buy it for ' + money(1400) + ' · power cuts stop touching you</small>';
     if (d.kind === 'roster') return 'Staff roster <small>hire a driver, a basement operator, a night guard</small>';
     if (d.kind === 'bagLine') return S.upgrades.bagline ? 'Trim & bag line <small>' + (X.bagline.on ? 'running' : 'off') + ' · ' + (S.supplies.bag || 0) + ' baggies</small>' : 'Trim & bag line <small>install for ' + money(900) + '</small>';
@@ -4027,11 +4033,11 @@
     if (d.kind === 'zoneClerk') { cityPoiMenu(d.poi); return true; } if (d.kind === 'labRig') { labMenu(); return true; } if (d.kind === 'roster') { rosterMenu(); return true; }
     if (d.kind === 'roofUp') { tobFade(function () { player.floor = 2; player.pos.set(-9.4, ROOF_Y + 1.65, -3.0); player.vel.set(0, 0, 0); player.yaw = -Math.PI / 2; }); return true; }
     if (d.kind === 'roofDown') { tobFade(function () { player.floor = 1; player.pos.set(-10.6, UP.y + 1.65, -3.0); player.vel.set(0, 0, 0); }); return true; }
-    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; if (b.stage === 'empty') { if (!hasLic('cult2')) { sfx('bad'); toast('🌱 Growing on the roof needs the Cultivation permit II (under Licences on the laptop)', 'bad'); return true; } if (S.bank < 10) { toast('Seedlings cost ' + money(10), 'bad'); return true; } S.bank -= 10; b.stage = 'grow'; b.t = 0; sfx('plant'); toast('🌱 Sown. Sunlight does the rest, for free.', 'good'); } else if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; var q = randi(42, 60) + (X.weather.kind === 'rain' ? -4 : 0); stashAdd('sunflower', 25, q, 1.0); var rproc = 25 * COST.processPerGram; spendOp(rproc); logEvent('Trim, testing and compliance on the roof harvest: ' + money(rproc), ''); sfx('harvest'); toast('🌿 25 g of outdoor bud (quality ' + q + ') into the stash. Rough stuff, perfect for the lab.', 'good'); } else toast('Still growing', ''); hud(); save(); return true; }
+    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; if (b.stage === 'empty') { if (!hasLic('cult2')) { sfx('bad'); toast('🌱 Growing on the roof needs the Cultivation permit II (under Licences on the office PC)', 'bad'); return true; } if (S.bank < 10) { toast('Seedlings cost ' + money(10), 'bad'); return true; } S.bank -= 10; b.stage = 'grow'; b.t = 0; sfx('plant'); toast('🌱 Sown. Sunlight does the rest, for free.', 'good'); } else if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; var q = randi(42, 60) + (X.weather.kind === 'rain' ? -4 : 0); stashAdd('sunflower', 25, q, 1.0); var rproc = 25 * COST.processPerGram; spendOp(rproc); logEvent('Trim, testing and compliance on the roof harvest: ' + money(rproc), ''); sfx('harvest'); toast('🌿 25 g of outdoor bud (quality ' + q + ') into the stash. Rough stuff, perfect for the lab.', 'good'); } else toast('Still growing', ''); hud(); save(); return true; }
     if (d.kind === 'generator') { if (S.upgrades.generator) toast('It will start itself on the next power cut', ''); else if (S.bank < 1400) toast('The generator costs ' + money(1400), 'bad'); else { S.bank -= 1400; S.upgrades.generator = true; sfx('cash'); toast('⚡ Generator installed. Power cuts won\'t stop you again.', 'good'); applyShopState(); hud(); save(); } return true; }
     if (d.kind === 'bagLine') { if (!S.upgrades.bagline) { if (S.bank < 900) toast('The trim & bag line costs ' + money(900), 'bad'); else { S.bank -= 900; S.upgrades.bagline = true; sfx('cash'); toast('Trim & bag line installed', 'good'); hud(); save(); } } else { X.bagline.on = !X.bagline.on; sfx('click'); toast(X.bagline.on ? '▶ Bag line running: an eighth every 4 s from your biggest stash, trimmed a little cleaner (+3 quality), one baggie each' : '⏹ Bag line stopped', ''); save(); } return true; }
     if (d.kind === 'dropoff') return jobHandOver(d.idx);
-    if (d.kind === 'tabletDock') { if (!hasLic('tobacco')) { toast('The tablet is dead. The round needs the tobacco licence from the laptop.', 'bad'); return true; } tabletTake(); return true; }
+    if (d.kind === 'tabletDock') { if (!hasLic('tobacco')) { toast('The tablet is dead. The round needs the tobacco licence from the office PC.', 'bad'); return true; } tabletTake(); return true; }
     return false;
   }
   function drawMapExtras(ctx, mx, mz, W, H) {
@@ -4143,13 +4149,13 @@
   function anySeed() { return Object.keys(S.supplies || {}).some(function (k) { return k.indexOf('seed_') === 0 && S.supplies[k] > 0; }); }
   function anyPotSoil() { return Object.keys(S.potSoil || {}).some(function (k) { return S.potSoil[k]; }); }
   var INTRO_STEPS = [
-    { t: 'Order your first supplies', d: 'Go to the <b>office</b> (left of the hall) and use the <b>laptop</b>. Order a <b>bag of soil</b> under Supplies and one <b>seed</b> in the Seed bank. The supplier\'s van brings them round the back. What arrives lands on the <b>supply rack</b> beside the laptop, or as crates in the back room.', ok: function () { return S.supplies.soil > 0 && anySeed(); } },
+    { t: 'Order your first supplies', d: 'Go to the <b>office</b> (left of the hall) and use the <b>office PC</b>. Order a <b>bag of soil</b> under Supplies and one <b>seed</b> in the Seed bank. The supplier\'s van brings them round the back. What arrives lands on the <b>supply rack</b> beside the office PC, or as crates in the back room.', ok: function () { return S.supplies.soil > 0 && anySeed(); } },
     { t: 'Fill a pot with soil', d: 'Pick up the <b>bag of soil</b> from the supply rack with <b>E</b>, carry it into the <b>grow tent</b>, and press <b>E</b> on an empty pot.', ok: anyPotSoil },
     { t: 'Plant the seed', d: 'Fetch the <b>seed</b> from the supply rack and press <b>E</b> on the pot you just filled.', ok: function () { return S.plants.length > 0; } },
     { t: 'Water it, and feed it once', d: 'The <b>watering can</b> stands beside the tent. Water the plant whenever it says it\'s thirsty, and give it <b>nutrients</b> once: fed plants are worth far more. Spray any pest or mould the moment you see one.', ok: function () { return S.plants.some(function (p) { return p.fed || p.progress > 0.35; }) || S.batches.length > 0 || S.cured.g > 0; } },
     { t: 'Harvest, then hang it up to dry', d: 'When the plant glows and says ready, harvest it with <b>empty hands</b>, carry the bunch to the <b>drying line</b> in the dry room and press <b>E</b> to hang it. It goes to the curing shelf when it\'s dry.', ok: function () { return S.batches.length > 0 || S.cured.g > 0; } },
     { t: 'Empty a cured jar into your stash', d: 'Once a jar appears on the <b>curing shelf</b>, carry it to the <b>workbench</b> in the processing room and press <b>E</b> to empty it. Jars keep gaining quality while they sit, so there\'s no rush.', ok: function () { return S.cured.g > 0; } },
-    { t: 'Pack something to sell', d: 'At the <b>workbench</b>, bag an eighth or roll a few joints. You need <b>baggies</b> for bags, and <b>papers</b> and <b>tips</b> for joints, all from the laptop. What you pack appears on the <b>goods shelf</b>.', ok: function () { return S.pkg.bags.n > 0 || S.pkg.joints.n > 0 || S.pkg.cookies.n > 0; } },
+    { t: 'Pack something to sell', d: 'At the <b>workbench</b>, bag an eighth or roll a few joints. You need <b>baggies</b> for bags, and <b>papers</b> and <b>tips</b> for joints, all from the office PC. What you pack appears on the <b>goods shelf</b>.', ok: function () { return S.pkg.bags.n > 0 || S.pkg.joints.n > 0 || S.pkg.cookies.n > 0; } },
     { t: 'Open the shop', d: 'Find the <b>control box</b> (it starts in the security room, and F2 lets you hang it anywhere) or the <b>front panel</b> behind the till, and open the shop. Customers only come in while you\'re open.', ok: function () { return shop().open; } },
     { t: 'Serve your first customer', d: 'Someone will walk in and wait at <b>the window</b>. Take what they asked for off the <b>goods shelf</b>, press <b>E</b> on them to hand it over, then take the money at the <b>till</b>.', ok: function () { return (S.stats.sold || 0) > 0 || (S.stats.earned || 0) > 0; } }
   ];
@@ -4368,7 +4374,7 @@
   }
   function robberInteract(d, h) { var r = robberOf(d); if (h && h.kind === 'bat') swingBat(); else if (h && WEAPONS[h.kind]) fireWeapon(); else if (r.state === 'case') confrontRobber(r); else toast('Get the bat or something from the weapon locker, hand over the till, or let the guard handle it', 'bad'); }
   function panicButton() {
-    if (!heist.on || !heist.masked) { toast('Nothing to call in', ''); return; } if (!S.upgrades.panic) { toast('No silent alarm installed. It\'s under Gear on the laptop.', 'bad'); return; }
+    if (!heist.on || !heist.masked) { toast('Nothing to call in', ''); return; } if (!S.upgrades.panic) { toast('No silent alarm installed. It\'s under Gear on the office PC.', 'bad'); return; }
     if (heist.policeT > 0) { toast('🚓 Police already on the way · ' + Math.ceil(heist.policeT) + ' s', ''); return; } heist.policeT = 12; sfx('click'); toast('🚨 Silent alarm tripped. A car is on its way.', 'good'); logEvent('🚨 You hit the silent alarm', '');
   }
   function policeArrive() {
@@ -4873,13 +4879,38 @@
     var treeG = new THREE.Group(); treeG.position.set(12, 0, SW + 1.0); world.group.add(treeG); var grate = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.02, 20), MAT.black); grate.position.y = 0.1; treeG.add(grate); plantTree('broad', 12, SW + 1.0, 0.72);
     world.sidewalkZ = SW;
     [[3.7, 5.3, SW - 1.4, SW - 0.8], [-3.85, -3.15, SW - 1.55, SW - 0.85], [-2.05, -1.55, SW + 1.05, SW + 1.55], [-5.8, -5.2, SW + 0.95, SW + 1.45], [8.3, 10.4, SW + 0.55, SW + 1.3], [11.35, 12.65, SW + 0.35, SW + 1.65], [-7.25, -6.75, SW + 1.25, SW + 1.75], [6.75, 7.25, SW + 1.25, SW + 1.75]].forEach(function (o) { world.obstacles.push({ x1: o[0], x2: o[1], z1: o[2], z2: o[3], tag: 'street', floorLevel: 0 }); });   // bench, bin, hydrant, paper box, bike rack, tree, lamp posts
-    for (var p = 0; p < 4; p++) spawnPed();
+    for (var p = 0; p < 9; p++) spawnPed();
+    for (var cp = 0; cp < 16; cp++) spawnCityPed(true);
   }
   function spawnPed() {
     var spec = { skin: pick(SKINS), hair: pick(HAIRS), shirt: pick(SHIRTS), pants: pick(PANTS), hat: pick([null, null, null, 'cap', 'beanie']), capColor: pick(SHIRTS), prop: pick([null, null, 'bag', 'phone', 'coffee']), glasses: Math.random() < 0.25, longSleeve: Math.random() < 0.6, hairStyle: pick(['short', 'short', 'long', 'bun', 'afro', 'ponytail']), backpack: Math.random() < 0.25, backpackColor: pick(SHIRTS), watch: Math.random() < 0.3, socks: Math.random() < 0.3, freckles: Math.random() < 0.2, lipstick: Math.random() < 0.25, earrings: Math.random() < 0.25, coat: Math.random() < 0.2 ? pick([0x2a2d33, 0x6b5a3a, 0x8a2a2a]) : undefined, skirt: Math.random() < 0.2 ? pick(SHIRTS) : undefined, beard: Math.random() < 0.2, logo: Math.random() < 0.2 ? pick(['🌿', '420', 'RF', '★']) : undefined, eyeColor: pick(['#3a5a8a', '#2a6a3a', '#6a4a2a', '#4a4a4a']) };
     var h = makeHuman(spec); var dir = Math.random() < 0.5 ? 1 : -1; var z = world.sidewalkZ - 0.8 + Math.random() * 1.6;
     h.position.set(-dir * (18 + Math.random() * 16), 0, z); h.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; world.group.add(h);
     peds.push({ h: h, dir: dir, speed: 0.9 + Math.random() * 0.7, pauseT: 0, z: z });
+  }
+
+  // ── town walkers: people on every pavement in town, so the streets are not empty when you drive out ──
+  var cityPeds = [], CITY_PED_MAX = 18;
+  function cityLanes() { var C = CITY, L = [{ axis: 'x', c: C.mainZ + 6.1 }]; [C.backZ, C.northZ].forEach(function (z) { L.push({ axis: 'x', c: z - 6.1 }); L.push({ axis: 'x', c: z + 6.1 }); }); [C.westX, C.eastX].forEach(function (x) { L.push({ axis: 'z', c: x - 6.1 }); L.push({ axis: 'z', c: x + 6.1 }); }); return L; }
+  function spawnCityPed(scatter) {
+    var C = CITY, ln = pick(cityLanes()), lo = ln.axis === 'x' ? -C.x + 6 : C.z1 + 6, hi = ln.axis === 'x' ? C.x - 6 : C.z2 - 6, dir = Math.random() < 0.5 ? 1 : -1;
+    var spec = { skin: pick(SKINS), hair: pick(HAIRS), shirt: pick(SHIRTS), pants: pick(PANTS), hat: pick([null, null, null, 'cap', 'beanie']), capColor: pick(SHIRTS), prop: pick([null, null, 'bag', 'phone', 'coffee']), glasses: Math.random() < 0.25, longSleeve: Math.random() < 0.6, hairStyle: pick(['short', 'short', 'long', 'bun', 'afro', 'ponytail']), backpack: Math.random() < 0.25, backpackColor: pick(SHIRTS), watch: Math.random() < 0.3, socks: Math.random() < 0.3, freckles: Math.random() < 0.2, lipstick: Math.random() < 0.25, earrings: Math.random() < 0.25, coat: Math.random() < 0.2 ? pick([0x2a2d33, 0x6b5a3a, 0x8a2a2a]) : undefined, skirt: Math.random() < 0.2 ? pick(SHIRTS) : undefined, beard: Math.random() < 0.2, logo: Math.random() < 0.2 ? pick(['🌿', '420', 'RF', '★']) : undefined, eyeColor: pick(['#3a5a8a', '#2a6a3a', '#6a4a2a', '#4a4a4a']) };
+    var h = makeHuman(spec), off = randf(-0.9, 0.9), t = scatter ? randf(lo, hi) : (dir > 0 ? lo : hi);
+    if (ln.axis === 'x') { h.position.set(t, 0, ln.c + off); h.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; } else { h.position.set(ln.c + off, 0, t); h.rotation.y = dir > 0 ? 0 : Math.PI; }
+    h.traverse(function (o) { o.layers.set(TOWN_LAYER); }); world.group.add(h);
+    cityPeds.push({ h: h, ln: ln, dir: dir, speed: 0.9 + Math.random() * 0.7, pauseT: 0, lo: lo, hi: hi });
+  }
+  function updateCityPeds(dt) {
+    var pp = drive.on ? drive.g.position : player.pos;
+    for (var i = 0; i < cityPeds.length; i++) {
+      var p = cityPeds[i], h = p.h, dx = h.position.x - pp.x, dz = h.position.z - pp.z, near = dx * dx + dz * dz < 80 * 80;   /* far walkers still move, they just skip the animation */
+      if (p.pauseT > 0) { p.pauseT -= dt; if (near) animateHuman(h, dt, 'idle', 0, null); continue; }
+      if (p.ln.axis === 'x') h.position.x += p.dir * p.speed * dt; else h.position.z += p.dir * p.speed * dt;
+      if (near) animateHuman(h, dt, 'walk', p.speed, null);
+      if (Math.random() < 0.0015) p.pauseT = 2 + Math.random() * 3;
+      var t = p.ln.axis === 'x' ? h.position.x : h.position.z; if (t < p.lo - 2 || t > p.hi + 2) { world.group.remove(h); disposeTree(h); cityPeds.splice(i, 1); i--; spawnCityPed(false); }
+    }
+    if (cityPeds.length < CITY_PED_MAX && Math.random() < 0.01) spawnCityPed(false);
   }
   function updatePeds(dt) {
     for (var i = 0; i < peds.length; i++) {
@@ -4889,7 +4920,8 @@
       if (Math.abs(h.position.x) < 5 && Math.random() < 0.004) { p.pauseT = 2 + Math.random() * 4; h.rotation.y = Math.PI; }
       if (Math.abs(h.position.x) > 40) { world.group.remove(h); disposeTree(h); peds.splice(i, 1); i--; spawnPed(); }
     }
-    if (peds.length < 5 && Math.random() < 0.002) spawnPed();
+    if (peds.length < 11 && Math.random() < 0.006) spawnPed();
+    updateCityPeds(dt);
   }
   // ── Room dressing (hall lounge, fridge, clock, posters) ────────────
   function buildProps() {
@@ -4922,27 +4954,11 @@
     if (spr > 0) { var rh = new THREE.Mesh(new THREE.BoxGeometry(0.1 * spr + 0.04, 0.22, 0.1), MAT.none); rh.position.set(rx + 0.1 + (spr - 1) * 0.05, 0.94, rz + 0.1); g.add(rh); interactable(rh, { kind: 'rackItem', item: 'remedy', label: 'pest spray' }); rh.userData.dynGroup = 'rack'; rh.userData.propId = 'rack'; }
       g.traverse(function (o) { if (o.isMesh) o.userData.propId = 'rack'; });
   }
-  function drawRegister() {
-    if (!world.reg) return; var c = world.reg.canvas, ctx = c.getContext('2d'), W = c.width, H = c.height;
-    ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, W, H); ctx.strokeStyle = 'rgba(111,220,140,.4)'; ctx.lineWidth = 2; ctx.strokeRect(3, 3, W - 6, H - 6);
-    ctx.font = '600 16px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#6fdc8c'; ctx.textBaseline = 'top'; ctx.fillText('GROW CO.', 12, 10); ctx.fillStyle = '#9fb8a6'; ctx.textAlign = 'right'; ctx.fillText(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), W - 12, 10); ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(111,220,140,.15)'; ctx.fillRect(8, 32, W - 16, 2);
-    var y = 42; ctx.font = '15px "Cascadia Mono",Consolas,monospace';
-    var h = held(); var c2 = S.customer;
-    if (c2 && !c2.arrived) { ctx.fillStyle = '#ffc857'; ctx.fillText('CUSTOMER INCOMING', 12, y); y += 20; ctx.fillStyle = '#e8f1ea'; ctx.fillText(c2.who.slice(0, 18), 12, y); y += 20; ctx.fillStyle = '#9fb8a6'; ctx.fillText(c2.premium ? 'looks like a connoisseur' : 'at the ID check', 12, y); y += 20; }
-    else if (c2) { ctx.fillStyle = '#ffc857'; ctx.fillText('ORDER ' + c2.who.toUpperCase().slice(0, 14), 12, y); y += 20; ctx.fillStyle = '#e8f1ea'; var q = S.pkg[c2.want].n ? S.pkg[c2.want].qSum / S.pkg[c2.want].n : curedAvgQ(), t = S.pkg[c2.want].n ? S.pkg[c2.want].thcSum / S.pkg[c2.want].n : curedAvgThc(); var each = unitPrice(c2.want, q, t); ctx.fillText(wantText(c2), 12, y); ctx.textAlign = 'right'; ctx.fillText(money(each * c2.qty * (c2.premium ? 2.2 : 1.15)), W - 12, y); ctx.textAlign = 'left'; y += 20; ctx.fillStyle = '#9fb8a6'; ctx.fillText('handed ' + (c2.given ? c2.given.n : 0) + '/' + c2.qty + (c2.premium ? '  min q' + c2.minQ : ''), 12, y); y += 20; }
-    else if (h && (h.kind === 'bags' || h.kind === 'joints')) { ctx.fillStyle = '#ffc857'; ctx.fillText('WALK-UP SALE', 12, y); y += 20; ctx.fillStyle = '#e8f1ea'; var hq = h.qSum / h.n, ht = h.thcSum / h.n; var he = h.kind === 'bags' ? bagPrice(hq, ht) : jointPrice(hq, ht); ctx.fillText(h.n + ' x ' + h.kind + ' q' + Math.round(hq), 12, y); ctx.textAlign = 'right'; ctx.fillText(money(he * h.n), W - 12, y); ctx.textAlign = 'left'; y += 20; ctx.fillStyle = '#9fb8a6'; ctx.fillText('E at the till to ring up', 12, y); y += 20; }
-    else { ctx.fillStyle = '#9fb8a6'; ctx.fillText('READY', 12, y); y += 20; ctx.fillStyle = '#e8f1ea'; ctx.fillText('bags   ' + money(bagPrice(curedAvgQ(), curedAvgThc())), 12, y); y += 18; ctx.fillText('joints ' + money(jointPrice(curedAvgQ(), curedAvgThc())), 12, y); y += 20; }
-    ctx.fillStyle = 'rgba(111,220,140,.15)'; ctx.fillRect(8, H - 52, W - 16, 2);
-    ctx.font = '13px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#9fb8a6'; ctx.fillText('market ' + S.market.toFixed(2) + '×   rep ' + Math.floor(S.rep), 12, H - 44);
-    if (world.reg.lastSale) { ctx.fillStyle = '#6fdc8c'; ctx.fillText('last: ' + world.reg.lastSale, 12, H - 26); } else { ctx.fillStyle = '#556'; ctx.fillText('no sales yet today', 12, H - 26); }
-    ctx.fillStyle = shop().open ? '#6fdc8c' : '#ff6b6b'; ctx.beginPath(); ctx.arc(W - 20, H - 20, 5, 0, Math.PI * 2); ctx.fill();
-    world.reg.tex.needsUpdate = true;
-  }
   function registerSale(text) { if (!world.reg) return; world.reg.lastSale = text; world.reg.drawerT = 1; drawRegister(); sfx('drawer'); }
   function updateProps(dt) {
     if (world.reg && world.reg.drawer) { var open = world.reg.drawerT > 0 ? 1 : 0; world.reg.drawerT = Math.max(0, world.reg.drawerT - dt * 0.35); world.reg.drawer.position.z = 3.55 - lerp(0, 0.22, clamp(world.reg.drawerT * 4, 0, 1)); }
     if (world.clipFan) world.clipFan.rotation.z += dt * 22;
+    cabinetTick(dt);
     if (world.fanBlades) { world.fanBlades.rotation.z += dt * 18; world.fanHead.rotation.y = world.fanBaseYaw + Math.sin(world.time * 0.6) * 0.6; }
     if (world.clockHands) { var d = new Date(); world.clockHands.m.rotation.z = -d.getMinutes() / 60 * Math.PI * 2; world.clockHands.h.rotation.z = -((d.getHours() % 12) + d.getMinutes() / 60) / 12 * Math.PI * 2; }
     updateGuard(dt); updateWorker(dt);
@@ -5096,6 +5112,290 @@
     deskDrawCard(ctx, W, H); deskDrawCursor(ctx);
     deskBoard.tex.needsUpdate = true;
   }
+
+  // ══ Interactive screens (2026-09-24): one touch layer for every in-world screen, the till tablet, the security desk screen, the office PC, the phone, the delivery tablet and the quick wheel ══
+  var TOUCH = { list: [] };
+  function touchScreen(o) {
+    var sc = { id: o.id, kind: o.kind, w: o.w, h: o.h, zones: [], cur: null, hot: null, hotZone: null, tapAt: 0, tapX: 0, tapY: 0, drawAt: 0, live: o.live || 0, draw: o.draw, tap: o.tap, wheel: o.wheel || null, canvas: document.createElement('canvas') };
+    sc.scale = o.scale || 1; sc.canvas.width = Math.round(o.w * sc.scale); sc.canvas.height = Math.round(o.h * sc.scale); sc.tex = new THREE.CanvasTexture(sc.canvas);   /* scale > 1 draws the same layout onto more pixels, so the text reads bigger on the same plane */ sc.tex.encoding = THREE.sRGBEncoding; sc.tex.anisotropy = 4;
+    sc.mesh = new THREE.Mesh(new THREE.PlaneGeometry(o.pw, o.ph), new THREE.MeshBasicMaterial({ map: sc.tex })); TOUCH.list.push(sc); return sc;
+  }
+  function tZone(sc, x, y, w, h, act, id, label, quiet) { var z = { x: x, y: y, w: w, h: h, act: act, id: id, label: label || '', key: act + ':' + (id === undefined ? '' : id) }; sc.zones.push(z); if (sc.hot === z.key && !quiet) { var ctx = sc.canvas.getContext('2d'); ctx.fillStyle = 'rgba(111,220,140,.16)'; roundRect(ctx, x, y, w, h, 10); ctx.fill(); ctx.strokeStyle = 'rgba(111,220,140,.85)'; ctx.lineWidth = 3; ctx.stroke(); } return z; }
+  function tBtn(sc, ctx, x, y, w, h, text, act, id, label, on, o) {
+    o = o || {}; var z = tZone(sc, x, y, w, h, act, id, label, true), hot = sc.hot === z.key && !o.off, col = o.col || DESK_OK;
+    ctx.fillStyle = o.off ? 'rgba(255,255,255,.03)' : on ? (o.fill || 'rgba(111,220,140,.28)') : hot ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.07)'; roundRect(ctx, x, y, w, h, o.r || 10); ctx.fill();
+    ctx.strokeStyle = o.off ? 'rgba(255,255,255,.08)' : on || hot ? col : 'rgba(255,255,255,.14)'; ctx.lineWidth = hot ? 3 : 2; ctx.stroke();
+    ctx.fillStyle = o.off ? DESK_MUTE : on || hot ? col : DESK_INK; ctx.font = (o.weight || '600') + ' ' + (o.size || 20) + 'px ' + DESK_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(deskTrim(ctx, text, w - 16), x + w / 2, y + h / 2 + 1 - (o.sub ? 9 : 0));
+    if (o.sub) { ctx.fillStyle = DESK_DIM; ctx.font = '14px ' + DESK_FONT; ctx.fillText(o.sub, x + w / 2, y + h - 14); }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  }
+  function tCursor(sc, ctx) {
+    var c = sc.cur, t = now();
+    if (sc.tapAt && t - sc.tapAt < 350) { var k = (t - sc.tapAt) / 350; ctx.strokeStyle = 'rgba(111,220,140,' + (1 - k).toFixed(2) + ')'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(sc.tapX, sc.tapY, 10 + k * 40, 0, Math.PI * 2); ctx.stroke(); }
+    if (!c) return; var r = Math.max(8, Math.round(sc.w / 110));
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = sc.hotZone ? DESK_OK : 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(c.x, c.y, r * 0.36, 0, Math.PI * 2); ctx.fill();
+  }
+  function tDraw(sc) { var ctx = sc.canvas.getContext('2d'); ctx.setTransform(sc.scale, 0, 0, sc.scale, 0, 0); sc.zones = []; sc.drawAt = now(); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; sc.draw(sc, ctx); tCursor(sc, ctx); sc.tex.needsUpdate = true; }
+  function touchUpdate() {   /* every frame: for the screen under the crosshair, where on it the crosshair is and which control that is */
+    var k = focus && focus.data.kind;
+    for (var s = 0; s < TOUCH.list.length; s++) {
+      var sc = TOUCH.list[s], on = k === sc.kind, cur = null, hot = null;
+      if (on) { deskRay.setFromCamera(center, camera); deskRay.far = 4.5; var hs = deskRay.intersectObject(sc.mesh, false); if (hs.length && hs[0].uv) { cur = { x: hs[0].uv.x * sc.w, y: (1 - hs[0].uv.y) * sc.h }; for (var i = sc.zones.length - 1; i >= 0; i--) { var z = sc.zones[i]; if (cur.x >= z.x && cur.x <= z.x + z.w && cur.y >= z.y && cur.y <= z.y + z.h) { hot = z; break; } } } }
+      var hk = hot ? hot.key : null, moved = !!cur !== !!sc.cur || (cur && (Math.abs(cur.x - sc.cur.x) > 2 || Math.abs(cur.y - sc.cur.y) > 2));
+      sc.cur = cur; sc.hotZone = hot;
+      if (hk !== sc.hot) { sc.hot = hk; tDraw(sc); }
+      else if ((moved || (sc.tapAt && now() - sc.tapAt < 400) || (on && sc.live && now() - sc.drawAt > sc.live)) && now() - sc.drawAt > 66) tDraw(sc);
+    }
+  }
+  function touchTap(sc) { var z = sc.hotZone, c = sc.cur; if (c) { sc.tapAt = now(); sc.tapX = c.x; sc.tapY = c.y; } sc.tap(z); tDraw(sc); }
+  function touchFor(kind) { for (var i = 0; i < TOUCH.list.length; i++) if (TOUCH.list[i].kind === kind) return TOUCH.list[i]; return null; }
+  function touchPrompt(sc, title, idle) { var hz = sc.hotZone; return title + ' <small>' + (hz ? 'tap: ' + esc(hz.label) : idle) + '</small>'; }
+
+  // ── the till: a tablet on a stand above the cash drawer; payments, change and walk-up sales happen on its screen ──
+  function buildPos(x, z) {
+    box(0.28, 0.02, 0.22, MAT.register, x, 1.115, z + 0.04, { cast: false }); cyl(0.022, 0.028, 0.26, MAT.chrome, x, 1.25, z + 0.05, null, 10);
+    var sc = touchScreen({ id: 'pos', kind: 'pos', w: 500, h: 375, scale: 1.6, pw: 0.48, ph: 0.36, draw: drawPos, tap: posTap, live: 1000 });
+    var g = new THREE.Group(); g.position.set(x, 1.42, z); g.rotation.set(0.42, Math.PI, 0); world.group.add(g); world.posGroup = g;
+    var body = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.39, 0.014), colorMat(0x1b1f24, 0.4, 0.5)); body.position.z = -0.008; body.castShadow = true; g.add(body);
+    sc.mesh.position.z = 0.0005; g.add(sc.mesh); world.registerScreen = sc.mesh;
+    var cam = new THREE.Mesh(new THREE.CircleGeometry(0.004, 8), MAT.black); cam.position.set(0, 0.185, 0.0006); g.add(cam);
+    var hit = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.41, 0.06), MAT.none); g.add(hit); interactable(hit, { kind: 'pos' });
+    world.reg.sc = sc; drawRegister();
+  }
+  function drawRegister() { if (world.reg && world.reg.sc) tDraw(world.reg.sc); }
+  function drawPos(sc, ctx) {
+    var W = sc.w, H = sc.h, c = S.customer, h = held(), sell = h && (h.kind === 'bags' || h.kind === 'joints' || h.kind === 'cookies');
+    ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, W, H); var grd = ctx.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, 'rgba(111,220,140,.10)'); grd.addColorStop(0.4, 'rgba(0,0,0,0)'); ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = DESK_OK; ctx.font = '800 26px ' + DESK_FONT; ctx.fillText('GROW CO. TILL', 24, 18);
+    ctx.textAlign = 'right'; ctx.fillStyle = DESK_INK; ctx.font = '700 26px "Cascadia Mono",Consolas,monospace'; ctx.fillText(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), W - 24, 18); ctx.textAlign = 'left';
+    ctx.fillStyle = DESK_DIM; ctx.font = '15px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, 'till ' + money(S.till) + ' · pocket ' + money(S.pocket) + ' · market ' + S.market.toFixed(2) + '× · rep ' + Math.floor(S.rep) + ' · ' + walkupLeft() + ' walk-ups left today', W - 70), 24, 50);
+    ctx.fillStyle = shop().open ? DESK_OK : DESK_BAD; ctx.beginPath(); ctx.arc(W - 34, 58, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(111,220,140,.25)'; ctx.fillRect(24, 74, W - 48, 2);
+    var y = 90;
+    if (c && c.stage) {
+      ctx.fillStyle = DESK_WARN; ctx.font = '700 20px ' + DESK_FONT; ctx.fillText((c.pay === 'card' ? '💳 ' : '💵 ') + c.who + ' is paying', 24, y); ctx.textAlign = 'right'; ctx.fillStyle = DESK_INK; ctx.font = '800 34px "Cascadia Mono",Consolas,monospace'; ctx.fillText(money(c.due), W - 24, y - 6); ctx.textAlign = 'left'; y += 32;
+      ctx.fillStyle = DESK_DIM; ctx.font = '16px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, wantText(c), W - 48), 24, y); y += 30;
+      if (c.pay === 'card') { tBtn(sc, ctx, 24, y, W - 48, 78, (c.declined ? 'Run the card again' : 'Run the card') + ' · ' + money(c.due), 'payCard', 0, 'Run the card', true, { size: 24 }); y += 90; if (c.declined) { ctx.fillStyle = DESK_BAD; ctx.font = '600 16px ' + DESK_FONT; ctx.fillText('Declined once. Try it again.', 24, y); } }
+      else if (c.stage === 'pay') { tBtn(sc, ctx, 24, y, W - 48, 78, 'Take the ' + money(c.tendered) + ' in cash', 'payCash', 0, 'Take the cash', true, { size: 24 }); y += 90; ctx.fillStyle = DESK_DIM; ctx.font = '16px ' + DESK_FONT; ctx.fillText(c.tendered > c.due ? 'Then count ' + money(c.tendered - c.due) + ' of change out of the till.' : 'Exact money.', 24, y); }
+      else {
+        var due = c.tendered - c.due; ctx.fillStyle = DESK_INK; ctx.font = '16px ' + DESK_FONT; ctx.fillText('Took ' + money(c.tendered) + ' · change due ' + money(due) + ' · in hand ' + money(c.changeGiven), 24, y); y += 30;
+        var ds = [50, 20, 10, 5, 1], bw = (W - 48 - 4 * 10) / 5; ds.forEach(function (d, i) { tBtn(sc, ctx, 24 + i * (bw + 10), y, bw, 64, '$' + d, 'chg', d, 'Count out $' + d, false, { size: 26, weight: '800' }); }); y += 76;
+        tBtn(sc, ctx, 24, y, (W - 58) / 2, 64, 'Hand over ' + money(c.changeGiven), 'chgGive', 0, 'Hand over the change', c.changeGiven >= due, { size: 20 }); tBtn(sc, ctx, 24 + (W - 58) / 2 + 10, y, (W - 58) / 2, 64, 'Back in the till', 'chgUndo', 0, 'Put it back in the till', false, { size: 20 }); y += 76;
+      }
+    }
+    else if (sell) {
+      var wl = walkupLeft(), n = Math.min(h.n, wl), q = h.qSum / h.n, t = h.thcSum / h.n, each = unitPrice(h.kind, q, t) * WALKUP_RATE;
+      ctx.fillStyle = DESK_WARN; ctx.font = '700 20px ' + DESK_FONT; ctx.fillText('WALK-UP SALE', 24, y); y += 30;
+      ctx.fillStyle = DESK_INK; ctx.font = '16px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, h.n + ' × ' + kindName(h.kind, h.n) + ' q' + Math.round(q) + ' · ' + money(each) + ' each at 85% of the board', W - 48), 24, y); y += 34;
+      if (wl > 0) tBtn(sc, ctx, 24, y, W - 48, 78, 'Ring up ' + n + ' ' + kindName(h.kind, n) + ' · ' + money(each * n), 'sellHeld', 0, 'Ring up a walk-up sale', true, { size: 24 }); else { ctx.fillStyle = DESK_BAD; ctx.font = '600 18px ' + DESK_FONT; ctx.fillText('The till is closed to walk-ups until tomorrow.', 24, y + 20); }
+      y += 90;
+    }
+    else {
+      ctx.fillStyle = DESK_INK; ctx.font = '700 20px ' + DESK_FONT; ctx.fillText('BOARD PRICES', 24, y); y += 30;
+      var aq = curedAvgQ() || 60, at = curedAvgThc(); var rows = [['bags', bagPrice(aq, at), S.pkg.bags.n], ['joints', jointPrice(aq, at), S.pkg.joints.n], ['cookies', cookiePrice(aq, at), S.pkg.cookies.n]];
+      rows.forEach(function (r) { ctx.fillStyle = DESK_DIM; ctx.font = '18px ' + DESK_FONT; ctx.fillText(r[0], 24, y); ctx.fillStyle = DESK_INK; ctx.font = '700 18px "Cascadia Mono",Consolas,monospace'; ctx.textAlign = 'right'; ctx.fillText(money(r[1]) + '   ' + r[2] + ' packed', W - 24, y); ctx.textAlign = 'left'; y += 28; });
+      y += 6; ctx.fillStyle = c ? DESK_WARN : DESK_DIM; ctx.font = '16px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, c ? (c.arrived ? c.who + ' wants ' + wantText(c) : c.who + ' is at the ID check') : 'No customer at the window.', W - 48), 24, y); y += 26;
+    }
+    var by = H - 70; ctx.fillStyle = 'rgba(111,220,140,.08)'; ctx.fillRect(0, by - 10, W, 80);
+    var bw2 = (W - 48 - 20) / 3;
+    tBtn(sc, ctx, 24, by, bw2, 58, '🗄 Open drawer', 'drawer', 0, 'Open the cash drawer', false, { size: 17 });
+    tBtn(sc, ctx, 24 + bw2 + 10, by, bw2, 58, S.till > 0 ? '👛 Empty till ' + money(S.till) : '👛 Till is empty', 'tillEmpty', 0, 'Empty the till into your pocket', false, { size: 17, off: S.till <= 0 });
+    tBtn(sc, ctx, 24 + 2 * (bw2 + 10), by, bw2, 58, '🧾 ' + (S.display.lighter || 0) + ' lighters · ' + (S.display.rpaper || 0) + ' papers · ' + (S.display.rgrinder || 0) + ' grinders', 'display', 0, 'Counter display stock', false, { size: 13, off: true });
+    if (world.reg.lastSale) { ctx.fillStyle = DESK_OK; ctx.font = '14px "Cascadia Mono",Consolas,monospace'; ctx.textAlign = 'right'; ctx.fillText(deskTrim(ctx, 'last: ' + world.reg.lastSale, 300), W - 24, by - 30); ctx.textAlign = 'left'; }
+  }
+  function posTap(z) {
+    if (!z) return; sfx('click');
+    if (z.act === 'drawer') { world.reg.drawerT = 1; sfx('drawer'); }
+    else if (z.act === 'tillEmpty') { var tl = S.till; if (tl > 0 && takeCash(tl, 'till')) S.till = 0; }
+    else if (z.act === 'sellHeld') sellHeld();
+    else if (payActions[z.act]) payActions[z.act](z.act === 'chg' ? +z.id : undefined);
+    else return;
+    afterAction();
+  }
+
+  // ── the security desk screen: cameras, doors and alerts on a monitor beside the wall of feeds ──
+  var SEC_PAGES = ['cams', 'doors', 'alerts'], SEC_PAGE_LABEL = { cams: 'Cameras', doors: 'Doors', alerts: 'Alerts' };
+  var secScreen = { page: 0, sc: null };
+  function buildSecScreen(x, y, z, ry) {   /* a big tablet screen on the wall to the right of the chair: nothing on the desk, nothing in front of the wall of feeds */
+    var sc = touchScreen({ id: 'sec', kind: 'secscreen', w: 1120, h: 700, pw: 1.2, ph: 0.75, draw: drawSecScreen, tap: secTap, wheel: function (dir) { secScreen.page = ((secScreen.page + dir) % 3 + 3) % 3; }, live: 1000 });
+    var g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; world.group.add(g); secScreen.g = g;
+    var bez = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.85, 0.04), MAT.black); bez.position.z = -0.021; bez.castShadow = true; g.add(bez);
+    var mount = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.03), MAT.metal); mount.position.z = -0.05; g.add(mount);
+    sc.mesh.position.z = 0.0005; g.add(sc.mesh);
+    var hit = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.87, 0.12), MAT.none); g.add(hit); interactable(hit, { kind: 'secscreen' });
+    var glow = new THREE.PointLight(0xffc857, 0.25, 3); glow.position.set(0, 0, 0.5); g.add(glow);
+    secScreen.sc = sc; tDraw(sc);
+  }
+  function drawSecScreen(sc, ctx) {
+    var W = sc.w, H = sc.h, page = SEC_PAGES[secScreen.page], X = xs(), o = { col: DESK_WARN, fill: 'rgba(255,200,87,.25)', size: 18 };
+    ctx.fillStyle = '#0b0e12'; ctx.fillRect(0, 0, W, H); var grd = ctx.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, 'rgba(255,200,87,.10)'); grd.addColorStop(0.4, 'rgba(0,0,0,0)'); ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = DESK_WARN; ctx.font = '800 30px ' + DESK_FONT; ctx.fillText('SECURITY', 30, 20);
+    ctx.textAlign = 'right'; ctx.fillStyle = DESK_INK; ctx.font = '700 30px "Cascadia Mono",Consolas,monospace'; ctx.fillText(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), W - 30, 20); ctx.textAlign = 'left';
+    SEC_PAGES.forEach(function (p, i) { tBtn(sc, ctx, 250 + i * 150, 18, 140, 40, SEC_PAGE_LABEL[p], 'page', i, SEC_PAGE_LABEL[p], i === secScreen.page, o); });
+    ctx.fillStyle = 'rgba(255,200,87,.25)'; ctx.fillRect(30, 72, W - 60, 2);
+    var y = 90;
+    if (page === 'cams') {
+      var cols = 4, bw = (W - 60 - 3 * 12) / cols, bh = 74;
+      SEC_CAMS.forEach(function (c, i) { var x = 30 + (i % cols) * (bw + 12), yy = y + Math.floor(i / cols) * (bh + 10); tBtn(sc, ctx, x, yy, bw, bh, 'CAM ' + (i + 1) + '  ' + c.name, 'cam', i, 'Watch ' + secCamName(i), sec.view.on && sec.view.idx === i, { col: DESK_WARN, fill: 'rgba(255,200,87,.25)', size: 19, sub: c.name === 'STREET' || c.name === 'YARD' ? 'outdoor' : 'indoor' }); });
+      y += 3 * (bh + 10) + 6; ctx.fillStyle = DESK_DIM; ctx.font = '16px ' + DESK_FONT; ctx.fillText('Tap a camera to watch it full screen from the chair. A and D step through, E leaves.', 30, y);
+    }
+    else if (page === 'doors') {
+      var list = DOORS.slice(0, 12), dw = (W - 60 - 12) / 2, dh = 58;
+      list.forEach(function (d, i) { var x = 30 + (i % 2) * (dw + 12), yy = y + Math.floor(i / 2) * (dh + 8); tZone(sc, x, yy, dw, dh, 'door', d.id, (d.locked ? 'Unlock the ' : 'Lock the ') + d.label); ctx.fillStyle = 'rgba(255,255,255,.05)'; roundRect(ctx, x, yy, dw, dh, 10); ctx.fill(); deskDot(ctx, x + 22, yy + 29, d.locked ? DESK_BAD : d.open ? DESK_OK : DESK_DIM, 8); ctx.fillStyle = DESK_INK; ctx.font = '700 19px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, d.name || d.label, dw - 220), x + 42, yy + 8); ctx.fillStyle = d.locked ? DESK_BAD : DESK_DIM; ctx.font = '15px ' + DESK_FONT; ctx.fillText((d.locked ? 'LOCKED' : d.open ? 'open' : 'closed') + (staffKey(d.id) ? ' · staff have a key' : ' · staff locked out'), x + 42, yy + 33); ctx.textAlign = 'right'; ctx.fillStyle = DESK_WARN; ctx.font = '600 15px ' + DESK_FONT; ctx.fillText(d.locked ? 'tap to unlock' : 'tap to lock', x + dw - 14, yy + 20); ctx.textAlign = 'left'; });
+      if (!list.length) { ctx.fillStyle = DESK_MUTE; ctx.font = '20px ' + DESK_FONT; ctx.fillText('no doors registered', 30, y); }
+    }
+    else {
+      var heat = Math.round(X.heat), hc = heat >= 60 ? DESK_BAD : heat >= 30 ? DESK_WARN : DESK_OK;
+      var tiles = [['Heat', heat + ' / 100', heat >= 60 ? 'inspections likely' : heat >= 30 ? 'noticed' : 'quiet', hc], ['Robbery', heist.on ? (heist.masked ? 'IN PROGRESS' : 'someone is casing') : 'none', heist.policeT > 0 ? 'police in ' + Math.ceil(heist.policeT) + ' s' : S.upgrades.panic ? 'silent alarm fitted' : 'no silent alarm', heist.on ? DESK_BAD : DESK_OK], ['Guard', guardOnDuty() ? (guard.state || 'idle') : guardOff() ? 'off shift' : 'not on the door', guardOnDuty() ? 'on the door' : 'the roster puts one on', guardOnDuty() ? DESK_OK : DESK_WARN], ['Shop', shop().open ? 'OPEN' : 'CLOSED', S.customer ? S.customer.who + ' at the window' : 'nobody at the window', shop().open ? DESK_OK : DESK_DIM]];
+      var tw = (W - 60 - 3 * 12) / 4; tiles.forEach(function (t, i) { deskTile(ctx, 30 + i * (tw + 12), y, tw, 120, t[0], t[1], t[2], t[3]); }); y += 136;
+      ctx.fillStyle = DESK_INK; ctx.font = '600 18px ' + DESK_FONT; ctx.fillText('INCIDENT LOG', 30, y); y += 28;
+      var ev = S.log.filter(function (l) { return /🚨|🔒|🔓|🚓|🥊|💸|⚠|🔫|🗡|🦹|🚔/.test(l.msg); }).slice(0, 7);
+      if (!ev.length) { ctx.fillStyle = DESK_MUTE; ctx.font = '17px ' + DESK_FONT; ctx.fillText('nothing to report', 30, y); }
+      ev.forEach(function (l) { ctx.fillStyle = DESK_DIM; ctx.font = '15px "Cascadia Mono",Consolas,monospace'; ctx.fillText(l.t, 30, y + 2); ctx.fillStyle = l.kind === 'bad' ? DESK_BAD : DESK_INK; ctx.font = '17px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, l.msg, W - 140), 100, y); y += 28; });
+    }
+    var by = H - 62; ctx.fillStyle = 'rgba(255,200,87,.06)'; ctx.fillRect(0, by - 10, W, 72);
+    var bx = 30, o2 = { col: DESK_WARN, fill: 'rgba(255,200,87,.25)', size: 17 };
+    tBtn(sc, ctx, bx, by, 200, 50, sec.view.on ? '📹 Leave the cameras' : '📹 Watch cameras', 'watch', 0, sec.view.on ? 'Leave the camera view' : 'Watch the cameras', sec.view.on, o2); bx += 210;
+    tBtn(sc, ctx, bx, by, 170, 50, '🔒 Lock all', 'lockAll', 0, 'Lock every door', false, o2); bx += 180;
+    tBtn(sc, ctx, bx, by, 170, 50, '🔓 Unlock all', 'unlockAll', 0, 'Unlock every door', false, o2); bx += 180;
+    tBtn(sc, ctx, bx, by, 200, 50, '🚨 Silent alarm', 'panic', 0, S.upgrades.panic ? 'Trip the silent alarm' : 'No silent alarm fitted: Gear on the office PC', false, { col: DESK_BAD, fill: 'rgba(255,107,107,.25)', size: 17, off: !S.upgrades.panic }); bx += 210;
+    tBtn(sc, ctx, bx, by, W - 30 - bx, 50, shop().open ? '🏪 Close the shop' : '🏪 Open the shop', 'shop', 0, shop().open ? 'Close the shop' : 'Open the shop', shop().open, o2);
+  }
+  function secTap(z) {
+    if (!z) return; sfx('click');
+    if (z.act === 'page') secScreen.page = z.id;
+    else if (z.act === 'cam') { if (!sec.view.on) camEnter(); camShow(z.id); }
+    else if (z.act === 'watch') { if (sec.view.on) camExit(); else camEnter(); }
+    else if (z.act === 'door') { var d = doorById[z.id]; if (d) { if (d.locked) { setDoor(z.id, d.open, false); toast('🔓 Unlocked the ' + d.label, 'good'); } else { setDoor(z.id, false, true); toast('🔒 Locked the ' + d.label, ''); } save(); } }
+    else if (z.act === 'lockAll') { doorsAll('lock'); toast('🔒 Every door locked', ''); }
+    else if (z.act === 'unlockAll') { doorsAll('unlock'); toast('🔓 Every door unlocked', 'good'); }
+    else if (z.act === 'panic') panicButton();
+    else if (z.act === 'shop') toggleShopOpen();
+  }
+
+  // ── the office PC: sit at the desk, E on the PC, and its desktop comes up with the shop, the seed bank, gear, staff, the bank and the rest as apps ──
+  function officeSeat() { var inst = propInst.officeDesk; if (!inst) return null; var p = propWorld('officeDesk', 0, 0.78); return { x: p.x, z: p.z, yaw: inst.g.rotation.y }; }
+  var pc = { open: false, app: null, el: null };
+  var PC_APPS = [
+    ['shop', '🛒', 'Supplies', function () { return paneShop(); }],
+    ['seeds', '🌱', 'Seed bank', function () { return paneSeeds(); }],
+    ['gear', '⚙️', 'Gear', function () { return paneUpgrades(); }],
+    ['lic', '🪪', 'Licences', function () { return paneLicences(); }],
+    ['staff', '🧑‍🔧', 'Staff', function () { return paneStaff(); }],
+    ['bank', '🏦', 'Bank', function () { return paneBank(); }],
+    ['jobs', '🚚', 'Deliveries', function () { return '<div class="g3-box">' + paneJobs(hasLic('tobacco') && tabletHere() ? 'tablet' : 'phone') + '</div>'; }],
+    ['desk', '🖥️', typeof drawShopBoard === 'function' ? 'Live desk' : 'Dashboard', function () { return paneDesk(); }],
+    ['diary', '📒', 'Diary', function () { return paneLog(); }],
+    ['stats', '📊', 'Stats', function () { return paneStats(); }],
+    ['settings', '⚙', 'Settings', function () { return '<div class="g3-box">' + settingsHtml() + '</div>'; }],
+    ['guide', '📖', 'Guide', function () { return '<div class="g3-box g3-menu-body" style="margin:0;padding:12px 14px">' + guideHtml() + '</div>'; }]
+  ];
+  function pcEl() {
+    if (pc.el) return pc.el;
+    var d = document.createElement('div'); d.id = 'g3-pc'; d.className = 'g3-overlay dim'; d.hidden = true;
+    d.innerHTML = '<div class="g3-pc"><div class="g3-pc-top"><span class="g3-pc-logo">🌿 Grow Co. OS</span><span class="g3-pc-clock" id="g3-pc-clock"></span><button class="g3-x" data-pc="close" title="Close (Esc)">✕</button></div><div class="g3-pc-desk" id="g3-pc-desk"></div><div class="g3-pc-win" id="g3-pc-win" hidden><div class="g3-pc-winhead"><span id="g3-pc-wintitle"></span><button class="g3-x" data-pc="home" title="Back to the desktop">🗕</button></div><div class="g3-pc-winbody" id="g3-pc-winbody"></div></div><div class="g3-pc-bar" id="g3-pc-bar"></div></div>';
+    document.body.appendChild(d); pc.el = d;
+    d.addEventListener('click', function (e) { var b = e.target.closest('[data-pc]'); if (!b) return; var a = b.getAttribute('data-pc'); sfx('click'); if (a === 'close') pcClose(); else if (a === 'home') { pc.app = null; pcRender(); } else pcApp(a); });
+    d.addEventListener('mousedown', function (e) { if (e.target === d) pcClose(); });
+    $('g3-pc-winbody').addEventListener('click', panelClick); $('g3-pc-winbody').addEventListener('input', panelInput); $('g3-pc-winbody').addEventListener('input', settingsInput);
+    return d;
+  }
+  function pcOpen() {
+    var seat = officeSeat(); if (seat && (!sit.on || sit.spot !== world.officeSeat)) { world.officeSeat = seat; if (sit.on) standUp(); sitDown(seat); }
+    pcEl(); pc.open = true; ui.pcOpen = true; pc.el.hidden = false; document.exitPointerLock(); pcRender(); sfx('type');
+  }
+  function pcClose() { if (!pc.open) return; pc.open = false; ui.pcOpen = false; pc.el.hidden = true; if (!ui.blocked()) lockPointer(); sfx('close'); }
+  function pcApp(id) { pc.app = id; pcRender(); }
+  function pcRender() {
+    if (!pc.open) return;
+    $('g3-pc-clock').textContent = clockText() + ' · day ' + (S.day || 1) + ' · bank ' + money(S.bank);
+    $('g3-pc-desk').innerHTML = PC_APPS.map(function (a) { return '<button class="g3-pc-icon" data-pc="' + a[0] + '"><span class="ico">' + a[1] + '</span><span class="n">' + a[2] + '</span></button>'; }).join('');
+    $('g3-pc-bar').innerHTML = '<button class="g3-pc-start" data-pc="home">🌿 Start</button>' + PC_APPS.map(function (a) { return '<button class="g3-pc-task' + (pc.app === a[0] ? ' on' : '') + '" data-pc="' + a[0] + '">' + a[1] + ' ' + a[2] + '</button>'; }).join('');
+    var app = null; PC_APPS.forEach(function (a) { if (a[0] === pc.app) app = a; });
+    var win = $('g3-pc-win'); if (!app) { win.hidden = true; return; }
+    win.hidden = false; $('g3-pc-wintitle').textContent = app[1] + ' ' + app[2]; $('g3-pc-winbody').innerHTML = app[3]();
+  }
+
+  // ── the phone (F, always on you) and the delivery tablet (J): two devices drawn as devices ──
+  var dev = { open: false, kind: null, app: null, el: null };
+  var PHONE_APPS = [
+    ['burner', '📱', 'Burner', function () { return '<h3>📱 Burner · street orders</h3>' + paneJobs('phone'); }],
+    ['wallet', '👛', 'Wallet', function () { return paneWallet(); }],
+    ['people', '👥', 'People', function () { return panePeople(); }],
+    ['map', '🗺️', 'Map', null],
+    ['msgs', '💬', 'Messages', function () { return '<h3>💬 Messages</h3>' + paneLogInner(40); }],
+    ['settings', '⚙️', 'Settings', function () { return settingsHtml(); }]
+  ];
+  function deviceEl() {
+    if (dev.el) return dev.el;
+    var d = document.createElement('div'); d.id = 'g3-device'; d.className = 'g3-overlay'; d.hidden = true;
+    d.innerHTML = '<div class="g3-dev" id="g3-dev"><div class="g3-dev-status"><span id="g3-dev-time"></span><span>▂▄▆ 4G · 🔋 82%</span></div><div class="g3-dev-body" id="g3-dev-body"></div><div class="g3-dev-nav" id="g3-dev-nav"></div></div>';
+    document.body.appendChild(d); dev.el = d;
+    d.addEventListener('click', function (e) { var b = e.target.closest('[data-dev]'); if (!b) return; var a = b.getAttribute('data-dev'); sfx('click'); if (a === 'close') deviceClose(); else if (a === 'home') { dev.app = null; deviceRender(); } else if (a === 'map') { deviceClose(); if (!cityMap.on) toggleCityMap(); } else { dev.app = a; deviceRender(); } });
+    d.addEventListener('mousedown', function (e) { if (e.target === d) deviceClose(); });
+    $('g3-dev-body').addEventListener('click', panelClick); $('g3-dev-body').addEventListener('input', panelInput); $('g3-dev-body').addEventListener('input', settingsInput);
+    return d;
+  }
+  function deviceOpen(kind, app) { deviceEl(); dev.open = true; dev.kind = kind; dev.app = app || null; ui.deviceOpen = true; dev.el.hidden = false; document.exitPointerLock(); deviceRender(); sfx('panel'); }
+  function deviceClose() { if (!dev.open) return; dev.open = false; ui.deviceOpen = false; dev.el.hidden = true; if (!ui.blocked()) lockPointer(); sfx('close'); }
+  function phoneOpen() { if (dev.open && dev.kind === 'phone') { deviceClose(); return; } if (ui.blocked()) return; deviceOpen('phone'); }
+  function paneWallet() { var X = xs(); return '<h3>👛 Wallet</h3>' + moneyRows() + '<div class="g3-row"><span class="ico">🔥</span><span class="meta"><span class="n">Heat ' + Math.round(X.heat) + ' / 100</span><span class="own">' + (X.heat >= 60 ? 'inspections likely' : X.heat >= 30 ? 'you have been noticed' : 'quiet') + '</span></span></div>' + (S.vault + S.pocket > 0 ? '<button class="g3-btn wide" data-act="courierCall" data-id="all">🏦 Book the bank courier for ' + money(Math.floor(S.vault + S.pocket)) + '</button>' : '<div class="g3-empty">Nothing in the vault or your pocket to send to the bank.</div>') + '<p class="g3-sub2" style="margin-top:10px">The courier collects the cash at the back door and banks it. The ATM in town and the vault in the office do the rest.</p>'; }
+  function panePeople() {
+    var list = crewList(), X = xs(), h = '<h3>👥 People</h3>';
+    h += '<div class="g3-row"><span class="ico">' + (guardOnDuty() ? '🟢' : '⚫') + '</span><span class="meta"><span class="n">The guard</span><span class="own">' + (guardOnDuty() ? 'on the door · ' + (guard.state || 'idle') : guardOff() ? 'sent home for the day' : 'not on the door') + '</span></span>' + (guard.h ? '<button class="g3-btn" data-act="guardShift">' + (guardOff() ? 'Call back in' : 'Send home') + '</button>' : '') + '</div>';
+    if (!list.length) h += '<div class="g3-empty">No crew hired yet. Staff on the office PC.</div>';
+    list.forEach(function (c, i) { h += '<div class="g3-row"><span class="ico">' + (c.off ? '⚫' : '🟢') + '</span><span class="meta"><span class="n">' + esc(crewName(i)) + '</span><span class="own">' + (c.off ? 'home for the day' : (c.task || 'idle')) + '</span></span><button class="g3-btn" data-act="crewShift" data-id="' + i + '">' + (c.off ? 'Call back in' : 'Send home') + '</button></div>'; });
+    h += '<h3 style="margin-top:12px">Extra staff</h3><div class="g3-chips">' + chip('driver', X.staff.driver ? 'hired' : 'none') + chip('operator', X.staff.operator ? 'hired' : 'none') + chip('night guard', X.staff.night ? 'hired' : 'none') + '</div>';
+    return h;
+  }
+  function ensureCityMap() { if (cityMap.el) return; var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;background:rgba(6,10,8,.72);pointer-events:none'; d.hidden = true; var cv = document.createElement('canvas'); cv.width = 1100; cv.height = 720; cv.style.cssText = 'max-width:94vw;max-height:90vh;border:1px solid rgba(111,220,140,.5);border-radius:10px;background:#0d1511'; d.appendChild(cv); document.body.appendChild(d); cityMap.el = d; cityMap.cv = cv; }
+  function paneTablet() {
+    var X = xs(), list = jobsOf('tablet'), pos = drive.on ? drive.g.position : player.pos, cc = carState().cigs, T = tob();
+    var h = '<div class="g3-tab-head"><b>RF SMOKING</b> delivery round · ' + list.length + ' job' + (list.length === 1 ? '' : 's') + ' · tablet ' + (X.tablet === 'car' ? 'in the car' : X.tablet === 'hand' ? 'in hand' : 'on the dock') + '</div><div class="g3-tab-cols"><div class="g3-tab-list">';
+    if (!list.length) h += '<div class="g3-empty">No round jobs right now. They come in while the shop is open, once the basement is making packs.</div>';
+    list.forEach(function (j) { var n = X.jobs.indexOf(j) + 1, left = Math.max(0, Math.round((j.until - now()) / 1000)), km = Math.round(Math.hypot(j.x - pos.x, j.z - pos.z)), inCar = cc[j.sku] || 0, ok = inCar >= j.qty; h += '<div class="g3-tab-job' + (left < 60 ? ' late' : '') + '"><span class="num">#' + n + '</span><span class="meta"><b>' + esc(j.addr) + '</b><span>' + j.qty + ' × ' + esc(jobGoods(j)) + ' · ' + km + ' m away</span><span class="' + (ok ? 'ok' : 'bad') + '">' + inCar + ' in the car · ' + T.packs[j.sku] + ' on the rack' + (ok ? ' · loaded' : ' · load more at home') + '</span></span><span class="pay">' + money(j.pay) + '<small>' + Math.floor(left / 60) + ' min ' + (left % 60) + ' s</small></span></div>'; });
+    h += '<p class="g3-sub2" style="margin-top:10px">Load packs into the car or the van at home (Shift+E on it), drive the round, and press <b>E</b> at each amber beacon. You don\'t have to get out.</p></div><div class="g3-tab-map"><canvas id="g3-tab-map" width="550" height="360"></canvas></div></div>';
+    return h;
+  }
+  function deviceRender() {
+    if (!dev.open) return; var body = $('g3-dev-body'), nav = $('g3-dev-nav'); $('g3-dev').className = 'g3-dev ' + dev.kind;
+    $('g3-dev-time').textContent = clockText() + ' · day ' + (S.day || 1);
+    if (dev.kind === 'phone') {
+      var X = xs();
+      if (!dev.app) { body.innerHTML = '<div class="g3-ph-home"><div class="g3-ph-widget"><b>' + clockText() + '</b><span>' + season() + ' · ' + X.weather.kind + ' · ' + (shop().open ? 'shop open' : 'shop closed') + '</span><span>bank ' + money(S.bank) + ' · pocket ' + money(S.pocket) + ' · heat ' + Math.round(X.heat) + '</span></div><div class="g3-ph-apps">' + PHONE_APPS.map(function (a) { var badge = a[0] === 'burner' ? jobsOf('phone').length : 0; return '<button class="g3-ph-app" data-dev="' + a[0] + '"><span class="ico">' + a[1] + (badge ? '<i>' + badge + '</i>' : '') + '</span><span class="n">' + a[2] + '</span></button>'; }).join('') + '</div></div>'; nav.innerHTML = '<button data-dev="close">✕ put away (F)</button>'; }
+      else { var app = null; PHONE_APPS.forEach(function (a) { if (a[0] === dev.app) app = a; }); body.innerHTML = '<div class="g3-ph-screen">' + (app && app[3] ? app[3]() : '') + '</div>'; nav.innerHTML = '<button data-dev="home">◀ home</button><button data-dev="close">✕ put away (F)</button>'; }
+    } else {
+      body.innerHTML = paneTablet(); nav.innerHTML = '<button data-dev="close">✕ put down (J)</button>';
+      ensureCityMap(); drawCityMap(); var tc = $('g3-tab-map'); if (tc) tc.getContext('2d').drawImage(cityMap.cv, 0, 0, tc.width, tc.height);
+    }
+  }
+
+  // ── the quick wheel on Tab: eight things you reach for often, without a walk ──
+  var wheel = { open: false, el: null, items: [] };
+  function wheelItems() {
+    var h = held(), items = [];
+    items.push({ ico: '🎒', n: 'Inventory', act: function () { ui.openPanel('inventory'); } });
+    items.push({ ico: '📱', n: 'Phone', act: function () { deviceOpen('phone'); } });
+    items.push({ ico: '🗺️', n: cityMap.on ? 'Hide the map' : 'Map', act: function () { toggleCityMap(); } });
+    items.push({ ico: '🚚', n: 'Deliveries', act: function () { jobsPanel(); } });
+    var broomHeld = h && h.kind === 'broom', broomOut = crew.some(function (r) { return r.hasBroom; });
+    items.push({ ico: '🧹', n: broomHeld ? 'Hang up the broom' : 'Grab the broom', dim: !broomHeld && (broomOut || hotbarFull()), act: function () { if (broomHeld) { S.held = null; syncBroom(); toast('Broom back on the hook', ''); } else if (broomOut) toast('The crew has the broom', 'bad'); else if (take({ kind: 'broom' })) { syncBroom(); toast('🧹 Got the broom. E on dirt sweeps it.', 'good'); } } });
+    items.push({ ico: '🔑', n: hasKeys() ? 'Hang up the keys' : 'Grab the keyring', dim: !hasKeys() && hotbarFull(), act: function () { if (hasKeys()) { for (var i = 0; i < 6; i++) if (S.hotbar[i] && S.hotbar[i].kind === 'keys') S.hotbar[i] = null; syncKeyHook(); toast('🔑 Keyring back on the hook', ''); } else if (take({ kind: 'keys' })) { syncKeyHook(); toast('🔑 Got the keyring. Shift+E at a door locks or unlocks it.', 'good'); } } });
+    items.push(drive.on ? { ico: '🚪', n: 'Get out', act: function () { exitCar(); } } : sit.on ? { ico: '🧍', n: 'Stand up', act: function () { standUp(); } } : { ico: '⬇️', n: h ? 'Put down' : 'Nothing in hand', dim: !h, act: function () { putBack(); } });
+    items.push({ ico: '🏪', n: shop().open ? 'Close the shop' : 'Open the shop', act: function () { toggleShopOpen(); } });
+    return items;
+  }
+  function wheelOpen() {
+    if (ui.blocked()) return;
+    if (!wheel.el) { var d = document.createElement('div'); d.id = 'g3-wheel'; d.hidden = true; document.body.appendChild(d); wheel.el = d; d.addEventListener('click', function (e) { var b = e.target.closest('[data-wheel]'); if (b) wheelPick(+b.getAttribute('data-wheel')); else if (e.target === d) wheelClose(); }); d.addEventListener('mouseover', function (e) { var b = e.target.closest('[data-wheel]'); var c = $('g3-wheel-center'); if (c) c.innerHTML = b ? '<b>' + wheel.items[+b.getAttribute('data-wheel')].n + '</b><span>click, or press ' + (+b.getAttribute('data-wheel') + 1) + '</span>' : '<b>Quick wheel</b><span>Tab or Esc closes</span>'; }); }
+    wheel.items = wheelItems(); var R = 170, html = '<div class="g3-wheel-ring"></div>';
+    wheel.items.forEach(function (it, i) { var a = (-90 + i * 45) * Math.PI / 180; html += '<button class="g3-wheel-item' + (it.dim ? ' dim' : '') + '" data-wheel="' + i + '" style="left:calc(50% + ' + Math.round(R * Math.cos(a)) + 'px);top:calc(50% + ' + Math.round(R * Math.sin(a)) + 'px)"><span class="k">' + (i + 1) + '</span><span class="ico">' + it.ico + '</span><span class="n">' + it.n + '</span></button>'; });
+    html += '<div class="g3-wheel-center" id="g3-wheel-center"><b>Quick wheel</b><span>Tab or Esc closes</span></div>';
+    wheel.el.innerHTML = html; wheel.el.hidden = false; wheel.open = true; ui.wheelOpen = true; document.exitPointerLock(); sfx('panel');
+  }
+  function wheelClose(keep) { if (!wheel.open) return; wheel.open = false; ui.wheelOpen = false; wheel.el.hidden = true; if (!keep && !ui.blocked()) lockPointer(); }
+  function wheelPick(i) { var it = wheel.items[i]; if (!it) return; wheelClose(true); sfx('click'); it.act(); afterAction(); if (!ui.blocked()) lockPointer(); }
   function paneDesk() {
     var all = dashRows(); var h = '<div class="g3-box"><div class="g3-chips">' + DESK_PAGES.map(function (p, i) { return '<button class="g3-btn' + (i === deskBoard.page ? ' primary' : '') + '" data-act="deskPage" data-id="' + i + '">' + DESK_PAGE_LABEL[p] + '</button>'; }).join('') + '</div></div>';
     (all[DESK_PAGES[deskBoard.page]] || []).forEach(function (r) { h += '<div class="g3-row"><span class="ico">📊</span><span class="meta"><span class="n">' + esc(r[0]) + ' · ' + esc(r[1]) + '</span><span class="own">' + esc(r[2]) + '</span></span></div>'; });
@@ -5155,28 +5455,65 @@
     [0.04, -0.04].forEach(function (dz) { var knob = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), MAT.metal); knob.position.set(1.05, 1.0, dz * 1.5); g.add(knob); });
     var hit = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.3, 0.3), MAT.none); hit.position.set(0.6, 1.15, 0); g.add(hit); interactable(hit, { kind: 'staffdoor' });
     staffDoor.obstacle = { x1: 9.4, x2: 10.6, z1: 3.85, z2: 4.15, tag: 'staffdoor' }; staffDoor.t = shop().staffDoor ? 1 : 0; syncStaffDoorObstacle();
-    // control box on the security room's north wall (it was by the office; F2 carries it anywhere): brushed panel, status screen, rocker switches, radio dial, LEDs
-    var bx = 15.6, by = 1.45, bz = -9.37; var cg = new THREE.Group(); cg.position.set(bx, by, bz); cg.rotation.y = Math.PI; world.group.add(cg); world.ctl = { g: cg };
-    var panelM = new THREE.MeshStandardMaterial({ color: 0xb9bcc2, roughness: 0.35, metalness: 0.7 }); var darkM = new THREE.MeshStandardMaterial({ color: 0x22262b, roughness: 0.5, metalness: 0.3 });
-    var body = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.8, 0.09), panelM); body.position.z = 0.045; body.castShadow = true; cg.add(body);
-    var bevel = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.74, 0.02), darkM); bevel.position.z = 0.095; cg.add(bevel);
-    [[-0.25, 0.37], [0.25, 0.37], [-0.25, -0.37], [0.25, -0.37]].forEach(function (p) { var sc = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.01, 8), MAT.black); sc.rotation.x = Math.PI / 2; sc.position.set(p[0], p[1], 0.095); cg.add(sc); });
-    var sc2 = document.createElement('canvas'); sc2.width = 256; sc2.height = 128; world.ctl.canvas = sc2; world.ctl.tex = new THREE.CanvasTexture(sc2); world.ctl.tex.encoding = THREE.sRGBEncoding;
-    var screen = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.21), new THREE.MeshBasicMaterial({ map: world.ctl.tex })); screen.position.set(0, 0.22, 0.106); cg.add(screen);
-    var screenGlow = new THREE.PointLight(0x6fdc8c, 0.15, 1.2); screenGlow.position.set(0, 0.22, 0.3); cg.add(screenGlow);
-    world.ctl.rockers = {}; [['open', -0.16, 'OPEN'], ['lights', 0, 'LIGHTS'], ['staffDoor', 0.16, 'DOOR']].forEach(function (r) {
-      var well = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.15, 0.01), MAT.black); well.position.set(r[1], -0.02, 0.106); cg.add(well);
-      var rocker = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.12, 0.03), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 })); rocker.position.set(r[1], -0.02, 0.12); cg.add(rocker); world.ctl.rockers[r[0]] = rocker;
-      var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.03), new THREE.MeshBasicMaterial({ map: textTex([r[2]], 120, 36, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(r[1], -0.12, 0.107); cg.add(lbl);
-      var led = new THREE.Mesh(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 2 })); led.position.set(r[1] + 0.055, 0.06, 0.108); cg.add(led); world.ctl.rockers[r[0] + 'Led'] = led;
+    // the shop control cabinet on the security room's right wall (F2 carries it): open the doors, and inside hangs a tablet with a bank of switches, levers, a radio knob and small displays under it
+    var bx = SEC.x2 - 0.365, by = 1.15, bz = -10.75; var cg = new THREE.Group();   /* the group's origin is the cabinet FRONT: its depth runs back to the wall at SEC.x2 */ cg.position.set(bx, by, bz); cg.rotation.y = -Math.PI / 2; world.group.add(cg); world.ctl = { g: cg, doorT: 0, doorOpen: false, doors: [], levers: {}, leds: {}, roomLeds: {}, lastTick: 0 };
+    var panelM = new THREE.MeshStandardMaterial({ color: 0xc9ccd2, roughness: 0.55, metalness: 0.2, emissive: 0x2a2d31, emissiveIntensity: 0.35 }); var darkM = new THREE.MeshStandardMaterial({ color: 0x22262b, roughness: 0.5, metalness: 0.3 }); var shellM = new THREE.MeshStandardMaterial({ color: 0x7d838c, roughness: 0.45, metalness: 0.4 });
+    var inLight = new THREE.PointLight(0xfff3e0, 0.9, 2.4); inLight.position.set(0, 0.3, 0.2); cg.add(inLight);   /* a strip light inside: a recess in a wall-facing cabinet gets no room light */
+    function cm(geo, mat, x, y, z, parent) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; (parent || cg).add(m); return m; }
+    cm(new THREE.BoxGeometry(1.44, 2.04, 0.02), shellM, 0, 0, -0.35);                                                                    // back plate against the wall
+    cm(new THREE.BoxGeometry(0.03, 2.04, 0.36), shellM, -0.705, 0, -0.17); cm(new THREE.BoxGeometry(0.03, 2.04, 0.36), shellM, 0.705, 0, -0.17);   // sides
+    cm(new THREE.BoxGeometry(1.44, 0.03, 0.36), shellM, 0, 1.005, -0.17); cm(new THREE.BoxGeometry(1.44, 0.03, 0.36), shellM, 0, -1.005, -0.17);   // top and bottom
+    cm(new THREE.BoxGeometry(1.44, 0.15, 0.36), darkM, 0, -1.09, -0.17); cm(new THREE.BoxGeometry(1.38, 1.98, 0.01), new THREE.MeshStandardMaterial({ color: 0x4a5058, roughness: 0.8 }), 0, 0, -0.34);   // plinth and the dark liner
+    cm(new THREE.BoxGeometry(0.06, 0.06, 0.4), darkM, -0.25, 1.0, -0.15); cm(new THREE.BoxGeometry(0.06, 0.06, 0.4), darkM, 0.25, 1.0, -0.15);   // top rail
+    [[-0.7, 1], [0.7, -1]].forEach(function (d) {   // two doors hinged on the outer edges; the free edge swings out into the room
+      var hg = new THREE.Group(); hg.position.set(d[0], 0, 0); cg.add(hg); var leaf = cm(new THREE.BoxGeometry(0.69, 2.0, 0.04), panelM, 0.35 * d[1], 0, 0.02, hg); cm(new THREE.BoxGeometry(0.55, 1.7, 0.005), darkM, 0.35 * d[1], 0, 0.043, hg);
+      cm(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 8), MAT.chrome, 0.64 * d[1], 0, 0.06, hg); var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.08), new THREE.MeshBasicMaterial({ map: textTex([d[1] > 0 ? 'SHOP' : 'CONTROLS'], 300, 60, { size: 40, bold: true, bg: 'rgba(0,0,0,0)', color: '#e8e8ec', titleColor: '#ffc857', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(0.35 * d[1], 0.75, 0.046); hg.add(lbl);
+      var dh = new THREE.Mesh(new THREE.BoxGeometry(0.69, 2.0, 0.08), MAT.none); dh.position.set(0.35 * d[1], 0, 0.03); hg.add(dh); interactable(dh, { kind: 'ctlDoor' });
+      world.ctl.doors.push({ g: hg, dir: d[1] });
     });
-    var dialArc = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['OFF · LOFI · DUB · NEON · JAZZ'], 300, 50, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); dialArc.position.set(-0.08, -0.29, 0.107); cg.add(dialArc);
-    var knob = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.03, 20), darkM); knob.rotation.x = Math.PI / 2; knob.position.set(0.18, -0.27, 0.12); cg.add(knob); world.ctl.knob = knob;
-    var pointer = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.03, 0.006), new THREE.MeshStandardMaterial({ color: 0xffc857, emissive: 0xffc857, emissiveIntensity: 0.6 })); pointer.position.set(0, 0.012, 0.02); knob.add(pointer); world.ctl.pointer = pointer;
-    var radioLed = new THREE.Mesh(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0x3ad0ff, emissive: 0x3ad0ff, emissiveIntensity: 2 })); radioLed.position.set(0.24, -0.22, 0.108); cg.add(radioLed); world.ctl.radioLed = radioLed;
-    var conduit = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.9, 8), panelM); conduit.position.set(-0.2, -0.85, 0.03); cg.add(conduit);
-    var chit = box(0.6, 0.85, 0.3, MAT.none, bx, by, bz - 0.12, { cast: false, receive: false }); interactable(chit, { kind: 'controls' });
-    var ctlSign = signPlane(['SHOP CONTROLS'], 0.7, 0.2, bx, 1.98, bz + 0.02, Math.PI, { titleColor: '#ffc857' }); fixtureAdd('ctlBox', 'control box', [cg, chit, ctlSign], Math.PI);
+    // the tablet hangs from the top rail on two straps
+    var tsc = touchScreen({ id: 'ctl', kind: 'ctlTablet', w: 1120, h: 700, pw: 0.9, ph: 0.5625, draw: drawCtlTablet, tap: ctlTap, wheel: function (dir) { world.ctl.page = ((world.ctl.page + dir) % CTL_PAGES.length + CTL_PAGES.length) % CTL_PAGES.length; }, live: 1000 });
+    var tg = new THREE.Group(); tg.position.set(0, 0.6, -0.27); cg.add(tg); world.ctl.tablet = tg;
+    cm(new THREE.BoxGeometry(0.98, 0.65, 0.02), MAT.black, 0, 0, -0.012, tg); tsc.mesh.position.z = 0.0005; tg.add(tsc.mesh);
+    [-0.3, 0.3].forEach(function (x) { cm(new THREE.BoxGeometry(0.04, 0.12, 0.01), darkM, x, 0.36, -0.01, tg); });
+    var th = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.67, 0.08), MAT.none); th.position.set(0, 0, 0.02); tg.add(th); interactable(th, { kind: 'ctlTablet' });
+    world.ctl.sc = tsc;
+    // the switch panel under it
+    cm(new THREE.BoxGeometry(1.3, 1.05, 0.03), panelM, 0, -0.42, -0.31);
+    world.ctl.rockers = {};
+    [['open', -0.5, 'OPEN'], ['lights', -0.25, 'LIGHTS'], ['staffDoor', 0, 'DOOR'], ['roller', 0.25, 'ROLLER'], ['gate', 0.5, 'GATE']].forEach(function (r) {
+      var y = 0.0, z = -0.295;
+      cm(new THREE.BoxGeometry(0.09, 0.15, 0.01), MAT.black, r[1], y, z); var rocker = cm(new THREE.BoxGeometry(0.07, 0.12, 0.03), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 }), r[1], y, z + 0.015); world.ctl.rockers[r[0]] = rocker;
+      var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.03), new THREE.MeshBasicMaterial({ map: textTex([r[2]], 160, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(r[1], y - 0.11, z + 0.001); cg.add(lbl);
+      var led = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 2 }), r[1] + 0.055, y + 0.09, z + 0.002); world.ctl.rockers[r[0] + 'Led'] = led;
+      var sh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.08), MAT.none); sh.position.set(r[1], y, z + 0.02); cg.add(sh); interactable(sh, { kind: 'ctlSwitch', id: r[0] });
+    });
+    // two small displays and the radio knob
+    var sc2 = document.createElement('canvas'); sc2.width = 256; sc2.height = 128; world.ctl.canvas = sc2; world.ctl.tex = new THREE.CanvasTexture(sc2); world.ctl.tex.encoding = THREE.sRGBEncoding;
+    var screen = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.2), new THREE.MeshBasicMaterial({ map: world.ctl.tex })); screen.position.set(-0.4, -0.3, -0.294); cg.add(screen); cm(new THREE.BoxGeometry(0.44, 0.24, 0.01), MAT.black, -0.4, -0.3, -0.3);
+    var sc3 = document.createElement('canvas'); sc3.width = 256; sc3.height = 128; world.ctl.canvas2 = sc3; world.ctl.tex2 = new THREE.CanvasTexture(sc3); world.ctl.tex2.encoding = THREE.sRGBEncoding;
+    var screen2 = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.2), new THREE.MeshBasicMaterial({ map: world.ctl.tex2 })); screen2.position.set(0.05, -0.3, -0.294); cg.add(screen2); cm(new THREE.BoxGeometry(0.44, 0.24, 0.01), MAT.black, 0.05, -0.3, -0.3);
+    var screenGlow = new THREE.PointLight(0x6fdc8c, 0.15, 1.2); screenGlow.position.set(0, -0.2, 0.2); cg.add(screenGlow);
+    var dialArc = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['OFF · LOFI · DUB · NEON · JAZZ'], 300, 50, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); dialArc.position.set(0.5, -0.19, -0.294); cg.add(dialArc);
+    var knob = cm(new THREE.CylinderGeometry(0.04, 0.045, 0.03, 20), darkM, 0.5, -0.32, -0.28); knob.rotation.x = Math.PI / 2; world.ctl.knob = knob;
+    var pointer = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.035, 0.006), new THREE.MeshStandardMaterial({ color: 0xffc857, emissive: 0xffc857, emissiveIntensity: 0.6 })); pointer.position.set(0, 0.012, 0.025); knob.add(pointer); world.ctl.pointer = pointer;
+    var radioLed = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0x3ad0ff, emissive: 0x3ad0ff, emissiveIntensity: 2 }), 0.58, -0.25, -0.293); world.ctl.radioLed = radioLed;
+    var kh = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.08), MAT.none); kh.position.set(0.5, -0.32, -0.27); cg.add(kh); interactable(kh, { kind: 'ctlKnob' });
+    // levers: dehumidifier targets, markup and volume, plus the red alarm button
+    [['grow', -0.5, 'DRY GROW', 'ctlLever'], ['dry', -0.27, 'DRY ROOM', 'ctlLever'], ['markup', -0.04, 'MARKUP', 'ctlMarkup'], ['volume', 0.19, 'VOLUME', 'ctlVol']].forEach(function (l) {
+      var y = -0.62, z = -0.295; cm(new THREE.BoxGeometry(0.03, 0.2, 0.01), MAT.black, l[1], y, z); var lg = new THREE.Group(); lg.position.set(l[1], y, z); cg.add(lg); cm(new THREE.CylinderGeometry(0.008, 0.008, 0.14, 8), MAT.chrome, 0, 0.07, 0.03, lg).rotation.x = 0; var knobL = cm(new THREE.SphereGeometry(0.02, 10, 8), new THREE.MeshStandardMaterial({ color: 0xc94a3a, roughness: 0.4 }), 0, 0.14, 0.03, lg); world.ctl.levers[l[0]] = lg;
+      var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.03), new THREE.MeshBasicMaterial({ map: textTex([l[2]], 200, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(l[1], y - 0.14, z + 0.001); cg.add(lbl);
+      var lh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.3, 0.1), MAT.none); lh.position.set(l[1], y, z + 0.03); cg.add(lh); interactable(lh, { kind: l[3], id: l[0] });
+    });
+    cm(new THREE.CylinderGeometry(0.05, 0.055, 0.02, 20), MAT.black, 0.5, -0.62, -0.29).rotation.x = Math.PI / 2; var pb = cm(new THREE.CylinderGeometry(0.038, 0.04, 0.035, 20), new THREE.MeshStandardMaterial({ color: 0xd0201a, roughness: 0.35 }), 0.5, -0.62, -0.27); pb.rotation.x = Math.PI / 2; world.ctl.panicBtn = pb;
+    var pl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.03), new THREE.MeshBasicMaterial({ map: textTex(['SILENT ALARM'], 200, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); pl.position.set(0.5, -0.76, -0.294); cg.add(pl);
+    var ph = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.1), MAT.none); ph.position.set(0.5, -0.62, -0.26); cg.add(ph); interactable(ph, { kind: 'ctlPanic' });
+    // a row of room lights: a LED and a button each
+    var rooms = Object.keys(ROOM_NAMES), rw = 1.2 / rooms.length;
+    rooms.forEach(function (rm, i) { var x = -0.6 + rw * (i + 0.5), y = -0.86, z = -0.295; var led = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xffe08a, emissiveIntensity: 2 }), x, y + 0.05, z + 0.002); world.ctl.roomLeds[rm] = led; cm(new THREE.CylinderGeometry(0.018, 0.02, 0.015, 12), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 }), x, y, z + 0.005).rotation.x = Math.PI / 2; var lbl = new THREE.Mesh(new THREE.PlaneGeometry(rw - 0.01, 0.026), new THREE.MeshBasicMaterial({ map: textTex([ROOM_NAMES[rm].toUpperCase().replace(' & ', '/')], 200, 30, { size: 20, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(x, y - 0.05, z + 0.001); cg.add(lbl); var rh = new THREE.Mesh(new THREE.BoxGeometry(rw - 0.01, 0.13, 0.08), MAT.none); rh.position.set(x, y - 0.01, z + 0.02); cg.add(rh); interactable(rh, { kind: 'ctlRoom', id: rm }); });
+    var conduit = cm(new THREE.CylinderGeometry(0.02, 0.02, 0.9, 8), panelM, 0.6, 1.4, -0.3);
+    world.obstacles.push({ x1: bx - 0.08, x2: SEC.x2, z1: bz - 0.74, z2: bz + 0.74, tag: 'ctlBox' });
+    var ctlSign = signPlane(['SHOP CONTROLS', 'E on the doors opens the cabinet'], 0.9, 0.3, SEC.x2 - 0.02, 2.45, bz, -Math.PI / 2, { titleColor: '#ffc857' }); fixtureAdd('ctlBox', 'control cabinet', [cg, ctlSign], -Math.PI / 2);
     drawCtlScreen();
     // Two satellite panels: one behind the register, one in the office. Smaller box, fewer switches.
     [
@@ -5210,6 +5547,78 @@
   function toggleStaffDoor() { shop().staffDoor = !shop().staffDoor; staffDoorAuto = false; syncStaffDoorObstacle(); sfx('door'); toast(shop().staffDoor ? 'Staff door open' : 'Staff door closed', ''); applyShopState(); save(); }
   function updateStaffDoor(dt) { if (!staffDoor.g) return; var staffNear = crew.some(function (r) { return r.g && Math.hypot(r.g.position.x - 10, r.g.position.z - 4) < 1.1; }) || (guard.h && guard.walking && Math.hypot(guard.h.position.x - 10, guard.h.position.z - 4) < 1.1); var target = (shop().staffDoor || staffNear) ? 1 : 0; staffDoor.t = lerp(staffDoor.t, target, 1 - Math.pow(0.01, dt)); staffDoor.g.rotation.y = -staffDoor.t * 1.75;
     if (world.frontDoor) { var fd = world.frontDoor; var ft = shop().open ? 1 : 0; fd.t = lerp(fd.t, ft, 1 - Math.pow(0.01, dt)); fd.g.rotation.y = fd.t * 1.6; } }
+
+  // ── the control cabinet: doors, the hanging tablet and the switch bank talk to the same shop state the old panel did ──
+  var CTL_PAGES = ['shop', 'rooms', 'curtains', 'doors', 'climate', 'radio'], CTL_LABEL = { shop: 'Shop', rooms: 'Rooms', curtains: 'Curtains', doors: 'Doors', climate: 'Climate', radio: 'Radio & price' };
+  function ctlAct(act, id) { var el = document.createElement('button'); el.setAttribute('data-act', act); if (id !== undefined && id !== null) el.setAttribute('data-id', String(id)); panelClick({ target: el }); }   /* the cabinet reuses the panel's own actions, so both stay one behaviour */
+  function ctlDoorSet(open) { if (!world.ctl) return; world.ctl.doorOpen = open; sfx('door'); toast(open ? '🗄️ Opened the control cabinet' : '🗄️ Closed the control cabinet', ''); }
+  function ctlMarkupStep() { var sh = shop(), v = Math.round(((sh.markup || 1) + 0.05) * 100) / 100; if (v > 1.3) v = 0.8; sh.markup = v; sfx('click'); toast('💲 Markup ' + Math.round(v * 100) + '%', ''); save(); ui.refreshOpen(); }
+  function ctlVolumeStep() { var sh = shop(), v = Math.round(((sh.volume || 0) + 0.25) * 100) / 100; if (v > 1) v = 0; sh.volume = v; sfx('click'); toast('🔊 Volume ' + Math.round(v * 100) + '%', ''); save(); ui.refreshOpen(); }
+  function ctlKnobStep() { var i = STATION_ORDER.indexOf(shop().radio); ctlAct('radioSet', STATION_ORDER[(i + 1) % STATION_ORDER.length]); }
+  function drawCtlClimate() {
+    if (!world.ctl || !world.ctl.canvas2) return; var c = world.ctl.canvas2, ctx = c.getContext('2d'), X = xs();
+    ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, 256, 128); ctx.strokeStyle = 'rgba(111,220,140,.35)'; ctx.lineWidth = 2; ctx.strokeRect(3, 3, 250, 122); ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    ctx.font = '600 18px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#9fb8a6'; ctx.fillText('GROW RH', 14, 12); ctx.fillText('DRY RH', 134, 12);
+    ctx.font = '700 30px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = S.rh.grow > 60 ? '#ff6b6b' : '#c9dccd'; ctx.fillText(Math.round(S.rh.grow) + '%', 14, 32); ctx.fillStyle = S.rh.dry > 60 ? '#ff6b6b' : S.rh.dry < 55 ? '#6fdc8c' : '#c9dccd'; ctx.fillText(Math.round(S.rh.dry) + '%', 134, 32);
+    ctx.font = '16px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#9fb8a6'; ctx.fillText(dehumLabel('grow'), 14, 66); ctx.fillText(dehumLabel('dry'), 134, 66);
+    ctx.fillStyle = '#c9dccd'; ctx.fillText('markup ' + Math.round((shop().markup || 1) * 100) + '%   vol ' + Math.round((shop().volume || 0) * 100) + '%', 14, 92); ctx.fillStyle = X.heat >= 60 ? '#ff6b6b' : '#9fb8a6'; ctx.fillText('heat ' + Math.round(X.heat), 14, 110);
+    world.ctl.tex2.needsUpdate = true;
+  }
+  function cabinetSync() {
+    var C = world.ctl; if (!C || !C.levers) return; var sh = shop();
+    if (C.rockers.roller) C.rockers.roller.rotation.x = world.rollerOpen ? -0.35 : 0.35; if (C.rockers.gate) C.rockers.gate.rotation.x = world.gateOpen ? -0.35 : 0.35;
+    if (C.rockers.rollerLed) C.rockers.rollerLed.material.emissiveIntensity = world.rollerOpen ? 2 : 0.1; if (C.rockers.gateLed) C.rockers.gateLed.material.emissiveIntensity = world.gateOpen ? 2 : 0.1;
+    if (C.rockers.openLed) C.rockers.openLed.material.emissiveIntensity = sh.open ? 2 : 0.1; if (C.rockers.lightsLed) C.rockers.lightsLed.material.emissiveIntensity = sh.lights ? 2 : 0.1; if (C.rockers.staffDoorLed) C.rockers.staffDoorLed.material.emissiveIntensity = sh.staffDoor ? 2 : 0.1;
+    var st = dehumSteps(); ['grow', 'dry'].forEach(function (z) { var i = Math.max(0, st.indexOf(S.dehum[z])); C.levers[z].rotation.x = 0.55 - (i / Math.max(1, st.length - 1)) * 1.1; });
+    C.levers.markup.rotation.x = 0.55 - (((sh.markup || 1) - 0.8) / 0.5) * 1.1; C.levers.volume.rotation.x = 0.55 - (sh.volume || 0) * 1.1;
+    Object.keys(C.roomLeds).forEach(function (rm) { C.roomLeds[rm].material.emissiveIntensity = sh.lights && powerOn() && roomLit(rm) ? 2 : 0.1; });
+    if (C.panicBtn) C.panicBtn.material.emissive = new THREE.Color(heist.on && heist.masked ? 0xd0201a : 0x000000);
+    drawCtlClimate();
+  }
+  function cabinetTick(dt) {
+    var C = world.ctl; if (!C || !C.doors) return;
+    var want = C.doorOpen ? 1 : 0; if (C.doorT !== want) { C.doorT = clamp(C.doorT + (want ? dt * 1.6 : -dt * 1.6), 0, 1); var a = (1 - Math.cos(C.doorT * Math.PI)) / 2 * 1.9; C.doors.forEach(function (d) { d.g.rotation.y = -a * d.dir; }); }
+    if (now() - C.lastTick > 1000) { C.lastTick = now(); cabinetSync(); }
+  }
+  function drawCtlTablet(sc, ctx) {
+    var W = sc.w, H = sc.h, page = CTL_PAGES[world.ctl.page || 0], sh = shop(), o = { size: 18 };
+    ctx.fillStyle = '#0a110d'; ctx.fillRect(0, 0, W, H); var grd = ctx.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, 'rgba(111,220,140,.12)'); grd.addColorStop(0.4, 'rgba(0,0,0,0)'); ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = DESK_OK; ctx.font = '800 30px ' + DESK_FONT; ctx.fillText('SHOP CONTROLS', 30, 20);
+    ctx.textAlign = 'right'; ctx.fillStyle = sh.open ? DESK_OK : DESK_BAD; ctx.font = '700 26px "Cascadia Mono",Consolas,monospace'; ctx.fillText(sh.open ? 'OPEN' : 'CLOSED', W - 30, 22); ctx.textAlign = 'left';
+    var tw = (W - 60 - 300 - 5 * 8) / 6; CTL_PAGES.forEach(function (p, i) { tBtn(sc, ctx, 300 + i * (tw + 8), 16, tw, 42, CTL_LABEL[p], 'page', i, CTL_LABEL[p], i === (world.ctl.page || 0), { size: 17 }); });
+    ctx.fillStyle = 'rgba(111,220,140,.25)'; ctx.fillRect(30, 72, W - 60, 2);
+    var y = 92, bw = (W - 60 - 2 * 14) / 3;
+    function grid(items, cols, h, gap) { var w = (W - 60 - (cols - 1) * gap) / cols; items.forEach(function (it, i) { tBtn(sc, ctx, 30 + (i % cols) * (w + gap), y + Math.floor(i / cols) * (h + gap), w, h, it[0], it[1], it[2], it[3] || it[0], !!it[4], { size: it[5] || 19, sub: it[6] }); }); y += Math.ceil(items.length / cols) * (h + gap); }
+    if (page === 'shop') {
+      grid([[sh.open ? '🔴 Close the shop' : '🟢 Open the shop', 'shopToggle', 0, sh.open ? 'Close the shop' : 'Open the shop', sh.open, 22], [sh.lights ? '🌑 Lights off' : '💡 Lights on', 'lightsToggle', 0, sh.lights ? 'All lights off' : 'All lights on', sh.lights, 22], [sh.staffDoor ? '🚪 Close staff door' : '🚪 Open staff door', 'staffDoorToggle', 0, sh.staffDoor ? 'Close the staff door' : 'Open the staff door', sh.staffDoor, 22],
+        ['Roller door ' + (world.rollerOpen ? 'open' : 'closed'), 'rollerToggle', 0, world.rollerOpen ? 'Close the roller door' : 'Open the roller door', world.rollerOpen, 20], ['Yard gate ' + (world.gateOpen ? 'open' : 'closed'), 'gateToggle', 0, world.gateOpen ? 'Close the yard gate' : 'Open the yard gate', world.gateOpen, 20], ['📺 TV: next channel', 'tvNext', 0, 'Next TV channel', false, 20]], 3, 110, 14);
+      ctx.fillStyle = DESK_DIM; ctx.font = '17px ' + DESK_FONT; ctx.fillText('Closed means no new customers walk in; the one at the window leaves. The switches under this screen do the same jobs.', 30, y + 10);
+    }
+    else if (page === 'rooms') { grid(Object.keys(ROOM_NAMES).map(function (r) { return [ROOM_NAMES[r], 'roomLight', r, 'Lights: ' + ROOM_NAMES[r], sh.lights && powerOn() && roomLit(r), 20]; }), 3, 88, 12); ctx.fillStyle = DESK_DIM; ctx.font = '17px ' + DESK_FONT; ctx.fillText(sh.lights ? 'Tap a room to switch its lights.' : 'The lights are off. Tap a room and only that one comes on.', 30, y + 10); }
+    else if (page === 'curtains') { grid(Object.keys(curtains).map(function (k) { return [curtains[k].label + ': ' + (curtainOpen(k) ? 'open' : 'closed'), 'curtainToggle', k, (curtainOpen(k) ? 'Close the ' : 'Open the ') + curtains[k].label, curtainOpen(k), 19]; }), 3, 88, 12); y += 6; grid([['Open all', 'curtainsOpen', 0, 'Open every curtain', false, 20], ['Close all', 'curtainsClose', 0, 'Close every curtain', false, 20]], 2, 64, 14); }
+    else if (page === 'doors') {
+      var list = DOORS.slice(0, 10), dw = (W - 60 - 12) / 2, dh = 66;
+      list.forEach(function (d, i) { var x = 30 + (i % 2) * (dw + 12), yy = y + Math.floor(i / 2) * (dh + 8); ctx.fillStyle = 'rgba(255,255,255,.05)'; roundRect(ctx, x, yy, dw, dh, 10); ctx.fill(); deskDot(ctx, x + 22, yy + 33, d.locked ? DESK_BAD : d.open ? DESK_OK : DESK_DIM, 8); ctx.fillStyle = DESK_INK; ctx.font = '700 19px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, d.name || d.label, dw - 330), x + 42, yy + 10); ctx.fillStyle = DESK_DIM; ctx.font = '15px ' + DESK_FONT; ctx.fillText((d.locked ? 'locked' : d.open ? 'open' : 'shut') + (staffKey(d.id) ? ' · staff key' : ' · no staff key'), x + 42, yy + 37); tBtn(sc, ctx, x + dw - 300, yy + 12, 90, 42, d.open ? 'Shut' : 'Open', 'doorToggle', d.id, (d.open ? 'Shut the ' : 'Open the ') + d.label, false, { size: 16 }); tBtn(sc, ctx, x + dw - 202, yy + 12, 90, 42, d.locked ? 'Unlock' : 'Lock', 'doorLock', d.id, (d.locked ? 'Unlock the ' : 'Lock the ') + d.label, d.locked, { size: 16, col: DESK_BAD, fill: 'rgba(255,107,107,.25)' }); tBtn(sc, ctx, x + dw - 104, yy + 12, 90, 42, 'Key', 'doorKey', d.id, (staffKey(d.id) ? 'Take the staff key back for the ' : 'Give the staff a key to the ') + d.label, staffKey(d.id), { size: 16 }); });
+      y += Math.ceil(list.length / 2) * (dh + 8) + 6; grid([['Open all', 'doorsAll', 'open', 'Open every door', false, 18], ['Shut all', 'doorsAll', 'close', 'Shut every door', false, 18], ['🔒 Lock all', 'doorsAll', 'lock', 'Lock every door', false, 18], ['Unlock all', 'doorsAll', 'unlock', 'Unlock every door', false, 18]], 4, 52, 12);
+    }
+    else if (page === 'climate') {
+      ['grow', 'dry'].forEach(function (z) { ctx.fillStyle = DESK_INK; ctx.font = '700 22px ' + DESK_FONT; ctx.fillText((z === 'grow' ? 'Grow room' : 'Dry & cure room') + ' · RH ' + Math.round(S.rh[z]) + '% · dehumidifier ' + dehumLabel(z), 30, y); y += 34; grid(dehumSteps().map(function (t) { return [t ? t + '%' : 'off', 'dehumSet', z + ':' + t, (z === 'grow' ? 'Grow room' : 'Dry room') + ' dehumidifier ' + (t ? 'to ' + t + '%' : 'off'), S.dehum[z] === t, 22]; }), dehumSteps().length, 64, 10); y += 16; });
+      ctx.fillStyle = DESK_DIM; ctx.font = '17px ' + DESK_FONT; ctx.fillText('Drying speeds up below 55% RH and mould spreads above 60%. Air under 42% makes plants thirstier.', 30, y);
+    }
+    else {
+      ctx.fillStyle = DESK_INK; ctx.font = '700 22px ' + DESK_FONT; ctx.fillText('♪ Radio', 30, y); y += 34; grid(STATION_ORDER.map(function (k) { return [(k === 'off' ? '⏻ ' : '♪ ') + STATIONS[k].name, 'radioSet', k, STATIONS[k].name, sh.radio === k, 19]; }), STATION_ORDER.length, 64, 10); y += 10;
+      ctx.fillStyle = DESK_INK; ctx.font = '700 22px ' + DESK_FONT; ctx.fillText('🔊 Volume ' + Math.round((sh.volume || 0) * 100) + '%', 30, y); y += 34; grid([0, 0.25, 0.5, 0.75, 1].map(function (v) { return [Math.round(v * 100) + '%', 'volume', v, 'Volume ' + Math.round(v * 100) + '%', Math.abs((sh.volume || 0) - v) < 0.01, 19]; }), 5, 56, 10); y += 10;
+      ctx.fillStyle = DESK_INK; ctx.font = '700 22px ' + DESK_FONT; ctx.fillText('💲 Markup ' + Math.round((sh.markup || 1) * 100) + '%  ·  above 100% every price rises but customers come less often', 30, y); y += 34; grid([0.8, 0.9, 1, 1.1, 1.2, 1.3].map(function (v) { return [Math.round(v * 100) + '%', 'markup', v, 'Markup ' + Math.round(v * 100) + '%', Math.abs((sh.markup || 1) - v) < 0.01, 19]; }), 6, 56, 10);
+    }
+  }
+  function ctlTap(z) {
+    if (!z) return; sfx('click');
+    if (z.act === 'page') world.ctl.page = z.id;
+    else if (z.act === 'volume') { shop().volume = +z.id; save(); ui.refreshOpen(); }
+    else if (z.act === 'markup') { shop().markup = +z.id; save(); ui.refreshOpen(); }
+    else ctlAct(z.act, z.id);
+    cabinetSync();
+  }
   function drawCtlScreen() {
     if (!world.ctl || !world.ctl.canvas) return; var c = world.ctl.canvas, ctx = c.getContext('2d'), sh = shop();
     ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, 256, 128); ctx.strokeStyle = 'rgba(111,220,140,.35)'; ctx.lineWidth = 2; ctx.strokeRect(3, 3, 250, 122);
@@ -5217,7 +5626,7 @@
     ctx.font = '18px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#9fb8a6'; ctx.textAlign = 'right'; ctx.fillText(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), 242, 18); ctx.textAlign = 'left';
     ctx.fillStyle = '#c9dccd'; ctx.fillText('lights  ' + (sh.lights ? 'ON' : 'OFF'), 14, 52); ctx.fillText('door    ' + (sh.staffDoor ? 'OPEN' : 'SHUT'), 14, 74); ctx.fillText('radio   ' + STATIONS[sh.radio].name.toUpperCase().slice(0, 14), 14, 96);
     var closed = Object.keys(curtains).filter(function (k) { return !curtainOpen(k); }).length; ctx.textAlign = 'right'; ctx.fillStyle = '#9fb8a6'; ctx.fillText(closed + '/' + Object.keys(curtains).length + ' drawn', 242, 96); ctx.textAlign = 'left';
-    world.ctl.tex.needsUpdate = true;
+    world.ctl.tex.needsUpdate = true; cabinetSync();
   }
   function applyShopState() {
     world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'frontdoor'; }); if (!shop().open) world.obstacles.push({ x1: -0.8, x2: 0.8, z1: ROOM.z - 0.2, z2: ROOM.z + 0.2, tag: 'frontdoor', floorLevel: 0 });   // a locked front door is a wall
@@ -5715,15 +6124,13 @@
     c.box(1.6, 0.05, 0.72, MAT.wood, 0, 0.78, 0, { solid: true }); c.box(1.62, 0.02, 0.74, MAT.darkwood, 0, 0.745, 0, { cast: false });
     c.box(0.06, 0.78, 0.06, MAT.metal, -0.74, 0.39, -0.3); c.box(0.06, 0.78, 0.06, MAT.metal, -0.74, 0.39, 0.3); c.box(0.06, 0.02, 0.6, MAT.metal, -0.74, 0.01, 0);
     c.box(0.45, 0.7, 0.66, MAT.darkwood, 0.55, 0.36, 0, { cast: false }); drawer(c, 0.41, 0.18, 0.62, 0.55, 0.6, 0); drawer(c, 0.41, 0.18, 0.62, 0.55, 0.38, 0); drawer(c, 0.41, 0.18, 0.62, 0.55, 0.16, 0);
-    var lap = new THREE.Group(); lap.position.set(-0.15, 0.81, 0.05); c.add(lap);
-    var base = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.018, 0.26), MAT.plastic); base.castShadow = true; lap.add(base);
-    var kb = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.004, 0.11), MAT.black); kb.position.set(0, 0.011, -0.02); lap.add(kb);
-    for (var kr = 0; kr < 4; kr++) for (var kc = 0; kc < 12; kc++) { var key = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.003, 0.02), colorMat(0x3a3f46, 0.5)); key.position.set(-0.135 + kc * 0.0245, 0.014, -0.06 + kr * 0.026); lap.add(key); }
-    var tp = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.002, 0.06), colorMat(0x3a3f46, 0.3)); tp.position.set(0, 0.011, 0.085); lap.add(tp);
-    var lid = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.012), MAT.plastic); lid.position.set(0, 0.12, -0.135); lid.rotation.x = -0.28; lap.add(lid);
-    var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.2), MAT.screen); scr.position.set(0, 0.123, -0.128); scr.rotation.x = -0.28; lap.add(scr);
-    var logo = new THREE.Mesh(new THREE.CircleGeometry(0.02, 12), glowMat(0x6fdc8c, 0.8)); logo.position.set(0, 0.13, -0.142); logo.rotation.set(-0.28, Math.PI, 0); lap.add(logo);
-    c.hit(0.5, 0.4, 0.5, -0.15, 0.95, 0.05, { kind: 'laptop', label: 'Laptop', prompt: 'Order supplies & upgrades' });
+    // the PC: a monitor on a stand, a keyboard and a tower under the desk; sit at the desk and E on it brings up its desktop
+    var pcM = colorMat(0x1b1f24, 0.4, 0.5); c.box(0.2, 0.015, 0.14, pcM, -0.15, 0.815, -0.12, { cast: false }); c.cyl(0.02, 0.025, 0.12, MAT.chrome, -0.15, 0.88, -0.14, 10);
+    var pcMon = c.box(0.5, 0.31, 0.02, pcM, -0.15, 1.09, -0.14); pcMon.rotation.x = -0.08;
+    var pcScr = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.27), new THREE.MeshBasicMaterial({ map: textTex(['GROW CO. OS', 'sit down and press E'], 460, 270, { size: 34, bg: '#0d1a26', color: '#8fb8d8', titleColor: '#6fdc8c' }) })); pcScr.position.set(-0.15, 1.09, -0.128); pcScr.rotation.x = -0.08; c.add(pcScr);
+    c.box(0.38, 0.012, 0.13, colorMat(0x2a2f36, 0.5), -0.15, 0.816, 0.12, { cast: false }); for (var kr = 0; kr < 4; kr++) for (var kc = 0; kc < 12; kc++) c.box(0.024, 0.004, 0.022, colorMat(0x3a3f46, 0.5), -0.31 + kc * 0.029, 0.824, 0.075 + kr * 0.028, { cast: false });
+    c.box(0.18, 0.42, 0.42, pcM, -0.35, 0.22, -0.05); c.box(0.02, 0.01, 0.06, glowMat(0x6fdc8c, 1), -0.26, 0.38, 0.15, { cast: false });
+    c.hit(0.56, 0.4, 0.3, -0.15, 1.05, -0.1, { kind: 'laptop', label: 'PC', prompt: 'Use the PC' });
     var mouse = c.box(0.06, 0.025, 0.1, colorMat(0xe8e8ec, 0.4), 0.15, 0.82, 0.1); mouse.rotation.y = 0.2;
     c.cyl(0.03, 0.03, 0.4, MAT.chrome, -0.65, 1.0, -0.2, 8); c.cyl(0.07, 0.08, 0.02, MAT.plastic, -0.65, 0.81, -0.2, 16); var shade = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.16, 16, 1, true), lampM); shade.position.set(-0.65, 1.22, -0.2); shade.rotation.z = 0.25; c.add(shade); var bulb = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), glowMat(0xffe9b0, 1.2)); bulb.position.set(-0.62, 1.18, -0.2); c.add(bulb);
     c.light(new THREE.PointLight(0xffe0a8, 0.35, 2.5), -0.6, 1.15, -0.1);
@@ -5733,7 +6140,7 @@
     c.box(0.1, 0.06, 0.04, MAT.black, -0.1, 0.5, -0.33, { cast: false }); c.cyl(0.008, 0.008, 0.5, MAT.black, -0.1, 0.25, -0.35, 5);   // cable tidy + power lead
     c.box(1.62, 0.05, 0.05, MAT.darkwood, 0, 0.755, -0.37, { cast: false });
     officeChairBuild({ box: function (w, h, d, mat, x, y, z, o) { return c.box(w, h, d, mat, x, y + 0, z + 0.75, o); }, cyl: function (rt, rb, h, mat, x, y, z, s) { return c.cyl(rt, rb, h, mat, x, y, z + 0.75, s); }, solid: function (a, b, d, e) { c.solid(a, b, d + 0.75, e + 0.75); } });
-    c.placard(['SUPPLY DESK', 'laptop: shop · seeds · gear'], 0.6, 0.2, 0.55, 1.05, -0.2, { titleColor: '#6fdc8c' });
+    c.placard(['SUPPLY DESK', 'the PC: shop · seeds · gear'], 0.6, 0.2, 0.55, 1.05, -0.2, { titleColor: '#6fdc8c' });
   } });
   defProp('tabletDock', { label: 'tablet dock', x: -10.4, z: 3.55, rot: 2, build: function (c) {
     // a charging plinth against the office wall: the tablet stands in the cradle, screen out, until you take it
@@ -6938,12 +7345,23 @@
     if (d.kind === 'rackItem') { var n = d.item.indexOf('seed_') === 0 ? (S.supplies[d.item] || 0) : (S.supplies[d.item] || 0); return 'Take ' + d.label + ' <small>' + n + ' on the supply rack</small>'; }
     if (d.kind === 'inventory' && h && h.kind === 'crate') return (h.item.indexOf('seed_') === 0 || (supplyById(h.item) && !supplyById(h.item).stock)) ? 'Stock the supply rack with ' + h.n + ' × ' + itemName(h.item) : 'That goes in a machine, not on the supply rack';
     if (d.kind === 'inventory') return 'Supply rack <small>' + (S.supplies.soil || 0) + ' soil · ' + (S.supplies.nutrients || 0) + ' nutrients · ' + (S.supplies.remedy || 0) + ' spray · ' + ((S.supplies.pot || 0) - S.plants.length) + ' pots</small>';
-    if (d.kind === 'laptop') return 'Use the laptop <small>supplies · seed bank · gear · licences · staff · bank</small>';
+    if (d.kind === 'laptop') return 'Use the PC <small>' + (sit.on && sit.spot === world.officeSeat ? 'supplies · seed bank · gear · licences · staff · bank' : 'E sits you at the desk and brings up the desktop') + '</small>';
     if (d.kind === 'bench') { if (h && h.kind === 'jar') return 'Empty jar into the ' + strainById(h.strain || 'sunflower').name + ' stash <small>' + gram(h.grams) + '</small>'; if (h && h.kind === 'harvest') return 'Hang it on the drying line first'; return 'Workbench <small>' + gram(S.cured.g) + ' cured · ' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints</small>'; }
     if (d.kind === 'lot' && !shutterOpen('goodsShelf')) return 'Goods shelf <small>' + (isLocked('goodsShelf') ? '🔒 locked' : 'gate down') + '</small>';
     if (d.kind === 'lot') { var lot0 = lotOf(d.item, d.strain), sn = strainById(d.strain).name; if (h && (h.kind !== d.item || (h.strain && h.strain !== d.strain)) && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; var lot = pileLot(d.item, h, d.strain); return 'Take 1 ' + sn + ' ' + kindName(d.item, 1) + ' <small>' + lot0.n + ' on the shelf · q' + Math.round(lot0.n ? lot0.qSum / lot0.n : 0) + ' · Shift+E takes ' + lot + (S.customer && S.customer.arrived && S.customer.want === d.item ? ' · ' + S.customer.who + ' wants ' + wantText(S.customer) : '') + '</small>'; }
     if (d.kind === 'goodsShelf') { if (isLocked('goodsShelf')) return 'Goods shelf <small>🔒 locked · Shift+E with the keyring</small>'; if (!shutterOpen('goodsShelf')) return 'Goods shelf <small>gate down · E rolls it up' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; return 'Goods shelf <small>' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints · aim at a strain' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; }
-    if (d.kind === 'register' && heistDemander()) return 'Hand over the till <small>' + money(S.till + S.tips) + ' · nobody gets hurt</small>';
+    if ((d.kind === 'register' || d.kind === 'pos') && heistDemander()) return 'Hand over the till <small>' + money(S.till + S.tips) + ' · nobody gets hurt</small>';
+    if (d.kind === 'ctlDoor') return world.ctl.doorOpen ? 'Close the control cabinet' : 'Open the control cabinet <small>the tablet and the switches are inside</small>';
+    if (d.kind === 'ctlTablet') return touchPrompt(world.ctl.sc, 'Controls tablet', CTL_LABEL[CTL_PAGES[world.ctl.page || 0]] + ' · touch screen: E taps, wheel flips');
+    if (d.kind === 'ctlSwitch') { var sw = { open: ['Shop', shop().open ? 'open' : 'closed'], lights: ['Lights', shop().lights ? 'on' : 'off'], staffDoor: ['Staff door', shop().staffDoor ? 'open' : 'closed'], roller: ['Roller door', world.rollerOpen ? 'open' : 'closed'], gate: ['Yard gate', world.gateOpen ? 'open' : 'closed'] }[d.id]; return 'Flip the ' + sw[0].toLowerCase() + ' switch <small>' + sw[1] + '</small>'; }
+    if (d.kind === 'ctlRoom') return 'Lights: ' + ROOM_NAMES[d.id] + ' <small>' + (shop().lights && powerOn() && roomLit(d.id) ? 'on' : 'off') + '</small>';
+    if (d.kind === 'ctlLever') return 'Dehumidifier lever <small>' + (d.id === 'grow' ? 'grow room' : 'dry room') + ' · ' + dehumLabel(d.id) + ' · E steps it</small>';
+    if (d.kind === 'ctlMarkup') return 'Markup lever <small>' + Math.round((shop().markup || 1) * 100) + '% · E steps it</small>';
+    if (d.kind === 'ctlVol') return 'Volume lever <small>' + Math.round((shop().volume || 0) * 100) + '% · E steps it</small>';
+    if (d.kind === 'ctlKnob') return 'Radio knob <small>' + STATIONS[shop().radio].name + ' · E turns it</small>';
+    if (d.kind === 'ctlPanic') return 'Silent alarm <small>' + (S.upgrades.panic ? (heist.on && heist.masked ? 'PRESS IT' : 'armed') : 'not installed: Gear on the office PC') + '</small>';
+    if (d.kind === 'pos') return touchPrompt(world.reg.sc, 'Till', S.customer && S.customer.stage ? 'take the payment on the screen' : 'touch screen: look and press E');
+    if (d.kind === 'secscreen') return touchPrompt(secScreen.sc, 'Security screen', SEC_PAGE_LABEL[SEC_PAGES[secScreen.page]] + ' · touch screen: E taps, wheel flips');
     if (d.kind === 'register' && h && h.kind === 'crate') return (supplyById(h.item) && supplyById(h.item).stock === 'display') ? 'Stock the counter display with ' + h.n + ' × ' + itemName(h.item) + ' <small>' + (S.display[h.item] || 0) + ' there now</small>' : 'That doesn\'t go on the counter display';
     if (d.kind === 'register') { if (S.customer && S.customer.stage) return 'Take payment from ' + S.customer.who + ' <small>' + money(S.customer.due) + ' by ' + S.customer.pay + '</small>'; if (!h && S.till > 0) return 'Empty the till <small>' + money(S.till) + ' · Shift+E opens the till</small>'; if (h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies')) { var wl = walkupLeft(), wn = Math.min(h.n, wl); return wl <= 0 ? 'Till closed to walk-ups <small>back tomorrow · serve the window instead</small>' : 'Ring up ' + wn + ' ' + kindName(h.kind, wn) + ' as a walk-up <small>' + money(unitPrice(h.kind, h.qSum / h.n, h.thcSum / h.n) * wn * WALKUP_RATE) + ' at 85% · ' + wl + ' left today</small>'; } return 'Till <small>prices & diary · bring goods to sell</small>'; }
     if (d.kind === 'jar') { var b = batchById(d.bid); if (!b) return 'Jar'; if (h) return 'Hands full <small>G to put down</small>'; return 'Take jar <small>' + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + ' · curing</small>'; }
@@ -7046,20 +7464,20 @@
       else ctxPlant(d.pid);
     }
     else if (d.kind === 'slot') {
-      if (d.noPot) { toast('No pot here. Buy one at the laptop.', 'bad'); return; }
+      if (d.noPot) { toast('No pot here. Buy one at the office PC.', 'bad'); return; }
       if (h && h.kind === 'soil') actions.fillSoil(d.slot);
       else if (h && h.kind === 'seed') actions.plant(h.strain, d.slot);
       else toast(S.potSoil && S.potSoil[d.slot] ? 'Bring a seed from the rack' : 'Bring a bag of soil from the rack', '');
     }
     else if (d.kind === 'rackItem') {
       if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; }
-      if ((S.supplies[d.item] || 0) < 1) { toast('None left. Order more at the laptop.', 'bad'); return; }
+      if ((S.supplies[d.item] || 0) < 1) { toast('None left. Order more at the office PC.', 'bad'); return; }
       S.supplies[d.item]--;
       if (d.item.indexOf('seed_') === 0) take({ kind: 'seed', strain: d.item.slice(5) }); else take({ kind: d.item }); dirtySupply(d.item);
       toast('Took ' + d.label, 'good');
     }
     else if (d.kind === 'inventory') { if (h && h.kind === 'crate') { var okRack = h.item.indexOf('seed_') === 0 || (supplyById(h.item) && !supplyById(h.item).stock); if (!okRack) { toast('That goes in a machine, not on the rack', 'bad'); return; } S.supplies[h.item] = (S.supplies[h.item] || 0) + h.n; sfx('putdown'); toast('🧰 Stocked the supply rack: ' + h.n + ' × ' + itemName(h.item), 'good'); logEvent('🧰 Supply rack stocked: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; dirtySupply(h.item); } else ui.openPanel('inventory'); }
-    else if (d.kind === 'laptop') ui.openPanel('laptop');
+    else if (d.kind === 'laptop') pcOpen();
     else if (d.kind === 'bench') { if (h && h.kind === 'jar') actions.collectHeld(); else if (h && h.kind === 'harvest') toast('Hang it on the drying line first (back-right)', 'bad'); else ui.openPanel('bench'); }
     else if (d.kind === 'lot' && !shutterOpen('goodsShelf')) { if (player.keys.ShiftLeft || player.keys.ShiftRight) toggleLock('goodsShelf'); else if (!lockedStop('goodsShelf')) setShutter('goodsShelf', true); }
     else if (d.kind === 'lot') {
@@ -7074,7 +7492,18 @@
     else if (d.kind === 'dehum') { dehumCycle(d.zone); }
     else if (d.kind === 'register' && heistDemander()) complyHeist();
     else if (d.kind === 'register' && h && h.kind === 'crate') { if (supplyById(h.item) && supplyById(h.item).stock === 'display') { S.display[h.item] = (S.display[h.item] || 0) + h.n; sfx('putdown'); toast('🧾 Counter display: +' + h.n + ' ' + itemName(h.item) + ' (' + S.display.lighter + ' lighters · ' + S.display.rpaper + ' papers · ' + S.display.rgrinder + ' grinders)', 'good'); logEvent('🧾 Stocked the counter display: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; world.dirtyDisplay = true; } else toast('That doesn\'t go on the counter display', 'bad'); }
-    else if (d.kind === 'register') { if (S.customer && S.customer.stage) ui.openPanel('register'); else if (h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies')) sellHeld(); else if (!h && S.till > 0 && !(player.keys.ShiftLeft || player.keys.ShiftRight)) { var tl = S.till; if (takeCash(tl, 'till')) S.till = 0; } else ui.openPanel('register'); }
+    else if (d.kind === 'register') { if (S.customer && S.customer.stage) toast('💳 Take the payment on the till screen: look at the tablet and press E', ''); else if (h && (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies')) sellHeld(); else if (!h && S.till > 0 && !(player.keys.ShiftLeft || player.keys.ShiftRight)) { var tl = S.till; if (takeCash(tl, 'till')) S.till = 0; } else toast('🧾 The till is the tablet on the counter: look at it and press E', ''); }
+    else if (d.kind === 'pos') { if (heistDemander()) complyHeist(); else touchTap(world.reg.sc); }
+    else if (d.kind === 'ctlDoor') ctlDoorSet(!world.ctl.doorOpen);
+    else if (d.kind === 'ctlTablet') touchTap(world.ctl.sc);
+    else if (d.kind === 'ctlSwitch') { ctlAct({ open: 'shopToggle', lights: 'lightsToggle', staffDoor: 'staffDoorToggle', roller: 'rollerToggle', gate: 'gateToggle' }[d.id]); cabinetSync(); }
+    else if (d.kind === 'ctlRoom') { ctlAct('roomLight', d.id); cabinetSync(); }
+    else if (d.kind === 'ctlLever') { dehumCycle(d.id); cabinetSync(); }
+    else if (d.kind === 'ctlMarkup') ctlMarkupStep();
+    else if (d.kind === 'ctlVol') ctlVolumeStep();
+    else if (d.kind === 'ctlKnob') { ctlKnobStep(); cabinetSync(); }
+    else if (d.kind === 'ctlPanic') panicButton();
+    else if (d.kind === 'secscreen') touchTap(secScreen.sc);
     else if (d.kind === 'jar') { if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } var b = batchById(d.bid); if (!b || !b.cured) return; S.batches = S.batches.filter(function (x) { return x.id !== d.bid; }); world.dirtyShelf = true; take({ kind: 'jar', bid: b.id, grams: b.grams, quality: b.quality, baseQ: b.baseQ, thc: b.thc, startedAt: b.startedAt, strain: b.strain }); toast('Took the jar. Empty it at the workbench.', 'good'); }
     else if (d.kind === 'line') { if (h && h.kind === 'harvest') actions.hang(); else ctxShelf(); }
     else if (d.kind === 'shelf') ctxShelf();
@@ -7220,7 +7649,7 @@
   }
   function ctxShelf() {
     var lines = [];
-    S.batches.forEach(function (b) { var drying = !b.cured; var dp = dryProgress(b); lines.push({ label: (drying ? '🌬️ ' : '🏺 ') + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + (drying ? ' · drying ' + Math.round(dp * 100) + '%' : jarWaits(b) ? ' · waiting for a jar (buy one at the laptop)' : ' · curing, quality rising') }); });
+    S.batches.forEach(function (b) { var drying = !b.cured; var dp = dryProgress(b); lines.push({ label: (drying ? '🌬️ ' : '🏺 ') + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + (drying ? ' · drying ' + Math.round(dp * 100) + '%' : jarWaits(b) ? ' · waiting for a jar (buy one at the office PC)' : ' · curing, quality rising') }); });
     if (!lines.length) lines.push({ label: 'Nothing here yet. Harvest a plant and hang it on the drying line.' });
     lines.push({ label: 'Dry batches go to the curing shelf in jars. Look at a jar and press E to carry it to the workbench.', cls: 'muted' });
     ctxOpen('🏺 Drying & curing', (S.upgrades.rack ? 'curing rack installed · faster, higher cap' : 'quality keeps rising while a batch cures') + ' · RH ' + Math.round(S.rh.dry) + '% · drying ×' + dryFactor().toFixed(1), lines);
@@ -7229,13 +7658,13 @@
   // ── UI: panels, menu, HUD ─────────────────────────────────────────
   var ui = {
     panelOpen: false, panelKind: null, panelTab: null, menuOpen: false, ctxOpen: false, started: false,
-    blocked: function () { return this.panelOpen || this.menuOpen || this.ctxOpen || this.taskOpen || !this.started; },
+    blocked: function () { return this.panelOpen || this.menuOpen || this.ctxOpen || this.taskOpen || this.pcOpen || this.deviceOpen || this.wheelOpen || !this.started; },
     openPanel: function (kind, tab) {
       this.panelKind = kind; this.panelTab = tab || (kind === 'laptop' ? 'shop' : kind === 'inventory' ? 'inv' : null);
       this.panelOpen = true; $('g3-panel').hidden = false; document.exitPointerLock(); this.render(); sfx(kind === 'laptop' ? 'type' : 'panel');
     },
     closePanel: function () { this.panelOpen = false; $('g3-panel').hidden = true; if (!this.menuOpen) lockPointer(); sfx('close'); },
-    refreshOpen: function () { if (this.panelOpen) this.render(); if (this.ctxOpen && this.ctxBtns) { /* ctx closes on action; nothing */ } },
+    refreshOpen: function () { if (this.panelOpen) this.render(); if (pc.open) pcRender(); if (dev.open) deviceRender(); if (this.ctxOpen && this.ctxBtns) { /* ctx closes on action; nothing */ } },
     render: function () {
       var kind = this.panelKind, tab = this.panelTab; var title = '', tabs = [], body = '';
       if (kind === 'laptop') { title = '💻 Supply desk'; tabs = [['shop', '🛒 Supplies'], ['seeds', '🌱 Seed bank'], ['gear', '⚙️ Gear'], ['lic', '🪪 Licences'], ['staff', '🧑‍🔧 Staff'], ['bank', '🏦 Bank']]; body = tab === 'seeds' ? paneSeeds() : tab === 'gear' ? paneUpgrades() : tab === 'lic' ? paneLicences() : tab === 'staff' ? paneStaff() : tab === 'bank' ? paneBank() : paneShop(); }
@@ -7359,8 +7788,8 @@
   function paneProcess() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🏺 Drying &amp; curing</h3><div class="desc">Harvests hang on the drying line, then go to the curing shelf in jars and keep gaining quality. Carry a jar here to empty it into the stash.</div>';
     if (!S.batches.length) h += '<div class="g3-empty">Nothing drying or curing. Harvest a plant and hang it on the drying line.</div>';
-    S.batches.forEach(function (b) { var drying = !b.cured; var dp = dryProgress(b); h += '<div class="g3-row"><span class="ico">' + (drying ? '🌬️' : '🏺') + '</span><span class="meta"><span class="n">' + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + '</span><span class="own">' + (drying ? 'drying ' + Math.round(dp * 100) + '% on the line' : jarWaits(b) ? 'waiting for a jar: ' + cureSlots() + ' batches cure at once, buy another jar at the laptop' : 'curing in a jar on the curing shelf. Carry it over when you like.') + '</span><div class="g3-bar' + (drying ? '' : ' q') + '"><span style="width:' + Math.round((drying ? dp : b.quality / 100) * 100) + '%"></span></div></span></div>'; });
-    h += '</div><div class="g3-box"><h3>✂️ Processing</h3><div class="desc">' + (S.supplies.grinder ? 'Grinder on the bench.' : '⚠ Buy a grinder at the laptop to process.') + '</div><div class="g3-chips">' + chip('stash', gram(S.cured.g) + (S.cured.g ? ' · q' + Math.round(curedAvgQ()) : '')) + chip('baggies', S.supplies.bag || 0) + chip('papers', S.supplies.paper || 0) + chip('tips', S.supplies.tip || 0) + chip('cookie mix', S.supplies.mix || 0) + '</div>' +
+    S.batches.forEach(function (b) { var drying = !b.cured; var dp = dryProgress(b); h += '<div class="g3-row"><span class="ico">' + (drying ? '🌬️' : '🏺') + '</span><span class="meta"><span class="n">' + gram(b.grams) + ' ' + strainById(b.strain || 'sunflower').name + ' · q' + Math.round(b.quality) + '</span><span class="own">' + (drying ? 'drying ' + Math.round(dp * 100) + '% on the line' : jarWaits(b) ? 'waiting for a jar: ' + cureSlots() + ' batches cure at once, buy another jar at the office PC' : 'curing in a jar on the curing shelf. Carry it over when you like.') + '</span><div class="g3-bar' + (drying ? '' : ' q') + '"><span style="width:' + Math.round((drying ? dp : b.quality / 100) * 100) + '%"></span></div></span></div>'; });
+    h += '</div><div class="g3-box"><h3>✂️ Processing</h3><div class="desc">' + (S.supplies.grinder ? 'Grinder on the bench.' : '⚠ Buy a grinder at the office PC to process.') + '</div><div class="g3-chips">' + chip('stash', gram(S.cured.g) + (S.cured.g ? ' · q' + Math.round(curedAvgQ()) : '')) + chip('baggies', S.supplies.bag || 0) + chip('papers', S.supplies.paper || 0) + chip('tips', S.supplies.tip || 0) + chip('cookie mix', S.supplies.mix || 0) + '</div>' +
       '<div class="desc">' + (S.upgrades.grinder2 ? 'Electric grinder' : 'Hand grinder: you turn it') + ' · ' + (S.upgrades.bagger ? 'auto-bagging line' : S.upgrades.scale ? 'digital scale' : 'kitchen scale: you weigh each eighth') + ' · ' + (S.upgrades.roller ? (S.upgrades.roller2 ? 'industrial roller' : 'rolling machine') : 'hand rolled') + ' · ' + (S.upgrades.oven ? 'convection oven' : 'home oven: you watch the bake') + '</div>' +
       STRAINS.filter(function (st) { return stashOf(st.id).g > 0; }).map(function (st) { var s = stashOf(st.id); return '<div class="g3-row"><span class="ico">' + st.emoji + '</span><span class="meta"><span class="n">' + st.name + ' <small>' + gram(s.g) + ' · q' + Math.round(s.qSum / s.g) + '</small></span><span class="own">bags ' + lotOf('bags', st.id).n + ' · joints ' + lotOf('joints', st.id).n + ' · cookies ' + lotOf('cookies', st.id).n + ' on the shelf</span></span></div><div class="g3-chips"><button class="g3-btn primary" data-act="bagOne" data-id="' + st.id + '">🛍️ Bag ' + bagGrams() + ' g</button>' + (S.upgrades.bagger ? '<button class="g3-btn" data-act="bagAll" data-id="' + st.id + '">🛍️ Bag all</button>' : '') + '<button class="g3-btn primary" data-act="rollOne" data-id="' + st.id + '">🚬 Roll ' + (S.upgrades.roller ? (S.upgrades.roller2 ? '10' : '5') : '1') + '</button>' + (S.upgrades.roller ? '<button class="g3-btn" data-act="rollAll" data-id="' + st.id + '">🚬 Roll all</button>' : '') + '<button class="g3-btn primary" data-act="bakeOne" data-id="' + st.id + '">🍪 Bake 6</button>' + (S.upgrades.oven ? '<button class="g3-btn" data-act="bakeAll" data-id="' + st.id + '">🍪 Bake all</button>' : '') + '</div>'; }).join('') +
       (S.cured.g > 0 ? '' : '<div class="g3-empty">Nothing in the stash. Empty a cured jar here first.</div>') +
@@ -7474,7 +7903,7 @@
   function paneStatsInner() { var days = Math.max(1, Math.floor((now() - (S.created || now())) / 86400000) + 1); return '<div class="g3-chips">' + chip('planted', S.stats.plants) + chip('harvested', gram(S.stats.harvested)) + chip('units sold', S.stats.sold) + chip('earned', money(S.stats.earned)) + chip('day', days) + chip('level', S.level) + chip('rep', Math.floor(S.rep)) + '</div>'; }
 
   // panel clicks
-  $('g3-panel-body').addEventListener('click', function (e) {
+  function panelClick(e) {
     var b = e.target.closest('[data-act]'); if (!b) return; var act = b.getAttribute('data-act'); var id = b.getAttribute('data-id'); sfx('click');
     if (runHooks(hooks.panelClick, act, b)) { afterAction(); return; }
     if (act === 'starter') { if (S.bank < starterCost()) { toast('The starter bundle is ' + money(starterCost()) + ', and the bank\'s short', 'bad'); return; } actions.buy('soil'); actions.buySeed('sunflower'); actions.buy('nutrients'); }
@@ -7519,7 +7948,8 @@
     else if (act === 'dehumSet') { var zp = id.split(':'); dehumSet(zp[0], +zp[1]); }
     else if (actions[act]) { actions[act](id); if (act === 'bagUp' || act === 'bagAll' || act === 'roll' || act === 'rollAll' || act === 'bake' || act === 'bakeAll') world.dirtyShelf = world.dirtyRack = true; }
     afterAction();
-  });
+  }
+  $('g3-panel-body').addEventListener('click', panelClick);
   $('g3-panel-tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-tab]'); if (!b) return; ui.panelTab = b.getAttribute('data-tab'); ui.render(); sfx('click'); });
   $('g3-panel-close').addEventListener('click', function () { ui.closePanel(); });
 
@@ -7592,23 +8022,25 @@
   function slider(label, key, min, max, step, val, unit) { return '<div class="g3-slider"><label>' + label + '</label><input type="range" data-set="' + key + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"><small>' + val + unit + '</small></div>'; }
   function check(label, key, val) { return '<div class="g3-slider"><label>' + label + '</label><input type="checkbox" data-set="' + key + '"' + (val ? ' checked' : '') + '></div>'; }
   function select(label, key, opts, val) { return '<div class="g3-slider"><label>' + label + '</label><select data-set="' + key + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === val ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>'; }
-  $('g3-panel-body').addEventListener('input', function (e) { var el = e.target; if (runHooks(hooks.panelInput, el)) return; if (el.getAttribute('data-ctl') === 'volume') { shop().volume = parseFloat(el.value); var sm = el.parentNode.querySelector('small'); if (sm) sm.textContent = Math.round(shop().volume * 100) + '%'; save(); } if (el.getAttribute('data-ctl') === 'markup') { shop().markup = parseFloat(el.value); var sm2 = el.parentNode.querySelector('small'); if (sm2) sm2.textContent = Math.round(shop().markup * 100) + '%'; save(); } });
-  $('g3-menu-body').addEventListener('input', function (e) {
+  function panelInput(e) { var el = e.target; if (runHooks(hooks.panelInput, el)) return; if (el.getAttribute('data-ctl') === 'volume') { shop().volume = parseFloat(el.value); var sm = el.parentNode.querySelector('small'); if (sm) sm.textContent = Math.round(shop().volume * 100) + '%'; save(); } if (el.getAttribute('data-ctl') === 'markup') { shop().markup = parseFloat(el.value); var sm2 = el.parentNode.querySelector('small'); if (sm2) sm2.textContent = Math.round(shop().markup * 100) + '%'; save(); } }
+  $('g3-panel-body').addEventListener('input', panelInput);
+  function settingsInput(e) {
     var el = e.target; var key = el.getAttribute('data-set'); if (!key) return;
     var v = el.type === 'checkbox' ? el.checked : el.type === 'range' ? parseFloat(el.value) : el.value;
     SET[key] = v; saveSettings(); applySettings();
     var sm = el.parentNode.querySelector('small'); if (sm) sm.textContent = v + (key === 'fov' ? '°' : '×');
-  });
+  }
+  $('g3-menu-body').addEventListener('input', settingsInput);
   function guideHtml() {
     if (window.RF_GUIDE) return window.RF_GUIDE.map(function (c) { return '<h4>' + c.icon + ' ' + c.title + '</h4>' + c.html; }).join('');   /* standalone: the full guide, same text as the main menu */
     return '<h4>Your hands do the work</h4><p>Everything is carried. <b>E</b> picks a thing up, or uses what you\'re holding on what you look at. <b>G</b> puts it back. One thing at a time.</p>' +
-      '<h4>The loop</h4><p>The <b>laptop</b> in the office: order soil and baggies under Supplies, a seed in the Seed bank, and a grinder. Orders land on the <b>supply rack</b> next to it, or as crates in the back room. Take a bag of soil to the <b>tent</b>, fill a pot, fetch a seed and plant it. Grab the <b>watering can</b> by the tent when a plant says it\'s thirsty, feed it <b>nutrients</b> once for quality, and <b>spray</b> pests or mould fast.</p>' +
+      '<h4>The loop</h4><p>The <b>office PC</b> in the office: order soil and baggies under Supplies, a seed in the Seed bank, and a grinder. Orders land on the <b>supply rack</b> next to it, or as crates in the back room. Take a bag of soil to the <b>tent</b>, fill a pot, fetch a seed and plant it. Grab the <b>watering can</b> by the tent when a plant says it\'s thirsty, feed it <b>nutrients</b> once for quality, and <b>spray</b> pests or mould fast.</p>' +
       '<h4>Harvest</h4><p>A plant that\'s ready glows. Harvest it with empty hands, carry the bunch to the <b>drying line</b> in the dry room and hang it. Dry batches go to the <b>curing shelf</b> in jars and keep gaining quality. Take a jar to the <b>workbench</b>, empty it into your stash, then bag, roll or bake there. Finished goods go on the <b>goods shelf</b>.</p>' +
       '<h4>Money</h4><p>Customers come to <b>the window</b>. Take what they want off the goods shelf and hand it over. They pay when the order is complete, and you take the money at the <b>till</b>. Connoisseurs (🎩) pay 2.2× for quality 70+. Goods rung up at the till as a walk-up sale fetch 85% of the board price, 12 a day.</p>' +
       '<h4>Edit mode</h4><p>Press <b>F2</b> (or Edit layout in this menu) to rearrange the place: look at any piece of furniture, <b>E</b> grabs it, carry it to a spot, <b>R</b> turns it, <b>E</b> drops it, <b>Backspace</b> puts it back where it came from. Your layout is saved.</p>' +
       '<h4>Upstairs</h4><p>The stairs in the office lead to your <b>flat</b>: a kitchen (fridge snacks, eat at the table), a couch and a <b>big TV</b> (E cycles: shop dashboard, grow cam, house news), and a bed. Eating gives you a speed boost for 10 min.</p>' +
       '<h4>The shop</h4><p>The <b>control box</b> in the security room opens or closes the shop, runs the lights and picks a radio station. The <b>front panel</b> behind the till and the <b>office panel</b> do part of the same job where you stand. <b>Curtains</b> on every window and the door open with E. The <b>staff door</b> opens with E and shuts itself 4 s after people are through. Dust settles on the floors, and the <b>broom</b> hangs in the processing room.</p>' +
-      '<h4>Keys</h4><p><b>WASD</b> move · <b>Shift</b> run · <b>Space</b> jump · <b>Ctrl</b> crouch · <b>E</b> or click: pick up, use, talk · <b>Shift+E</b> the second action · <b>Ctrl+E</b> sends a crew member home · <b>G</b> put back · <b>Tab</b> inventory · <b>Esc</b> pause</p>';
+      '<h4>Keys</h4><p><b>WASD</b> move · <b>Shift</b> run · <b>Space</b> jump · <b>Ctrl</b> crouch · <b>E</b> or click: pick up, use, talk · <b>Shift+E</b> the second action · <b>Ctrl+E</b> sends a crew member home · <b>G</b> put back · <b>I</b> inventory · <b>Tab</b> quick wheel · <b>F</b> phone · <b>Esc</b> pause</p>';
   }
   var appliedQuality = null;   /* the quality the materials were last compiled for */
   function applySettings() {
@@ -7671,12 +8103,12 @@
     if (hasLic('tobacco') && XJ.tablet === 'dock' && !XJ.seenTablet) return t + '📋 The delivery tablet on the office dock is live now. Take it, and <b class="kk">J</b> brings up the RF Smoking round.';
     if (XJ.jobs.length) { var soon = XJ.jobs.filter(function (j) { return j.until - now() < 120000; }).length; return t + '🚚 ' + XJ.jobs.length + ' drop' + (XJ.jobs.length === 1 ? '' : 's') + ' waiting' + (soon ? ', ' + soon + ' close to running out' : '') + '. <b class="kk">J</b> for the board, <b class="kk">M</b> for the map.'; }
     var ready = S.plants.filter(function (p) { return p.progress >= 1; }).length; if (ready) return t + '✂️ ' + ready + ' plant' + (ready > 1 ? 's are' : ' is') + ' ready. Empty your hands and press E on the plant.';
-    var haz = S.plants.filter(function (p) { return p.hazard; }).length; if (haz) return t + '⚠ ' + haz + ' plant' + (haz > 1 ? 's have' : ' has') + ' a problem. ' + (h && h.kind === 'remedy' ? 'Spray it.' : (S.supplies.remedy || 0) ? 'Grab pest spray from the supply rack.' : 'Buy pest spray at the laptop.');
+    var haz = S.plants.filter(function (p) { return p.hazard; }).length; if (haz) return t + '⚠ ' + haz + ' plant' + (haz > 1 ? 's have' : ' has') + ' a problem. ' + (h && h.kind === 'remedy' ? 'Spray it.' : (S.supplies.remedy || 0) ? 'Grab pest spray from the supply rack.' : 'Buy pest spray at the office PC.');
     var thirsty = !S.upgrades.autowater && S.plants.filter(function (p) { return p.thirst > 0.6; }).length; if (thirsty) return t + '💧 ' + thirsty + ' plant' + (thirsty > 1 ? 's are' : ' is') + ' thirsty. ' + (h && h.kind === 'can' ? 'E on each plant waters it.' : 'Grab the watering can from the hose reel in the grow room.');
     var cured = S.batches.filter(function (b) { return b.cured; }).length; if (cured && S.cured.g < 3.5) return t + '🏺 ' + cured + ' jar' + (cured > 1 ? 's are' : ' is') + ' on the curing shelf. Take one to the workbench when you want to pack.';
-    if (S.cured.g >= 3.5 && !S.supplies.grinder) return t + '⚙️ You\'ve got bud but no grinder. Buy one at the laptop.';
+    if (S.cured.g >= 3.5 && !S.supplies.grinder) return t + '⚙️ You\'ve got bud but no grinder. Buy one at the office PC.';
     if (S.cured.g >= 3.5 && S.supplies.grinder && ((S.supplies.bag || 0) || ((S.supplies.paper || 0) && (S.supplies.tip || 0)) || S.upgrades.roller)) return t + '✂️ Bag or roll your stash at the workbench.';
-    if (S.cured.g >= 3.5 && S.supplies.grinder) return t + '🛍️ Buy baggies, or papers and tips, at the laptop to pack it.';
+    if (S.cured.g >= 3.5 && S.supplies.grinder) return t + '🛍️ Buy baggies, or papers and tips, at the office PC to pack it.';
     if (S.pkg.bags.n + S.pkg.joints.n > 0) return t + '💵 ' + (S.pkg.bags.n + S.pkg.joints.n) + ' bags and joints on the goods shelf. Wait for a customer at the window, or ring some up at the till as walk-ups.';
     var anySeed = STRAINS.some(function (s) { return (S.supplies['seed_' + s.id] || 0) > 0; });
     if (h && h.kind === 'soil') return t + '🪴 Fill an empty pot in the tent with the soil.';
@@ -7684,10 +8116,10 @@
     var freePots = (S.supplies.pot || 0) - S.plants.length;
     if (!S.plants.length || (S.plants.length < slots() && freePots > 0 && (S.supplies.soil || 0) > 0 && anySeed)) {
       if (!anySeed || !(S.supplies.soil || 0)) return t + '🛒 Order soil and a seed at the office laptop. They land on the supply rack next to it.';
-      if (freePots < 1) return t + '🫙 Buy a pot at the laptop.';
+      if (freePots < 1) return t + '🫙 Buy a pot at the office PC.';
       return t + '🌱 Take soil from the supply rack, fill a pot, then bring a seed and plant it.';
     }
-    var growing = S.plants.length; return t + '🌿 ' + growing + ' plant' + (growing > 1 ? 's' : '') + ' growing. ' + (S.plants.some(function (p) { return !p.fed; }) && (S.supplies.nutrients || 0) ? 'Bring nutrients from the supply rack for quality.' : 'Relax, or stock up at the laptop.');
+    var growing = S.plants.length; return t + '🌿 ' + growing + ' plant' + (growing > 1 ? 's' : '') + ' growing. ' + (S.plants.some(function (p) { return !p.fed; }) && (S.supplies.nutrients || 0) ? 'Bring nutrients from the supply rack for quality.' : 'Relax, or stock up at the office PC.');
   }
 
   // ── Day / night ───────────────────────────────────────────────────
@@ -7720,9 +8152,16 @@
     if (ui.taskOpen) { if (e.code === 'Escape') { taskCancel(); } else if (e.code === 'Space' && !e.repeat) taskPress(true); e.preventDefault(); return; }   // Space is the only task key: E, clicks and every other key are swallowed while a task runs
     if (sec.view.on && !ui.blocked()) { if (e.code === 'Escape' || e.code === 'KeyE') camExit(); else if (/^Digit[1-6]$/.test(e.code)) camShow(+e.code.charAt(5) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') camShow(sec.view.idx + 1); else if (e.code === 'ArrowLeft' || e.code === 'KeyA') camShow(sec.view.idx - 1); e.preventDefault(); return; }
     if (e.code === 'Escape' && postPick >= 0) { postPick = -1; toast('📍 Cancelled', ''); e.preventDefault(); return; }
-    if (e.code === 'Escape') { if (!ui.blocked() && runHooks(hooks.keydown, e)) { e.preventDefault(); return; } if (ui.ctxOpen) { ctxClose(); } else if (ui.panelOpen) { ui.closePanel(); } else if (ui.menuOpen) { closeMenu(); } else { openMenu(); } e.preventDefault(); return; }
+    if (e.code === 'Escape') { if (!ui.blocked() && runHooks(hooks.keydown, e)) { e.preventDefault(); return; } if (ui.pcOpen) { pcClose(); } else if (ui.deviceOpen) { deviceClose(); } else if (ui.wheelOpen) { wheelClose(); } else if (ui.ctxOpen) { ctxClose(); } else if (ui.panelOpen) { ui.closePanel(); } else if (ui.menuOpen) { closeMenu(); } else { openMenu(); } e.preventDefault(); return; }
     if (ui.ctxOpen) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') { ctxClose(); e.preventDefault(); } return; }
-    if (ui.panelOpen || ui.menuOpen) { if (e.code === 'Tab' && ui.panelKind === 'inventory') { ui.closePanel(); e.preventDefault(); } return; }
+    if (ui.pcOpen || ui.deviceOpen || ui.wheelOpen) {   /* the PC desktop, a device or the wheel is up: only its own keys work */
+      if (ui.deviceOpen && ((e.code === 'KeyF' && dev.kind === 'phone') || e.code === 'KeyJ')) { deviceClose(); e.preventDefault(); }
+      else if (ui.wheelOpen && e.code === 'Tab') { wheelClose(); e.preventDefault(); }
+      else if (ui.wheelOpen && /^Digit[1-8]$/.test(e.code)) { wheelPick(+e.code.charAt(5) - 1); e.preventDefault(); }
+      else if (e.code === 'Tab') e.preventDefault();
+      return;
+    }
+    if (ui.panelOpen || ui.menuOpen) { if (e.code === 'KeyI' && ui.panelKind === 'inventory') { ui.closePanel(); e.preventDefault(); } return; }
     player.keys[e.code] = true;
     if (runHooks(hooks.keydown, e)) { e.preventDefault(); return; }
     if (e.code === 'Space' && !e.repeat && !drive.on && !sit.on && !player.air && !(player.downT > 0) && player.locked && !ui.blocked()) { player.air = true; player.jumpV = player.crouch ? 2.6 : 4.0; e.preventDefault(); return; }   // jump; a crouched hop is smaller
@@ -7745,10 +8184,12 @@
     if (e.code === 'KeyE' && postPick >= 0) { postSet(); e.preventDefault(); return; }
     if (e.code === 'KeyE') { if (!e.repeat) interact(); e.preventDefault(); }
     if (e.code === 'KeyP') { panicButton(); e.preventDefault(); }
-    if (e.code === 'Tab') { ui.openPanel('inventory'); e.preventDefault(); }
+    if (e.code === 'Tab') { wheelOpen(); e.preventDefault(); }
+    if (e.code === 'KeyI') { ui.openPanel('inventory'); e.preventDefault(); }
+    if (e.code === 'KeyF' && !e.repeat) { phoneOpen(); e.preventDefault(); }
     if ((e.code === 'KeyG' || e.code === 'KeyQ') && !e.repeat) { putBack(); afterAction(); }
   });
-  document.addEventListener('wheel', function (e) { if (!player.locked || ui.blocked() || edit.on || sec.view.on) return; if (window.RFGROW && window.RFGROW.creative && window.RFGROW.creative.state.on) return; if (drive.on) { drive.dist = clamp(drive.dist + (e.deltaY > 0 ? 0.7 : -0.7), 3.2, 12); drive.look.t = 1.4; return; } if (focus && focus.data.kind === 'deskboard') { deskWheel(e.deltaY > 0 ? 1 : -1); return; }   /* the wheel pulls the chase camera in and out at the wheel */ selectSlot(S.slot + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
+  document.addEventListener('wheel', function (e) { if (!player.locked || ui.blocked() || edit.on || sec.view.on) return; if (window.RFGROW && window.RFGROW.creative && window.RFGROW.creative.state.on) return; if (drive.on) { drive.dist = clamp(drive.dist + (e.deltaY > 0 ? 0.7 : -0.7), 3.2, 12); drive.look.t = 1.4; return; } if (focus && focus.data.kind === 'deskboard') { deskWheel(e.deltaY > 0 ? 1 : -1); return; } var tsc = focus && touchFor(focus.data.kind); if (tsc) { if (tsc.wheel) { tsc.wheel(e.deltaY > 0 ? 1 : -1); tDraw(tsc); sfx('click'); } return; }   /* the wheel pulls the chase camera in and out at the wheel */ selectSlot(S.slot + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
   document.addEventListener('keyup', function (e) { player.keys[e.code] = false; if (ui.taskOpen && e.code === 'Space') taskPress(false); });
   window.addEventListener('blur', function () { player.keys = {}; });
   document.addEventListener('mousemove', onMouseMove);
@@ -7761,7 +8202,7 @@
     if (e.button === 0) { if (drive.on) return; var hb3 = held(); if (hb3 && hb3.kind === 'bat' && !edit.on) { swingBat(); return; } if (hb3 && WEAPONS[hb3.kind] && !edit.on) { fireWeapon(); return; } if (edit.on) { if (edit.grabbed || edit.grabbedFx) editDrop(); else editGrab(); } else interact(); }
   });
   var lastUiClose = 0;
-  function closeTopUi() { if (now() - lastUiClose < 300) return; if (ui.ctxOpen) { lastUiClose = now(); ctxClose(); } else if (ui.panelOpen) { lastUiClose = now(); ui.closePanel(); } }   /* one right-click closes one layer: the mousedown and the contextmenu event of the same click must not each close something */
+  function closeTopUi() { if (now() - lastUiClose < 300) return; if (ui.ctxOpen) { lastUiClose = now(); ctxClose(); } else if (ui.panelOpen) { lastUiClose = now(); ui.closePanel(); } else if (ui.wheelOpen) { lastUiClose = now(); wheelClose(); } else if (ui.deviceOpen) { lastUiClose = now(); deviceClose(); } else if (ui.pcOpen) { lastUiClose = now(); pcClose(); } }   /* one right-click closes one layer: the mousedown and the contextmenu event of the same click must not each close something */
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); closeTopUi(); });
   document.addEventListener('pointerlockchange', function () { player.locked = document.pointerLockElement === canvas; if (!player.locked) player.keys = {}; if (!player.locked && ui.started && !ui.blocked()) { /* user pressed Esc in lock: browser exits lock; a hook may claim it (creative cancels a carried piece), else open the menu */ if (!runHooks(hooks.unlock)) openMenu(); } });
   document.addEventListener('pointerlockerror', function () { lockRetry(); });
@@ -7885,7 +8326,7 @@
     var dt = Math.min(clock.getDelta(), 0.1);
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
-    if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); deskTouchUpdate(); }
+    if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); deskTouchUpdate(); touchUpdate(); }
     updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt);
     if (_df.t && now() - _df.t > 250) { _df.t = 0; defightScene(); }
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); var vcTown = (vc.layers.mask & (1 << TOWN_LAYER)) !== 0; vc.layers.enable(TOWN_LAYER); renderer.render(scene, vc); if (!vcTown) vc.layers.disable(TOWN_LAYER); } else renderer.render(scene, camera);
@@ -7893,5 +8334,5 @@
   }
   frame();
   // debug / automation handle (read-only use; not part of the game loop)
-  window.RFGROW = { hooks: hooks, deskBoard: deskBoard, deskTap: deskTap, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision, setDoor: setDoor, doorAt: doorAt, navBuild: navBuild }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, unitIds: unitIds, unitCount: unitCount, machCost: machCost, buyUnit: buyUnit, machState: machState, syncMachines: syncMachines, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
+  window.RFGROW = { hooks: hooks, deskBoard: deskBoard, deskTap: deskTap, TOUCH: TOUCH, touchTap: touchTap, secScreen: secScreen, pc: pc, pcOpen: pcOpen, pcClose: pcClose, pcApp: pcApp, dev: dev, deviceOpen: deviceOpen, deviceClose: deviceClose, wheelOpen: wheelOpen, wheelPick: wheelPick, wheelClose: wheelClose, officeSeat: officeSeat, cityPeds: function () { return cityPeds; }, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision, setDoor: setDoor, doorAt: doorAt, navBuild: navBuild }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, unitIds: unitIds, unitCount: unitCount, machCost: machCost, buyUnit: buyUnit, machState: machState, syncMachines: syncMachines, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
 })();

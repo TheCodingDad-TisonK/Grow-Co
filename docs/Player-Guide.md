@@ -30,8 +30,8 @@ You start with **$220**, a small tent, one pot and an empty shop. There's no see
 
 A new shop gets the **guided intro**, a card on the left of the screen that ticks off nine steps as you do them. Finish all nine and **$1,200** goes into the bank. You can switch it off under **Guided intro** in the pause menu, but skipping it costs you the bonus.
 
-1. Walk to the **laptop** in the office (the room left of the hall). Order **soil** and **baggies** under **Supplies** and a **seed** in the **Seed bank**. Get a **grinder** too. The workbench won't bag or roll without one.
-2. Orders come round the back in the supplier's van. What arrives lands on the **supply rack** beside the laptop, or as crates in the **back room**. Carry crates to the supply rack yourself, or hire crew later to do it.
+1. Walk to the **office PC** in the office (the room left of the hall). Order **soil** and **baggies** under **Supplies** and a **seed** in the **Seed bank**. Get a **grinder** too. The workbench won't bag or roll without one.
+2. Orders come round the back in the supplier's van. What arrives lands on the **supply rack** beside the office PC, or as crates in the **back room**. Carry crates to the supply rack yourself, or hire crew later to do it.
 3. Take a bag of soil to the **grow tent** and fill the pot. Fetch the seed from the supply rack and plant it.
 4. When the plant says it's thirsty, grab the **watering can** next to the tent. Feed it **nutrients** once for quality. Spray pests or mould straight away.
 5. A plant that's ready glows. Harvest it with empty hands, carry the bunch to the **drying line** in the dry room and hang it up.
@@ -52,10 +52,12 @@ That's the whole game in miniature. Everything else makes the loop bigger, faste
 | **E** or left-click | use, pick up, talk, hand over |
 | **Shift+E** | the second action: lock or unlock with the keyring, the vehicle menu, orders for your crew, open or close the shop van at its hatch |
 | **Ctrl+E** | send a crew member home |
-| **E** on the office screen | it is a touch screen: look at a tab, a tile or a button and press E; the wheel flips pages; the auto / manual button at the bottom right keeps the page you picked |
+| **E** on a screen | the office wall screen, the till tablet and the security desk screen are touch screens: look at a tab, a tile or a button and press E; the wheel flips pages |
 | **G** or **Q** | put back what you hold |
 | **1 to 6**, mouse wheel | hotbar slot |
-| **Tab** | inventory |
+| **I** | inventory |
+| **Tab** | the quick wheel: inventory, phone, map, deliveries, the broom, the keyring, put down or stand up, open or close the shop |
+| **F** | your phone: the burner, wallet, people, map, messages, settings |
 | **M** | town map |
 | **J** | the Deliveries screen: the burner and the tablet |
 | **P** | silent alarm (needs the upgrade) |
@@ -80,8 +82,8 @@ Quality is the number that sets your prices and decides whether connoisseurs buy
 - **Nutrients** once per plant: a flat quality bonus.
 - **Pests and mould** are hazards. Hit them with **pest spray** at once.
 - **Humidity**: drying is faster below 55%, and mould spreads above 60%. Set the dehumidifiers at the control box.
-- **Lights and tents** are bought at the laptop. Bigger tents need the cultivation permits.
-- **Curing**: jars keep improving on the curing shelf. Patience is quality. Each **curing jar** you own cures one batch at a time, and two always can. The rest wait on the shelf until a jar is free, so buy more jars at the laptop as the tent grows.
+- **Lights and tents** are bought at the office PC. Bigger tents need the cultivation permits.
+- **Curing**: jars keep improving on the curing shelf. Patience is quality. Each **curing jar** you own cures one batch at a time, and two always can. The rest wait on the shelf until a jar is free, so buy more jars at the office PC as the tent grows.
 
 Rough, low-quality bud isn't wasted. The **extraction lab** turns any quality into carts, hash, gummies and chocolate. The **roof greenhouse** grows exactly that kind of bud, cheaply.
 
@@ -104,7 +106,7 @@ Rough, low-quality bud isn't wasted. The **extraction lab** turns any quality in
 Money sits in places: the **till**, the **tip jar**, the machine cash boxes, your **pocket**, the **vault** and the **bank**. Only the bank is safe, and only the bank pays for orders and licences.
 
 - Empty the till into your pocket, then put it in the **vault** in the office.
-- Book a **courier** under **Bank** on the laptop. He collects from your pocket at the back door and it clears the next morning.
+- Book a **courier** under **Bank** on the office PC. He collects from your pocket at the back door and it clears the next morning.
 - Or drive to **First Harvest Bank** in town and pay it in yourself. That's instant and free.
 - A robber takes what's in the till and the tip jar. A gunman goes for the vault next. Pocket cash is lost if you're knocked down, and inspections fine you on it when your heat is high.
 - Bills fall every morning. Anything the bank can't cover comes out of the vault, then the till.
@@ -112,7 +114,7 @@ Money sits in places: the **till**, the **tip jar**, the machine cash boxes, you
 
 ## Staff
 
-- **Crew**: up to three on the shop floor, **Jo**, **Mika** and **Sam**. Hire them at the laptop under **Staff**. Each one costs more than the last. They serve the window, restock the supply rack and the machines, sweep, or tend the plants.
+- **Crew**: up to three on the shop floor, **Jo**, **Mika** and **Sam**. Hire them at the office PC under **Staff**. Each one costs more than the last. They serve the window, restock the supply rack and the machines, sweep, or tend the plants.
 - **The guard** is on the door from day one, at $60 a day while he's on shift. He checks IDs. Send him on patrol to put robbers off and break up fights sooner, or give him a chore. He's back on the door whenever someone walks in.
 - The **staff roster** board in the office hires three more: a **driver** (every morning he wholesales every pack above 6 of each kind, and he runs phone deliveries), a **basement operator** (keeps the line running) and a **night guard** (stops break-ins). Roster hires count towards the staff a bigger shop needs.
 - Your crew and the guard carry keys. The Doors chapter has the details.
@@ -122,7 +124,7 @@ Money sits in places: the **till**, the **tip jar**, the machine cash boxes, you
 
 Each crew member has their own look, their own job and their own wage.
 
-- Set each one's job at the laptop under **Staff**, or with **Shift+E** on them: serve the window, restock, sweep, tend the plants, or take a break.
+- Set each one's job at the office PC under **Staff**, or with **Shift+E** on them: serve the window, restock, sweep, tend the plants, or take a break.
 - **Send home** takes someone off the floor for the day. They draw no wage while they're off, and **Call in** brings them back. The guard can be sent home the same way. **Ctrl+E** on a crew member sends them home on the spot.
 - **Shift+E**, then **Send them somewhere**, posts a crew member. Walk to the spot and press **E**. That's where they wait between jobs until you clear it from the same menu.
 - If they've nothing to do, they say so instead of standing there: no dust to sweep, an empty back room, plants already fine.
@@ -234,7 +236,7 @@ The **Workshop** is on the main menu. Content packs change what the game has in 
 
 - **strains**: a whole new plant, with its cost, grow time, yield, strength, unlock level and colours.
 - **lights** and **tents** for the grow room.
-- **supplies**: anything you order at the laptop, including things for the counter display or the vending machine. Items a pack marks for vending sell from your vending machines like the drinks and snacks do.
+- **supplies**: anything you order at the office PC, including things for the counter display or the vending machine. Items a pack marks for vending sell from your vending machines like the drinks and snacks do.
 - **places**: a building and a shopfront anywhere in town, with either a counter that sells supplies at a discount, or a service you pay for that moves your heat and rep. The grocery and the cinema in City Life are nothing more than that. Stock you buy for the machines or the counter display arrives as a crate in the back room.
 - **city**: how much bigger the map is, and how many extra blocks fill it.
 - **vehicle**: the paint, top speed and boot size of your car.
@@ -262,7 +264,7 @@ A keyring hangs on a hook in the **office**, by the door to the hall. E takes it
 
 ## Machines, drinks and the bin
 
-Four kinds of machine earn on their own, and you can own more than one of each: up to four vending machines, four coffee machines, four arcade cabinets and three fridges. Buy extras at the laptop under **Gear**, in the **Machines** box. Each one costs more than the last.
+Four kinds of machine earn on their own, and you can own more than one of each: up to four vending machines, four coffee machines, four arcade cabinets and three fridges. Buy extras at the office PC under **Gear**, in the **Machines** box. Each one costs more than the last.
 
 - A machine you buy lands beside the one you already have, in the first clear space along the same wall. Press **F2** and drag it where you actually want it. Where you leave it is where it stays.
 - Every machine is its own machine. Its door, its delivery tray, the cup under its spout and the cans on its shelves belong to it alone. Open one and the others stay shut.
