@@ -19,7 +19,8 @@ Quality `q` runs 20 to 100. `thc` is a multiplier of roughly 1.0 to 1.9, not a p
 
 | System | State | Entry points |
 |---|---|---|
-| Customers | `S.customer` | `maybeCustomer`, `spawnCustomer`, `orderLines`, `handOver`, `finalizeSale`, `updateNpc` |
+| Customers | `S.customer` (the one at the window); a new face carries its look in `customer.look` | `maybeCustomer`, `customerArrives`, `newCustomer`, `spawnCustomer`, `newFace`, `strangerLook`, `orderLines`, `handOver`, `finalizeSale`, `updateNpc` |
+| The line | `lineup` (runtime only, up to `LINE_MAX` 4 along the rope at `LINE_Z`) | `lineJoin`, `updateLineup`, `linePromote`, `lineLeave`, `lineRoute`, `npcHandOff`, `lineShown` (what the HUD counts, robbers posing in the line included) |
 | Walk-up sales at the till | `S.regDay`, `S.regSold` | `sellHeld`, `walkupLeft`, `WALKUP_RATE` (85%), `WALKUP_CAP` (12 a day) |
 | Who says what | `S.idDay`, `S.idsToday` | `CUST_VOICE` and `custLine`, `CREW_VOICE` and `crewLine`, `guardIdLine`; see [House style](House-Style.md) |
 | Counter display | `S.display` | `ACC`, `syncDisplay` |
@@ -47,14 +48,15 @@ Quality `q` runs 20 to 100. `thc` is a multiplier of roughly 1.0 to 1.9, not a p
 
 | System | State | Entry points |
 |---|---|---|
-| Robberies | `heist`, `robber`, `mate` (runtime only), `S.stats.heists` | `ROB_KINDS`, `robTier`, `startRobbery(kind)`, `updateRobber`, `takeTill`, `finishLoot`, `returnLoot`, `robberFlee`, `startGetaway` |
-| Weapons | `S.armory` | `WEAPONS`, `fireWeapon`, `strikeRobber`, `shootRobber`, `shotBystander`, `sightLine`, `lockerMenu` |
+| Robberies | `heist`, `robber`, `mate` (runtime only), `S.stats.heists` | `ROB_KINDS`, `robTier`, `startRobbery(kind)`, `robberCase`, `robberInside`, `fakeIdCaught`, `browseSpot`, `caseHintOn`, `updateRobber`, `takeTill`, `finishLoot`, `returnLoot`, `robberFlee`, `startGetaway` |
+| Weapons | `S.armory` | `WEAPONS`, `fireWeapon`, `updateTrigger` (full auto), `updateScope` (the rifle's scope), `strikeRobber`, `shootRobber`, `shotBystander`, `sightLine`, `lockerMenu` |
 | Getting hurt | `player.downT` | `hurtPlayer`, `robberAttack`, `robberShoot` |
+| Using what you hold (V) | `S.buff`, `S.chill` | `useHeld`, `useHint`, `drinkHeld`, `eatSnack`, `eatCookie`, `sparkUp`, `autoBin` |
 | Police | `S.x.heat` | `addHeat`, `policeFine`, `panicButton`, `policeArrive`, the inspection in `updateExpansion` |
 | Doors and locks | `S.doors`, `S.doorLocks`, `S.staffKeys` | `slideDoor`, `setDoor`, `doorsAll`, `updateDoors`, `staffKey`, `staffPass` (a keyholder lets themselves through and it relocks) |
 | Cameras | | `SEC_CAMS`, `buildSecCams`, `updateSecurity`, `camEnter` |
 
-Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `down`, `out`, `away`.
+Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `down`, `out`, `away`. While in `case` a robber also has a `pre` step: `walk`, `hold`, `tocheck`, `check` at the door, then `browse` or `queue` and `stepup` (his `plan`). Police officers are dressed by `dressCop`.
 
 ## Production
 
@@ -85,6 +87,7 @@ Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `d
 | System | State | Entry points |
 |---|---|---|
 | Props (furniture) | `S.layout[id]` | `defProp`, `buildProp`, `propPlacement`, `propWorld`, `propCtx` |
+| Rope lines | `S.layout[id]` (the `queueRope` multi prop), `S.ropes[id]` | `ropeBuild`, `ropeStyle`, `ropeMenu`, `ropeAdd`, `ropeUp` |
 | Fixtures (signs, screens, boards) | `S.fixtures[id]` | `fixtureAdd`, `fixtureFromBuild`, `fixtureSign`, `fxCarry`, `applyFixtures` |
 | Edit mode | `edit` | `editToggle`, `editUpdate`, `editGrab`, `editDrop`, `editRotate`, `editReset` |
 | Creative mode | `S.custom`, `S.designs` | `grow3d-creative.js`, through `RFGROW.hooks` and `RFGROW.internal` |
@@ -93,4 +96,4 @@ Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `d
 
 ## The console handle
 
-`window.RFGROW` exposes, among others: `S`, `player`, `world`, `devAction(id)`, `startRobbery(kind)`, `heistState()`, `fireWeapon`, `enterCar`, `exitCar`, `toggleCityMap`, `goBasement`, `enterZone(id)`, `startVip`, `xs()`, `FIXTURES`, `DOORS`, `stepFrame()`. `stepFrame()` advances one frame by hand, which is how the game is tested in a hidden browser tab where animation frames do not fire.
+`window.RFGROW` exposes, among others: `S`, `player`, `world`, `devAction(id)`, `startRobbery(kind)`, `heistState()`, `fireWeapon`, `enterCar`, `exitCar`, `toggleCityMap`, `goBasement`, `enterZone(id)`, `startVip`, `xs()`, `FIXTURES`, `DOORS`, `lineup()`, `customerArrives(premium)`, `stepFrame()`. `stepFrame()` advances one frame by hand, which is how the game is tested in a hidden browser tab where animation frames do not fire.

@@ -25,8 +25,9 @@ The whole game is one JSON object, `S`, written to `localStorage` a fraction of 
 | `upgrades`, `lic` | what you own, by id |
 | `staff` | the crew (`crew`, up to three, each with a job and whether they're off), the guard's job (`guardTask`) and whether he's off shift (`guardOff`) |
 | `hotbar`, `slot` | the six things you carry and which is active |
-| `customer`, `courier`, `vip` | who is being served right now |
-| `layout[propId]` | moved furniture: `{ x, z, rot }` |
+| `customer`, `courier`, `vip` | who is being served right now; a new face also carries `look`. The line behind the window is not saved |
+| `layout[propId]` | moved furniture: `{ x, z, rot }`, plus `hidden` for something taken down |
+| `ropes[propId]` | each rope line's style: `{ color, len, posts, kind }` |
 | `fixtures[id]` | moved signs and screens: `{ x, y, z, ry }` |
 | `doors[id]`, `doorLocks[id]` | sliding doors: open, locked |
 | `custom`, `designs` | creative mode objects and saved designs |

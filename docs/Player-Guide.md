@@ -54,6 +54,7 @@ That's the whole game in miniature. Everything else makes the loop bigger, faste
 | **Ctrl+E** | send a crew member home |
 | **E** on a screen | the office wall screen, the till tablet and the security desk screen are touch screens: look at a tab, a tile or a button and press E; the wheel flips pages |
 | **G** or **Q** | put back what you hold |
+| **V** | use what you hold, wherever you are: drink it, eat it, light a joint (on your feet it sits in your left hand), or bin an empty when a bin is close |
 | **1 to 6**, mouse wheel | hotbar slot |
 | **I** | inventory |
 | **Tab** | the quick wheel: inventory, phone, map, deliveries, the broom, the keyring, put down or stand up, open or close the shop |
@@ -65,15 +66,15 @@ That's the whole game in miniature. Everything else makes the loop bigger, faste
 | **F3** | creative build mode |
 | **Right-click** | close the open menu or panel |
 | **F7** | report a bug |
-| **F12** or **F9** | screenshot, without the HUD. The desktop app files it under Pictures, Grow Co; a browser downloads it |
-| **Esc** | pause menu. **Save file** there exports this slot as a .json file, or imports one in its place |
+| **F12** or **F9** | screenshot, without the HUD (the desktop app files it under Pictures, Grow Co) |
+| **Esc** | pause menu, with the save file export and import |
 | **F11** | fullscreen (desktop app) |
 
 Jump and crouch don't work while you're sitting, driving or knocked down. A crouched jump is smaller.
 
 **At the wheel:** **I** turns the key, **P** is the handbrake, **L** cycles the lights, W and S drive, A and D steer, Space is the footbrake, **T** opens the boot and **B** the bonnet. The mouse swings the camera round, the wheel zooms, **C** re-centres, and **E** gets you out once you've stopped.
 
-**With a weapon in hand:** left-click swings or fires.
+**With a weapon in hand:** left-click swings or fires. With the **hunting rifle**, hold right-click to look through the scope. Hold left-click with the **AK-47** for full auto; it climbs, so pull the mouse down as it fires.
 
 ## Growing and quality
 
@@ -97,6 +98,8 @@ Rough, low-quality bud isn't wasted. The **extraction lab** turns any quality in
 - **Cigarettes, carts, hash, gummies and chocolate** live in the **cigarette cabinet** behind the counter. Roll the shutter up, take what they asked for and hand it over yourself. It goes on the same bill.
 - **Walk-up sales.** Carry bags, joints or cookies to the till and press E to ring them up with nobody at the window. They fetch 85% of the board price, and the till takes 12 of those a day.
 - With the **lounge licence**, some customers stay to smoke in the lobby. Each one buys a joint off the goods shelf at the board price, into the till, or leaves if there are none.
+- The **rope line** in the lobby is yours to arrange. E on it changes the colour, length, style and posts, turns it, puts up another beside it or takes it down. F2 moves it. More are under Gear, Machines, on the office PC.
+- Most customers are your regulars. Now and then a **new face** walks in: a stranger who orders like anyone else.
 - Rep brings people in. The better your name, the shorter the wait between customers, down to 60% of it.
 - The **markup** slider at the control box trades price against footfall.
 - Rain, storms and snow thin the street out. Weekends are busier, and there's a holiday week.
@@ -151,12 +154,13 @@ Doors are real to everybody in the building, not just to you.
 
 ## Robberies, weapons and the police
 
-Robberies run in stages: someone **cases** the lobby, the **mask** comes down, the **demand** at the window, an **escalation**, sometimes a **second target** in the back, then the **getaway**.
+Robberies run in stages: a robber walks in looking like any other customer, the **mask** comes down, the **demand** at the window, an **escalation**, sometimes a **second target** in the back, then the **getaway**.
 
-- While he's only casing, walk up and press E to confront him. Often he just leaves.
+- Nobody announces themselves, and robbers dress like anyone off the street. Some join the line and wait their turn, then pull the mask at the window. Others browse the lobby and glance at the till now and then. A partner may come in on his own a little later. The guard's ID check at the door catches some of them on a fake card.
+- E on anyone in the line or the lobby has a word. A customer just chats. A robber often leaves, and sometimes makes his move there and then.
 - During the demand, E on the till hands it over and nobody gets hurt.
 - Four kinds, growing with your shop: the **snatch thief**, the **knife robber**, the **gunman** (goes for the vault) and the two-man **gang** (the bagman strips your goods shelf, and the cigarette cabinet if its shutter is up).
-- **Weapons**: the bat by the counter is free. The **weapon locker** sells pepper spray, a taser, and with the firearms licence a pistol and a shotgun. Non-lethal tools can fail against dangerous robbers. When they do, he hits back and you go down.
+- **Weapons**: the bat by the counter is free. The **weapon locker** sells pepper spray, a taser, and with the firearms licence a pistol, a shotgun, a **hunting rifle** (the longest reach, one careful shot at a time, with a scope on right-click) and an **AK-47** (full auto, 90 bullets to start). Non-lethal tools can fail against dangerous robbers. When they do, he hits back and you go down.
 - Shooting an armed, masked robber is self-defence. Shooting a fleeing or unarmed man gets you a fine. Shooting a bystander costs you the licence and the guns.
 - A robber who gets away with loot jumps into a **black car** on Main Street. Ram it with yours and everything comes back.
 - **Silent alarm** upgrade: press P and the police are there in about 20 s.
@@ -175,7 +179,7 @@ The steel hatch in the hall leads down to a pre-installed cigarette line. You ne
 5. **Packer**: boxes 10s or 20s. It needs paper, filters and blanks, ordered from its own menu.
 6. Take cartons from the **finished goods rack** up to the cigarette cabinet.
 
-The line makes far more than the window sells. Load cartons into the car or the van at home (**Shift+E** on it). They ride in whichever you loaded. Sell them to the **Corner Tobacconist** in town for 60% of the board price, or hire the driver, who gets 55%. The window pays full price, so keep the cabinet stocked first.
+The line makes far more than the window sells. Load cartons into the car or the van at home (**Shift+E** on it). They ride in whichever you loaded. Sell them to the **Corner Tobacconist** in town, or hire the driver.
 
 ## The extraction lab
 
@@ -249,7 +253,7 @@ Packs that ship with the game can't be overwritten, so give yours its own id.
 
 ## Upstairs and the roof
 
-- The **office stairs** lead to your flat: kitchen, table, couch and TV, bed. Eating gives you a speed boost, and the bed sleeps through the night.
+- The **office stairs** lead to your flat: kitchen, table, couch and TV, bed. Eating gives you a speed boost (**V** eats a snack anywhere), and the bed sleeps through the night.
 - The **lobby stairs** lead to the **connoisseur lounge**. With the connoisseur permit, guests book it, walk up on their own and wait to be served quality 70 or better. They pay triple and tip.
 - A ladder in the flat climbs to the **roof greenhouse**: six beds that grow in daylight only. They need the **Cultivation permit II**. Seedlings are $10 a bed, and each harvest pays its trimming and compliance like any other.
 
@@ -275,7 +279,7 @@ Four kinds of machine earn on their own, and you can own more than one of each: 
 - You need the **Lobby coffee machine** upgrade before you can buy a second coffee machine. Vending, coffee and the fridge need the **Vending & catering permit**, and the arcade the **Amusement permit**.
 - Customers who stay a while use your machines, and every extra machine of a kind catches trade the first one missed, up to three of each.
 
-**Drinks and the bin.** The **water cooler** hands you a cup of water. Drink it at the cooler, the couch or the table for a small speed boost (4 min). A coffee or a cold drink does the same at the couch or the table (8 min). Either way you're left holding the empty. A cup refills at the cooler, and anything else goes in the **bin**. The bin holds 12. A full bin makes the dust build half as fast again and costs a point of rep every day until you empty it. E with empty hands bags it up. Take the bin bag to the **dumpster** in the yard.
+**Drinks and the bin.** The **water cooler** hands you a cup of water. Press **V** to drink it wherever you are, or E at the cooler, the couch or the table, for a small speed boost (4 min). A coffee or a cold drink does the same (8 min). Either way you're left holding the empty, unless a bin with room is a few steps away: then it goes straight in. A cup refills at the cooler, and anything else goes in the **bin**. The bin holds 12. A full bin makes the dust build half as fast again and costs a point of rep every day until you empty it. E with empty hands bags it up. Take the bin bag to the **dumpster** in the yard.
 
 ## Making the place yours
 

@@ -166,7 +166,7 @@
   ];
   // how each regular talks: one habit each, so a line tells you who said it. {x} is filled in by the caller.
   var CUST_VOICE = {
-    _: { hi: 'Hi there', thanks: 'Thanks', bye: 'Never mind', grab: 'Grabbing a {x} too', noAcc: 'No {x}? Shame', hurt: 'Ow. What the…', angry: 'You\'re out of your mind', noSmokes: 'No smokes for me, thanks', wrongSmokes: 'No, the {x}', smokes: 'And the smokes, cheers', more: 'One more of those', wrong: 'No, {x}, please', said: 'I said {x}', sub: 'Not what I asked for, but fine', match: 'Ooh, the {x}', better: 'Got anything better?', andMore: 'And {x}…', card: 'Card okay? {x}', cash: 'Here you go. {x}', declined: 'Declined? Try it again', short: 'That\'s short', remind: '{x}, when you can' },
+    _: { hi: 'Hi there', thanks: 'Thanks', bye: 'Never mind', grab: 'Grabbing a {x} too', noAcc: 'No {x}? Shame', hurt: 'Ow. What the…', angry: 'You\'re out of your mind', noSmokes: 'No smokes for me, thanks', wrongSmokes: 'No, the {x}', smokes: 'And the smokes, cheers', more: 'One more of those', wrong: 'No, {x}, please', said: 'I said {x}', sub: 'Not what I asked for, but fine', match: 'Ooh, the {x}', better: 'Got anything better?', andMore: 'And {x}…', card: 'Card okay? {x}', cash: 'Here you go. {x}', declined: 'Declined? Try it again', short: 'That\'s short', remind: '{x}, when you can', queue: 'Is this line even moving?' },
     'Chill Chad': { hi: 'Hey, man', thanks: 'Sweet, thanks, man', bye: 'Eh, never mind, man', sub: 'Close enough, man', match: 'Oh nice, the {x}, man', better: 'Got anything better, man?', card: 'Card alright, man? {x}', cash: 'There you go, man. {x}', declined: 'Weird. Again, man?', short: 'That\'s short, man', angry: 'Not cool, man', said: 'Nah, man, I said {x}' },
     'Nurse Nadia': { hi: 'Quick one, love. I\'m on my break', thanks: 'Lovely, ta', bye: 'Can\'t wait, love. I\'m due back', sub: 'That\'ll do, love', match: 'Ooh, the {x}. Lovely', better: 'Anything better, love?', card: 'Card, love. {x}', cash: 'There you go, love. {x}', declined: 'Once more, love', short: 'That\'s short, love', angry: 'I\'ll be reporting that', said: 'I said {x}, love' },
     'Old Man Ferns': { hi: 'Hello there, young\'un', thanks: 'Much obliged', bye: 'I haven\'t got all day, you know', sub: 'Hmph. That\'ll have to do', match: 'The {x}. Very good', better: 'Is that the best you\'ve got?', card: 'You take cards these days? {x}', cash: 'Exact money, mind. {x}', declined: 'Blasted thing. Again', short: 'You\'ve short-changed me, young\'un', angry: 'In my day, that got you locked up', said: 'I said {x}, young\'un' },
@@ -214,7 +214,7 @@
       potSoil: {}, held: null,
       vip: null, car: null, flyerDay: 0,   // where the car was left and what is in its trunk
       tob: null, cigStock: {}, cigShutter: false,   // the basement line, the cabinet behind the counter and its roller shutter
-      armory: { pepper: false, taser: false, pistol: false, shotgun: false, spray: 0, rounds: 0, shells: 0 }   // what the weapon locker holds
+      armory: { pepper: false, taser: false, pistol: false, shotgun: false, rifle: false, ak: false, spray: 0, rounds: 0, shells: 0, cartridges: 0, bullets: 0 }   // what the weapon locker holds
     };
   }
   // A save that will not read or will not normalise never stops the shop opening. The game falls back to a fresh
@@ -338,6 +338,8 @@
   function sBeep(t, f, dur, gain) { sTone('square', f, t, dur || 0.08, gain || 0.05, { lp: 3000 }); }
   var SFX = {
     gunshot: function (t) { sNoise(t, 0.2, 0.5, { type: 'lowpass', freq: 2400, fade: true }); sTone('square', 150, t, 0.12, 0.22, { f1: 50 }); },
+    ak: function (t) { sNoise(t, 0.11, 0.45, { type: 'lowpass', freq: 2900, fade: true }); sTone('square', 175, t, 0.06, 0.18, { f1: 60 }); },
+    rifle: function (t) { sNoise(t, 0.5, 0.75, { type: 'lowpass', freq: 3000, fade: true }); sTone('square', 110, t, 0.2, 0.3, { f1: 32 }); sNoise(t + 0.75, 0.04, 0.12, { freq: 2200 }); sNoise(t + 0.95, 0.05, 0.12, { freq: 1800 }); },
     shotgun: function (t) { sNoise(t, 0.34, 0.6, { type: 'lowpass', freq: 1500, fade: true }); sTone('sawtooth', 95, t, 0.22, 0.28, { f1: 40 }); sNoise(t + 0.5, 0.05, 0.1, { freq: 2600 }); sNoise(t + 0.62, 0.05, 0.1, { freq: 2200 }); },
     zap:     function (t) { for (var i = 0; i < 9; i++) sTone('square', 900 + Math.random() * 1500, t + i * 0.04, 0.035, 0.05); },
     siren:   function (t) { for (var i = 0; i < 6; i++) sTone('sine', i % 2 ? 640 : 860, t + i * 0.32, 0.31, 0.07); },
@@ -607,7 +609,7 @@
     else if (roll < 0.5) { S.event = { type: 'cup', label: 'Cannabis Cup in town: sales at quality 70+ earn double rep', mult: 1.08, until: now() + 60000 }; logEvent('🏆 Cannabis Cup in town. For the next minute, sales at quality 70+ earn double rep', 'rare'); }
     else if (roll < 0.7) { var gift = randi(30, 90) * (S.upgrades.tipjar ? 2 : 1); S.tips += gift; logEvent('💰 A grateful regular left ' + money(gift) + ' in the tip jar.', 'good'); sfx('cash'); }
     else if (roll < 0.85 && S.plants.length) { var v = pick(S.plants); if (!v.hazard) { v.hazard = pick(['pest', 'mold']); logEvent((v.hazard === 'pest' ? '🐛 Spider mites on a ' : '🍄 Mould on a ') + strainById(v.strain).name + '. Spray it before it spreads.', 'bad'); } }
-    else if (!S.customer && shop().open && now() >= (S.noCustomersUntil || 0)) spawnCustomer(hasLic('premium'));   // connoisseurs only come once you hold the permit, never while someone is already at the window, and never through a locked front door
+    else if (shop().open && now() >= (S.noCustomersUntil || 0)) customerArrives(hasLic('premium'));   // connoisseurs only come once you hold the permit and never through a locked front door; with someone at the window they join the line
   }
   // ── ID: a card with a face, a date and sometimes something wrong with it ───────────────
   var ID_FLAWS = [
@@ -628,21 +630,25 @@
     return F.hint + (id.flaw === 0 ? id.age : '');
   }
   function guardOnDuty() { return !guardOff() && !!guard.h; }
-  function spawnCustomer(premium) {
-    if (S.customer) return;   // one customer at a time: replacing the record mid-visit rebuilt the body at the door, so the one at the window seemed to vanish
-    var c = pick(CUSTOMERS); var wr = Math.random(); var wantKind = wr < 0.45 ? 'joints' : wr < 0.8 || S.pkg.cookies.n <= 0 ? 'bags' : 'cookies'; var wantJoints = wantKind === 'joints';
-    S.customer = { who: c.who, avatar: c.a, color: c.c, want: wantKind, qty: wantJoints ? randi(2, 5) : wantKind === 'cookies' ? randi(2, 6) : randi(1, 3), premium: !!premium, minQ: premium ? 70 : 0, until: now() + (premium ? 60000 : 45000) * (S.upgrades.lounge2 ? 2 : S.upgrades.lobby ? 1.5 : 1) };
-    S.customer.arrived = false; S.customer.spawnedAt = now(); S.customer.pay = hasLic('retail') && Math.random() < 0.45 ? 'card' : 'cash';
-    S.customer.id = makeId(c.who);   /* a real document, and about one in eight will not stand up */
+  function newCustomer(premium) {   /* the record only: spawnCustomer puts it at the window, lineJoin at the back of the line */
+    var c = Math.random() < 0.3 ? newFace() : pickRegular(); var wr = Math.random(); var wantKind = wr < 0.45 ? 'joints' : wr < 0.8 || S.pkg.cookies.n <= 0 ? 'bags' : 'cookies'; var wantJoints = wantKind === 'joints';
+    var cu = { who: c.who, avatar: c.a, color: c.c, want: wantKind, qty: wantJoints ? randi(2, 5) : wantKind === 'cookies' ? randi(2, 6) : randi(1, 3), premium: !!premium, minQ: premium ? 70 : 0, until: now() + (premium ? 60000 : 45000) * (S.upgrades.lounge2 ? 2 : S.upgrades.lobby ? 1.5 : 1) };
+    cu.look = c.look; cu.arrived = false; cu.spawnedAt = now(); cu.pay = hasLic('retail') && Math.random() < 0.45 ? 'card' : 'cash';
+    cu.id = makeId(c.who);   /* a real document, and about one in eight will not stand up */
     // every customer names a strain: usually one you actually have packed or in the stash, sometimes something you will have to grow
-    var known = strainsWithGoods(); S.customer.strain = known.length && Math.random() < 0.8 ? pick(known) : pick(STRAINS.filter(function (s) { return s.lvl <= S.level + 2; })).id;
+    var known = strainsWithGoods(); cu.strain = known.length && Math.random() < 0.8 ? pick(known) : pick(STRAINS.filter(function (s) { return s.lvl <= S.level + 2; })).id;
     // the order: a main line, sometimes a second product, sometimes bits from the counter display
-    var cu = S.customer; cu.lines = [{ kind: cu.want, strain: cu.strain, qty: cu.qty, given: { n: 0, qSum: 0, thcSum: 0 } }]; cu.given = cu.lines[0].given;
+    cu.lines = [{ kind: cu.want, strain: cu.strain, qty: cu.qty, given: { n: 0, qSum: 0, thcSum: 0 } }]; cu.given = cu.lines[0].given;
     if (Math.random() < 0.35) { var kinds2 = ['bags', 'joints', 'cookies'].filter(function (k) { return k !== cu.want && (k !== 'cookies' || S.pkg.cookies.n > 0); }); var k2 = pick(kinds2); cu.lines.push({ kind: k2, strain: known.length ? pick(known) : cu.strain, qty: k2 === 'bags' ? 1 : randi(1, 3), given: { n: 0, qSum: 0, thcSum: 0 } }); }
     cu.acc = []; if (Math.random() < 0.45) {   /* one or two extras off the counter, likelier the more of it is on show; the three staples can still be asked for when the rack has run dry */
       var accW = Object.keys(ACC).map(function (k) { return [k, (S.display[k] || 0) + (k === 'lighter' || k === 'rpaper' || k === 'rgrinder' ? 1 : 0)]; }).filter(function (w) { return w[1] > 0; });
       for (var an = Math.random() < 0.35 ? 2 : 1; an > 0 && accW.length; an--) { var ar = Math.random() * accW.reduce(function (a, w) { return a + w[1]; }, 0), ai = accW.length - 1; for (var aj = 0; aj < accW.length; aj++) { ar -= accW[aj][1]; if (ar < 0) { ai = aj; break; } } cu.acc.push({ item: accW[ai][0], qty: 1 }); accW.splice(ai, 1); }
     } var cks = anyCigStock(); if (cks.length && Math.random() < 0.4) cu.cig = { sku: pick(cks), qty: Math.random() < 0.25 ? 2 : 1, given: 0 };
+    return cu;
+  }
+  function spawnCustomer(premium) {
+    if (S.customer) return;   // one customer at a time: replacing the record mid-visit rebuilt the body at the door, so the one at the window seemed to vanish
+    var c = S.customer = newCustomer(premium);
     if (premium) { logEvent('🎩 A connoisseur (' + c.who + ') just walked in, and they\'re after the top shelf', 'rare'); toast('🎩 Connoisseur walking in', 'rare'); }
     else logEvent('🚪 ' + c.who + ' walked in' + (guardOff() ? '. With the guard off, they\'ll show you their ID at the window.' : '. The guard is checking their ID.'), '');
   }
@@ -650,9 +656,9 @@
     if (!shop().open || now() < (S.noCustomersUntil || 0)) { S.lastCustomer = now(); return; }
     var gap = S.upgrades.billboard ? 0.4 : S.upgrades.sign ? 0.65 : 1; gap /= footfall(); if (hasLic('latehours') && nightNow()) gap *= 0.75; var mk = shop().markup || 1; gap *= mk > 1 ? 1 + (mk - 1) * 2.5 : mk < 1 ? 1 - (1 - mk) * 0.8 : 1;
     gap *= clamp(1 / (1 + (S.rep || 0) / 200), 0.6, 1);   /* word of mouth: a good name shortens the wait between customers, never below 60% of it */
-    if (S.customer || now() - S.lastCustomer < randi(30000, 60000) * gap) return;
+    if ((S.customer && lineCount() >= LINE_MAX) || now() - S.lastCustomer < randi(30000, 60000) * gap) return;   /* someone at the window no longer holds the next one back: they queue, up to LINE_MAX */
     S.lastCustomer = now();
-    if (Math.random() < 0.75) spawnCustomer(false);
+    if (Math.random() < 0.75) customerArrives(false);
   }
 
   // ── Actions ───────────────────────────────────────────────────────
@@ -1549,10 +1555,7 @@
     // lobby: menu board, framed posters, queue posts with a sagging rope, a guard podium
     signPlane(['MENU', 'eighths · joints', 'ask for the good stuff'], 1.4, 0.8, -3.4, 2.1, 4.12, 0, { titleColor: '#ffc857' });
     framedPoster(TEX.poster1, 0.6, 0.9, -8.0, 1.9, 4.12, 0); framedPoster(TEX.poster2, 0.6, 0.9, -6.8, 1.9, 4.12, 0); framedPoster(TEX.poster3, 0.6, 0.9, 7.2, 1.9, 4.12, 0);
-    [[-0.9, 6.0], [0.9, 6.0]].forEach(function (q) { cyl(0.025, 0.025, 0.95, MAT.chrome, q[0], 0.475, q[1], null, 12); cyl(0.16, 0.18, 0.03, MAT.chrome, q[0], 0.015, q[1], null, 20); var ball = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 10), MAT.chrome); ball.position.set(q[0], 0.98, q[1]); world.group.add(ball); });
-    var ropeCurve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(-0.9, 0.93, 6.0), new THREE.Vector3(0, 0.72, 6.0), new THREE.Vector3(0.9, 0.93, 6.0));
-    var rope = new THREE.Mesh(new THREE.TubeGeometry(ropeCurve, 20, 0.022, 8, false), new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0xc94a3a, roughness: 1 })); rope.castShadow = true; world.group.add(rope);
-    world.obstacles.push({ x1: -1.05, x2: -0.75, z1: 5.85, z2: 6.15, tag: 'post' }); world.obstacles.push({ x1: 0.75, x2: 1.05, z1: 5.85, z2: 6.15, tag: 'post' });
+    /* the queue rope is the queueRope prop: E on it restyles it, F2 moves it */
     box(0.6, 1.1, 0.5, MAT.darkwood, 2.2, 0.55, 7.6, { solid: true, tag: 'podium' }); box(0.7, 0.04, 0.6, MAT.counterTop, 2.2, 1.12, 7.6, { cast: false }); box(0.64, 0.04, 0.54, MAT.darkwood, 2.2, 0.02, 7.6, { cast: false });
     var tablet = box(0.22, 0.01, 0.16, MAT.black, 2.2, 1.15, 7.6); tablet.rotation.y = 0.4; var tscr = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.14), MAT.screen); tscr.position.set(2.2, 1.157, 7.6); tscr.rotation.set(-Math.PI / 2, 0, 0.4); world.group.add(tscr);
     var stool = cyl(0.16, 0.16, 0.04, colorMat(0x1c1c22, 0.9), 2.9, 0.62, 7.6, null, 18); cyl(0.02, 0.02, 0.6, MAT.chrome, 2.9, 0.3, 7.6, null, 8); cyl(0.14, 0.16, 0.02, MAT.chrome, 2.9, 0.01, 7.6, null, 18);
@@ -2122,7 +2125,7 @@
     var P = guard.h.userData.parts;
     if (robber.state === 'demand' || robber.state === 'in') { animateHuman(guard.h, dt, 'idle', 0, robber.g.position); P.rArm.rotation.x = -1.4; P.rArm.rotation.z = -0.2; guard.h.userData.setMood('angry'); return; }
     if (updateGuardTasks(dt)) return;
-    if (guard.state === 'check') { guard.armT += dt; P.rArm.rotation.x = lerp(P.rArm.rotation.x, -1.3, 0.15); P.rArm.rotation.z = lerp(P.rArm.rotation.z, -0.3, 0.15); animateHuman(guard.h, dt, 'idle', 0, npc.g.visible ? npc.g.position : player.pos); P.rArm.rotation.x = -1.3; P.rArm.rotation.z = -0.3; if (guard.armT > 2.2) { guard.state = 'idle'; guard.h.userData.setMood('happy'); guard.say('You\'re good. Go on through.', '#6fdc8c'); setTimeout(function () { if (guard.h) guard.h.userData.setMood('neutral'); }, 2000); } return; }
+    if (guard.state === 'check') { guard.armT += dt; P.rArm.rotation.x = lerp(P.rArm.rotation.x, -1.3, 0.15); P.rArm.rotation.z = lerp(P.rArm.rotation.z, -0.3, 0.15); animateHuman(guard.h, dt, 'idle', 0, guard.checkG ? guard.checkG.position : npc.g.visible ? npc.g.position : player.pos); P.rArm.rotation.x = -1.3; P.rArm.rotation.z = -0.3; if (guard.armT > 2.2) { guard.state = 'idle'; guard.h.userData.setMood('happy'); guard.say('You\'re good. Go on through.', '#6fdc8c'); setTimeout(function () { if (guard.h) guard.h.userData.setMood('neutral'); }, 2000); } return; }
     // idle: watch whoever is closer, the customer or the player
     var look = player.pos; if (npc.g.visible) { var dn = Math.hypot(npc.g.position.x - guard.h.position.x, npc.g.position.z - guard.h.position.z); var dp = Math.hypot(player.pos.x - guard.h.position.x, player.pos.z - guard.h.position.z); if (dn < dp) look = npc.g.position; }
     animateHuman(guard.h, dt, 'idle', 0, look);
@@ -2131,7 +2134,7 @@
     if (near < 2.2 && !guard.greeted) { guard.greeted = true; var gh = gameHour(); guard.say(pick([gh >= 5 && gh < 12 ? 'Morning, boss.' : gh >= 12 && gh < 18 ? 'Afternoon, boss.' : 'Evening, boss.', 'All quiet out here.', guardIdLine()]), '#e8f1ea', 2600); }
     if (near > 4) guard.greeted = false;
   }
-  guard.startCheck = function () { guard.state = 'check'; guard.armT = 0; guard.h.userData.setMood('neutral'); if (S.idDay !== S.day) { S.idDay = S.day; S.idsToday = 0; } S.idsToday = (S.idsToday || 0) + 1; guard.say('ID, please.', '#ffc857', 2000); };
+  guard.startCheck = function (g) { guard.checkG = g || null; guard.state = 'check'; guard.armT = 0; guard.h.userData.setMood('neutral'); if (S.idDay !== S.day) { S.idDay = S.day; S.idsToday = 0; } S.idsToday = (S.idsToday || 0) + 1; guard.say('ID, please.', '#ffc857', 2000); };
   function guardIdLine() { var n = S.idDay === S.day ? S.idsToday || 0 : 0; return n ? 'Checked ' + n + (n === 1 ? ' ID' : ' IDs') + ' today.' : 'No IDs to check yet today.'; }   /* a real count, reset each day */
 
   // ── Staff: waypoints through the doorways, a hired assistant, and orders for the guard ──
@@ -2428,7 +2431,7 @@
   function guardGo(x, z, fn) { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); guard.path = routeTo(guard.h.position, x, z, 'staff'); guard.walking = true; guard.onArrive = fn || null; guard.toPost = Math.abs(x - WP.post.x) < 0.01 && Math.abs(z - WP.post.z) < 0.01; }
   function updateGuardTasks(dt) {   // returns true when it handled this frame
     var gt = S.staff && S.staff.guardTask || 'door';
-    var wantPost = gt === 'door' || npc.state === 'enter' || npc.state === 'check' || guard.state === 'check';
+    var wantPost = gt === 'door' || npc.state === 'enter' || npc.state === 'check' || guard.state === 'check' || lineAtDoor();
     if (guard.walking) { if (walkAlong(guard.h, guard.path, 1.3, dt)) { guard.walking = false; guard.pauseT = 1.6; if (guard.toPost) { guard.h.rotation.y = -0.9; world.obstacles.push({ x1: 1.4, x2: 2.0, z1: 7.0, z2: 7.6, tag: 'guard' }); } var fn = guard.onArrive; guard.onArrive = null; if (fn) fn(); } animateHuman(guard.h, dt, 'walk', 1.3, null); return true; }
     guard.pauseT = Math.max(0, (guard.pauseT || 0) - dt); var atPost = Math.hypot(guard.h.position.x - WP.post.x, guard.h.position.z - WP.post.z) < 0.15;
     if (wantPost) { if (!atPost && guard.pauseT <= 0) { guardGo(WP.post.x, WP.post.z); return true; } return false; }
@@ -2449,7 +2452,7 @@
   }
   npc.setCustomer = function (c) {
     if (npc.human) { npc.g.remove(npc.human); disposeTree(npc.human); world.interact = world.interact.filter(function (m) { return !m.userData.npc; }); }
-    var spec = CAST[c.who] || {}; npc.human = makeHuman(spec); npc.g.add(npc.human); npc.who = c.who; npc.cust = c;
+    var spec = CAST[c.who] || c.look || {}; npc.human = makeHuman(spec); npc.g.add(npc.human); npc.who = c.who; npc.cust = c;
     var hitBox = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hitBox.position.y = 1.25; hitBox.userData.npc = true; npc.human.add(hitBox); interactable(hitBox, { kind: 'customer', label: c.who, prompt: 'Serve' });
     npc.setBubble(c);
     var side = Math.random() < 0.5 ? 1 : -1;
@@ -2460,12 +2463,12 @@
     if (npc.state === 'away' || !npc.human) return;
     npc.state = 'leave'; npc.human.userData.setMood(mood);
     var ob = npc.bubble.material.map; npc.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color }); npc.bubble.material.needsUpdate = true; if (ob) ob.dispose(); npc.bubble.visible = true;
-    var out = [[0.4, 7.9], [0, 9.7], [0.6, 11.4], [Math.random() < 0.5 ? 16 : -16, 11.6]]; npc.path = out.map(function (p) { return { x: p[0], z: p[1] }; });
+    var out = [[0.4, 7.9], [0, 9.7], [0.6, 11.4], [Math.random() < 0.5 ? 16 : -16, 11.6]]; if (npc.g.position.z < 6.3) out.unshift([0.5, 5.7]);   /* from the window: step aside first so the walk out passes the head of the line, not through it */ npc.path = out.map(function (p) { return { x: p[0], z: p[1] }; });
   }
   npc.leaveHappy = function () { npcLeave('happy', custLine(npc.who, 'thanks'), '#6fdc8c'); };
   npc.leaveSad = function () { npcLeave('sad', custLine(npc.who, 'bye'), '#ff6b6b'); };
   // What security makes of the card. They are good, not perfect, and you can always look yourself.
-  function guardVerdict(c) {
+  function guardVerdict(c, m) {
     var id = c.id; if (!id || id.seen) return true;
     id.seen = true; id.by = 'guard';
     var sharp = clamp(0.62 + (S.upgrades.security2 ? 0.22 : S.upgrades.security ? 0.12 : 0) + (S.staff && S.staff.guardTask === 'door' ? 0.1 : -0.1), 0.3, 0.96);
@@ -2473,7 +2476,7 @@
       guard.say('Not with that card. Out.', '#ff6b6b', 2600);
       logEvent('🪪 The guard turned ' + c.who + ' away: ' + ID_FLAWS[id.flaw].why, '');
       toast('🪪 The guard turned someone away: ' + ID_FLAWS[id.flaw].why, '');
-      npc.leaveSad(); S.customer = null; hud();
+      if (m) lineLeave(m, 'sad'); else { npc.leaveSad(); S.customer = null; } hud();
       return false;
     }
     if (!id.ok) { c.idDodgy = true; guard.say('Go on through.', '#6fdc8c', 1600); }   /* waved through with a bad card: yours to catch */
@@ -2523,6 +2526,131 @@
     else if (npc.state === 'down') { npc.downT += dt; if (npc.downT > 4) { standBack(npc.human); npcLeave('angry', custLine(npc.who, 'angry'), '#ff6b6b'); } }
     else if (npc.state === 'out') { npc.downT += dt; if (npc.downT > 5) { npc.state = 'away'; g.visible = false; standBack(npc.human); npc.bubble.visible = false; } }
     else if (npc.state === 'leave') { if (walkAlong(g, npc.path, walkSpeed * 1.1, dt)) { npc.state = 'away'; g.visible = false; } animateHuman(npc.human, dt, 'walk', walkSpeed, null); }
+  }
+
+  // ── The line: while someone is at the window, the next customers queue along the rope instead of waiting outside ──
+  var LINE_Z = 7.0, LINE_X = [0, -0.7, -1.4, -2.1, -2.8, -3.5], LINE_MAX = 4;   /* two spare places past the four customers, for anyone only pretending to queue */   /* along the rope toward the left wall: the front door's leaf swings in along x -0.7 behind it, and the guard stands to the right */
+  var LINE_HOLD = { x: 0.25, z: 9.8 }, LINE_CHECK = { x: 0.5, z: 7.9 }, LINE_WAIT = 90;   /* outside the door while the guard is busy, his ID spot, seconds of patience (counted in played frames, so a pause costs nothing) */
+  var lineup = [], lineSeq = 0;   // bodies in the queue, plus any walking back out (state 'leave'); places go in the order people get past the door (seq)
+  function lineWaiting(m) { return !!m.c && m.state !== 'leave' && m.state !== 'down' && m.state !== 'out' && m.state !== 'up'; }
+  function lineShown() { return lineCount() + robbers.filter(function (r) { return r.state === 'case' && (r.pre === 'queue' || r.pre === 'stepup'); }).length; }   /* what you can see standing there, not only the real customers */
+  function lineCount() { return lineup.filter(lineWaiting).length; }
+  function lineAtDoor() { return lineup.some(function (m) { return m.state === 'enter' || m.state === 'hold' || m.state === 'tocheck' || m.state === 'check'; }) || robbers.some(function (r) { return r.state === 'case' && !(r.delay > 0) && (r.pre === 'walk' || r.pre === 'hold' || r.pre === 'tocheck' || r.pre === 'check'); }); }
+  function windowFree() { return !S.customer && (npc.state === 'away' || npc.state === 'leave'); }
+  function robberAtWindow() { return robbers.some(function (r) { return r.state === 'case' && r.pre === 'stepup'; }); }
+  function doorCheckBusy() { return guard.state === 'check' || npc.state === 'enter' || npc.state === 'check' || lineup.some(function (m) { return m.state === 'tocheck' || m.state === 'check'; }) || robbers.some(function (r) { return r.state === 'case' && (r.pre === 'tocheck' || r.pre === 'check'); }); }
+  function lineMult() { return S.upgrades.lounge2 ? 2 : S.upgrades.lobby ? 1.5 : 1; }
+  function strangerLook(bag, man) {   /* an ordinary passer-by; robbers dress exactly like this, so a stranger is not automatically trouble */
+    return { skin: pick(SKINS), hair: pick(HAIRS), shirt: pick(SHIRTS), pants: pick(PANTS), hairStyle: pick(man ? ['short', 'short', 'afro', 'long'] : ['short', 'short', 'long', 'bun', 'ponytail', 'afro']), hat: pick([null, null, null, 'cap', 'beanie']), capColor: pick([0x222222, 0x2a3a5a, 0x7a2a2a, 0x3a5a3a, 0xc9a45a]), glasses: Math.random() < 0.2, beard: !!man && Math.random() < 0.3, coat: Math.random() < 0.3 ? pick([0x3a3a3a, 0x5a4a3a, 0x2a3a4a, 0x6a2a2a, 0x3a4a3a]) : 0, longSleeve: Math.random() < 0.6, backpack: !!bag || Math.random() < 0.2, backpackColor: pick([0x15171a, 0x2a4a6a, 0x6a3a2a]), mood: 'neutral' };
+  }
+  var NEW_FACES = ['Dana', 'Marco', 'Priya', 'Kev', 'Lou', 'Tomasz', 'Ines', 'Jamal', 'Rosa', 'Theo', 'Mei', 'Callum', 'Nia', 'Ollie', 'Sven', 'Amara'];
+  function newFace() {   /* a walk-in nobody knows yet */
+    var here = [S.customer ? S.customer.who : ''].concat(lineup.map(function (m) { return m.who; })), free = NEW_FACES.filter(function (n) { return here.indexOf(n) < 0; });
+    return { who: pick(free.length ? free : NEW_FACES), a: pick(['🙂', '🧑', '👩', '👨', '🧔', '👱']), c: 0x9aa4ad, look: strangerLook(false, false) };
+  }
+  function pickRegular() {   /* a regular who is not in the shop already, while there is one */
+    var here = [S.customer ? S.customer.who : ''].concat(lineup.map(function (m) { return m.who; }), loungers.map(function (l) { return l.who; }));
+    var free = CUSTOMERS.filter(function (c) { return here.indexOf(c.who) < 0; }); return pick(free.length ? free : CUSTOMERS);
+  }
+  // someone turns up: straight to the window when it is free and nobody is queueing, otherwise to the back of the line
+  function customerArrives(premium) {
+    if (!S.customer && !lineCount() && !robberAtWindow()) { if (npc.human && npc.state === 'leave') npcHandOff(); spawnCustomer(premium); return true; }   /* the last one still walking out no longer holds the door */
+    if (lineCount() >= LINE_MAX || (heist.on && heist.masked)) return false;
+    lineJoin(premium); return true;
+  }
+  function lineJoin(premium) {
+    var c = newCustomer(premium), side = Math.random() < 0.5 ? 1 : -1, outside = lineup.filter(function (m) { return m.state === 'enter' || m.state === 'hold'; }).length;
+    var g = new THREE.Group(), h = makeHuman(CAST[c.who] || c.look || {}); g.add(h); world.group.add(g);
+    var bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.47, 0, 2.25, 0, g); bubble.visible = false;
+    var m = { id: 'Q' + now() + randi(0, 999), c: c, who: c.who, g: g, h: h, bubble: bubble, side: side, state: 'enter', slot: -1, t: 0, waited: 0, grumbled: false, fast: false, sayT: null,
+      path: [{ x: 6.5 * side, z: 11.6 }, { x: 0.6 * side, z: 11.4 }, { x: LINE_HOLD.x, z: LINE_HOLD.z + outside * 0.65 }] };   /* a second arrival while the guard is busy waits a step further out */
+    g.position.set(m.path[0].x, 0, m.path[0].z + 0.01); lineup.push(m);
+    var qhb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); qhb.position.y = 1.25; qhb.userData.queuer = m.id; h.add(qhb); interactable(qhb, { kind: 'queuer', qid: m.id });
+    if (premium) { logEvent('🎩 A connoisseur (' + c.who + ') walked in and joined the line (' + lineShown() + ' waiting)', 'rare'); toast('🎩 Connoisseur joined the line', 'rare'); }
+    else logEvent('🚪 ' + c.who + ' walked in and joined the line (' + lineShown() + ' waiting)', '');
+    hud();
+  }
+  function lineDropHit(m) { if (!m.id) return; m.h.children.filter(function (ch) { return ch.userData.queuer; }).forEach(function (ch) { m.h.remove(ch); }); world.interact = world.interact.filter(function (x) { return x.userData.queuer !== m.id; }); }
+  function lineChat(m) { if (!lineWaiting(m)) return; lineSay(m, pick([custLine(m.who, 'hi'), 'Just waiting my turn.', 'Busy in here today.', 'Is it always this slow?']), '#e8f1ea', 2200); }
+  function lineSay(m, text, color, ms) {
+    var ob = m.bubble.material.map; m.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); m.bubble.material.needsUpdate = true; if (ob) ob.dispose(); m.bubble.visible = true;
+    clearTimeout(m.sayT); m.sayT = setTimeout(function () { m.bubble.visible = false; }, ms || 2400);
+  }
+  // the way to a place in the row: shuffle up along it, or come round the front on the walkway and step back into place (clear of the door leaf)
+  function lineRoute(p, i) {
+    var x = LINE_X[i];
+    if (i === 0 || (Math.abs(p.z - LINE_Z) < 0.25 && p.x < 0.3)) return [{ x: x, z: LINE_Z }];
+    return (p.z > 6.8 ? [{ x: 0.45, z: 6.55 }] : []).concat([{ x: x, z: 6.55 }, { x: x, z: LINE_Z }]);
+  }
+  function lineLeave(m, mood, text, color, fast) {
+    if (m.state === 'leave') return;
+    lineDropHit(m); m.state = 'leave'; m.slot = -1; m.fast = !!fast; m.h.userData.setMood(mood || 'sad'); lineSay(m, text || custLine(m.who, 'bye'), color || '#ff6b6b', 4000);
+    var p = m.g.position, out = [];
+    if (p.z < 9.2) { if (p.z < LINE_Z + 0.3 && p.x < 0.3) out.push({ x: p.x, z: 6.55 }, { x: 0.45, z: 6.6 }, { x: 0.4, z: 7.9 }); out.push({ x: 0.1, z: 9.7 }); }   /* from the row: out along the walkway, round the head of the line */
+    out.push({ x: 0.6 * m.side, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }); m.path = out; hud();
+  }
+  function lineHit(m) {   // the bat on someone in the queue: the same as at the window
+    if (m.state === 'out') return;
+    if (m.state === 'down') { m.state = 'out'; m.t = 0; S.rep = Math.max(0, S.rep - 25); logEvent('🚑 ' + m.who + ' is out cold. An ambulance took them away.', 'bad'); policeFine('You put ' + m.who + ' in hospital'); return; }
+    m.state = 'down'; m.t = 0; m.slot = -1; lieDown(m.h); m.h.userData.setMood('sad'); lineSay(m, custLine(m.who, 'hurt'), '#ff6b6b'); S.rep = Math.max(0, S.rep - 8);
+    logEvent('👊 You put ' + m.who + ' on the floor' + (m.c ? ' while they waited in line' : '') + ' (rep -8)', 'bad'); toast('👊 ' + m.who + ' goes down (rep -8)', 'bad'); hud();
+  }
+  function lineFlee() {   // a robbery kicks off: the queue empties
+    var n = 0; lineup.forEach(function (m) { if (lineWaiting(m)) { n++; lineLeave(m, 'sad', pick(['I\'m out of here.', 'Nope. Not today.', 'Run!']), '#ff6b6b', true); } });
+    if (n) logEvent('🏃 ' + n + (n === 1 ? ' customer' : ' customers') + ' in the line ran for the door', 'bad');
+  }
+  function lineClear() { lineup.forEach(function (m) { lineDropHit(m); world.group.remove(m.g); disposeTree(m.g); clearTimeout(m.sayT); }); lineup.length = 0; hud(); }
+  // the served customer is still walking out: their body finishes the walk on its own so the window can take the next one now
+  function npcHandOff() {
+    var h = npc.human; h.children.filter(function (ch) { return ch.userData.npc; }).forEach(function (ch) { h.remove(ch); });
+    world.interact = world.interact.filter(function (x) { return !x.userData.npc; });
+    var g = new THREE.Group(); g.position.copy(npc.g.position); g.rotation.y = npc.g.rotation.y; npc.g.remove(h); g.add(h); world.group.add(g);
+    var bubble = sprite(npc.bubble.material.map, 1, 1, 0, 0, 0, g); bubble.scale.copy(npc.bubble.scale); bubble.position.copy(npc.bubble.position); bubble.visible = npc.bubble.visible;   /* the goodbye line walks out with them */
+    npc.bubble.material.map = textTex(['…'], 512, 200, { size: 40 }); npc.bubble.material.needsUpdate = true; npc.bubble.visible = false;
+    lineup.push({ c: null, who: npc.who, g: g, h: h, bubble: bubble, side: 1, state: 'leave', slot: -1, t: 0, waited: 0, fast: false, sayT: null, path: npc.path });
+    npc.human = null; npc.state = 'away'; npc.g.visible = false;
+  }
+  // the head of the line steps up: the body moves over to the window customer and the order becomes S.customer
+  function linePromote(m) {
+    if (npc.human && npc.state === 'leave') npcHandOff();
+    else if (npc.human) { npc.g.remove(npc.human); disposeTree(npc.human); npc.human = null; }
+    world.interact = world.interact.filter(function (x) { return !x.userData.npc; });
+    lineDropHit(m); lineup.splice(lineup.indexOf(m), 1); clearTimeout(m.sayT);
+    var c = m.c, h = m.h; m.g.remove(h); npc.g.position.set(m.g.position.x, 0, m.g.position.z); npc.g.rotation.y = m.g.rotation.y; world.group.remove(m.g); disposeTree(m.g);
+    npc.human = h; npc.g.add(h); npc.g.visible = true; npc.who = c.who; npc.cust = c;
+    var hitBox = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hitBox.position.y = 1.25; hitBox.userData.npc = true; h.add(hitBox); interactable(hitBox, { kind: 'customer', label: c.who, prompt: 'Serve' });
+    h.userData.impatient = false; h.userData.setMood(CAST[c.who] && CAST[c.who].mood || 'neutral');
+    c.fromLine = true; c.spawnedAt = now(); c.until = now() + (c.premium ? 60000 : 45000) * lineMult(); if (c.id && !c.id.seen) c.idPending = true;   /* nobody checked the card at the door: they hand it over at the window */
+    S.customer = c; npc.setBubble(c); npc.bubble.visible = false; npc.state = 'towindow'; npc.path = [{ x: 0, z: 5.25 }]; hud();
+  }
+  function updateLineup(dt) {
+    var checking = doorCheckBusy(), gone = [];
+    lineup.forEach(function (m) {
+      var P = m.h.userData.parts, sp = m.h.userData.spec.hunch ? 0.9 : 1.5;
+      if (lineWaiting(m) && m.state !== 'check') { m.waited += dt; if (m.waited > LINE_WAIT * lineMult()) { S.rep = Math.max(0, S.rep - 1); logEvent('🚶 ' + m.who + ' got tired of the line and left (rep -1)', 'bad'); toast('🚶 ' + m.who + ' gave up on the line (rep -1)', 'bad'); lineLeave(m, 'angry'); } }
+      if (m.state === 'enter') { if (walkAlong(m.g, m.path, sp, dt)) m.state = 'hold'; animateHuman(m.h, dt, 'walk', sp, null); }
+      else if (m.state === 'hold') {
+        if (!guardOnDuty()) { m.state = 'toslot'; m.slot = -1; m.seq = ++lineSeq; }   /* nobody on the door: the card comes to the window with them */
+        else if (!checking) { checking = true; m.state = 'tocheck'; m.path = [{ x: LINE_CHECK.x, z: LINE_CHECK.z }]; }
+        animateHuman(m.h, dt, 'idle', 0, guard.h ? guard.h.position : null);
+      }
+      else if (m.state === 'tocheck') { if (walkAlong(m.g, m.path, sp, dt)) { if (guardOnDuty()) { m.state = 'check'; m.t = 0; m.g.rotation.y = Math.PI / 2; guard.startCheck(m.g); } else { m.state = 'toslot'; m.slot = -1; m.seq = ++lineSeq; } } animateHuman(m.h, dt, 'walk', sp, null); }
+      else if (m.state === 'check') { m.t += dt; animateHuman(m.h, dt, 'idle', 0, guard.h ? guard.h.position : player.pos); P.lArm.rotation.x = -1.1; P.lArm.rotation.z = 0.2; if (m.t > 2.6) { P.lArm.rotation.z = 0; if (!m.c.id || guardVerdict(m.c, m)) { m.state = 'toslot'; m.slot = -1; m.seq = ++lineSeq; } } }
+      else if (m.state === 'toslot') { if (m.slot >= 0 && walkAlong(m.g, m.path, sp, dt)) m.state = 'line'; animateHuman(m.h, dt, m.slot >= 0 ? 'walk' : 'idle', sp, null); }
+      else if (m.state === 'line') {
+        turnTo(m, m.slot === 0 ? Math.PI : Math.PI / 2, dt);   // the head of the line faces the window, the rest face the back of the one in front
+        if (!m.grumbled && m.waited > LINE_WAIT * lineMult() - 20) { m.grumbled = true; m.h.userData.setMood('angry'); lineSay(m, custLine(m.who, 'queue'), '#ffc857', 2600); }
+        animateHuman(m.h, dt, m.grumbled ? 'wait' : 'idle', 0, m.slot === 0 ? player.pos : null);
+      }
+      else if (m.state === 'leave') { if (walkAlong(m.g, m.path, sp * (m.fast ? 1.8 : 1.1), dt)) gone.push(m); else animateHuman(m.h, dt, 'walk', sp * (m.fast ? 1.6 : 1), null); }
+      else if (m.state === 'down') { m.t += dt; if (m.t > 4) { standBack(m.h); m.state = 'up'; lineLeave(m, 'angry', custLine(m.who, 'angry'), '#ff6b6b'); } }
+      else if (m.state === 'out') { m.t += dt; if (m.t > 5) gone.push(m); }
+    });
+    gone.forEach(function (m) { lineDropHit(m); world.group.remove(m.g); disposeTree(m.g); clearTimeout(m.sayT); lineup.splice(lineup.indexOf(m), 1); });
+    // everyone past the door takes the next place along the rope, in join order, and shuffles up when someone ahead goes
+    lineup.filter(function (m) { return m.c && (m.state === 'toslot' || m.state === 'line'); }).concat(robbers.filter(function (r) { return r.state === 'case' && r.pre === 'queue'; })).sort(function (a, b) { return a.seq - b.seq; }).forEach(function (m, k) { if (m.slot !== k) { m.slot = k; if (m.c) m.state = 'toslot'; m.path = lineRoute(m.g.position, k); } });   /* a robber posing as a customer holds a place like anyone else */
+    // the window is free: the head of the line steps up
+    if (windowFree() && !(heist.on && heist.masked) && !robberAtWindow()) { var head = lineup.filter(function (m) { return m.c && m.state === 'line' && m.slot === 0; })[0]; if (head) linePromote(head); }
   }
 
   // ── Logistics: laptop orders become a van delivery at the back door; the bank courier collects cash at the back gate ──
@@ -2603,6 +2731,7 @@
     function test(g2, what, ref) { if (!g2 || !g2.visible) return; var dx = g2.position.x - player.pos.x, dz = g2.position.z - player.pos.z; var d = Math.hypot(dx, dz); if (d > (range || 1.9) || d < 0.05) return; var dot = (dx * fx + dz * fz) / d; if (dot < (minDot || 0.75)) return; out.push({ what: what, ref: ref, d: d }); }
     if (npc.human && npc.state !== 'away') test(npc.g, 'customer', npc);
     loungers.forEach(function (l) { test(l.g, 'lounger', l); });
+    lineup.forEach(function (m) { if (m.state !== 'out') test(m.g, 'queuer', m); });
     if (courier.h && courier.state !== 'away') test(courier.g, 'courier', courier);
     robbers.forEach(function (r) { if (r.h && r.state !== 'away') test(r.g, 'robber', r); });
     out.sort(function (p, q) { return p.d - q.d; }); return out;
@@ -2620,6 +2749,7 @@
       if (npc.state === 'down') { npc.state = 'out'; npc.downT = 0; S.rep = Math.max(0, S.rep - 25); logEvent('🚑 ' + npc.who + ' is out cold. An ambulance took them away.', 'bad'); policeFine('You put ' + npc.who + ' in hospital'); return; }
       if (npc.state === 'out') return;
       npc.state = 'down'; npc.downT = 0; lieDown(npc.human); npc.human.userData.setMood('sad'); npc.say(custLine(npc.who, 'hurt'), '#ff6b6b'); S.rep = Math.max(0, S.rep - 8); if (S.customer) { logEvent('👊 You hit ' + npc.who + ' with the bat. The order\'s off (rep -8)', 'bad'); S.customer = null; } toast('👊 ' + npc.who + ' goes down (rep -8)', 'bad');
+    } else if (what === 'queuer') { lineHit(ref);
     } else if (what === 'lounger') {
       var l = ref; if (fight && (fight.a === l || fight.b === l)) endFight('force');
       if (l.state === 'down') { l.state = 'out'; l.t = 0; S.rep = Math.max(0, S.rep - 25); logEvent('🚑 ' + l.who + ' is out cold. An ambulance took them away.', 'bad'); policeFine('You put ' + l.who + ' in hospital'); return; }
@@ -3467,6 +3597,8 @@
       buy('🦺 Kevlar vest <small>' + (A.vest ? 'you already wear one' : 'four hits in ten bounce off, hospital bills halved') + '</small>', 600, !A.vest, function () { A.vest = true; toast('🦺 Vest on', 'good'); });
       buy('🔫 32 rounds <small>' + (A.pistol ? (A.rounds || 0) + ' left · cheaper than the locker' : 'you own no pistol') + '</small>', 60, !!A.pistol, function () { A.rounds = (A.rounds || 0) + 32; toast('🔫 32 rounds', 'good'); });
       buy('💥 16 shells <small>' + (A.shotgun ? (A.shells || 0) + ' left' : 'you own no shotgun') + '</small>', 60, !!A.shotgun, function () { A.shells = (A.shells || 0) + 16; toast('💥 16 shells', 'good'); });
+      buy('🪖 180 bullets <small>' + (A.ak ? (A.bullets || 0) + ' left' : 'you own no AK') + '</small>', 110, !!A.ak, function () { A.bullets = (A.bullets || 0) + 180; toast('🪖 180 bullets', 'good'); });
+      buy('🎯 20 cartridges <small>' + (A.rifle ? (A.cartridges || 0) + ' left' : 'you own no rifle') + '</small>', 90, !!A.rifle, function () { A.cartridges = (A.cartridges || 0) + 20; toast('🎯 20 cartridges', 'good'); });
       buy('🌶️ Pepper spray refill <small>' + (A.pepper ? (A.spray || 0) + ' bursts left' : 'you own no can') + '</small>', 18, !!A.pepper, function () { A.spray = 6; toast('🌶️ Fresh can', 'good'); });
       ctxOpen('🔫 Iron & Oak Arms', 'bank ' + money(S.bank) + (hasLic('firearm') ? ' · licence checked' : ' · no firearms licence on file: guns are sold at your own locker once you hold one'), lines); return;
     }
@@ -4071,6 +4203,7 @@
     var keyed = folk.slice();   /* the crew and the guard: the only ones with keys */
     if (npc.g && npc.state !== 'away') folk.push(npc.g.position);
     loungers.forEach(function (l) { if (l.g) folk.push(l.g.position); });
+    lineup.forEach(function (m) { folk.push(m.g.position); });
     robbers.forEach(function (r) { if (r.g && r.state !== 'away' && r.state !== 'force') folk.push(r.g.position); });   /* a robber mid-break is handled by his own state, not by standing close */
     if (!shop().staffDoor && folk.length) {
       for (var sdi = 0; sdi < folk.length; sdi++) {
@@ -4211,7 +4344,9 @@
     pepper:  { ico: '🌶️', name: 'pepper spray', price: 60,   range: 3.2, dot: 0.8,   cd: 900,  sfx: 'spray',   lethal: false, d: 'short range, six bursts a can' },
     taser:   { ico: '⚡', name: 'taser',         price: 350,  range: 5.5, dot: 0.9,   cd: 3500, sfx: 'zap',     lethal: false, lvl: 3, d: 'drops almost anyone, slow to recharge' },
     pistol:  { ico: '🔫', name: '9mm pistol',    price: 900,  range: 16,  dot: 0.965, cd: 380,  sfx: 'gunshot', lethal: true, lic: true, ammo: 'rounds', d: 'comes with 16 rounds' },
-    shotgun: { ico: '💥', name: 'pump shotgun',  price: 1600, range: 8,   dot: 0.88,  cd: 1100, sfx: 'shotgun', lethal: true, lic: true, ammo: 'shells', d: 'comes with 8 shells' }
+    shotgun: { ico: '💥', name: 'pump shotgun',  price: 1600, range: 8,   dot: 0.88,  cd: 1100, sfx: 'shotgun', lethal: true, lic: true, ammo: 'shells', d: 'comes with 8 shells' },
+    rifle:   { ico: '🎯', name: 'hunting rifle', price: 2400, range: 30,  dot: 0.985, cd: 1500, sfx: 'rifle',   lethal: true, lic: true, ammo: 'cartridges', d: 'the longest reach, one careful shot at a time; hold right-click for the scope; comes with 10 cartridges' },
+    ak:      { ico: '🪖', name: 'AK-47',         price: 3200, range: 20,  dot: 0.93,  cd: 110,  sfx: 'ak',      lethal: true, lic: true, auto: true, ammo: 'bullets', d: 'full auto: hold the button down; kicks upward, so pull it back on target; comes with 90 bullets' }
   };
   function mkRobber(id) { return { id: id, g: null, h: null, state: 'away', path: [], t: 0, bubble: null, grabbed: 0, goods: [], disp: {}, guardRolled: false, kind: 'knife', weapon: null, role: 'lead', alertT: 0, losT: 0, losOk: false, mask: null, gun: null, masked: false, escal: false, delay: 0, arrived: false, caseT: 8, downFor: 4, raid: '' }; }
   var robber = mkRobber(0), mate = mkRobber(1), robbers = [robber, mate];
@@ -4231,8 +4366,8 @@
   function buildRobber(r, kind, weapon, role) {
     if (!r.g) { r.g = new THREE.Group(); world.group.add(r.g); r.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, r.g); }
     if (r.h) { r.g.remove(r.h); disposeTree(r.h); } world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; });
-    r.h = makeHuman({ skin: pick(SKINS), hair: 0x111111, shirt: pick([0x23262b, 0x2b2622, 0x1f2a24]), pants: 0x1c1c1c, hat: 'beanie', capColor: 0x111111, mood: 'neutral', longSleeve: true, hairStyle: 'short', shoes: 0x111111, backpack: role === 'bagman', backpackColor: 0x15171a }); r.g.add(r.h);
-    var P = r.h.userData.parts; r.mask = new THREE.Group(); var hood = new THREE.Mesh(new THREE.SphereGeometry(0.182, 14, 12), colorMat(0x0c0c0e, 0.95)); hood.position.set(0, 0.24, 0); r.mask.add(hood); var slit = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.03), colorMat(0xd9a57e, 0.8)); slit.position.set(0, 0.27, 0.17); r.mask.add(slit); r.mask.visible = false; P.head.add(r.mask);
+    r.h = makeHuman(strangerLook(role === 'bagman', true)); r.g.add(r.h);   /* dressed like anyone off the street: the balaclava stays in a pocket until he makes his move */
+    var P = r.h.userData.parts; r.mask = new THREE.Group(); var hood = new THREE.Mesh(new THREE.SphereGeometry(0.195, 14, 12), colorMat(0x0c0c0e, 0.95)); hood.position.set(0, 0.24, 0); r.mask.add(hood); var slit = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.03), colorMat(0xd9a57e, 0.8)); slit.position.set(0, 0.27, 0.185); r.mask.add(slit); r.mask.visible = false; P.head.add(r.mask);
     r.gun = weapon ? robWeaponMesh(weapon) : null; if (r.gun) { r.gun.visible = false; P.rArm.userData.elbow.add(r.gun); }
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; hb.userData.robberId = r.id; r.h.add(hb); interactable(hb, { kind: 'robber', rid: r.id });
     r.kind = kind; r.weapon = weapon; r.role = role; r.t = 0; r.grabbed = 0; r.goods = []; r.disp = {}; r.guardRolled = false; r.alertT = 0; r.losT = 0; r.losOk = false; r.escal = false; r.masked = false; r.arrived = false; r.raid = ''; r.bubble.visible = false; standBack(r.h); r.g.visible = true; r.g.rotation.y = 0;
@@ -4241,27 +4376,29 @@
     if (heist.on || !shop().open) return;
     kind = ROB_KINDS[kind] ? kind : pickRobKind(); var K = ROB_KINDS[kind];
     heist = { on: true, kind: kind, policeT: 0, masked: false, aborted: false, t: 0 }; S.stats.heists = (S.stats.heists || 0) + 1;
-    var side = Math.random() < 0.5 ? 1 : -1;
     (kind === 'crew' ? [robber, mate] : [robber]).forEach(function (r, i) {
       buildRobber(r, kind, i ? 'pistol' : K.weapon, i ? 'bagman' : 'lead');
-      var walkIn = CUSTOMER_IN.map(function (p, j) { return { x: j < 2 ? p[0] * side : p[0], z: p[1] }; });
-      var spot = i ? { x: 4.6, z: 6.7 } : { x: pick([-3.4, 2.8]), z: 6.9 };
-      r.path = walkIn.concat(routeTo(walkIn[walkIn.length - 1], spot.x, spot.z)); r.g.position.set(r.path[0].x, 0, r.path[0].z); r.state = 'case'; r.caseT = i ? 999 : randf(7, 12); r.delay = i * 1.3;   // the bagman waits for the lead's signal
+      var side = Math.random() < 0.5 ? 1 : -1;
+      r.plan = i ? 'browse' : (Math.random() < 0.6 ? 'queue' : 'browse');   /* the lead usually queues like a customer and shows his hand at the window; otherwise he browses the lobby */
+      r.pre = 'walk'; r.slot = -1; r.seq = 0; r.spot = null; r.state = 'case';
+      r.path = [{ x: 6.5 * side, z: 11.6 }, { x: 0.6 * side, z: 11.4 }, { x: 0.65, z: 10.15 }]; r.g.position.set(r.path[0].x, 0, r.path[0].z);
+      r.caseT = i ? 999 : r.plan === 'queue' ? randf(18, 32) : randf(8, 16); r.delay = i ? randf(6, 16) : 0;   // a partner comes in on his own a little later and waits for the lead's signal
     });
-    toast('👀 ' + (kind === 'crew' ? 'Two men in beanies' : 'A man in a beanie') + ' walked in and didn\'t come to the window…', ''); logEvent('👀 ' + (kind === 'crew' ? 'Two men are' : 'Someone is') + ' hanging around the lobby, watching the counter', '');
+    /* no announcement: they walk in like anyone else, and the first sign may be the mask */
   }
   function maskUp(r) {
-    if (r.masked || r.state !== 'case') return; r.masked = true; r.mask.visible = true; if (r.gun) r.gun.visible = true; r.h.userData.setMood('angry'); r.t = 0;
-    if (!heist.masked) { heist.masked = true; sfx('alarm'); var K = ROB_KINDS[r.kind]; toast('🚨 ' + (r.kind === 'crew' ? 'They pulled masks down, and one has a shotgun' : r.kind === 'gun' ? 'He pulled a mask down, and he has a gun' : r.kind === 'knife' ? 'He pulled a mask down, and he has a knife' : 'He pulled his hood up and he\'s heading for the tip jar'), 'bad'); logEvent('🚨 ' + (r.kind === 'crew' ? 'A gang' : 'A ' + K.label) + ' just made a move in the lobby', 'bad'); guard.say('Hey. Stop right there.', '#ff6b6b', 3000); if (S.customer && !S.customer.stage && npc.state !== 'down' && npc.state !== 'out') { logEvent('🏃 ' + S.customer.who + ' ran for the door, and the order went with them', 'bad'); S.customer = null; npcLeave('sad', 'I\'m out of here.', '#ff6b6b'); } }   // whoever was being served clears the line of fire
+    if (r.masked || r.state !== 'case') return; r.delay = 0; r.g.visible = true; r.slot = -1; r.masked = true; r.mask.visible = true; if (r.gun) r.gun.visible = true; r.h.userData.setMood('angry'); r.t = 0;
+    if (!heist.masked) { heist.masked = true; sfx('alarm'); var K = ROB_KINDS[r.kind]; toast('🚨 ' + (r.kind === 'crew' ? 'They pulled masks down, and one has a shotgun' : r.kind === 'gun' ? 'He pulled a mask down, and he has a gun' : r.kind === 'knife' ? 'He pulled a mask down, and he has a knife' : 'He pulled his hood up and he\'s heading for the tip jar'), 'bad'); logEvent('🚨 ' + (r.kind === 'crew' ? 'A gang' : 'A ' + K.label) + ' just made a move in the lobby', 'bad'); guard.say('Hey. Stop right there.', '#ff6b6b', 3000); lineFlee(); if (S.customer && !S.customer.stage && npc.state !== 'down' && npc.state !== 'out') { logEvent('🏃 ' + S.customer.who + ' ran for the door, and the order went with them', 'bad'); S.customer = null; npcLeave('sad', 'I\'m out of here.', '#ff6b6b'); } }   // whoever was being served clears the line of fire
     if (r.role === 'bagman') { var tgt = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: 6.5, z: 2.7 }; r.path = routeTo(r.g.position, tgt.x, tgt.z); r.state = 'raid'; r.raid = 'goods'; }
     else { r.path = routeTo(r.g.position, 0, 5.25); r.state = 'in'; if (mate.state === 'case') maskUp(mate); }
   }
   function heistAbort(how) {
     heist.aborted = true; robbers.forEach(function (r) { if (r.state === 'case') robberFlee(r); });
-    if (how === 'guard') { guard.say('You. Out. Now.', '#ffc857', 3000); S.rep += 1; logEvent('🛡️ The guard didn\'t like the look of them and walked them out (rep +1)', 'good'); toast('🛡️ The guard walked a suspicious visitor out', 'good'); }
+    if (how === 'id') { guard.say('This card\'s a fake. Out.', '#ffc857', 3000); S.rep += 1; logEvent('🪪 The guard spotted a fake ID at the door and turned the man away. He wasn\'t there to buy anything (rep +1)', 'good'); toast('🪪 The guard caught a fake ID at the door', 'good'); }
+    else if (how === 'guard') { guard.say('You. Out. Now.', '#ffc857', 3000); S.rep += 1; logEvent('🛡️ The guard didn\'t like the look of them and walked them out (rep +1)', 'good'); toast('🛡️ The guard walked a suspicious visitor out', 'good'); }
     else { S.rep += 1; logEvent('🗣️ You confronted the man casing the shop and he left (rep +1)', 'good'); toast('🗣️ He mumbled something and left', 'good'); }
   }
-  function confrontRobber(r) { if (r.state !== 'case' || !r.arrived) return; if (Math.random() < 0.55) { robberSay(r, 'Just looking. I\'m going.', '#ffc857'); heistAbort('you'); } else { robberSay(r, 'Wrong move.', '#ff6b6b'); maskUp(robber); } }
+  function confrontRobber(r) { if (r.state !== 'case') return; if (!r.arrived) { robberSay(r, 'Hm? Just coming in.', '#e8f1ea'); return; } if (Math.random() < 0.55) { robberSay(r, r.pre === 'browse' ? 'Just looking. I\'m going.' : 'Forget it. I\'ll come back later.', '#ffc857'); heistAbort('you'); } else { robberSay(r, 'Wrong move.', '#ff6b6b'); maskUp(robber); } }
   function heistDemander() { for (var i = 0; i < robbers.length; i++) if (robbers[i].state === 'demand') return robbers[i]; return null; }
   function complyHeist() { var r = heistDemander(); if (!r) return; robberSay(r, 'Smart. Nobody moves.', '#ffc857'); takeTill(r, true); }
   function takeTill(r, complied) {
@@ -4283,7 +4420,7 @@
     var dn = 0; Object.keys(r.disp).forEach(function (k) { S.display[k] = (S.display[k] || 0) + r.disp[k]; dn += r.disp[k]; }); r.disp = {}; if (dn) { syncDisplay(); bits.push(dn + ' counter items'); }
     if (bits.length) toast('💵 Got back ' + bits.join(' and '), 'good');
   }
-  function robberFlee(r) { r.state = 'flee'; r.t = 0; r.path = routeTo(r.g.position, 0.4, 7.9).concat([{ x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]); }
+  function robberFlee(r) { r.delay = 0; if (r.g) r.g.visible = true; r.state = 'flee'; r.t = 0; r.path = (r.g.position.z > 9.3 ? [] : routeTo(r.g.position, 0.4, 7.9).concat([{ x: 0, z: 9.7 }])).concat([{ x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]); }   /* still outside: just walk off */
   // can the player see this figure? walls, doors and furniture block; glass, signs' hit boxes and the figure itself do not
   var losRay = new THREE.Raycaster(); losRay.layers.enable(TOWN_LAYER);   /* rays still hit the town layer */
   function sightLine(tg) {
@@ -4335,7 +4472,7 @@
     else { S.rep = Math.max(0, S.rep - 10); policeFine('Excessive force: you shot ' + (fleeing ? 'a man who was already running or down' : 'an unarmed man')); }
   }
   function shotBystander(t) {
-    hitNpc(t.what, t.ref); addHeat(40); var fine = Math.min(S.bank, 2000); S.bank -= fine; S.rep = Math.max(0, S.rep - 30); S.noCustomersUntil = now() + 240000; if (S.lic) S.lic.firearm = false; S.armory.pistol = false; S.armory.shotgun = false;
+    hitNpc(t.what, t.ref); addHeat(40); var fine = Math.min(S.bank, 2000); S.bank -= fine; S.rep = Math.max(0, S.rep - 30); S.noCustomersUntil = now() + 240000; if (S.lic) S.lic.firearm = false; S.armory.pistol = false; S.armory.shotgun = false; S.armory.rifle = false; S.armory.ak = false;
     for (var i = 0; i < 6; i++) if (S.hotbar[i] && WEAPONS[S.hotbar[i].kind] && WEAPONS[S.hotbar[i].kind].lethal) S.hotbar[i] = null;
     logEvent('🚓 You shot a bystander: ' + money(fine) + ' fine, firearms licence revoked, guns confiscated (rep -30)', 'bad'); toast('🚓 You shot a bystander. Licence revoked, guns confiscated.', 'bad'); hud();
   }
@@ -4347,30 +4484,45 @@
     if (h.kind === 'pepper' && (A.spray || 0) <= 0) { sfx('click'); swing.cd = now() + 400; toast('The can is empty. Refill it at the weapon locker.', 'bad'); return; }
     if (W.ammo && (A[W.ammo] || 0) <= 0) { sfx('click'); swing.cd = now() + 400; toast('Click. Out of ' + W.ammo + '. Buy more at the weapon locker.', 'bad'); return; }
     if (h.kind === 'pepper') A.spray--; if (W.ammo) A[W.ammo]--;
-    swing.cd = now() + W.cd; swing.t = 0.35; sfx(W.sfx); if (W.lethal) world.muzzleT = 0.09;
+    swing.cd = now() + W.cd; swing.t = 0.35; sfx(W.sfx); if (W.lethal) world.muzzleT = 0.09; if (W.auto) { player.pitch = Math.min(player.pitch + 0.012, 1.3); player.yaw += (Math.random() - 0.5) * 0.01; }   /* full auto climbs: pull it back down */
     var fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw); if (!W.lethal) burst(player.pos.x + fx * 1.2, player.pos.y - 0.25, player.pos.z + fz * 1.2, h.kind === 'pepper' ? 0xff8a3c : 0x7fd4ff, 14, 'out');
     var t = facingTargets(W.range, W.dot).filter(function (c) { return sightLine(c.ref.g); })[0]; hud(); save();
     if (!t) { if (W.lethal) warningShot(); return; }
     burst(t.ref.g.position.x, 1.3, t.ref.g.position.z, W.lethal ? 0xb01010 : 0xffffff, 12, 'out');
     if (t.what === 'robber') { if (W.lethal) shootRobber(t.ref); else strikeRobber(t.ref, h.kind); } else if (W.lethal) shotBystander(t); else hitNpc(t.what, t.ref);
   }
-  function weaponLabel(kind) { var W = WEAPONS[kind], A = S.armory; return W.ico + ' ' + W.name.charAt(0).toUpperCase() + W.name.slice(1) + ' · ' + (kind === 'pepper' ? (A.spray || 0) + ' bursts' : W.ammo ? (A[W.ammo] || 0) + ' ' + W.ammo : 'charged') + ' · click to ' + (W.lethal ? 'fire' : 'use'); }
+  var trigger = { down: false };   // the left button held, for full-auto weapons
+  function updateTrigger() {
+    if (!trigger.down) return; var h = held(), W = h && WEAPONS[h.kind];
+    if (!W || !W.auto || !player.locked || ui.blocked() || drive.on) { trigger.down = false; return; }
+    if ((S.armory[W.ammo] || 0) <= 0) { trigger.down = false; return; }   /* the click on an empty mag came with the first press */
+    fireWeapon();
+  }
+  var scope = { on: false, k: 0, el: null };   // the rifle's scope, held on right-click
+  function updateScope(dt) {
+    var h = held(), want = scope.on && !!h && h.kind === 'rifle' && !drive.on && !ui.blocked() && player.locked && !(player.downT > 0);
+    scope.k = clamp(scope.k + (want ? dt * 6 : -dt * 8), 0, 1);
+    var f = SET.fov + (20 - SET.fov) * scope.k * scope.k; if (Math.abs(camera.fov - f) > 0.01) { camera.fov = f; camera.updateProjectionMatrix(); }
+    if (!scope.el) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .12s;z-index:4;background:radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0, rgba(0,0,0,0) 34vmin, rgba(0,0,0,.94) 35vmin)'; d.innerHTML = '<div style="position:absolute;left:50%;top:15vmin;bottom:15vmin;width:1px;background:rgba(0,0,0,.85)"></div><div style="position:absolute;top:50%;left:calc(50% - 35vmin);right:calc(50% - 35vmin);height:1px;background:rgba(0,0,0,.85)"></div>'; document.body.appendChild(d); scope.el = d; }
+    var vis = scope.k > 0.7 ? '1' : '0'; if (scope.el.style.opacity !== vis) scope.el.style.opacity = vis;
+  }
+  function weaponLabel(kind) { var W = WEAPONS[kind], A = S.armory; return W.ico + ' ' + W.name.charAt(0).toUpperCase() + W.name.slice(1) + ' · ' + (kind === 'pepper' ? (A.spray || 0) + ' bursts' : W.ammo ? (A[W.ammo] || 0) + ' ' + W.ammo : 'charged') + ' · click to ' + (W.lethal ? 'fire' : 'use') + (kind === 'rifle' ? ' · hold right-click to aim' : kind === 'ak' ? ' · hold to keep firing' : ''); }
   function lockerMenu() {
     var A = S.armory, lines = [];
     Object.keys(WEAPONS).forEach(function (k) {
       var W = WEAPONS[k]; var inHand = S.hotbar.some(function (x) { return x && x.kind === k; });
-      if (!A[k]) { var why = W.lic && !hasLic('firearm') ? 'needs the firearms licence' : W.lvl && S.level < W.lvl ? 'needs level ' + W.lvl : S.bank < W.price ? 'not enough in the bank' : ''; lines.push({ label: W.ico + ' Buy the ' + W.name + ' · ' + money(W.price) + ' <small>' + (why || W.d) + '</small>', cls: why ? 'muted' : '', act: why ? null : function () { S.bank -= W.price; A[k] = true; if (k === 'pepper') A.spray = 6; if (k === 'pistol') A.rounds = (A.rounds || 0) + 16; if (k === 'shotgun') A.shells = (A.shells || 0) + 8; sfx('cash'); toast(W.ico + ' Bought the ' + W.name + '. It\'s in the weapon locker.', 'good'); logEvent(W.ico + ' Bought a ' + W.name, ''); save(); } }); }
+      if (!A[k]) { var why = W.lic && !hasLic('firearm') ? 'needs the firearms licence' : W.lvl && S.level < W.lvl ? 'needs level ' + W.lvl : S.bank < W.price ? 'not enough in the bank' : ''; lines.push({ label: W.ico + ' Buy the ' + W.name + ' · ' + money(W.price) + ' <small>' + (why || W.d) + '</small>', cls: why ? 'muted' : '', act: why ? null : function () { S.bank -= W.price; A[k] = true; if (k === 'pepper') A.spray = 6; if (k === 'pistol') A.rounds = (A.rounds || 0) + 16; if (k === 'shotgun') A.shells = (A.shells || 0) + 8; if (k === 'rifle') A.cartridges = (A.cartridges || 0) + 10; if (k === 'ak') A.bullets = (A.bullets || 0) + 90; sfx('cash'); toast(W.ico + ' Bought the ' + W.name + '. It\'s in the weapon locker.', 'good'); logEvent(W.ico + ' Bought a ' + W.name, ''); save(); } }); }
       else if (inHand) lines.push({ label: W.ico + ' The ' + W.name + ' is in your hands <small>G puts it back</small>', cls: 'muted' });
       else lines.push({ label: W.ico + ' Take the ' + W.name, act: function () { if (k !== 'pepper' && k !== 'taser' && !hasLic('firearm')) { toast('Your firearms licence is gone, so the guns stay locked', 'bad'); return; } take({ kind: k }); } });
     });
     function ammoLine(ico, what, key, n, price) { lines.push({ label: ico + ' Buy ' + n + ' ' + what + ' · ' + money(price) + ' <small>' + (A[key] || 0) + ' left</small>', cls: S.bank < price ? 'muted' : '', act: S.bank < price ? null : function () { S.bank -= price; A[key] = (key === 'spray' ? 0 : (A[key] || 0)) + n; sfx('cash'); toast(ico + ' ' + n + ' ' + what, 'good'); save(); } }); }
-    if (A.pepper) ammoLine('🌶️', 'bursts (new can)', 'spray', 6, 25); if (A.pistol) ammoLine('🔫', 'rounds', 'rounds', 16, 40); if (A.shotgun) ammoLine('💥', 'shells', 'shells', 8, 40);
+    if (A.pepper) ammoLine('🌶️', 'bursts (new can)', 'spray', 6, 25); if (A.pistol) ammoLine('🔫', 'rounds', 'rounds', 16, 40); if (A.shotgun) ammoLine('💥', 'shells', 'shells', 8, 40); if (A.rifle) ammoLine('🎯', 'cartridges', 'cartridges', 10, 55); if (A.ak) ammoLine('🪖', 'bullets', 'bullets', 90, 70);
     ctxOpen('🧰 Weapon locker', 'bank ' + money(S.bank) + (hasLic('firearm') ? ' · firearms licence on file' : ' · guns need the firearms licence'), lines);
   }
   function robberOf(d) { return robbers[d.rid] || robber; }
   function robberPrompt(d, h) {
     var r = robberOf(d); if (h && h.kind === 'bat') return 'Swing <small>floor him</small>'; if (h && WEAPONS[h.kind]) return (WEAPONS[h.kind].lethal ? 'FIRE' : 'Use the ' + WEAPONS[h.kind].name) + ' <small>click</small>';
-    if (r.state === 'case') return 'Man in a beanie <small>E to ask what he wants</small>'; return 'Robber <small>bat by the till · weapon locker next to it</small>';
+    if (r.state === 'case') return 'Customer <small>' + (r.pre === 'browse' ? '' : 'in line · ') + 'E to have a word</small>'; return 'Robber <small>bat by the till · weapon locker next to it</small>';
   }
   function robberInteract(d, h) { var r = robberOf(d); if (h && h.kind === 'bat') swingBat(); else if (h && WEAPONS[h.kind]) fireWeapon(); else if (r.state === 'case') confrontRobber(r); else toast('Get the bat or something from the weapon locker, hand over the till, or let the guard handle it', 'bad'); }
   function panicButton() {
@@ -4386,7 +4538,7 @@
   function heistHint() {
     if (!heist.on) return ''; var lead = robber, pol = heist.policeT > 0 ? ' 🚓 police in ' + Math.ceil(heist.policeT) + ' s.' : S.upgrades.panic && heist.masked ? ' Press P for the silent alarm.' : '';
     if (player.downT > 0) return '🩸 You\'re down. Stay still.';
-    if (!heist.masked) return heist.aborted ? '' : '👀 ' + (heist.kind === 'crew' ? 'Two men are' : 'A man is') + ' hanging around the lobby watching the counter. Walk up and press E to ask what he wants, or keep a weapon close.';
+    if (!heist.masked) return caseHintOn() ? '👀 Someone in the lobby hasn\'t ordered anything and keeps glancing at the till. Walk up and press E to have a word, or keep a weapon close.' : '';
     if (lead.state === 'demand') return '🚨 Robbery: ' + (lead.weapon === 'knife' ? 'he has a knife' : 'he\'s armed') + '. Press E on the till to hand it over, or stop him with the bat, pepper spray, the taser or a gun.' + (mate.state === 'raid' || mate.state === 'loot' ? ' His partner is in the back at the goods shelf.' : '') + pol;
     if (lead.state === 'raid' || lead.state === 'loot') return '🚨 He\'s in the back going for the vault. Catch him from behind while he works on it.' + pol;
     if (mate.state === 'raid' || mate.state === 'loot') return '🚨 The bagman is still at the goods shelf.' + pol;
@@ -4421,6 +4573,8 @@
     // the blue stripe and the light bar, so it reads as a police car and not a white hatchback
     var stripe = colorMat(0x1b4f9c, 0.5);
     [-1.02, 1.02].forEach(function (sx) { var b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.34, 2.9), stripe); b.position.set(sx, 0.72, 0.1); b.castShadow = false; g.add(b); });
+    var pword = textTex(['POLICE'], 512, 96, { size: 64, bold: true, bg: '#1b4f9c', color: '#ffffff', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' });
+    [-1, 1].forEach(function (s) { var pl = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.3), new THREE.MeshBasicMaterial({ map: pword })); pl.position.set(s * 1.056, 0.72, 0.1); pl.rotation.y = s * Math.PI / 2; g.add(pl); });   /* lettered down both flanks */
     var barG = new THREE.Group(); barG.position.set(0, 1.44, -0.15); g.add(barG); police.bar = barG;
     barG.add(new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.07, 0.22), colorMat(0x22262b, 0.6)));
     police.lamp = [-1, 1].map(function (sx, i) {
@@ -4430,10 +4584,27 @@
       return { m: m, l: l };
     });
     police.cops = [0, 1].map(function (i) {
-      var h = makeHuman({ skin: pick(SKINS), hair: pick(HAIRS), shirt: 0x1f2a44, pants: 0x1a2136, hat: 'cap' });
+      var h = makeHuman({ skin: pick(SKINS), hair: pick(HAIRS), hairStyle: 'short', shirt: 0x1f2a44, pants: 0x1a2136, shoes: 0x111111, belt: 0x111111, longSleeve: true, mood: 'neutral' }); dressCop(h);
       var cg = new THREE.Group(); cg.add(h); cg.visible = false; world.group.add(cg);
       return { g: cg, h: h, path: [], side: i ? 1 : -1 };
     });
+  }
+  var copCheck = null;   // the chequered cap band, drawn once
+  function dressCop(h) {   // reads as police across the lobby: peaked cap with a chequered band, a black vest lettered POLICE front and back, badge, radio, holster
+    var P = h.userData.parts, T = P.torso, H = P.head, blk = colorMat(0x111214, 0.55), gold = colorMat(0xd9b44a, 0.35, 0.8);
+    function part(geo, mat, x, y, z, parent, rx) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (rx) m.rotation.x = rx; m.castShadow = true; parent.add(m); return m; }
+    part(new THREE.BoxGeometry(0.47, 0.5, 0.29), colorMat(0x17191d, 0.85), 0, 0.37, 0, T);
+    var wm = new THREE.MeshBasicMaterial({ map: textTex(['POLICE'], 256, 72, { size: 50, bold: true, bg: 'rgba(0,0,0,0)', color: '#ffffff', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true });
+    var back = part(new THREE.PlaneGeometry(0.4, 0.11), wm, 0, 0.47, -0.148, T); back.rotation.y = Math.PI; back.castShadow = false;
+    part(new THREE.PlaneGeometry(0.25, 0.07), wm, 0.085, 0.53, 0.148, T).castShadow = false;
+    part(new THREE.CircleGeometry(0.028, 14), gold, -0.11, 0.53, 0.149, T).castShadow = false;
+    part(new THREE.BoxGeometry(0.05, 0.1, 0.035), blk, -0.13, 0.6, 0.16, T); part(new THREE.CylinderGeometry(0.004, 0.004, 0.08, 6), blk, -0.14, 0.69, 0.16, T);
+    part(new THREE.BoxGeometry(0.05, 0.15, 0.08), blk, 0.235, 0.08, 0.03, T);
+    if (!copCheck) { var cv = document.createElement('canvas'); cv.width = 256; cv.height = 32; var cx = cv.getContext('2d'); for (var i = 0; i < 16; i++) for (var j = 0; j < 2; j++) { cx.fillStyle = (i + j) % 2 ? '#101010' : '#f2f2f2'; cx.fillRect(i * 16, j * 16, 16, 16); } copCheck = new THREE.CanvasTexture(cv); }
+    part(new THREE.CylinderGeometry(0.155, 0.155, 0.06, 24, 1, true), new THREE.MeshStandardMaterial({ map: copCheck, roughness: 0.7, side: THREE.DoubleSide }), 0, 0.375, 0, H);
+    part(new THREE.CylinderGeometry(0.185, 0.155, 0.07, 24), colorMat(0x141b2e, 0.7), 0, 0.44, 0, H);
+    part(new THREE.BoxGeometry(0.17, 0.012, 0.09), blk, 0, 0.35, 0.175, H, 0.3);
+    part(new THREE.PlaneGeometry(0.04, 0.04), gold, 0, 0.44, 0.176, H).castShadow = false;
   }
   function policeLights(dt) {
     police.lightT += dt;
@@ -4532,15 +4703,47 @@
       return;
     }
   }
+  var BROWSE_SPOTS = [{ x: -3.4, z: 5.1, yaw: Math.PI }, { x: -7.4, z: 5.1, yaw: Math.PI }, { x: -5.2, z: 8.3, yaw: 0 }, { x: 4.6, z: 6.7, yaw: Math.PI / 2 }, { x: 4.2, z: 8.4, yaw: 0 }];   // the menu board, the posters, the front glass, near the machines
+  function browseSpot(r) {
+    var s = BROWSE_SPOTS.slice(); ['vend', 'arcade'].forEach(function (k) { var st = lobbyStop(k); if (st) s.push({ x: st.x, z: st.z, yaw: st.yaw }); });
+    var taken = robbers.filter(function (x) { return x !== r && x.spot; }).map(function (x) { return x.spot; });
+    s = s.filter(function (p) { return !taken.some(function (o) { return Math.hypot(o.x - p.x, o.z - p.z) < 1; }); });
+    r.spot = pick(s.length ? s : BROWSE_SPOTS); return r.spot;
+  }
+  function caseHintOn() { var r = robber; return heist.on && !heist.masked && !heist.aborted && r.state === 'case' && r.pre === 'browse' && r.arrived && r.t > r.caseT * 0.5; }   /* only a browser who lingers gives himself away */
+  function fakeIdCaught() { var sharp = clamp(0.62 + (S.upgrades.security2 ? 0.22 : S.upgrades.security ? 0.12 : 0) + (S.staff && S.staff.guardTask === 'door' ? 0.1 : -0.1), 0.3, 0.96); return Math.random() < sharp * 0.45; }   // the fakes are good: the guard catches fewer than half
+  function robberInside(r) {   // past the door: into the line like a customer, or off to browse
+    r.t = 0; r.arrived = false; r.path = [];
+    if (r.plan === 'queue') { r.pre = 'queue'; r.arrived = true; r.slot = -1; r.seq = ++lineSeq; return; }
+    var s = browseSpot(r); r.pre = 'browse'; r.faceYaw = s.yaw; r.path = routeTo(r.g.position, s.x, s.z);
+  }
+  function robberCase(r, dt) {   // before the mask: indistinguishable from anyone walking in, bar the odd look at the till
+    var g2 = r.g, P = r.h.userData.parts;
+    if (r.delay > 0) { r.delay -= dt; g2.visible = false; return; }
+    g2.visible = true;
+    if (r.pre === 'walk') { if (walkAlong(g2, r.path, 1.4, dt)) r.pre = 'hold'; animateHuman(r.h, dt, 'walk', 1.4, null); return; }
+    if (r.pre === 'hold') { if (!guardOnDuty()) robberInside(r); else if (!doorCheckBusy()) { r.pre = 'tocheck'; r.path = [{ x: LINE_CHECK.x, z: LINE_CHECK.z }]; } animateHuman(r.h, dt, 'idle', 0, null); return; }
+    if (r.pre === 'tocheck') { if (walkAlong(g2, r.path, 1.4, dt)) { if (guardOnDuty()) { r.pre = 'check'; r.t = 0; g2.rotation.y = Math.PI / 2; guard.startCheck(g2); } else robberInside(r); } animateHuman(r.h, dt, 'walk', 1.4, null); return; }
+    if (r.pre === 'check') { r.t += dt; animateHuman(r.h, dt, 'idle', 0, guard.h ? guard.h.position : null); P.lArm.rotation.x = -1.1; P.lArm.rotation.z = 0.2; if (r.t > 2.6) { P.lArm.rotation.z = 0; if (fakeIdCaught()) heistAbort('id'); else robberInside(r); } return; }
+    r.t += dt; var glance = r.t % 7 < 1.3 ? REG_POS : null;
+    if (r.pre === 'browse') {
+      if (!r.arrived) { if (walkAlong(g2, r.path, 1.3, dt)) { r.arrived = true; r.t = 0; if (r === robber && S.staff && S.staff.guardTask === 'patrol' && Math.random() < 0.45) { heistAbort('guard'); return; } } animateHuman(r.h, dt, 'walk', 1.3, null); return; }
+      turnTo(r, r.faceYaw, dt); animateHuman(r.h, dt, 'idle', 0, glance); if (r.t > r.caseT) maskUp(r); return;
+    }
+    if (r.pre === 'queue') {
+      if (r.slot >= 0 && r.path.length) { walkAlong(g2, r.path, 1.4, dt); animateHuman(r.h, dt, 'walk', 1.4, null); }
+      else { turnTo(r, r.slot === 0 ? Math.PI : Math.PI / 2, dt); animateHuman(r.h, dt, 'idle', 0, glance || (r.slot === 0 ? player.pos : null)); }
+      if (r.slot === 0 && !r.path.length && windowFree()) { r.pre = 'stepup'; r.path = [{ x: 0, z: 5.25 }]; }   /* his turn: he walks up like a customer */
+      else if (r.t > r.caseT) maskUp(r);
+      return;
+    }
+    if (r.pre === 'stepup') { if (walkAlong(g2, r.path, 1.4, dt)) maskUp(r); else animateHuman(r.h, dt, 'walk', 1.4, null); }
+  }
   function updateRobber(r, dt) {
     var g2 = r.g, K = ROB_KINDS[r.kind], P = r.h.userData.parts;
     if (r.sayT > 0) { r.sayT -= dt; if (r.sayT <= 0) r.bubble.visible = false; }
     function aim() { if (!r.gun) return; P.rArm.rotation.x = -1.4; P.rArm.rotation.z = -0.05; P.rArm.userData.elbow.rotation.x = -0.08; }
-    if (r.state === 'case') {
-      if (r.delay > 0) { r.delay -= dt; return; }
-      if (!r.arrived) { if (walkAlong(g2, r.path, 1.3, dt)) { r.arrived = true; r.t = 0; if (r === robber && S.staff && S.staff.guardTask === 'patrol' && Math.random() < 0.45) { heistAbort('guard'); return; } } animateHuman(r.h, dt, 'walk', 1.3, null); return; }
-      r.t += dt; animateHuman(r.h, dt, 'wait', 0, r.t % 5 < 2.5 ? REG_POS : null); if (r.t > r.caseT) maskUp(r); return;
-    }
+    if (r.state === 'case') { robberCase(r, dt); return; }
     if (r.state === 'in') {
       if (walkAlong(g2, r.path, K.speed, dt)) { r.t = 0; if (r.kind === 'snatch') { r.state = 'grab'; robberSay(r, '…', '#ffc857'); } else { r.state = 'demand'; robberSay(r, r.weapon === 'knife' ? 'The till. Now.' : 'Empty the till or I shoot.', '#ff6b6b'); sfx('alarm'); toast('🚨 Robbery. He wants the till, at the window.', 'bad'); hud(); } }
       animateHuman(r.h, dt, 'walk', K.speed, null); aim(); return;
@@ -4686,7 +4889,7 @@
   npc.goLounge = function () { var seat = freeLoungeSeat(); return seat ? npc.goLobby([{ kind: 'bench', seat: seat }]) : false; };
   function nextStep(l) {
     l.step++; var st = l.plan[l.step]; var from = { x: l.g.position.x, z: l.g.position.z }; l.t = 0;
-    if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = [{ x: from.x, z: 6.6 }, { x: 0.4, z: 7.9 }, { x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]; return; }
+    if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = [{ x: from.x, z: 6.6 }, { x: 0.45, z: 6.6 }, { x: 0.4, z: 7.9 }, { x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]; return; }
     if (st.kind === 'bench') {   /* a smoke in the lounge starts with buying the joint, off the goods shelf at the board price; no joints, no sit */
       var jid = Object.keys(S.lots.joints).filter(function (k) { return S.lots.joints[k].n > 0; })[0];
       if (!jid) { l.seat = null; loungerSay(l, 'No joints left? Another time, then.', '#ffc857', 2400); logEvent('🪑 ' + l.who + ' wanted a joint for the lounge, but the goods shelf had none', ''); nextStep(l); return; }
@@ -5249,7 +5452,7 @@
     }
     else {
       var heat = Math.round(X.heat), hc = heat >= 60 ? DESK_BAD : heat >= 30 ? DESK_WARN : DESK_OK;
-      var tiles = [['Heat', heat + ' / 100', heat >= 60 ? 'inspections likely' : heat >= 30 ? 'noticed' : 'quiet', hc], ['Robbery', heist.on ? (heist.masked ? 'IN PROGRESS' : 'someone is casing') : 'none', heist.policeT > 0 ? 'police in ' + Math.ceil(heist.policeT) + ' s' : S.upgrades.panic ? 'silent alarm fitted' : 'no silent alarm', heist.on ? DESK_BAD : DESK_OK], ['Guard', guardOnDuty() ? (guard.state || 'idle') : guardOff() ? 'off shift' : 'not on the door', guardOnDuty() ? 'on the door' : 'the roster puts one on', guardOnDuty() ? DESK_OK : DESK_WARN], ['Shop', shop().open ? 'OPEN' : 'CLOSED', S.customer ? S.customer.who + ' at the window' : 'nobody at the window', shop().open ? DESK_OK : DESK_DIM]];
+      var tiles = [['Heat', heat + ' / 100', heat >= 60 ? 'inspections likely' : heat >= 30 ? 'noticed' : 'quiet', hc], ['Robbery', heist.masked ? 'IN PROGRESS' : caseHintOn() ? 'someone loitering' : 'none', heist.policeT > 0 ? 'police in ' + Math.ceil(heist.policeT) + ' s' : S.upgrades.panic ? 'silent alarm fitted' : 'no silent alarm', heist.masked || caseHintOn() ? DESK_BAD : DESK_OK], ['Guard', guardOnDuty() ? (guard.state || 'idle') : guardOff() ? 'off shift' : 'not on the door', guardOnDuty() ? 'on the door' : 'the roster puts one on', guardOnDuty() ? DESK_OK : DESK_WARN], ['Shop', shop().open ? 'OPEN' : 'CLOSED', S.customer ? S.customer.who + ' at the window' : 'nobody at the window', shop().open ? DESK_OK : DESK_DIM]];
       var tw = (W - 60 - 3 * 12) / 4; tiles.forEach(function (t, i) { deskTile(ctx, 30 + i * (tw + 12), y, tw, 120, t[0], t[1], t[2], t[3]); }); y += 136;
       ctx.fillStyle = DESK_INK; ctx.font = '600 18px ' + DESK_FONT; ctx.fillText('INCIDENT LOG', 30, y); y += 28;
       var ev = S.log.filter(function (l) { return /🚨|🔒|🔓|🚓|🥊|💸|⚠|🔫|🗡|🦹|🚔/.test(l.msg); }).slice(0, 7);
@@ -5929,8 +6132,30 @@
   var sit = { on: false, spot: null, prevPos: null };
   function sitDown(spot) { if (sit.on) { standUp(); return; } sfx('sit'); sit.on = true; sit.spot = spot; sit.prevPos = player.pos.clone(); player.pos.x = spot.x; player.pos.z = spot.z; player.yaw = spot.yaw; player.pitch = 0; player.vel.set(0, 0, 0); toast('Sat down. E or move to get up.', ''); }
   function standUp() { if (!sit.on) return; camExit(); sfx('sit'); sit.on = false; if (sit.prevPos) { player.pos.x = sit.prevPos.x; player.pos.z = sit.prevPos.z; } sit.spot = null; }
-  function eatSnack() { var h = held(); if (!h || h.kind !== 'snack') { toast('Grab something from the kitchen fridge first', 'bad'); return; } S.held = null; S.buff = { until: now() + 10 * 60000, speed: 1.15, label: 'well fed' }; S.stats.meals = (S.stats.meals || 0) + 1; burst(player.pos.x, player.pos.y - 0.3, player.pos.z, 0xffd766, 16, 'up'); sfx('rare'); toast('😋 ' + pick(['Nice.', 'Chef\'s kiss.', 'That hit the spot.']) + ' Well fed: +15% walk speed for 10 min', 'good'); logEvent('🍽️ Had a meal upstairs', ''); }
+  function eatSnack() { var h = held(); if (!h || h.kind !== 'snack') { toast('Grab something from the kitchen fridge first', 'bad'); return; } S.held = null; S.buff = { until: now() + 10 * 60000, speed: 1.15, label: 'well fed' }; S.stats.meals = (S.stats.meals || 0) + 1; burst(player.pos.x, player.pos.y - 0.3, player.pos.z, 0xffd766, 16, 'up'); sfx('rare'); toast('😋 ' + pick(['Nice.', 'Chef\'s kiss.', 'That hit the spot.']) + ' Well fed: +15% walk speed for 10 min', 'good'); logEvent('🍽️ Had something to eat', ''); }
   function buffSpeed() { return S.buff && S.buff.until > now() ? S.buff.speed : 1; }
+  function useHint(h) { if (!h) return ''; if (isDrink(h)) return 'V drinks it'; if (h.kind === 'snack') return 'V eats it'; if (h.kind === 'joints') return smoke.on ? 'one already lit' : 'V lights one'; if (h.kind === 'cookies') return 'V eats one'; if (h.kind === 'cupEmpty' || h.kind === 'canEmpty') return 'V bins it near a bin'; return ''; }
+  function useHeld() {   /* V: drink, eat or light up where you stand; no couch or cooler needed */
+    var h = held(); if (!h) { toast('Nothing in your hand', ''); return; }
+    if (drive.on) { toast('Not while you\'re driving', 'bad'); return; }
+    if (isDrink(h)) { drinkHeld(); autoBin(); return; }
+    if (h.kind === 'snack') { eatSnack(); return; }
+    if (h.kind === 'joints') { sparkUp(); return; }
+    if (h.kind === 'cookies') { eatCookie(); return; }
+    if (h.kind === 'cupEmpty' || h.kind === 'canEmpty') { if (!autoBin()) toast('No bin with room within reach. Walk over to one, or G puts it down', ''); return; }
+    toast('Nothing to use there. V drinks, eats or lights a joint', '');
+  }
+  function eatCookie() {   /* one of your own, off the stack in your hand */
+    var h = held(); if (!h || h.kind !== 'cookies' || !(h.n >= 1)) return;
+    var q = (h.qSum || 0) / h.n, thc = (h.thcSum || 0) / h.n; h.n -= 1; h.qSum = (h.qSum || 0) - q; h.thcSum = (h.thcSum || 0) - thc; if (h.n <= 0) S.held = null;
+    S.chill = { until: now() + 10 * 60000, label: 'mellow' }; S.stats.cookiesEaten = (S.stats.cookiesEaten || 0) + 1;
+    sfx('pickup'); toast('🍪 ' + pick(['Quality control.', 'For science.', 'Just the one.']) + ' Mellow: customers pay 2% more for 10 min', 'good'); logEvent('🍪 Ate one of your own cookies (quality ' + Math.round(q) + ')', ''); save();
+  }
+  function autoBin() {   /* an empty in your hand goes straight into a bin with room within a few steps, on your floor */
+    var h = held(); if (!h || (h.kind !== 'cupEmpty' && h.kind !== 'canEmpty')) return false;
+    var best = null, bd = 3.5; builtUnits('trash').forEach(function (u) { var P = propPlacement(u); if ((P.floor || 0) !== (player.floor || 0)) return; var d = Math.hypot(P.x - player.pos.x, P.z - player.pos.z); if (d < bd && (machState(u).trash || 0) < 12) { bd = d; best = u; } });
+    if (!best) return false; var TB = machState(best); S.held = null; TB.trash = (TB.trash || 0) + 1; sfx('dust'); toast('🗑️ Tossed the empty in the bin (' + TB.trash + ' of 12)', ''); save(); return true;
+  }
   function isDrink(h) { return !!h && (h.kind === 'cupWater' || h.kind === 'cup2' || h.kind === 'can2'); }
   function isTrash(h) { return !!h && (h.kind === 'cupEmpty' || h.kind === 'canEmpty' || h.kind === 'cupWater' || h.kind === 'cup2' || h.kind === 'can2'); }
   function drinkHeld() {   /* water, coffee or a cold one: a short lift, and you are left holding the empty */
@@ -5950,20 +6175,22 @@
     smoke.light = new THREE.PointLight(0xff7a2a, 0, 0.6); smoke.light.position.y = 0.065; j.add(smoke.light);
     gr.position.set(0.26, -0.28, -0.55);
   }
+  function smokeSide() { return sit.on ? 1 : -1; }
   function sparkUp() {
     var h = held(); if (!h || h.kind !== 'joints') { toast('Bring a joint from the goods shelf first', 'bad'); return; }
     if (smoke.on) { toast('One at a time', ''); return; }
     var q = h.qSum / h.n, thc = h.thcSum / h.n; h.n -= 1; h.qSum -= q; h.thcSum -= thc; if (h.n <= 0) S.held = null;
-    smoke.on = true; smoke.until = now() + 24000; smoke.nextDrag = now() + 1500; smoke.drag = 0; smoke.puffed = false; if (smoke.group) { smoke.group.visible = true; smoke.group.position.set(0.26, -0.28, -0.55); }
+    smoke.on = true; smoke.until = now() + 24000; smoke.nextDrag = now() + 1500; smoke.drag = 0; smoke.puffed = false; if (smoke.group) { smoke.group.visible = true; smoke.group.position.set(0.26 * smokeSide(), -0.28, -0.55); }
     S.chill = { until: now() + 10 * 60000, label: 'mellow' }; S.stats.smoked = (S.stats.smoked || 0) + 1;
     sfx('lighter'); toast('🚬 ' + pick(['Sparked one up.', 'Ahh.', 'Quality control.']) + ' Mellow: customers pay 2% more for 10 min', 'good');
-    logEvent('🚬 Sat down and smoked a joint (quality ' + Math.round(q) + ')', '');
+    logEvent('🚬 ' + (sit.on ? 'Sat down and smoked a joint' : 'Lit a joint on the go') + ' (quality ' + Math.round(q) + ')', '');
   }
   function endSmoke() { smoke.on = false; smoke.drag = 0; if (smoke.group) smoke.group.visible = false; if (smoke.light) smoke.light.intensity = 0; }
   var _puff = new THREE.Vector3(), _tp = new THREE.Vector3();
   function updateSmoke(dt) {
     if (!smoke.on) return;
-    if (!sit.on || now() > smoke.until) { endSmoke(); if (sit.on) toast('Down to the roach', ''); return; }
+    if (drive.on) { endSmoke(); toast('Stubbed it out before driving', ''); return; }
+    if (now() > smoke.until) { endSmoke(); toast('Down to the roach', ''); return; }
     var t = now();
     if (smoke.drag <= 0 && t > smoke.nextDrag) { smoke.drag = 1.8; smoke.nextDrag = t + randi(3500, 6000); sfx('inhale'); }
     var up = smoke.drag > 0.7;
@@ -5972,7 +6199,7 @@
       if (smoke.drag <= 0.7 && !smoke.puffed) { smoke.puffed = true; sfx('exhale'); camera.getWorldDirection(_puff); burst(camera.position.x + _puff.x * 0.4, camera.position.y - 0.04 + _puff.y * 0.4, camera.position.z + _puff.z * 0.4, 0xc9d1cc, 12, 'smoke'); }
       if (smoke.drag <= 0) { smoke.drag = 0; smoke.puffed = false; }
     }
-    _tp.set(up ? 0.08 : 0.26, up ? -0.13 : -0.28, up ? -0.36 : -0.55); smoke.group.position.lerp(_tp, 0.15);
+    _tp.set((up ? 0.08 : 0.26) * smokeSide(), up ? -0.13 : -0.28, up ? -0.36 : -0.55); smoke.group.position.lerp(_tp, 0.15);
     smoke.light.intensity = up ? 0.6 + Math.sin(world.time * 30) * 0.2 : 0.15;
   }
   // ── Bed: lie down, the screen fades out, the sim jumps to 06:00 the next morning, fade back in standing by the bed ──
@@ -5989,7 +6216,7 @@
       // advance the world to 06:00: in cycle mode by the clock, otherwise a flat eight hours of the default day length
       var dayLen = (+SET.dayLength || 20) * 60; var hours = SET.dayNight === 'cycle' ? ((6 - S.clock + 24) % 24 || 24) : 8;
       var secs = hours / 24 * dayLen; var dayBefore = S.day || 1;
-      if (S.customer) { logEvent('🚪 ' + S.customer.who + ' gave up waiting while you slept', ''); S.customer = null; }
+      if (S.customer) { logEvent('🚪 ' + S.customer.who + ' gave up waiting while you slept', ''); S.customer = null; } if (lineCount()) logEvent('🚪 The line gave up and went home while you slept', ''); lineClear();
       step(secs, true); if (SET.dayNight === 'cycle') S.clock = 6; S.lastTick = now(); S.stats.naps = (S.stats.naps || 0) + 1;
       S.buff = { until: now() + 15 * 60000, speed: 1.15, label: 'well rested' };
       world.dirty = true; rebuildDynamic(); syncShelf(); syncRack(); updateDayNight(); hud(); save();
@@ -6313,6 +6540,42 @@
   defProp('lobbyBenchL', { label: 'lobby bench', x: -8.5, z: 8.2, rot: 2, build: lobbyBench });
   defProp('lobbyBenchR', { label: 'lobby bench', x: 8.5, z: 8.2, rot: 2, build: lobbyBench });
   defProp('magTable', { label: 'magazine table', x: -6.6, z: 7.6, build: function (c) { c.cyl(0.32, 0.32, 0.03, MAT.wood, 0, 0.45, 0, 24); c.cyl(0.03, 0.03, 0.44, MAT.chrome, 0, 0.22, 0, 10); c.cyl(0.2, 0.22, 0.02, MAT.chrome, 0, 0.01, 0, 24); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: textTex(['HIGH', 'times'], 150, 110, { size: 34, bg: '#6fdc8c', color: '#062010', titleColor: '#062010', line: 'rgba(0,0,0,0)' }) }), -0.05, 0.47, 0, { cast: false }); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: textTex(['GROW', 'weekly'], 150, 110, { size: 34, bg: '#ffc857', color: '#332200', titleColor: '#332200', line: 'rgba(0,0,0,0)' }) }), 0.1, 0.48, -0.05, { cast: false }).rotation.y = 0.3; c.solid(-0.33, 0.33, -0.33, 0.33); } });
+  var ROPE_COLORS = { red: 0xc94a3a, navy: 0x2a3a6a, black: 0x1a1a1c, gold: 0xc9a44a, green: 0x2e7d4f }, ROPE_POSTS = { chrome: [0xd8dde2, 0.25, 0.95], brass: [0xb8913a, 0.35, 0.85], black: [0x1a1a1c, 0.4, 0.6] }, ROPE_LENS = [1.2, 1.8, 2.4, 3.0];
+  function ropeStyle(id) { if (!S.ropes) S.ropes = {}; var st = S.ropes[id] || {}; return { color: ROPE_COLORS[st.color] ? st.color : 'red', len: ROPE_LENS.indexOf(st.len) >= 0 ? st.len : 1.8, posts: ROPE_POSTS[st.posts] ? st.posts : 'chrome', kind: st.kind === 'belt' ? 'belt' : 'rope' }; }
+  function ropeBuild(c) {   // two posts and a velvet rope (or a retractable belt) between them, along local x
+    var id = c.group.userData.propId, st = ropeStyle(id), hx = st.len / 2, pf = ROPE_POSTS[st.posts], postM = colorMat(pf[0], pf[1], pf[2]), bandM = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: ROPE_COLORS[st.color], roughness: 1 });
+    [-hx, hx].forEach(function (x) { c.cyl(0.025, 0.025, 0.95, postM, x, 0.475, 0, 12); c.cyl(0.16, 0.18, 0.03, postM, x, 0.015, 0, 20); var ball = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 10), postM); ball.position.set(x, 0.98, 0); ball.castShadow = true; c.add(ball); c.solid(x - 0.15, x + 0.15, -0.15, 0.15); });
+    if (st.kind === 'belt') c.box(st.len - 0.05, 0.05, 0.006, bandM, 0, 0.9, 0);
+    else { var rope = new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(new THREE.Vector3(-hx, 0.93, 0), new THREE.Vector3(0, 0.93 - 0.12 * st.len, 0), new THREE.Vector3(hx, 0.93, 0)), 20, 0.022, 8, false), bandM); rope.castShadow = true; c.add(rope); }
+    c.solid(-hx, hx, -0.05, 0.05);
+    c.hit(st.len + 0.3, 1.05, 0.35, 0, 0.52, 0, { kind: 'rope' });
+  }
+  function ropeMenu(id) {
+    var st = ropeStyle(id), P = propPlacement(id), lines = [];
+    function cyc(list, v) { return list[(list.indexOf(v) + 1) % list.length]; }
+    function set(k, v) { return function () { st[k] = v; S.ropes[id] = st; buildProp(id); world.dirty = true; save(); ropeMenu(id); }; }
+    lines.push({ label: '🎨 Colour: <b>' + st.color + '</b> <small>click for ' + cyc(Object.keys(ROPE_COLORS), st.color) + '</small>', act: set('color', cyc(Object.keys(ROPE_COLORS), st.color)) });
+    lines.push({ label: '📏 Length: <b>' + st.len + ' m</b> <small>click for ' + cyc(ROPE_LENS, st.len) + ' m</small>', act: set('len', cyc(ROPE_LENS, st.len)) });
+    lines.push({ label: '🪢 Style: <b>' + (st.kind === 'belt' ? 'retractable belt' : 'velvet rope') + '</b> <small>click for ' + (st.kind === 'belt' ? 'velvet rope' : 'retractable belt') + '</small>', act: set('kind', st.kind === 'belt' ? 'rope' : 'belt') });
+    lines.push({ label: '✨ Posts: <b>' + st.posts + '</b> <small>click for ' + cyc(Object.keys(ROPE_POSTS), st.posts) + '</small>', act: set('posts', cyc(Object.keys(ROPE_POSTS), st.posts)) });
+    lines.push({ label: '↻ Turn it a quarter <small>F2 and R do the same</small>', act: function () { if (!S.layout) S.layout = {}; S.layout[id] = Object.assign({}, S.layout[id] || {}, { x: P.x, z: P.z, rot: (P.rot + 1) % 4 }); buildProp(id); world.dirty = true; save(); ropeMenu(id); } });
+    lines.push({ label: '✋ Move it <small>opens edit mode: look at it and press E to pick it up</small>', act: function () { if (!edit.on) editToggle(); } });
+    lines.push({ label: '➕ Put up another beside it <small>' + (unitIds('queueRope').some(function (u) { return propPlacement(u).hidden; }) ? 'free: one you took down' : unitCount('queueRope') >= PROPS.queueRope.multi.max ? 'you have the most there is room for' : money(machCost('queueRope', unitCount('queueRope') + 1))) + '</small>', act: function () { ropeAdd(id); } });
+    lines.push({ label: '🗑️ Take it down <small>it goes in the back; put it up again from another rope line or the office PC</small>', act: function () { if (!S.layout) S.layout = {}; S.layout[id] = Object.assign({}, S.layout[id] || {}, { x: P.x, z: P.z, rot: P.rot, hidden: true }); buildProp(id); world.dirty = true; save(); toast('🪢 Rope line taken down', ''); } });
+    ctxOpen('🪢 Rope line', 'change how it looks, move it, add to it or take it down', lines);
+  }
+  function ropeAdd(id) {   // the next one lands a step in front of this one, same style and angle: line them up with F2
+    var P = propPlacement(id), fr = [[0, 1], [1, 0], [0, -1], [-1, 0]][((P.rot % 4) + 4) % 4];
+    var nid = unitIds('queueRope').filter(function (u) { return propPlacement(u).hidden; })[0];
+    if (!nid) { var have = unitCount('queueRope'); buyUnit('queueRope'); if (unitCount('queueRope') === have) return; nid = 'queueRope#' + unitCount('queueRope'); }
+    var sty = ropeStyle(id); if (!S.layout) S.layout = {}; S.layout[nid] = { x: P.x + fr[0] * 0.9, z: P.z + fr[1] * 0.9, rot: P.rot }; S.ropes[nid] = sty;
+    buildProp(nid); world.dirty = true; save(); toast('🪢 Another rope line is up. F2 lines it up.', 'good');
+  }
+  function ropeUp() {   /* from the office PC: the last one taken down goes back where it stood */
+    var nid = unitIds('queueRope').filter(function (u) { return propPlacement(u).hidden; }).pop(); if (!nid) return;
+    S.layout[nid] = Object.assign({}, S.layout[nid], { hidden: false }); buildProp(nid); world.dirty = true; save(); toast('🪢 Rope line back up where it stood', 'good');
+  }
+  defProp('queueRope', { label: 'rope line', x: -1.9, z: 7.5, rot: 0, multi: { max: 8, price: 40, gap: 2.2, ico: '🪢', name: 'Rope line' }, build: ropeBuild });   // behind the line, left of the door leaf: it frames the queue without crossing anyone's path
   defProp('lobbyPlant', { label: 'lobby plant', x: -10.5, z: 5.0, build: function (c) { c.cyl(0.26, 0.2, 0.5, colorMat(0x2a2d33, 0.5), 0, 0.25, 0, 20); c.cyl(0.24, 0.24, 0.02, MAT.soil, 0, 0.5, 0, 20); c.cyl(0.015, 0.02, 0.9, MAT.trunk, 0, 0.9, 0, 8); for (var i = 0; i < 12; i++) { var lf = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.8), MAT.leaf); var a = i * 0.55; lf.position.set(Math.cos(a) * 0.08, 1.0 + (i % 3) * 0.2, Math.sin(a) * 0.08); lf.rotation.set(-0.5 - (i % 4) * 0.15, a + Math.PI / 2, 0); lf.castShadow = true; c.add(lf); } c.solid(-0.3, 0.3, -0.3, 0.3); } });
   defProp('lobbyCoffee', { label: 'lobby coffee machine', x: ROOM.x - 0.4, z: 8.1, rot: 3, multi: { max: 4, price: 600, gap: 0.95, ico: '☕', lic: 'catering', upg: 'lobby', name: 'Coffee machine' }, build: function (c) {
     if (!S.upgrades.lobby) return;   // stand + machine appear with the upgrade
@@ -6683,7 +6946,7 @@
   }
   function onMouseMove(e) {
     if (!player.locked || ui.blocked()) return;
-    var sx = 0.0022 * SET.sens;
+    var sx = 0.0022 * SET.sens * (1 - 0.72 * scope.k);
     if (drive.on) { var lk = drive.look; lk.yaw = clamp(lk.yaw - e.movementX * sx, -2.6, 2.6); lk.pitch = clamp(lk.pitch + e.movementY * sx * (SET.invertY ? -1 : 1), -0.5, 1.1);   /* orbit pitch lifts the camera, which tilts the view DOWN: the sign is the opposite of the on-foot look */ lk.t = 1.4; return; }   /* at the wheel the mouse swings the camera round the car instead of the head */
     player.yaw -= e.movementX * sx; player.pitch -= e.movementY * sx * (SET.invertY ? -1 : 1);
     player.pitch = clamp(player.pitch, -1.45, 1.45);
@@ -6692,14 +6955,14 @@
   // ── Hands & carrying ──────────────────────────────────────────────
   // Everything physical goes through the hands: you pick things up, carry
   // them across the room and use them on something. `S.held` persists.
-  var HELD_LABEL = { keys: 'Keyring', crate: 'Crate', cookies: 'Cookies', bat: 'Baseball bat', cigs: 'Cigarettes', tablet: 'Delivery tablet', can2: 'Cold drink', cup2: 'Coffee', cupWater: 'Cup of water', cupEmpty: 'Empty cup', canEmpty: 'Empty can', trashbag: 'Bin bag', pepper: 'Pepper spray', taser: 'Taser', pistol: 'Pistol', shotgun: 'Shotgun', can: 'Watering can', soil: 'Bag of soil', nutrients: 'Nutrients', remedy: 'Pest spray', seed: 'Seed', harvest: 'Fresh harvest', jar: 'Curing jar', joints: 'Joints', bags: 'Eighth bags' };
+  var HELD_LABEL = { keys: 'Keyring', crate: 'Crate', cookies: 'Cookies', bat: 'Baseball bat', cigs: 'Cigarettes', tablet: 'Delivery tablet', can2: 'Cold drink', cup2: 'Coffee', cupWater: 'Cup of water', cupEmpty: 'Empty cup', canEmpty: 'Empty can', trashbag: 'Bin bag', pepper: 'Pepper spray', taser: 'Taser', pistol: 'Pistol', shotgun: 'Shotgun', rifle: 'Hunting rifle', ak: 'AK-47', can: 'Watering can', soil: 'Bag of soil', nutrients: 'Nutrients', remedy: 'Pest spray', seed: 'Seed', harvest: 'Fresh harvest', jar: 'Curing jar', joints: 'Joints', bags: 'Eighth bags' };
   // the hotbar: S.held reads and writes the active slot, so every older code path keeps working
   function bindHotbar() { if (!Array.isArray(S.hotbar) || S.hotbar.length !== 6) { var old = S.hotbar; S.hotbar = [null, null, null, null, null, null]; if (Array.isArray(old)) old.slice(0, 6).forEach(function (x, i) { S.hotbar[i] = x || null; }); } if (typeof S.slot !== 'number') S.slot = 0; var legacy = Object.prototype.hasOwnProperty.call(S, 'held') ? S.held : undefined; if (legacy && typeof legacy === 'object') { S.hotbar[S.slot] = legacy; } try { delete S.held; } catch (e) {} Object.defineProperty(S, 'held', { get: function () { return S.hotbar[S.slot] || null; }, set: function (v) { S.hotbar[S.slot] = v || null; }, enumerable: false, configurable: true }); }
   function held() { return S.hotbar && S.hotbar[S.slot] || null; }
   function hotbarFull() { return S.hotbar.every(function (x) { return !!x; }); }
   function freeSlot() { if (!S.hotbar[S.slot]) return S.slot; for (var i = 0; i < 6; i++) if (!S.hotbar[i]) return i; return -1; }
   function selectSlot(i) { S.slot = ((i % 6) + 6) % 6; hud(); if (focus) setFocus(focus); }
-  function slotIcon(it) { if (!it) return ''; if (it.kind === 'seed') return strainById(it.strain).emoji; if (it.kind === 'crate') return itemIcon(it.item); return { can: '💧', soil: '🪴', nutrients: '🧪', remedy: '🧴', harvest: '🌿', jar: '🏺', joints: '🚬', bags: '🛍️', cookies: '🍪', broom: '🧹', snack: '🥪', bat: '🏏', cashbag: '💰', keys: '🔑', pepper: '🌶️', taser: '⚡', pistol: '🔫', shotgun: '💥', cigs: '🚬', tablet: '📋', can2: '🥤', cup2: '☕', cupWater: '🥤', cupEmpty: '🥛', canEmpty: '🥫', trashbag: '🗑️' }[it.kind] || '📦'; }
+  function slotIcon(it) { if (!it) return ''; if (it.kind === 'seed') return strainById(it.strain).emoji; if (it.kind === 'crate') return itemIcon(it.item); return { can: '💧', soil: '🪴', nutrients: '🧪', remedy: '🧴', harvest: '🌿', jar: '🏺', joints: '🚬', bags: '🛍️', cookies: '🍪', broom: '🧹', snack: '🥪', bat: '🏏', cashbag: '💰', keys: '🔑', pepper: '🌶️', taser: '⚡', pistol: '🔫', shotgun: '💥', rifle: '🎯', ak: '🪖', cigs: '🚬', tablet: '📋', can2: '🥤', cup2: '☕', cupWater: '🥤', cupEmpty: '🥛', canEmpty: '🥫', trashbag: '🗑️' }[it.kind] || '📦'; }
   function slotLabel(it) { if (!it) return ''; if (it.kind === 'joints' || it.kind === 'bags' || it.kind === 'cookies') return it.n + ' ' + kindName(it.kind, it.n); if (it.kind === 'crate') return it.n + '× ' + itemName(it.item).split(' ')[0]; if (it.kind === 'harvest') return gram(it.grams); if (it.kind === 'jar') return gram(it.grams); if (it.kind === 'seed') return 'seed'; return (HELD_LABEL[it.kind] || it.kind).split(' ')[0].toLowerCase(); }
   // how many a Shift-pickup grabs: what the current customer still needs, else up to five
   function pileLot(item, h, sid) { var have = sid ? lotOf(item, sid).n : S.pkg[item].n; var want = S.customer && S.customer.arrived && S.customer.want === item ? Math.max(1, S.customer.qty - (S.customer.given ? S.customer.given.n : 0) - (h ? h.n : 0)) : 5; return Math.min(have, want); }
@@ -7074,6 +7337,8 @@
       var gBlk = new THREE.MeshStandardMaterial({ color: 0x17181b, roughness: 0.45, metalness: 0.5 }), gWood = new THREE.MeshStandardMaterial({ color: 0x5a3a1e, roughness: 0.7 });
       if (h.kind === 'pistol') { add(new THREE.BoxGeometry(0.035, 0.045, 0.2), gBlk, 0, 0.05, -0.06); add(new THREE.BoxGeometry(0.032, 0.11, 0.045), gBlk, 0, -0.02, 0.02, 0.25); add(new THREE.BoxGeometry(0.01, 0.012, 0.01), gBlk, 0, 0.078, -0.15); }
       else if (h.kind === 'shotgun') { add(new THREE.CylinderGeometry(0.014, 0.014, 0.6, 10), gBlk, 0, 0.055, -0.32, Math.PI / 2); add(new THREE.CylinderGeometry(0.012, 0.012, 0.42, 8), gBlk, 0, 0.025, -0.24, Math.PI / 2); add(new THREE.BoxGeometry(0.04, 0.065, 0.26), gBlk, 0, 0.04, 0.02); add(new THREE.BoxGeometry(0.046, 0.042, 0.15), gWood, 0, 0.02, -0.26); add(new THREE.BoxGeometry(0.036, 0.09, 0.26), gWood, 0, 0.01, 0.27, -0.12); }
+      else if (h.kind === 'ak') { add(new THREE.BoxGeometry(0.042, 0.062, 0.26), gBlk, 0, 0.045, -0.05); add(new THREE.CylinderGeometry(0.009, 0.009, 0.32, 10), gBlk, 0, 0.055, -0.34, Math.PI / 2); add(new THREE.BoxGeometry(0.036, 0.028, 0.17), gWood, 0, 0.085, -0.25); add(new THREE.BoxGeometry(0.046, 0.046, 0.19), gWood, 0, 0.03, -0.26); add(new THREE.BoxGeometry(0.008, 0.035, 0.012), gBlk, 0, 0.09, -0.47); add(new THREE.BoxGeometry(0.03, 0.12, 0.062), gBlk, 0, -0.035, -0.1, 0.22); add(new THREE.BoxGeometry(0.03, 0.09, 0.056), gBlk, 0, -0.125, -0.135, 0.5); add(new THREE.BoxGeometry(0.032, 0.1, 0.042), gWood, 0, -0.03, 0.06, 0.3); add(new THREE.BoxGeometry(0.036, 0.08, 0.25), gWood, 0, 0.012, 0.24, -0.1); }
+      else if (h.kind === 'rifle') { add(new THREE.CylinderGeometry(0.01, 0.012, 0.74, 10), gBlk, 0, 0.055, -0.42, Math.PI / 2); add(new THREE.BoxGeometry(0.038, 0.06, 0.22), gBlk, 0, 0.045, -0.02); add(new THREE.BoxGeometry(0.044, 0.05, 0.36), gWood, 0, 0.02, -0.2); add(new THREE.BoxGeometry(0.038, 0.1, 0.26), gWood, 0, 0.0, 0.25, -0.15); add(new THREE.CylinderGeometry(0.019, 0.019, 0.24, 12), gBlk, 0, 0.11, -0.05, Math.PI / 2); add(new THREE.CylinderGeometry(0.025, 0.02, 0.04, 12), gBlk, 0, 0.11, -0.18, Math.PI / 2); add(new THREE.BoxGeometry(0.012, 0.04, 0.012), gBlk, 0, 0.08, -0.1); add(new THREE.BoxGeometry(0.012, 0.04, 0.012), gBlk, 0, 0.08, 0.02); add(new THREE.BoxGeometry(0.008, 0.03, 0.03), gBlk, 0.024, 0.06, 0.04); }
       else if (h.kind === 'taser') { add(new THREE.BoxGeometry(0.042, 0.06, 0.15), new THREE.MeshStandardMaterial({ color: 0xf2c21a, roughness: 0.6 }), 0, 0.04, -0.04); add(new THREE.BoxGeometry(0.036, 0.1, 0.042), gBlk, 0, -0.03, 0.02, 0.2); add(new THREE.BoxGeometry(0.044, 0.035, 0.02), gBlk, 0, 0.04, -0.125); }
       else if (h.kind === 'pepper') { add(new THREE.CylinderGeometry(0.022, 0.022, 0.11, 12), new THREE.MeshStandardMaterial({ color: 0xc0281e, roughness: 0.5 }), 0, 0.04, 0); add(new THREE.CylinderGeometry(0.018, 0.02, 0.03, 10), gBlk, 0, 0.11, 0); add(new THREE.BoxGeometry(0.012, 0.012, 0.02), gBlk, 0, 0.115, -0.02); }
     }
@@ -7136,7 +7401,7 @@
   function syncHands(dt) {
     var h = held(); var key = h ? h.kind + ':' + (h.n || 0) + ':' + (h.strain || '') + ':' + (h.grams || 0) : '';
     if (key !== heldKey) { heldKey = key; if (heldMesh) { hands.remove(heldMesh); if (!heldMesh.userData.wsModel) disposeTree(heldMesh); } heldMesh = null;   /* a pack's Blender model shares its meshes with the loaded copy, so only hand-built items are freed */ if (h) { heldMesh = buildHeldMesh(h); heldMesh.position.set(0.3, -0.3, -0.52); heldMesh.rotation.set(0.2, -0.5, 0); hands.add(heldMesh); } }
-    hands.visible = ui.started && !!h && !drive.on;
+    hands.visible = ui.started && !!h && !drive.on && scope.k < 0.6;
     if (heldMesh && h && WEAPONS[h.kind]) { var rc = swing.t > 0 ? Math.sin((1 - clamp(swing.t / 0.35, 0, 1)) * Math.PI) : 0; if (swing.t > 0) swing.t -= dt; var kick = WEAPONS[h.kind].lethal ? 1 : 0.3; heldMesh.position.set(0.24, -0.24 + rc * 0.03 * kick, -0.5 + rc * 0.09 * kick); heldMesh.rotation.set(rc * 0.45 * kick, 0, 0); }
     if (world.muzzleT > 0) { world.muzzleT -= dt; muzzle.intensity = 3; } else muzzle.intensity = 0;
     if (heldMesh && h && h.kind === 'bat') { var sw = swing.t > 0 ? Math.sin((1 - clamp(swing.t / 0.35, 0, 1)) * Math.PI) : 0; if (swing.t > 0) swing.t -= dt; heldMesh.position.set(0.36 - sw * 0.42, -0.46 + sw * 0.1, -0.5 - sw * 0.15); heldMesh.rotation.set(-0.6 + sw * 1.5, -0.2 - sw * 0.3, -0.45 - sw * 0.9); }   // held upright over the right shoulder, swung across the view
@@ -7436,7 +7701,7 @@
     var expP = expPrompt(d, h); if (expP) return expP;
     if (d.kind === 'keyHook') return keyHookPrompt(h);
     var doorP = doorPrompt(d); if (doorP) return doorP;
-    if (d.kind === 'lounger') { var lg = loungers.filter(function (l) { return l.id === d.lid; })[0]; if (!lg) return ''; if (fight && (fight.a === lg || fight.b === lg)) return h && h.kind === 'bat' ? 'Swing <small>or press E to break it up</small>' : 'Break it up <small>' + fight.a.who + ' and ' + fight.b.who + '</small>'; return (h && h.kind === 'bat' ? 'Swing at ' : '') + lg.who + ' <small>' + (lg.state === 'smoke' ? 'having a smoke' : lg.state === 'use' ? 'at the ' + lg.useKind : lg.state === 'down' ? 'on the floor' : 'in the lobby') + '</small>'; }
+    if (d.kind === 'queuer') return 'Customer <small>in line · E to have a word</small>'; if (d.kind === 'rope') return 'Rope line <small>E to change it · F2 moves it</small>'; if (d.kind === 'lounger') { var lg = loungers.filter(function (l) { return l.id === d.lid; })[0]; if (!lg) return ''; if (fight && (fight.a === lg || fight.b === lg)) return h && h.kind === 'bat' ? 'Swing <small>or press E to break it up</small>' : 'Break it up <small>' + fight.a.who + ' and ' + fight.b.who + '</small>'; return (h && h.kind === 'bat' ? 'Swing at ' : '') + lg.who + ' <small>' + (lg.state === 'smoke' ? 'having a smoke' : lg.state === 'use' ? 'at the ' + lg.useKind : lg.state === 'down' ? 'on the floor' : 'in the lobby') + '</small>'; }
     if (d.kind === 'stock') return isGoods(h) ? 'Lock ' + h.n + ' ' + kindName(h.kind, h.n) + ' in the stock cabinet <small>' + stockCount() + ' stored · Shift+E opens it</small>' : 'Stock cabinet <small>' + stockCount() + ' packed goods stored · E opens</small>';
     if (d.kind === 'worker') return crewName(d.idx || 0) + ' <small>' + workerTaskLabel(d.idx || 0) + ' · Shift+E gives orders · Ctrl+E sends them home</small>';
     if (d.kind === 'guard') return 'The guard <small>' + guardTaskLabel() + ' · Shift+E gives orders · E to chat</small>';
@@ -7606,7 +7871,7 @@
     else if (expInteract(d, h)) { }
     else if (d.kind === 'door') { if (player.keys.ShiftLeft || player.keys.ShiftRight) keyDoor(d.id); else toggleDoor(d.id); }
     else if (d.kind === 'keyHook') keyHookInteract();
-    else if (d.kind === 'lounger') { var lg2 = loungers.filter(function (l) { return l.id === d.lid; })[0]; if (!lg2) return; if (h && h.kind === 'bat') { swingBat(); return; } if (fight && (fight.a === lg2 || fight.b === lg2)) { endFight('player'); return; } loungerSay(lg2, pick(['All good, boss.', 'Nice place.', 'Cheers, boss.', 'Top shelf, this.']), '#e8f1ea'); }
+    else if (d.kind === 'rope') ropeMenu(d.propId); else if (d.kind === 'queuer') { var qm = lineup.filter(function (m) { return m.id === d.qid; })[0]; if (qm) { if (h && h.kind === 'bat') swingBat(); else lineChat(qm); } } else if (d.kind === 'lounger') { var lg2 = loungers.filter(function (l) { return l.id === d.lid; })[0]; if (!lg2) return; if (h && h.kind === 'bat') { swingBat(); return; } if (fight && (fight.a === lg2 || fight.b === lg2)) { endFight('player'); return; } loungerSay(lg2, pick(['All good, boss.', 'Nice place.', 'Cheers, boss.', 'Top shelf, this.']), '#e8f1ea'); }
     else if (d.kind === 'stock') { if (isGoods(h) && !(player.keys.ShiftLeft || player.keys.ShiftRight)) stockStore(h); else ui.openPanel('stock'); }
     else if (d.kind === 'worker') { var wi = d.idx || 0;
       if (player.keys.ControlLeft || player.keys.ControlRight) { crewShift(wi, true); return; }   /* Ctrl+E sends this one home */ var wr = crew.filter(function (x) { return x.idx === wi; })[0]; if (wr) worker = wr; if (player.keys.ShiftLeft || player.keys.ShiftRight) workerMenu(wi); else workerSay(crewLine('chat'), '#e8f1ea'); }
@@ -7778,13 +8043,14 @@
     h += '<div class="g3-row"><span class="ico">⛺</span><span class="meta"><span class="n">Grow tent</span><span class="own">More plant slots. now: ' + slots() + ' slots</span></span>' + (nextT ? (nextT.lic && !hasLic(nextT.lic) ? '<span class="g3-tier">🔒 ' + nextT.slots + ' slots needs ' + licById(nextT.lic).name + '</span>' : '<button class="g3-btn primary" data-act="buyTent">' + nextT.slots + ' slots · ' + money(nextT.price) + '</button>') : '<span class="g3-tier">maxed</span>') + '</div>';
     UPGRADES.forEach(function (u) { var why = !S.upgrades[u.id] && (u.req && !S.upgrades[u.req] ? 'needs ' + (UPGRADES.filter(function (x) { return x.id === u.req; })[0] || { name: u.req }).name : u.lvl && S.level < u.lvl ? 'level ' + u.lvl : ''); h += '<div class="g3-row"><span class="ico">' + u.ico + '</span><span class="meta"><span class="n">' + u.name + '</span><span class="own">' + u.d + '</span></span>' + (S.upgrades[u.id] ? '<span class="g3-tier">✓ installed</span>' : why ? '<span class="g3-tier">🔒 ' + why + '</span>' : '<button class="g3-btn primary" data-act="buyUpg" data-id="' + u.id + '">' + money(u.price) + '</button>') + '</div>'; });
     h += '</div><div class="g3-box"><h3>🥤 Machines</h3><div class="desc">Buy another and it lands beside the one you have. Press <b>F2</b> to drag it anywhere you like. They share the shop\'s stock and float.</div>';
-    ['vending', 'lobbyCoffee', 'arcade', 'fridge'].forEach(function (base) {
+    ['vending', 'lobbyCoffee', 'arcade', 'fridge', 'queueRope'].forEach(function (base) {
       var d = PROPS[base]; if (!d || !d.multi) return;
       var have = unitCount(base), full = have >= d.multi.max, locked = unitLock(base);
       h += '<div class="g3-row"><span class="ico">' + d.multi.ico + '</span><span class="meta"><span class="n">' + (d.multi.name || d.label.replace(/^./, function (m2) { return m2.toUpperCase(); })) + '</span><span class="own">' + have + ' of ' + d.multi.max +
         (locked ? ' · needs the ' + locked : full ? ' · the shop is full' : '') + (base === 'fridge' ? ' · one stood in the lobby sells cold drinks to customers at $2 a can, with the catering permit' : '') + '</span></span>' +
         (full || locked ? '<span class="g3-tier">' + (full ? 'max' : '🔒') + '</span>' : '<button class="g3-btn primary" data-act="buyUnit" data-id="' + base + '">' + money(machCost(base, have + 1)) + '</button>') + '</div>';
     });
+    var rDown = unitIds('queueRope').filter(function (u) { return propPlacement(u).hidden; }).length; if (rDown) h += '<div class="g3-row"><span class="ico">🪢</span><span class="meta"><span class="n">Rope lines taken down</span><span class="own">' + rDown + ' in the back, free to put up again where they stood</span></span><button class="g3-btn" data-act="ropeUp">Put one back up</button></div>';
     h += '</div><div class="g3-box"><h3>📈 Business</h3><div class="g3-chips">' + chip('market', S.market.toFixed(2) + '×') + chip('rep', Math.floor(S.rep)) + chip('price mult', '×' + repMult().toFixed(2)) + chip('level', S.level) + '</div><div class="desc">Rep adds up to 10% to a price and brings people through the door. Connoisseurs (🎩) pay 2.2× for quality 70+.</div>' + paneStatsInner() + '</div></div>';
     return h;
   }
@@ -7882,10 +8148,11 @@
     var h = '<div class="g3-grid"><div class="g3-box"><h3>💵 Price board</h3><div class="desc">Market ' + S.market.toFixed(2) + '× · rep ' + Math.floor(S.rep) + ' (×' + repMult().toFixed(2) + ' price). Hand goods to a customer at the window for the full price. Rung up at the till (E) as a walk-up sale they fetch 85%, and the till takes ' + WALKUP_CAP + ' of those a day (' + walkupLeft() + ' left today).</div>';
     if (S.customer && S.customer.stage) h += panePayment(S.customer);
     h += '<div class="g3-chips">' + chip('in the till', money(S.till)) + chip('pocket', money(S.pocket)) + chip('lighters', S.display.lighter || 0) + chip('papers', S.display.rpaper || 0) + chip('grinders', S.display.rgrinder || 0) + '</div>' + (S.till > 0 ? '<button class="g3-btn wide" data-act="tillEmpty">👛 Empty the till into my pocket · ' + money(S.till) + '</button>' : '');
-    if (S.customer && !S.customer.arrived) h += '<div class="g3-customer"><span class="avatar">' + S.customer.avatar + '</span><span style="flex:1"><span class="who">' + S.customer.who + '</span><span class="req">' + (guardOnDuty() ? 'just walked in, and the guard is checking their ID.' : 'just walked in, and they\'ll show you their ID at the window.') + ' You\'ll hear the order at the window.</span></span></div>';
+    if (S.customer && !S.customer.arrived) h += '<div class="g3-customer"><span class="avatar">' + S.customer.avatar + '</span><span style="flex:1"><span class="who">' + S.customer.who + '</span><span class="req">' + (S.customer.fromLine ? 'is stepping up from the line.' : guardOnDuty() ? 'just walked in, and the guard is checking their ID.' : 'just walked in, and they\'ll show you their ID at the window.') + ' You\'ll hear the order at the window.</span></span></div>';
     else if (S.customer && !S.customer.arrived && !S.customer.stage) { h += '<div class="g3-customer"><span class="avatar">' + S.customer.avatar + '</span><span style="flex:1"><span class="who">' + S.customer.who + (S.customer.premium ? ' 🎩' : '') + '</span><span class="req">coming through the ID check. You\'ll hear the order at the window.</span></span></div>'; }
     else if (S.customer) { var c = S.customer; var gv = c.given ? c.given.n : 0; var left = Math.max(0, Math.round((c.until - now()) / 1000)); h += '<div class="g3-customer ' + (c.premium ? 'premium' : '') + '"><span class="avatar">' + c.avatar + '</span><span style="flex:1"><span class="who">' + c.who + (c.premium ? ' 🎩' : '') + '</span><span class="req">wants <b>' + wantText(c) + '</b>' + (c.premium ? ' at quality ' + c.minQ + '+ (pays 2.2×)' : ' (pays 1.15×)') + ' · handed ' + gv + '/' + c.qty + '</span><span class="timer">leaves in ' + left + 's</span></span></div>'; }
     else h += '<div class="g3-empty">No customer at the window. One will wander in…</div>';
+    if (lineShown()) h += '<div class="g3-empty">👥 ' + lineShown() + ' more waiting in line</div>';
     var anyGoods = false;
     STRAINS.forEach(function (st) { var bg = lotOf('bags', st.id), jt = lotOf('joints', st.id), ck = lotOf('cookies', st.id); if (!bg.n && !jt.n && !ck.n) return; anyGoods = true;
       h += '<div class="g3-row"><span class="ico">' + st.emoji + '</span><span class="meta"><span class="n">' + st.name + '</span><span class="own">' + (bg.n ? bg.n + ' bags q' + Math.round(bg.qSum / bg.n) + ' · ' + money(bagPrice(bg.qSum / bg.n, bg.thcSum / bg.n)) + ' each' : 'no bags') + ' &nbsp;·&nbsp; ' + (jt.n ? jt.n + ' joints q' + Math.round(jt.qSum / jt.n) + ' · ' + money(jointPrice(jt.qSum / jt.n, jt.thcSum / jt.n)) + ' each' : 'no joints') + (ck.n ? ' &nbsp;·&nbsp; ' + ck.n + ' cookies q' + Math.round(ck.qSum / ck.n) + ' · ' + money(cookiePrice(ck.qSum / ck.n, ck.thcSum / ck.n)) + ' each' : '') + '</span></span></div>'; });
@@ -7914,7 +8181,7 @@
     else if (act === 'stockToShelf') { var sp2 = id.split('|'); stockToShelf(sp2[0], sp2[1]); toast('Out on the shelf', ''); sfx('putdown'); }
     else if (act === 'shelfToStock') { ['bags', 'joints', 'cookies'].forEach(function (k) { Object.keys(S.lots[k]).forEach(function (sid) { shelfToStock(k, sid); }); }); toast('🔒 Shelf cleared into the cabinet', 'good'); sfx('vault'); }
     else if (act === 'stockAllToShelf') { ['bags', 'joints', 'cookies'].forEach(function (k) { Object.keys(S.stock[k] || {}).forEach(function (sid) { stockToShelf(k, sid); }); }); toast('🛍️ Everything is out on the shelf', ''); sfx('putdown'); }
-    else if (act === 'buyUnit') { buyUnit(id); }
+    else if (act === 'buyUnit') { buyUnit(id); } else if (act === 'ropeUp') { ropeUp(); }
     else if (act === 'hire') { hireWorker(); }
     else if (act === 'fire') { fireWorker(+id); }
     else if (act === 'workerTask') { var wt = String(id).split('|'); workerTask(wt[1], +wt[0]); }
@@ -8026,9 +8293,9 @@
       case 'machines': S.vendStock.drink = 24; S.vendStock.snack = 24; S.coffeeStock.cup = 80; S.coffeeStock.beans = 80; S.display.lighter = 20; S.display.rpaper = 10; S.display.rgrinder = 5; unitIds('fridge').forEach(function (u) { machState(u).fridge = 16; }); break;   /* the fridge holds its own cans rather than drawing on the shop's, so it needs filling by name */
       case 'plants': S.plants = []; S.potSoil = {}; for (var i = 0; i < slots(); i++) { var st2 = STRAINS[i % STRAINS.length]; S.potSoil[i] = true; S.plants.push({ id: 'p' + now() + i, strain: st2.id, progress: 1, quality: 75, thirst: 0.1, fed: true, hazard: null, slot: i }); } S.supplies.pot = Math.max(S.supplies.pot || 0, slots()); break;
       case 'batches': STRAINS.slice(0, 5).forEach(function (st, i) { S.batches.push({ id: 'b' + now() + i, grams: 18, quality: 70, baseQ: 70, thc: st.thc, startedAt: now(), cured: i >= 3, dry: i >= 3 ? 1 : 0.2, strain: st.id }); }); break;
-      case 'customer': case 'premium': closeMenu(); if (S.customer) { S.customer = null; npc.leaveSad(); toast('Sending the current customer away first. The new one walks in after.', ''); } else spawnCustomer(id === 'premium'); break;
+      case 'customer': case 'premium': closeMenu(); if (!customerArrives(id === 'premium')) toast('The line is full (' + LINE_MAX + ' waiting)', ''); break;
       case 'robbery': case 'robSnatch': case 'robKnife': case 'robGun': case 'robCrew': closeMenu(); S.till = Math.max(S.till, 40); startRobbery({ robSnatch: 'snatch', robKnife: 'knife', robGun: 'gun', robCrew: 'crew' }[id]); break; case 'basement': closeMenu(); goBasement(); break; case 'vip': closeMenu(); S.lic.premium = true; shop().open = true; if (!startVip()) toast('A lounge guest is already here', ''); break; case 'roof': closeMenu(); expInteract({ kind: 'roofUp' }, null); break; case 'heat': addHeat(40); break; case 'blackout': xs().blackoutUntil = now() + 60000; break; case 'delivery': closeMenu(); S.pkg.joints.n = Math.max(S.pkg.joints.n, 2); jobSpawn('phone'); break;
-      case 'round': closeMenu(); S.lic.tobacco = true; jobSpawn('tablet'); jobSpawn('tablet'); break; case 'toCar': closeMenu(); standUp(); player.floor = 0; player.pos.set(drive.g.position.x - 2.4, 1.65, drive.g.position.z); break; case 'tobFill': S.lic.tobacco = true; var TF = tob(); TF.leaf = 8; TF.cured = 2; TF.cut = 1; TF.sticks.normal = 400; TF.sticks.light = 400; TF.mat = 200; CIG_KEYS.forEach(function (k) { TF.packs[k] = 30; S.cigStock[k] = cigStock(k) + 10; }); syncTobRack(); syncCigCab(); break; case 'arm': S.lic.firearm = true; S.upgrades.panic = true; S.armory = { pepper: true, taser: true, pistol: true, shotgun: true, spray: 6, rounds: 64, shells: 32 }; break; case 'fight': closeMenu(); startFight(); if (!fight) toast('Need two visitors in the lobby first', 'bad'); break;
+      case 'round': closeMenu(); S.lic.tobacco = true; jobSpawn('tablet'); jobSpawn('tablet'); break; case 'toCar': closeMenu(); standUp(); player.floor = 0; player.pos.set(drive.g.position.x - 2.4, 1.65, drive.g.position.z); break; case 'tobFill': S.lic.tobacco = true; var TF = tob(); TF.leaf = 8; TF.cured = 2; TF.cut = 1; TF.sticks.normal = 400; TF.sticks.light = 400; TF.mat = 200; CIG_KEYS.forEach(function (k) { TF.packs[k] = 30; S.cigStock[k] = cigStock(k) + 10; }); syncTobRack(); syncCigCab(); break; case 'arm': S.lic.firearm = true; S.upgrades.panic = true; S.armory = { pepper: true, taser: true, pistol: true, shotgun: true, rifle: true, ak: true, spray: 6, rounds: 64, shells: 32, cartridges: 30, bullets: 270 }; break; case 'fight': closeMenu(); startFight(); if (!fight) toast('Need two visitors in the lobby first', 'bad'); break;
       case 'van': if (S.order) { S.deliveries.push({ items: S.order.items, due: now() }); S.order = null; } else if (!S.deliveries.length) S.deliveries.push({ items: { drink: 12, cup: 50, lighter: 20 }, due: now() }); else S.deliveries[0].due = now(); closeMenu(); break;
       case 'courier': if (!S.courier) S.courier = { amount: 100, state: 'called', at: now() }; else S.courier.at = now(); S.courierBanUntil = 0; closeMenu(); break;
       case 'dust': spawnDust(6); break; case 'clean': S.dust = []; world.dustDirty = true; break;
@@ -8105,7 +8372,7 @@
     $('h-lvl').textContent = 'Level ' + S.level; $('h-xp').textContent = S.xp + ' / ' + need + ' xp'; $('h-xpbar').style.width = Math.round(S.xp / need * 100) + '%';
     var ev = $('h-event'); if (S.event) { ev.hidden = false; ev.textContent = '🎪 ' + S.event.label + ' · ' + Math.max(0, Math.round((S.event.until - now()) / 1000)) + ' s'; } else if (!shop().open) { ev.hidden = false; ev.textContent = '🔴 Shop closed · no customers'; } else ev.hidden = true;
     drawRegister();
-    var hl = $('h-held'); if (held()) { hl.hidden = false; hl.innerHTML = '<span class="k">slot ' + (S.slot + 1) + '</span>' + heldLabel() + '<small>G puts it back · 1 to 6 or the wheel switch</small>'; } else hl.hidden = true;
+    var hl = $('h-held'); if (held()) { hl.hidden = false; hl.innerHTML = '<span class="k">slot ' + (S.slot + 1) + '</span>' + heldLabel() + '<small>' + (useHint(held()) ? useHint(held()) + ' · ' : '') + 'G puts it back · 1 to 6 or the wheel switch</small>'; } else hl.hidden = true;
     $('h-clock').textContent = clockText();
     $('h-day').textContent = 'Day ' + (SET.dayNight === 'cycle' ? (S.day || 1) : (Math.floor((now() - (S.created || now())) / 86400000) + 1));
     // order ticket
@@ -8120,13 +8387,13 @@
   function objective() {
     if (drive.on) { var jn = xs().jobs.length; return '<b>At the wheel</b>' + (jn ? '🚚 ' + jn + ' drop' + (jn === 1 ? '' : 's') + ' waiting: <b class="kk">J</b> the board, <b class="kk">M</b> the map.<br>' : '') + 'Mouse looks around · wheel zooms · <b class="kk">I</b> ignition · <b class="kk">P</b> handbrake · <b class="kk">L</b> lights · <b class="kk">W</b> and <b class="kk">S</b> drive · <b class="kk">A</b> and <b class="kk">D</b> steer · <b class="kk">Space</b> brake · <b class="kk">T</b> boot · <b class="kk">B</b> bonnet · <b class="kk">C</b> centre · <b class="kk">E</b> get out'; }
     if (introRunning()) return '';   /* the intro card is the guidance while it runs: two boxes competing is noise */
-    var t = '<b>Next up</b>'; var h = held();
+    var t = '<b>Next up' + (lineShown() ? ' · 👥 ' + lineShown() + ' in line' : '') + '</b>'; var h = held();
     if (h && h.kind === 'tablet') return t + '📋 The delivery round is in your hands. <b class="kk">E</b> or <b class="kk">J</b> opens it, and it slots into the dash cradle once you\'re at the wheel.';
     if (h && h.kind === 'broom') return t + '🧹 ' + dustList().length + ' dusty spot' + (dustList().length === 1 ? '' : 's') + ' left. E on the dust sweeps it.';
     if (!S.customer && !h && dustList().length >= 8) return t + '🧹 The floors are dusty. Grab the broom in the processing room.';
     if (h && h.kind === 'harvest') return t + '🌬️ Hang the fresh harvest on the drying line in the dry room.';
     if (h && h.kind === 'jar') return t + '🏺 Carry the jar to the workbench in the processing room and empty it into the stash.';
-    if (S.customer && !S.customer.arrived) return t + '🚪 ' + S.customer.who + ' just walked in' + (guardOnDuty() ? ' and the guard is checking their ID.' : '.') + ' Head to the window.';
+    if (S.customer && !S.customer.arrived) return t + '🚪 ' + S.customer.who + (S.customer.fromLine ? ' is next in line and stepping up.' : ' just walked in' + (guardOnDuty() ? ' and the guard is checking their ID.' : '.')) + ' Head to the window.';
     var hh = heistHint(); if (hh) return t + hh;
     if (fight) return t + '👊 ' + fight.a.who + ' and ' + fight.b.who + ' are fighting in the lobby. Press E on one of them to break it up.';
     if (S.customer && S.customer.stage) return t + '💵 ' + S.customer.who + ' is paying by ' + S.customer.pay + '. Take it at the till.';
@@ -8226,6 +8493,7 @@
     if (e.code === 'KeyI') { ui.openPanel('inventory'); e.preventDefault(); }
     if (e.code === 'KeyF' && !e.repeat) { phoneOpen(); e.preventDefault(); }
     if ((e.code === 'KeyG' || e.code === 'KeyQ') && !e.repeat) { putBack(); afterAction(); }
+    if (e.code === 'KeyV' && !e.repeat) { useHeld(); afterAction(); }
   });
   document.addEventListener('wheel', function (e) { if (!player.locked || ui.blocked() || edit.on || sec.view.on) return; if (window.RFGROW && window.RFGROW.creative && window.RFGROW.creative.state.on) return; if (drive.on) { drive.dist = clamp(drive.dist + (e.deltaY > 0 ? 0.7 : -0.7), 3.2, 12); drive.look.t = 1.4; return; } if (focus && focus.data.kind === 'deskboard') { deskWheel(e.deltaY > 0 ? 1 : -1); return; } var tsc = focus && touchFor(focus.data.kind); if (tsc) { if (tsc.wheel) { tsc.wheel(e.deltaY > 0 ? 1 : -1); tDraw(tsc); sfx('click'); } return; }   /* the wheel pulls the chase camera in and out at the wheel */ selectSlot(S.slot + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
   document.addEventListener('keyup', function (e) { player.keys[e.code] = false; if (ui.taskOpen && e.code === 'Space') taskPress(false); });
@@ -8237,11 +8505,13 @@
     if (e.button === 2 && cityMap.on) { toggleCityMap(); return; }
     if (!player.locked) { lockPointer(); if (e.button !== 0 || drive.on) return; }   /* the click that takes the pointer back also does its job on whatever the crosshair is on: the first click after a menu or panel used to be swallowed */
     if (runHooks(hooks.mousedown, e)) return;
-    if (e.button === 0) { if (drive.on) return; var hb3 = held(); if (hb3 && hb3.kind === 'bat' && !edit.on) { swingBat(); return; } if (hb3 && WEAPONS[hb3.kind] && !edit.on) { fireWeapon(); return; } if (edit.on) { if (edit.grabbed || edit.grabbedFx) editDrop(); else editGrab(); } else interact(); }
+    if (e.button === 2) { var hs = held(); if (hs && hs.kind === 'rifle' && !drive.on && !edit.on) scope.on = true; return; }
+    if (e.button === 0) { if (drive.on) return; var hb3 = held(); if (hb3 && hb3.kind === 'bat' && !edit.on) { swingBat(); return; } if (hb3 && WEAPONS[hb3.kind] && !edit.on) { trigger.down = true; fireWeapon(); return; } if (edit.on) { if (edit.grabbed || edit.grabbedFx) editDrop(); else editGrab(); } else interact(); }
   });
   var lastUiClose = 0;
   function closeTopUi() { if (now() - lastUiClose < 300) return; if (ui.ctxOpen) { lastUiClose = now(); ctxClose(); } else if (ui.panelOpen) { lastUiClose = now(); ui.closePanel(); } else if (ui.wheelOpen) { lastUiClose = now(); wheelClose(); } else if (ui.deviceOpen) { lastUiClose = now(); deviceClose(); } else if (ui.pcOpen) { lastUiClose = now(); pcClose(); } }   /* one right-click closes one layer: the mousedown and the contextmenu event of the same click must not each close something */
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); closeTopUi(); });
+  document.addEventListener('mouseup', function (e) { if (e.button === 2) scope.on = false; if (e.button === 0) trigger.down = false; });
   document.addEventListener('pointerlockchange', function () { player.locked = document.pointerLockElement === canvas; if (!player.locked) player.keys = {}; if (!player.locked && ui.started && !ui.blocked()) { /* user pressed Esc in lock: browser exits lock; a hook may claim it (creative cancels a carried piece), else open the menu */ if (!runHooks(hooks.unlock)) openMenu(); } });
   document.addEventListener('pointerlockerror', function () { lockRetry(); });
   window.addEventListener('resize', resize);
@@ -8364,7 +8634,7 @@
     var dt = Math.min(clock.getDelta(), 0.1);
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
-    if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updatePlantVisuals(dt); updateNpc(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); deskTouchUpdate(); touchUpdate(); }
+    if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updateScope(dt); updateTrigger(); updatePlantVisuals(dt); updateNpc(dt); updateLineup(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); deskTouchUpdate(); touchUpdate(); }
     updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt);
     if (_df.t && now() - _df.t > 250) { _df.t = 0; defightScene(); }
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); var vcTown = (vc.layers.mask & (1 << TOWN_LAYER)) !== 0; vc.layers.enable(TOWN_LAYER); renderer.render(scene, vc); if (!vcTown) vc.layers.disable(TOWN_LAYER); } else renderer.render(scene, camera);
@@ -8372,5 +8642,5 @@
   }
   frame();
   // debug / automation handle (read-only use; not part of the game loop)
-  window.RFGROW = { hooks: hooks, deskBoard: deskBoard, deskTap: deskTap, TOUCH: TOUCH, touchTap: touchTap, secScreen: secScreen, pc: pc, pcOpen: pcOpen, pcClose: pcClose, pcApp: pcApp, dev: dev, deviceOpen: deviceOpen, deviceClose: deviceClose, wheelOpen: wheelOpen, wheelPick: wheelPick, wheelClose: wheelClose, officeSeat: officeSeat, cityPeds: function () { return cityPeds; }, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision, setDoor: setDoor, doorAt: doorAt, navBuild: navBuild }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, unitIds: unitIds, unitCount: unitCount, machCost: machCost, buyUnit: buyUnit, machState: machState, syncMachines: syncMachines, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
+  window.RFGROW = { lineup: function () { return lineup; }, customerArrives: customerArrives, hooks: hooks, deskBoard: deskBoard, deskTap: deskTap, TOUCH: TOUCH, touchTap: touchTap, secScreen: secScreen, pc: pc, pcOpen: pcOpen, pcClose: pcClose, pcApp: pcApp, dev: dev, deviceOpen: deviceOpen, deviceClose: deviceClose, wheelOpen: wheelOpen, wheelPick: wheelPick, wheelClose: wheelClose, officeSeat: officeSeat, cityPeds: function () { return cityPeds; }, internal: { MAT: MAT, TEX: TEX, colorMat: colorMat, fabricMat: fabricMat, glowMat: glowMat, textTex: textTex, makeTex: makeTex, world: world, scene: scene, ROOM: ROOM, UP: UP, WALL_T: WALL_T, groundY: groundY, save: save, toast: toast, sfx: sfx, lockPointer: lockPointer, interactable: interactable, propCtx: propCtx, rotAABB: rotAABB, setFocus: setFocus, ray: ray, center: center, edit: edit, editToggle: editToggle, sit: sit, builders: { chair: chair, sofaBuild: sofaBuild, coffeeTableBuild: coffeeTableBuild, bookshelfBuild: bookshelfBuild, crateBuild: crateBuild, lobbyBench: lobbyBench, officeChairBuild: officeChairBuild, makePot: makePot, legs4: legs4, drawer: drawer }, esc: esc, clamp: clamp, lerp: lerp, randf: randf, randi: randi, pick: pick, $: $, hud: hud, afterAction: afterAction, openMenu: openMenu, closeMenu: closeMenu, STRAINS: STRAINS, take: take, held: held, selectSlot: selectSlot, hotbarFull: hotbarFull, devAction: devAction, toggleRoomLight: toggleRoomLight, roomOf: roomOf, syncDisplay: syncDisplay, shop: shop, npc: typeof npc !== 'undefined' ? npc : null, sec: sec, camEnter: camEnter, camExit: camExit, camShow: camShow, updateSecurity: updateSecurity, tentSize: tentSize, slotPos: slotPos, sit: sit, renderer: renderer, camera: camera, updateNpc: updateNpc, spawnCustomer: spawnCustomer, updateCourier: updateCourier, courierHandOver: courierHandOver, courierState: function () { return courier; }, worker: worker, updateWorker: updateWorker, workerTask: workerTask, guardTask: guardTask, guard: guard, updateGuard: updateGuard, routeTo: routeTo, hireWorker: hireWorker, stockStore: stockStore, stockCount: stockCount, moveWithCollision: moveWithCollision, setDoor: setDoor, doorAt: doorAt, navBuild: navBuild }, get S() { return S; }, player: player, ui: ui, actions: actions, world: world, camera: camera, hud: hud, after: afterAction, openPanel: function (k, t) { ui.openPanel(k, t); }, ctxPlant: ctxPlant, ctxShelf: ctxShelf, openMenu: openMenu, edit: edit, editToggle: editToggle, editGrab: editGrab, editDrop: editDrop, editRotate: editRotate, editReset: editReset, props: propInst, PROPS: PROPS, npcState: function () { return npc.state; }, loungers: loungers, devAction: devAction, selectSlot: selectSlot, roomOf: roomOf, toggleRoomLight: toggleRoomLight, robber: robber, startRobbery: startRobbery, heistState: function () { return { heist: heist, robbers: robbers }; }, fireWeapon: fireWeapon, lockerMenu: lockerMenu, complyHeist: complyHeist, confrontRobber: confrontRobber, panicButton: panicButton, heistHint: heistHint, xs: xs, exp: exp, enterZone: enterZone, leaveZone: leaveZone, expInteract: expInteract, expPrompt: expPrompt, carMenu: carMenu, labMenu: labMenu, rosterMenu: rosterMenu, expPoiMenu: expPoiMenu, startGetaway: startGetaway, expansionNewDay: expansionNewDay, FIXTURES: FIXTURES, DOORS: DOORS, toggleDoor: toggleDoor, startVip: startVip, vipObj: vip, serveVip: serveVip, enterCar: enterCar, exitCar: exitCar, drive: drive, ignition: ignition, parkBrake: parkBrake, carLightStep: carLightStep, carPartToggle: carPartToggle, carInBay: carInBay, carAnyOpen: carAnyOpen, drawDash: drawDash, jobSpawn: jobSpawn, jobsPanel: jobsPanel, jobHandOver: jobHandOver, jobAtCar: jobAtCar, tabletTake: tabletTake, tabletHere: tabletHere, driverRuns: driverRuns, addrFor: addrFor, CITY: CITY, toggleCityMap: toggleCityMap, cityPoiMenu: cityPoiMenu, parkDeal: parkDeal, cityInteract: cityInteract, goBasement: goBasement, leaveBasement: leaveBasement, tobInteract: tobInteract, tobPrompt: tobPrompt, handOverFn: handOver, stepFrame: function () { frame(); }, swingBat: swingBat, hitNpc: hitNpc, startFight: startFight, endFight: endFight, fightState: function () { return fight; }, task: task, taskStart: taskStart, taskPress: taskPress, taskFinish: taskFinish, buildProp: buildProp, propPlacement: propPlacement, hiddenProps: hiddenProps, PROP_ORDER: PROP_ORDER, unitIds: unitIds, unitCount: unitCount, machCost: machCost, buyUnit: buyUnit, machState: machState, syncMachines: syncMachines, truck: truck, courier: courier, callCourier: callCourier, updateLogistics: updateLogistics, payActions: payActions, dehums: dehums, dehumSet: dehumSet, smoke: smoke, sparkUp: sparkUp, shop: shop, spawnDust: spawnDust, curtains: curtains, radio: radio, dust: dustList, tv: tv, sit: sit, groundY: groundY, standUp: standUp, take: take, putBack: putBack, handOver: handOver, sellHeld: sellHeld, held: held, reset: function () { S = fresh(); try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} world.dirty = true; buildAllProps(); rebuildDynamic(); syncDust(); hud(); } };
 })();
