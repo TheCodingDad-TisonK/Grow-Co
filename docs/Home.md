@@ -21,7 +21,8 @@ This wiki is a mirror of the [`docs/`](https://github.com/TheCodingDad-TisonK/Gr
 - **[Systems reference](Systems-Reference)**: every system, its state and its entry points.
 - **[Modding guide](Modding-Guide)**: add a prop, a machine, a product, a place in town, a robber, a door.
 - **[Save format](Save-Format)**
-- **[Building and releasing](Building-and-Releasing)**
+- **[Building and releasing](Building-and-Releasing)**: build, test, release.
+- **[Balance](Balance)**: the numbers, a simulated player, and what falls out of them.
 - **[Roadmap and ideas](Roadmap-and-Ideas)**
 - **[House style](House-Style)**: how the game and these pages are written, and the word list.
 

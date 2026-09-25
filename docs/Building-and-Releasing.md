@@ -6,14 +6,17 @@
 npm install        # once
 npm start          # run the desktop app from source
 npm run serve      # play in a browser, http://127.0.0.1:8420/
-npm run check      # syntax check of the game scripts
+npm run build      # join src/ into game/grow3d.js (and the desk copy, when .desk-path is set)
+npm run check      # the built file matches src/, the version stamp, the lint gate, syntax
+npm test           # the test suite, against the real game in a hidden window
+npm run balance    # regenerate docs/Balance.md from the numbers in src/
 npm run guide      # regenerate docs/Player-Guide.md from game/guide.js
 npm run version    # regenerate game/version.js from package.json (npm run check does this too)
 ```
 
-There is no build step for the game itself. Edit a file in `game/`, reload (`Ctrl+R` in the app).
+The game's code lives in `src/`: edit a part, `npm run build`, reload (`Ctrl+R` in the app). Every other file in `game/` is edited in place. Never edit `game/grow3d.js` itself; `npm run check` will say so.
 
-`npm run check` only proves the files parse. The long one-line statements in `grow3d.js` can hide a mistake that parses fine and fails at runtime, so always play what you changed.
+`npm run check` only proves the files parse and match. The long one-line statements can hide a mistake that parses fine and fails at runtime, so run `npm test` and play what you changed.
 
 ## Windows builds
 

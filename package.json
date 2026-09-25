@@ -10,14 +10,17 @@
   "scripts": {
     "start": "electron .",
     "serve": "node tools/serve.js",
-    "check": "node tools/sync-version.js && node tools/lint-gate.js && node --check game/grow3d.js && node --check game/grow3d-creative.js && node --check game/menu.js && node --check game/guide.js && node --check game/report.js && node --check game/workshop.js && node --check main.js",
+    "check": "node tools/build-game.js --check && node tools/sync-version.js && node tools/lint-gate.js && node --check game/grow3d.js && node --check game/grow3d-creative.js && node --check game/menu.js && node --check game/guide.js && node --check game/report.js && node --check game/workshop.js && node --check main.js",
     "icon": "electron tools/render-brand.js",
-    "dist": "npm run check && npm run icon && node tools/verify-icon.js && electron-packager . \"Grow Co\" --platform=win32 --arch=x64 --out=dist --overwrite --icon=build/icon.ico --app-copyright=\"TheCodingDad-TisonK\" --ignore=\"^/dist\" --ignore=\"^/docs\" --ignore=\"^/screenshots\" --ignore=\"^/tools\" --ignore=\"^/build\" --ignore=\"^/\\.github\" --ignore=\"^/\\.git\" --prune=true",
+    "dist": "npm run check && npm run icon && node tools/verify-icon.js && electron-packager . \"Grow Co\" --platform=win32 --arch=x64 --out=dist --overwrite --icon=build/icon.ico --app-copyright=\"TheCodingDad-TisonK\" --ignore=\"^/dist\" --ignore=\"^/docs\" --ignore=\"^/screenshots\" --ignore=\"^/tools\" --ignore=\"^/src\" --ignore=\"^/tests\" --ignore=\"^/build\" --ignore=\"^/\\.github\" --ignore=\"^/\\.git\" --prune=true",
     "zip": "node tools/zip-dist.js",
     "installer": "npm run check && npm run icon && node tools/verify-icon.js && electron-builder --win nsis --x64 --publish never",
     "guide": "node tools/guide-to-md.js",
     "version": "node tools/sync-version.js",
-    "brand": "electron tools/render-brand.js"
+    "brand": "electron tools/render-brand.js",
+    "build": "node tools/build-game.js",
+    "test": "node tools/build-game.js --check && electron tools/test/run.js",
+    "balance": "node tools/balance/report.js > docs/Balance.md"
   },
   "devDependencies": {
     "@electron/packager": "^18.3.6",

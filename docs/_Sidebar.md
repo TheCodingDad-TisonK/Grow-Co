@@ -13,6 +13,7 @@
 - [Modding guide](Modding-Guide)
 - [Save format](Save-Format)
 - [Building and releasing](Building-and-Releasing)
+- [Balance](Balance)
 - [Roadmap and ideas](Roadmap-and-Ideas)
 - [House style](House-Style)
 

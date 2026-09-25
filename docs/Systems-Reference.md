@@ -1,6 +1,6 @@
 # Systems reference
 
-Every system, where its state lives, and the functions to start reading from. Names are exact: search for them in `game/grow3d.js`.
+Every system, where its state lives, and the functions to start reading from. Names are exact: search for them in `src/` (or in the built `game/grow3d.js`).
 
 ## Core loop
 

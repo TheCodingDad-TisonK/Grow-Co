@@ -6,11 +6,44 @@ Grow Co. is deliberately simple to run and a little unusual to read. This page i
 
 - **One page.** `game/index.html` holds the canvas, the HUD and every overlay (start card, panels, pause menu, context menu).
 - **One closure.** `game/grow3d.js` is a single immediately invoked function. All state and every system live inside it as plain `var`s and function declarations. Nothing is a module, nothing is bundled.
+- **Written in parts.** That file is built from the parts in `src/` (see below). Edit the parts, never `game/grow3d.js`.
 - **One save object.** The whole game state is `S`, a JSON-safe object written to `localStorage`.
 - **One loop.** `frame()` runs every animation frame and calls each system's `update…(dt)` in a fixed order, then renders.
 - **One handle.** `window.RFGROW` exposes the running game for the creative mode plug-in, for the console, and for tests.
 
-There is no build step. Open the page and it runs.
+Players and hosts need no build step: `game/` is committed ready to run. Open the page and it runs.
+
+## The parts in src/
+
+`game/grow3d.js` is too big to read or review as one file, so it is written as about forty parts in `src/`, one system each (`11-customers-line.js`, `20-robberies.js`, `29-prop-defs.js`...). `npm run build` joins them in file-name order into `game/grow3d.js`. Nothing about the running game changes: it is still one file and one closure, and the day the parts were made the joined file was byte-for-byte the old one.
+
+- `NN-name.js` goes into both builds. `NN-name.desk.js` goes only into the desk build (the office wall screen that reads the Implementation Desk's API), `NN-name.shop.js` only into this standalone build.
+- A small difference inside a shared part is a block at column 0: `//#if desk`, `//#else`, `//#endif` (or `//#if shop`).
+- A line starting `//@` at column 0 is a note for the reader and is left out of the build. Every part opens with one.
+- The build refuses to join the parts if two of them declare the same top-level function: in one closure a second `function foo(` silently replaces the first.
+- `npm run check` fails when `game/grow3d.js` is not what `src/` builds, so an edit made straight to the built file is caught, not lost.
+
+With a `.desk-path` file (git-ignored, one line: the desk's `public` folder), `npm run build` also writes the desk's copy of `grow3d.js` and copies the files both builds share unchanged (the guide, the menu, creative mode, the Workshop, the stylesheet, the report form). A fix is made once, in `src/`, and reaches both builds.
+
+## Tests
+
+`npm test` runs the suite in `tests/` against the real game: a hidden Electron window loads `game/index.html` on a fresh page per test, with a fake clock and fake timers installed before the game's scripts (`tools/test/preload.js`), a fixed random seed per test, drawing switched off and random events held back. Time only moves when a test moves it, so a rule that takes minutes of game time runs in milliseconds and every run gives the same result. `window.RFGROW.test` is the handle the tests reach the game through; the game never reads it. A test is a few lines:
+
+```js
+test('the head of the line steps up the moment the window frees', async (h) => {
+  h.arrive(6);                                   // six customers, every card good
+  h.until(() => h.R.lineup().length >= 4, 90, 'a full line', h.patience);
+  h.T.npc.leaveHappy(); h.S.customer = null;     // the window frees
+  h.frame(1);
+  h.ok(h.S.customer.fromLine, 'the front of the line stepped up');
+});
+```
+
+`npm test -- rope` runs only the tests whose file or name contains "rope", and `TEST_VERBOSE=1` prints a failure in full. The same suite runs on every push and pull request (`.github/workflows/test.yml`).
+
+## The balance model
+
+`npm run balance` writes [Balance.md](Balance.md): prices, lamps, strains, the shop at each stage, a simulated player over 90 days and the findings that fall out of them. `tools/balance/tables.js` reads the numbers straight out of `src/`, `tools/balance/model.js` holds the formulas, and `tests/balance-model.test.js` checks the model against the running game (prices, the morning bill, harvest weights, what customers order), so the report cannot drift from what players get. Change a number, run it again.
 
 ## Why the lines are so long
 
@@ -18,7 +51,7 @@ Most statements in `grow3d.js` are long one-liners: a whole prop, a whole menu, 
 
 > Never append a `//` comment in the middle of a long line. It comments out the rest of the statement. The file still parses and the bug only shows at runtime. Use `/* ... */` inside lines.
 
-`node --check game/grow3d.js` (or `npm run check`) catches syntax errors only. Always run the game after an edit.
+`node --check game/grow3d.js` (or `npm run check`) catches syntax errors only. Run `npm test`, and play what you changed.
 
 ## Finding your way
 
