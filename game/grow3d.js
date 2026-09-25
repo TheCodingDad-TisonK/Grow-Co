@@ -2066,6 +2066,7 @@
   // animate: state 'walk' | 'idle' | 'wait' ; speed in m/s ; lookAt optional Vector3 (world). Knees and elbows follow the stride.
   var _tmpV = new THREE.Vector3();
   function animateHuman(g, dt, state, speed, lookAt) {
+    if (state === 'walk' && g.parent && g.parent.userData.ropeHold && now() - g.parent.userData.ropeHold < 200) { state = 'idle'; speed = 0; }   /* held at the rope: stand, don't walk on the spot */
     var P = g.userData.parts; g.userData.phase += dt * (state === 'walk' ? 6.5 * clamp(speed / 1.4, 0.5, 1.6) : 1.2);
     var t = g.userData.phase; var lk = P.lLeg.userData.knee, rk = P.rLeg.userData.knee, le = P.lArm.userData.elbow, re = P.rArm.userData.elbow;
     if (state === 'walk') {
@@ -2124,6 +2125,7 @@
     if (!guard.h) return;
     var P = guard.h.userData.parts;
     if (robber.state === 'demand' || robber.state === 'in') { animateHuman(guard.h, dt, 'idle', 0, robber.g.position); P.rArm.rotation.x = -1.4; P.rArm.rotation.z = -0.2; guard.h.userData.setMood('angry'); return; }
+    if (updateGuardRope(dt)) return;
     if (updateGuardTasks(dt)) return;
     if (guard.state === 'check') { guard.armT += dt; P.rArm.rotation.x = lerp(P.rArm.rotation.x, -1.3, 0.15); P.rArm.rotation.z = lerp(P.rArm.rotation.z, -0.3, 0.15); animateHuman(guard.h, dt, 'idle', 0, guard.checkG ? guard.checkG.position : npc.g.visible ? npc.g.position : player.pos); P.rArm.rotation.x = -1.3; P.rArm.rotation.z = -0.3; if (guard.armT > 2.2) { guard.state = 'idle'; guard.h.userData.setMood('happy'); guard.say('You\'re good. Go on through.', '#6fdc8c'); setTimeout(function () { if (guard.h) guard.h.userData.setMood('neutral'); }, 2000); } return; }
     // idle: watch whoever is closer, the customer or the player
@@ -2447,7 +2449,7 @@
   var CUSTOMER_IN = [[6.5, 11.6], [0.6, 11.4], [0, 9.7], [0.5, 7.9]];
   var CUSTOMER_WINDOW = [[0, 6.4], [0, 5.25]];
   function buildNpc() {
-    var g = new THREE.Group(); npc.g = g; world.group.add(g); g.visible = false;
+    var g = new THREE.Group(); npc.g = g; world.group.add(g); g.visible = false; g.userData.gated = true;
     npc.bubble = sprite(textTex(['…'], 512, 200, { size: 40 }), 1.5, 0.58, 0, 2.25, 0, g);
   }
   npc.setCustomer = function (c) {
@@ -2463,7 +2465,7 @@
     if (npc.state === 'away' || !npc.human) return;
     npc.state = 'leave'; npc.human.userData.setMood(mood);
     var ob = npc.bubble.material.map; npc.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color }); npc.bubble.material.needsUpdate = true; if (ob) ob.dispose(); npc.bubble.visible = true;
-    var out = [[0.4, 7.9], [0, 9.7], [0.6, 11.4], [Math.random() < 0.5 ? 16 : -16, 11.6]]; if (npc.g.position.z < 6.3) out.unshift([0.5, 5.7]);   /* from the window: step aside first so the walk out passes the head of the line, not through it */ npc.path = out.map(function (p) { return { x: p[0], z: p[1] }; });
+    npc.path = exitPath(npc.g.position);   /* round the rope, not through the gate or the line */
   }
   npc.leaveHappy = function () { npcLeave('happy', custLine(npc.who, 'thanks'), '#6fdc8c'); };
   npc.leaveSad = function () { npcLeave('sad', custLine(npc.who, 'bye'), '#ff6b6b'); };
@@ -2489,7 +2491,8 @@
     if (!path.length) return true;
     var tgt = path[0]; var dx = tgt.x - g.position.x, dz = tgt.z - g.position.z; var d = Math.hypot(dx, dz);
     if (d < 0.08) { path.shift(); return path.length === 0; }
-    var step = Math.min(d, speed * dt); g.position.x += dx / d * step; g.position.z += dz / d * step;
+    if (g.userData.gated && ropeHeld(g, dx / d, dz / d, d)) return false;   /* a hooked rope just ahead: wait for it to be opened */
+    var step = Math.min(d, speed * dt); g.position.x += dx / d * step; g.position.z += dz / d * step; g.userData.moveT = now();
     var want = Math.atan2(dx, dz); var cur = g.rotation.y; var diff = want - cur; while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2; g.rotation.y = cur + diff * Math.min(1, dt * 10);
     return false;
   }
@@ -2560,7 +2563,7 @@
   }
   function lineJoin(premium) {
     var c = newCustomer(premium), side = Math.random() < 0.5 ? 1 : -1, outside = lineup.filter(function (m) { return m.state === 'enter' || m.state === 'hold'; }).length;
-    var g = new THREE.Group(), h = makeHuman(CAST[c.who] || c.look || {}); g.add(h); world.group.add(g);
+    var g = new THREE.Group(), h = makeHuman(CAST[c.who] || c.look || {}); g.add(h); world.group.add(g); g.userData.gated = true;
     var bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.47, 0, 2.25, 0, g); bubble.visible = false;
     var m = { id: 'Q' + now() + randi(0, 999), c: c, who: c.who, g: g, h: h, bubble: bubble, side: side, state: 'enter', slot: -1, t: 0, waited: 0, grumbled: false, fast: false, sayT: null,
       path: [{ x: 6.5 * side, z: 11.6 }, { x: 0.6 * side, z: 11.4 }, { x: LINE_HOLD.x, z: LINE_HOLD.z + outside * 0.65 }] };   /* a second arrival while the guard is busy waits a step further out */
@@ -2585,9 +2588,7 @@
   function lineLeave(m, mood, text, color, fast) {
     if (m.state === 'leave') return;
     lineDropHit(m); m.state = 'leave'; m.slot = -1; m.fast = !!fast; m.h.userData.setMood(mood || 'sad'); lineSay(m, text || custLine(m.who, 'bye'), color || '#ff6b6b', 4000);
-    var p = m.g.position, out = [];
-    if (p.z < 9.2) { if (p.z < LINE_Z + 0.3 && p.x < 0.3) out.push({ x: p.x, z: 6.55 }, { x: 0.45, z: 6.6 }, { x: 0.4, z: 7.9 }); out.push({ x: 0.1, z: 9.7 }); }   /* from the row: out along the walkway, round the head of the line */
-    out.push({ x: 0.6 * m.side, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }); m.path = out; hud();
+    m.path = exitPath(m.g.position, m.side); hud();   /* round the rope, not through the gate or the line */
   }
   function lineHit(m) {   // the bat on someone in the queue: the same as at the window
     if (m.state === 'out') return;
@@ -2604,7 +2605,7 @@
   function npcHandOff() {
     var h = npc.human; h.children.filter(function (ch) { return ch.userData.npc; }).forEach(function (ch) { h.remove(ch); });
     world.interact = world.interact.filter(function (x) { return !x.userData.npc; });
-    var g = new THREE.Group(); g.position.copy(npc.g.position); g.rotation.y = npc.g.rotation.y; npc.g.remove(h); g.add(h); world.group.add(g);
+    var g = new THREE.Group(); g.position.copy(npc.g.position); g.rotation.y = npc.g.rotation.y; npc.g.remove(h); g.add(h); world.group.add(g); g.userData.gated = true;
     var bubble = sprite(npc.bubble.material.map, 1, 1, 0, 0, 0, g); bubble.scale.copy(npc.bubble.scale); bubble.position.copy(npc.bubble.position); bubble.visible = npc.bubble.visible;   /* the goodbye line walks out with them */
     npc.bubble.material.map = textTex(['…'], 512, 200, { size: 40 }); npc.bubble.material.needsUpdate = true; npc.bubble.visible = false;
     lineup.push({ c: null, who: npc.who, g: g, h: h, bubble: bubble, side: 1, state: 'leave', slot: -1, t: 0, waited: 0, fast: false, sayT: null, path: npc.path });
@@ -4366,7 +4367,7 @@
   function buildRobber(r, kind, weapon, role) {
     if (!r.g) { r.g = new THREE.Group(); world.group.add(r.g); r.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, r.g); }
     if (r.h) { r.g.remove(r.h); disposeTree(r.h); } world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; });
-    r.h = makeHuman(strangerLook(role === 'bagman', true)); r.g.add(r.h);   /* dressed like anyone off the street: the balaclava stays in a pocket until he makes his move */
+    r.h = makeHuman(strangerLook(role === 'bagman', true)); r.g.add(r.h); r.g.userData.gated = true;   /* dressed like anyone off the street: the balaclava stays in a pocket until he makes his move */
     var P = r.h.userData.parts; r.mask = new THREE.Group(); var hood = new THREE.Mesh(new THREE.SphereGeometry(0.195, 14, 12), colorMat(0x0c0c0e, 0.95)); hood.position.set(0, 0.24, 0); r.mask.add(hood); var slit = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.03), colorMat(0xd9a57e, 0.8)); slit.position.set(0, 0.27, 0.185); r.mask.add(slit); r.mask.visible = false; P.head.add(r.mask);
     r.gun = weapon ? robWeaponMesh(weapon) : null; if (r.gun) { r.gun.visible = false; P.rArm.userData.elbow.add(r.gun); }
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; hb.userData.robberId = r.id; r.h.add(hb); interactable(hb, { kind: 'robber', rid: r.id });
@@ -4387,7 +4388,7 @@
     /* no announcement: they walk in like anyone else, and the first sign may be the mask */
   }
   function maskUp(r) {
-    if (r.masked || r.state !== 'case') return; r.delay = 0; r.g.visible = true; r.slot = -1; r.masked = true; r.mask.visible = true; if (r.gun) r.gun.visible = true; r.h.userData.setMood('angry'); r.t = 0;
+    if (r.masked || r.state !== 'case') return; r.delay = 0; r.g.visible = true; r.slot = -1; r.masked = true; r.g.userData.gated = false; r.mask.visible = true; if (r.gun) r.gun.visible = true; r.h.userData.setMood('angry'); r.t = 0;
     if (!heist.masked) { heist.masked = true; sfx('alarm'); var K = ROB_KINDS[r.kind]; toast('🚨 ' + (r.kind === 'crew' ? 'They pulled masks down, and one has a shotgun' : r.kind === 'gun' ? 'He pulled a mask down, and he has a gun' : r.kind === 'knife' ? 'He pulled a mask down, and he has a knife' : 'He pulled his hood up and he\'s heading for the tip jar'), 'bad'); logEvent('🚨 ' + (r.kind === 'crew' ? 'A gang' : 'A ' + K.label) + ' just made a move in the lobby', 'bad'); guard.say('Hey. Stop right there.', '#ff6b6b', 3000); lineFlee(); if (S.customer && !S.customer.stage && npc.state !== 'down' && npc.state !== 'out') { logEvent('🏃 ' + S.customer.who + ' ran for the door, and the order went with them', 'bad'); S.customer = null; npcLeave('sad', 'I\'m out of here.', '#ff6b6b'); } }   // whoever was being served clears the line of fire
     if (r.role === 'bagman') { var tgt = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: 6.5, z: 2.7 }; r.path = routeTo(r.g.position, tgt.x, tgt.z); r.state = 'raid'; r.raid = 'goods'; }
     else { r.path = routeTo(r.g.position, 0, 5.25); r.state = 'in'; if (mate.state === 'case') maskUp(mate); }
@@ -4420,7 +4421,7 @@
     var dn = 0; Object.keys(r.disp).forEach(function (k) { S.display[k] = (S.display[k] || 0) + r.disp[k]; dn += r.disp[k]; }); r.disp = {}; if (dn) { syncDisplay(); bits.push(dn + ' counter items'); }
     if (bits.length) toast('💵 Got back ' + bits.join(' and '), 'good');
   }
-  function robberFlee(r) { r.delay = 0; if (r.g) r.g.visible = true; r.state = 'flee'; r.t = 0; r.path = (r.g.position.z > 9.3 ? [] : routeTo(r.g.position, 0.4, 7.9).concat([{ x: 0, z: 9.7 }])).concat([{ x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]); }   /* still outside: just walk off */
+  function robberFlee(r) { r.delay = 0; if (r.g) { r.g.visible = true; r.g.userData.gated = false; } r.state = 'flee'; r.t = 0; r.path = (r.g.position.z > 9.3 ? [] : routeTo(r.g.position, 0.4, 7.9).concat([{ x: 0, z: 9.7 }])).concat([{ x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]); }   /* still outside: just walk off */
   // can the player see this figure? walls, doors and furniture block; glass, signs' hit boxes and the figure itself do not
   var losRay = new THREE.Raycaster(); losRay.layers.enable(TOWN_LAYER);   /* rays still hit the town layer */
   function sightLine(tg) {
@@ -4871,7 +4872,7 @@
     h.children.filter(function (ch) { return ch.userData.npc; }).forEach(function (ch) { h.remove(ch); });
     world.interact = world.interact.filter(function (m) { return !m.userData.npc; });
     npc.g.remove(h); npc.human = null; npc.state = 'away'; npc.g.visible = false; npc.bubble.visible = false;
-    var g = new THREE.Group(); g.position.set(wp.x, 0, wp.z); g.rotation.y = npc.g.rotation.y; g.add(h); world.group.add(g);
+    var g = new THREE.Group(); g.position.set(wp.x, 0, wp.z); g.rotation.y = npc.g.rotation.y; g.add(h); world.group.add(g); g.userData.gated = true;
     var bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, g); bubble.visible = false;
     var lid = 'L' + now() + randi(0, 999); var lhb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); lhb.position.y = 1.25; lhb.userData.lounger = lid; h.add(lhb); interactable(lhb, { kind: 'lounger', lid: lid });
     // a joint in the right hand, hidden until they sit down: paper, ember and a point light that flares on each drag
@@ -4889,7 +4890,7 @@
   npc.goLounge = function () { var seat = freeLoungeSeat(); return seat ? npc.goLobby([{ kind: 'bench', seat: seat }]) : false; };
   function nextStep(l) {
     l.step++; var st = l.plan[l.step]; var from = { x: l.g.position.x, z: l.g.position.z }; l.t = 0;
-    if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = [{ x: from.x, z: 6.6 }, { x: 0.45, z: 6.6 }, { x: 0.4, z: 7.9 }, { x: 0, z: 9.7 }, { x: 0.6, z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }]; return; }
+    if (!st) { l.state = 'leave'; l.joint.visible = false; l.glow.intensity = 0; l.path = exitPath(from); return; }
     if (st.kind === 'bench') {   /* a smoke in the lounge starts with buying the joint, off the goods shelf at the board price; no joints, no sit */
       var jid = Object.keys(S.lots.joints).filter(function (k) { return S.lots.joints[k].n > 0; })[0];
       if (!jid) { l.seat = null; loungerSay(l, 'No joints left? Another time, then.', '#ffc857', 2400); logEvent('🪑 ' + l.who + ' wanted a joint for the lounge, but the goods shelf had none', ''); nextStep(l); return; }
@@ -6541,19 +6542,78 @@
   defProp('lobbyBenchR', { label: 'lobby bench', x: 8.5, z: 8.2, rot: 2, build: lobbyBench });
   defProp('magTable', { label: 'magazine table', x: -6.6, z: 7.6, build: function (c) { c.cyl(0.32, 0.32, 0.03, MAT.wood, 0, 0.45, 0, 24); c.cyl(0.03, 0.03, 0.44, MAT.chrome, 0, 0.22, 0, 10); c.cyl(0.2, 0.22, 0.02, MAT.chrome, 0, 0.01, 0, 24); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: textTex(['HIGH', 'times'], 150, 110, { size: 34, bg: '#6fdc8c', color: '#062010', titleColor: '#062010', line: 'rgba(0,0,0,0)' }) }), -0.05, 0.47, 0, { cast: false }); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: textTex(['GROW', 'weekly'], 150, 110, { size: 34, bg: '#ffc857', color: '#332200', titleColor: '#332200', line: 'rgba(0,0,0,0)' }) }), 0.1, 0.48, -0.05, { cast: false }).rotation.y = 0.3; c.solid(-0.33, 0.33, -0.33, 0.33); } });
   var ROPE_COLORS = { red: 0xc94a3a, navy: 0x2a3a6a, black: 0x1a1a1c, gold: 0xc9a44a, green: 0x2e7d4f }, ROPE_POSTS = { chrome: [0xd8dde2, 0.25, 0.95], brass: [0xb8913a, 0.35, 0.85], black: [0x1a1a1c, 0.4, 0.6] }, ROPE_LENS = [1.2, 1.8, 2.4, 3.0];
-  function ropeStyle(id) { if (!S.ropes) S.ropes = {}; var st = S.ropes[id] || {}; return { color: ROPE_COLORS[st.color] ? st.color : 'red', len: ROPE_LENS.indexOf(st.len) >= 0 ? st.len : 1.8, posts: ROPE_POSTS[st.posts] ? st.posts : 'chrome', kind: st.kind === 'belt' ? 'belt' : 'rope' }; }
-  function ropeBuild(c) {   // two posts and a velvet rope (or a retractable belt) between them, along local x
+  function ropeStyle(id) { if (!S.ropes) S.ropes = {}; var st = S.ropes[id] || {}; return { color: ROPE_COLORS[st.color] ? st.color : 'red', len: ROPE_LENS.indexOf(st.len) >= 0 ? st.len : 1.8, posts: ROPE_POSTS[st.posts] ? st.posts : 'chrome', kind: st.kind === 'belt' ? 'belt' : 'rope', open: !!st.open }; }
+  function ropeBuild(c) {   // two posts and a velvet rope (or a retractable belt) clipped between them, along local x; unhooked, it hangs down the far post
     var id = c.group.userData.propId, st = ropeStyle(id), hx = st.len / 2, pf = ROPE_POSTS[st.posts], postM = colorMat(pf[0], pf[1], pf[2]), bandM = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: ROPE_COLORS[st.color], roughness: 1 });
     [-hx, hx].forEach(function (x) { c.cyl(0.025, 0.025, 0.95, postM, x, 0.475, 0, 12); c.cyl(0.16, 0.18, 0.03, postM, x, 0.015, 0, 20); var ball = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 10), postM); ball.position.set(x, 0.98, 0); ball.castShadow = true; c.add(ball); c.solid(x - 0.15, x + 0.15, -0.15, 0.15); });
-    if (st.kind === 'belt') c.box(st.len - 0.05, 0.05, 0.006, bandM, 0, 0.9, 0);
-    else { var rope = new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(new THREE.Vector3(-hx, 0.93, 0), new THREE.Vector3(0, 0.93 - 0.12 * st.len, 0), new THREE.Vector3(hx, 0.93, 0)), 20, 0.022, 8, false), bandM); rope.castShadow = true; c.add(rope); }
-    c.solid(-hx, hx, -0.05, 0.05);
+    var piv = new THREE.Group(); piv.position.set(-hx, 0.93, 0); c.add(piv);
+    if (st.kind === 'belt') { var belt = new THREE.Mesh(new THREE.BoxGeometry(st.len - 0.05, 0.05, 0.006), bandM); belt.position.set(hx, -0.03, 0); belt.castShadow = true; piv.add(belt); }
+    else { var rope = new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(hx, -0.12 * st.len, 0), new THREE.Vector3(st.len, 0, 0)), 20, 0.022, 8, false), bandM); rope.castShadow = true; piv.add(rope); }
+    var clip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.035, 0.03), postM); clip.position.set(st.len - 0.03, st.kind === 'belt' ? -0.03 : 0, 0); piv.add(clip);
+    var G = ropeGate(id); G.pivot = piv; G.len = st.len; ropePose(G);
     c.hit(st.len + 0.3, 1.05, 0.35, 0, 0.52, 0, { kind: 'rope' });
+  }
+  var ropeGates = {}, ropeSegList = [];   // per rope: how far unhooked it is (open 0..1, passable from 0.8) and who wants it
+  function ropeGate(id) { return ropeGates[id] || (ropeGates[id] = { open: 0, clip: false, want: false, waitT: 0, idleT: 0, pivot: null, len: 1.8 }); }
+  function ropeSegs() {   // every standing rope on the ground floor, as the line between its posts; x1 is the far post it hangs from, x2 the clip end
+    return unitIds('queueRope').filter(function (u) { var P = propPlacement(u); return propInst[u] && !P.hidden && !P.floor; }).map(function (u) { var P = propPlacement(u), hx = ropeStyle(u).len / 2, a = P.rot * Math.PI / 2, cx = Math.cos(a) * hx, cz = -Math.sin(a) * hx; return { id: u, x1: P.x - cx, z1: P.z - cz, x2: P.x + cx, z2: P.z + cz }; });
+  }
+  function segCross(ax, az, bx, bz, cx, cz, dx, dz) { function o(px, pz, qx, qz, rx, rz) { return (qx - px) * (rz - pz) - (qz - pz) * (rx - px); } return ((o(cx, cz, dx, dz, ax, az) > 0) !== (o(cx, cz, dx, dz, bx, bz) > 0)) && ((o(ax, az, bx, bz, cx, cz) > 0) !== (o(ax, az, bx, bz, dx, dz) > 0)); }
+  function segDist(px, pz, s) { var vx = s.x2 - s.x1, vz = s.z2 - s.z1, L = vx * vx + vz * vz, t = L ? clamp(((px - s.x1) * vx + (pz - s.z1) * vz) / L, 0, 1) : 0; return Math.hypot(px - (s.x1 + vx * t), pz - (s.z1 + vz * t)); }
+  function ropeHeld(g, ux, uz, d) {   // from walkAlong: is a hooked rope within the next step or so? then stop and ask for it
+    if (heist.on && heist.masked) return false;   /* a robbery: everyone barges through */
+    var la = Math.min(0.45, d), ax = g.position.x, az = g.position.z, bx = ax + ux * la, bz = az + uz * la;   /* never look past the point you are walking to, or someone heading for the ID spot would ask for the rope beyond it */
+    for (var i = 0; i < ropeSegList.length; i++) { var s = ropeSegList[i]; if (!segCross(ax, az, bx, bz, s.x1, s.z1, s.x2, s.z2)) continue; var G = ropeGate(s.id); if (G.open >= 0.8) return false; G.want = true; g.userData.ropeHold = now(); return true; }
+    return false;
+  }
+  function guardCanRope(s) { return guardOnDuty() && !(heist.on && heist.masked) && Math.hypot(guard.h.position.x - s.x2, guard.h.position.z - s.z2) < 8 && (!guard.rope || guard.rope.id === s.id); }
+  function ropePose(G) { if (!G.pivot) return; G.pivot.rotation.z = -G.open * Math.PI / 2; G.pivot.scale.x = 1 + (Math.min(1, 0.86 / G.len) - 1) * G.open; }   /* unhooked, it swings down and hangs from the far post */
+  function updateRopeGates(dt) {
+    ropeSegList = ropeSegs();
+    var movers = []; function add(g) { if (g && g.visible && g.userData.gated && now() - (g.userData.moveT || 0) < 400) movers.push(g.position); }
+    if (npc.human && npc.state !== 'away') add(npc.g); lineup.forEach(function (m) { add(m.g); }); loungers.forEach(function (l) { add(l.g); }); robbers.forEach(function (r) { if (r.g && r.state === 'case') add(r.g); });
+    ropeSegList.forEach(function (s) {
+      var G = ropeGate(s.id);
+      if (ropeStyle(s.id).open || (heist.on && heist.masked) || !guardOnDuty()) { G.clip = true; G.idleT = 0; }   /* pinned open, a robbery, or the guard sent home: it stays unhooked */
+      else if (G.want && !G.clip) { G.idleT = 0; G.waitT += dt; if (guardCanRope(s) && G.waitT < 4) { if (!guard.rope) guard.ropeReq = s.id; } else if (G.waitT > 0.9) G.clip = true; }   /* nobody free on the door: after a moment they unhook it themselves */
+      else if (G.clip) { var busy = G.want || movers.some(function (p) { return segDist(p.x, p.z, s) < 0.6; }); G.idleT = busy ? 0 : G.idleT + dt; if (G.idleT > 1.2) { G.clip = false; G.waitT = 0; } }   // clear for a moment: hooked back
+      else G.waitT = 0;
+      G.want = false;
+      var o = clamp(G.open + (G.clip ? 1 : -1) * dt * 2.2, 0, 1); if (o !== G.open) { G.open = o; ropePose(G); }
+    });
+  }
+  function updateGuardRope(dt) {   // his hand on the clip: reach over (or walk over), unhook it, hold it while they pass, hook it back
+    if (guard.state === 'check') return false;   /* an ID check comes first; the rope waits */
+    var id = (guard.rope && guard.rope.id) || guard.ropeReq; if (!id) return false;
+    var s = ropeSegList.filter(function (x) { return x.id === id; })[0], P = guard.h.userData.parts;
+    if (!s) { guard.rope = null; guard.ropeReq = null; return false; }
+    var G = ropeGate(id);
+    if (!guard.rope) {
+      guard.ropeReq = null; guard.rope = { id: id, t: 0, phase: 'reach', rot0: guard.h.rotation.y, walked: false };
+      if (Math.hypot(guard.h.position.x - s.x2, guard.h.position.z - s.z2) > 1.3) { var L = Math.hypot(s.x2 - s.x1, s.z2 - s.z1) || 1; guardGo(s.x2 + (s.x2 - s.x1) / L * 0.35, s.z2 + (s.z2 - s.z1) / L * 0.35); guard.rope.phase = 'go'; guard.rope.walked = true; }
+    }
+    var j = guard.rope;
+    if (j.phase === 'go') { if (guard.walking) return false; j.phase = 'reach'; j.t = 0; }
+    j.t += dt; var face = Math.atan2(s.x2 - guard.h.position.x, s.z2 - guard.h.position.z), diff = face - guard.h.rotation.y; while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2; guard.h.rotation.y += diff * Math.min(1, dt * 8);
+    animateHuman(guard.h, dt, 'idle', 0, null); P.rArm.rotation.x = lerp(P.rArm.rotation.x, -1.15, 0.2);
+    if (j.phase === 'reach' && j.t > 0.45) { j.phase = 'hold'; G.clip = true; G.idleT = 0; if (Math.random() < 0.35) guard.say(pick(['In you go.', 'Go on through.', 'Mind the rope.', 'After you.']), '#e8f1ea', 1500); }
+    if (j.phase === 'hold' && !G.clip) j.phase = 'rehook';
+    if (j.phase === 'rehook' && G.open <= 0.02) { guard.rope = null; P.rArm.rotation.x = 0; if (!j.walked) guard.h.rotation.y = j.rot0; return false; }
+    return true;
+  }
+  var EXIT_X = 3.3;   // the way out runs along the walkway in front of the line, round the right-hand end of the rope behind the guard's podium, and back to the door
+  function exitPath(p, side) {
+    var street = [{ x: 0.6 * (side || 1), z: 11.4 }, { x: Math.random() < 0.5 ? 16 : -16, z: 11.6 }], door = [{ x: 0.55, z: 8.6 }, { x: 0.1, z: 9.7 }].concat(street);
+    if (p.z > 9.2) return street;   /* already outside */
+    if (p.z > 7.6 && p.x > -0.6 && p.x < EXIT_X - 0.4) return door.slice(1);   /* on the door side of the rope: the ID spot, the way in */
+    if (p.z < 6.2) return [{ x: 0.6, z: 5.65 }, { x: EXIT_X, z: 5.9 }, { x: EXIT_X, z: 8.45 }].concat(door);   /* from the window: step aside and keep to the counter */
+    return [{ x: p.x, z: Math.min(p.z, 6.6) }, { x: EXIT_X, z: 6.6 }, { x: EXIT_X, z: 8.45 }].concat(door);   // anywhere else in the lobby: out onto the walkway first
   }
   function ropeMenu(id) {
     var st = ropeStyle(id), P = propPlacement(id), lines = [];
     function cyc(list, v) { return list[(list.indexOf(v) + 1) % list.length]; }
     function set(k, v) { return function () { st[k] = v; S.ropes[id] = st; buildProp(id); world.dirty = true; save(); ropeMenu(id); }; }
+    lines.push({ label: st.open ? '🔓 <b>Unhooked</b>: people walk straight through <small>click to hook it, and the guard lets people through</small>' : '🔒 <b>Hooked</b>: the guard unhooks it for people <small>click to leave it unhooked; it stays unhooked while he is sent home</small>', act: set('open', !st.open) });
     lines.push({ label: '🎨 Colour: <b>' + st.color + '</b> <small>click for ' + cyc(Object.keys(ROPE_COLORS), st.color) + '</small>', act: set('color', cyc(Object.keys(ROPE_COLORS), st.color)) });
     lines.push({ label: '📏 Length: <b>' + st.len + ' m</b> <small>click for ' + cyc(ROPE_LENS, st.len) + ' m</small>', act: set('len', cyc(ROPE_LENS, st.len)) });
     lines.push({ label: '🪢 Style: <b>' + (st.kind === 'belt' ? 'retractable belt' : 'velvet rope') + '</b> <small>click for ' + (st.kind === 'belt' ? 'velvet rope' : 'retractable belt') + '</small>', act: set('kind', st.kind === 'belt' ? 'rope' : 'belt') });
@@ -6575,7 +6635,7 @@
     var nid = unitIds('queueRope').filter(function (u) { return propPlacement(u).hidden; }).pop(); if (!nid) return;
     S.layout[nid] = Object.assign({}, S.layout[nid], { hidden: false }); buildProp(nid); world.dirty = true; save(); toast('🪢 Rope line back up where it stood', 'good');
   }
-  defProp('queueRope', { label: 'rope line', x: -1.9, z: 7.5, rot: 0, multi: { max: 8, price: 40, gap: 2.2, ico: '🪢', name: 'Rope line' }, build: ropeBuild });   // behind the line, left of the door leaf: it frames the queue without crossing anyone's path
+  defProp('queueRope', { label: 'rope line', x: 0.35, z: 7.45, rot: 0, multi: { max: 8, price: 40, gap: 2.2, ico: '🪢', name: 'Rope line' }, build: ropeBuild });   // across the way in, between the ID check and the queue: the guard at his post unhooks it for whoever he lets through
   defProp('lobbyPlant', { label: 'lobby plant', x: -10.5, z: 5.0, build: function (c) { c.cyl(0.26, 0.2, 0.5, colorMat(0x2a2d33, 0.5), 0, 0.25, 0, 20); c.cyl(0.24, 0.24, 0.02, MAT.soil, 0, 0.5, 0, 20); c.cyl(0.015, 0.02, 0.9, MAT.trunk, 0, 0.9, 0, 8); for (var i = 0; i < 12; i++) { var lf = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.8), MAT.leaf); var a = i * 0.55; lf.position.set(Math.cos(a) * 0.08, 1.0 + (i % 3) * 0.2, Math.sin(a) * 0.08); lf.rotation.set(-0.5 - (i % 4) * 0.15, a + Math.PI / 2, 0); lf.castShadow = true; c.add(lf); } c.solid(-0.3, 0.3, -0.3, 0.3); } });
   defProp('lobbyCoffee', { label: 'lobby coffee machine', x: ROOM.x - 0.4, z: 8.1, rot: 3, multi: { max: 4, price: 600, gap: 0.95, ico: '☕', lic: 'catering', upg: 'lobby', name: 'Coffee machine' }, build: function (c) {
     if (!S.upgrades.lobby) return;   // stand + machine appear with the upgrade
@@ -8634,7 +8694,7 @@
     var dt = Math.min(clock.getDelta(), 0.1);
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
-    if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updateScope(dt); updateTrigger(); updatePlantVisuals(dt); updateNpc(dt); updateLineup(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); deskTouchUpdate(); touchUpdate(); }
+    if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updateScope(dt); updateTrigger(); updatePlantVisuals(dt); updateNpc(dt); updateLineup(dt); updateRopeGates(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); deskTouchUpdate(); touchUpdate(); }
     updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt);
     if (_df.t && now() - _df.t > 250) { _df.t = 0; defightScene(); }
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); var vcTown = (vc.layers.mask & (1 << TOWN_LAYER)) !== 0; vc.layers.enable(TOWN_LAYER); renderer.render(scene, vc); if (!vcTown) vc.layers.disable(TOWN_LAYER); } else renderer.render(scene, camera);

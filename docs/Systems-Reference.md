@@ -88,6 +88,7 @@ Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `d
 |---|---|---|
 | Props (furniture) | `S.layout[id]` | `defProp`, `buildProp`, `propPlacement`, `propWorld`, `propCtx` |
 | Rope lines | `S.layout[id]` (the `queueRope` multi prop), `S.ropes[id]` | `ropeBuild`, `ropeStyle`, `ropeMenu`, `ropeAdd`, `ropeUp` |
+| Rope as a gate | `ropeGates[id]` (runtime: `open` 0..1, passable from 0.8), `guard.rope` | `ropeSegs`, `ropeHeld` (called from `walkAlong` for groups with `userData.gated`), `updateRopeGates`, `updateGuardRope`, `ropePose`; leavers take `exitPath` round the rope's far end. Unhooked while pinned open, during a robbery, or with the guard sent home |
 | Fixtures (signs, screens, boards) | `S.fixtures[id]` | `fixtureAdd`, `fixtureFromBuild`, `fixtureSign`, `fxCarry`, `applyFixtures` |
 | Edit mode | `edit` | `editToggle`, `editUpdate`, `editGrab`, `editDrop`, `editRotate`, `editReset` |
 | Creative mode | `S.custom`, `S.designs` | `grow3d-creative.js`, through `RFGROW.hooks` and `RFGROW.internal` |
