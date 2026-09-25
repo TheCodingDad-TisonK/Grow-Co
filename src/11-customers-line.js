@@ -183,7 +183,7 @@
     var checking = doorCheckBusy(), gone = [];
     lineup.forEach(function (m) {
       var P = m.h.userData.parts, sp = m.h.userData.spec.hunch ? 0.9 : 1.5;
-      if (lineWaiting(m) && m.state !== 'check') { m.waited += dt; if (m.waited > LINE_WAIT * lineMult()) { S.rep = Math.max(0, S.rep - 1); logEvent('🚶 ' + m.who + ' got tired of the line and left (rep -1)', 'bad'); toast('🚶 ' + m.who + ' gave up on the line (rep -1)', 'bad'); lineLeave(m, 'angry'); } }
+      if (lineWaiting(m) && m.state !== 'check' && !breakWait()) { m.waited += dt; if (m.waited > LINE_WAIT * lineMult()) { S.rep = Math.max(0, S.rep - 1); logEvent('🚶 ' + m.who + ' got tired of the line and left (rep -1)', 'bad'); toast('🚶 ' + m.who + ' gave up on the line (rep -1)', 'bad'); lineLeave(m, 'angry'); } }
       if (m.state === 'enter') { if (walkAlong(m.g, m.path, sp, dt)) m.state = 'hold'; animateHuman(m.h, dt, 'walk', sp, null); }
       else if (m.state === 'hold') {
         if (!guardOnDuty()) { m.state = 'toslot'; m.slot = -1; m.seq = ++lineSeq; }   /* nobody on the door: the card comes to the window with them */

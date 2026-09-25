@@ -13,6 +13,10 @@
 
 **The crew restock one crate at a time.** On restock, a crew member fetches one crate from its bay, carries it in both arms to where it goes, opens the machine, loads it, shuts it again and goes back for the next. The emptiest machine of a kind is filled first. They never touch a machine's coins. Give them another job or send them home mid-errand and the crate goes back on the racking; a crate in someone's arms when the game is saved is back on the racking when it loads.
 
+**Closing time.** Closing the shop locks the front door. Nobody new comes in and anyone still on the way in turns round, robbers included, but whoever is already inside is served: the line, the one at the window, a smoke in the lounge. Closing used to send the customer at the window away. The front door opens for anyone walking out and shuts behind them.
+
+**A break.** Draw the window curtain, walk round to the customers' side and press Shift+E on it to hang a "back in 5 minutes" note. For five minutes the line and the one at the window wait for you without losing patience. Shift+E takes it down, and opening the curtain takes it down too.
+
 **The crew actually walk there.** The roof greenhouse beds were being counted as walls on the ground floor, so a crew member sent from the hall to the back room or the lobby stopped halfway and did the job from where they stood. They walk all the way now.
 
 **Pacing**, from the balance report (docs/Balance.md):
@@ -23,7 +27,7 @@
 - **Big months pay more tax.** Business tax is 20% instead of 10% on what a month takes over $60,000. A young shop never reaches it.
 - **A heavy till warns you.** When the till and the tip jar hold $250 or more, the vault readout turns amber and shows them, and once a day a warning says a robber would take all of it.
 
-**For people who work on the game.** The code is written in parts in `src/` and built into the game (and the desk build) by `npm run build`. `npm test` runs 42 tests against the real game in a hidden window, on every push. `npm run balance` writes docs/Balance.md from the numbers in the code.
+**For people who work on the game.** The code is written in parts in `src/` and built into the game (and the desk build) by `npm run build`. `npm test` runs 46 tests against the real game in a hidden window, on every push. `npm run balance` writes docs/Balance.md from the numbers in the code.
 
 ## v1.24: the busy shop
 

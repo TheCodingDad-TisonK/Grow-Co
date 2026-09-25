@@ -23,6 +23,7 @@ The whole game is one JSON object, `S`, written to `localStorage` a fraction of 
 | `supplies`, `storage`, `order`, `deliveries` | what is on the supply rack, in the back room, on order |
 | `display` | the counter display. Each machine's own stock is in `S.x.mach` (below); saves before 1.25 had one shared `vendStock` and `coffeeStock`, moved into the first machine of each kind on load |
 | `upgrades`, `lic` | what you own, by id |
+| `shop` | the shop's switches: `open`, `lights`, `rooms` (room lights), `radio`, `volume`, `markup`, `staffDoor`, `curtains` (true = open, by key; `service` is the window curtain) and `breakNote`, when the "back in 5 minutes" note went up on the window curtain (0 when it is down) |
 | `staff` | the crew (`crew`, up to three, each with a job, whether they're off, and `carry`, a crate in their arms, which goes back on the racking when the save loads), the guard's job (`guardTask`) and whether he's off shift (`guardOff`) |
 | `tillWarnDay` | the last day the heavy-till warning was given |
 | `hotbar`, `slot` | the six things you carry and which is active |

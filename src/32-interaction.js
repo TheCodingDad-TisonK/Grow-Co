@@ -106,7 +106,7 @@
     if (d.kind === 'miniFront') return 'Front panel <small>' + (shop().open ? 'open' : 'closed') + ' · hall and lounge lights · E</small>';
     if (d.kind === 'miniOffice') return 'Office panel <small>lights back here and the office door · E</small>';
     if (d.kind === 'controls') return 'Control box <small>' + (shop().open ? 'open' : 'closed') + ' · lights ' + (shop().lights ? 'on' : 'off') + ' · radio ' + STATIONS[shop().radio].name + '</small>';
-    if (d.kind === 'curtain') return (curtainOpen(d.key) ? 'Close ' : 'Open ') + d.label;
+    if (d.kind === 'curtain') { var ct = (curtainOpen(d.key) ? 'Close ' : 'Open ') + d.label; if (d.key === 'service') { if (shop().breakNote && !curtainOpen('service')) return ct + ' <small>Shift+E takes the break note down</small>'; if (lobbySide()) return ct + (curtainOpen('service') ? ' <small>draw it, then Shift+E hangs a "back in 5 minutes" note</small>' : ' <small>Shift+E hangs a "back in 5 minutes" note</small>'); } return ct; }
     if (d.kind === 'staffdoor') return (shop().staffDoor ? 'Close' : 'Open') + ' the staff door';
     if (d.kind === 'frontdoor') return shop().open ? 'Lock the front door <small>closes the shop</small>' : 'Unlock the front door <small>opens the shop</small>';
     if (d.kind === 'broom') return h && h.kind === 'broom' ? 'Hang the broom back up' : (h ? 'Hands full <small>G to put down</small>' : 'Take the broom <small>' + dustList().length + ' dusty spot' + (dustList().length === 1 ? '' : 's') + '</small>');
@@ -247,7 +247,7 @@
     else if (d.kind === 'controls') ui.openPanel('controls');
     else if (d.kind === 'miniFront') ui.openPanel('miniFront');
     else if (d.kind === 'miniOffice') ui.openPanel('miniOffice');
-    else if (d.kind === 'curtain') toggleCurtain(d.key);
+    else if (d.kind === 'curtain') { if (d.key === 'service' && (player.keys.ShiftLeft || player.keys.ShiftRight)) breakNoteToggle(); else toggleCurtain(d.key); }
     else if (d.kind === 'staffdoor') toggleStaffDoor();
     else if (d.kind === 'frontdoor') toggleShopOpen();
     else if (d.kind === 'broom') { if (h && h.kind === 'broom') { S.held = null; toast('Broom back on the hook', ''); } else if (hotbarFull()) toast('Your hands are full (G puts things down)', 'bad'); else { take({ kind: 'broom' }); toast('🧹 Got the broom. E on the dust sweeps it.', 'good'); } }

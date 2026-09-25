@@ -28,10 +28,49 @@
     curtains[key] = { g: g, cloth: cloth, w: w, t: shop().curtains[key] ? 0 : 1 }; // t: 1 = closed (drawn), 0 = open (bunched)
   }
   function curtainOpen(key) { return !!shop().curtains[key]; }
-  function toggleCurtain(key) { var c = shop().curtains; c[key] = !c[key]; sfx('curtain'); toast((c[key] ? 'Opened' : 'Closed') + ' the ' + (curtains[key] ? curtains[key].label || 'curtain' : 'curtain'), ''); drawCtlScreen(); save(); }
-  function setAllCurtains(open) { Object.keys(curtains).forEach(function (k) { shop().curtains[k] = open; }); drawCtlScreen(); save(); }
+  function toggleCurtain(key) { var c = shop().curtains; c[key] = !c[key]; sfx('curtain'); toast((c[key] ? 'Opened' : 'Closed') + ' the ' + (curtains[key] ? curtains[key].label || 'curtain' : 'curtain') + (key === 'service' && c[key] && shop().breakNote ? ', and the break note came down with it' : ''), ''); if (key === 'service' && c[key]) breakNoteDown(); drawCtlScreen(); save(); }
+  function setAllCurtains(open) { Object.keys(curtains).forEach(function (k) { shop().curtains[k] = open; }); if (open) breakNoteDown(); drawCtlScreen(); save(); }
+  // ── The break note: with the window curtain drawn, Shift+E from the customers' side hangs "back in 5 minutes" on it.
+  // For the five minutes it promises, the line and whoever is at the window wait for you instead of losing patience.
+  var BREAK_MS = 300000, breakNoteMesh = null;
+  function breakWait() { var t = shop().breakNote; return !!t && !curtainOpen('service') && now() - t < BREAK_MS; }
+  function lobbySide() { return (player.floor || 0) === 0 && player.pos.z > 4.15 && player.pos.z < ROOM.z; }
+  function breakNoteDown() { if (!shop().breakNote) return; shop().breakNote = 0; syncBreakNote(); }
+  function breakNoteToggle() {
+    var sh = shop();
+    if (sh.breakNote) { breakNoteDown(); sfx('rustle'); toast('📝 Took the break note down', ''); save(); return; }
+    if (curtainOpen('service')) { toast('Close the window curtain first, then hang the note on it', 'bad'); return; }
+    if (!lobbySide()) { toast('The note goes on the customers\' side: walk round to the front of the window', 'bad'); return; }
+    sh.breakNote = now(); syncBreakNote(); sfx('rustle');
+    toast('📝 "Back in 5 minutes" is up. The line waits for you for five minutes.', 'good'); logEvent('📝 Hung a "back in 5 minutes" note on the window', '');
+    var m0 = lineup.filter(function (m) { return m.c && lineWaiting(m); })[0]; if (m0) lineSay(m0, pick(['Five minutes. Fine.', 'I\'ll wait.', 'A break? Lucky you.']), '#e8f1ea', 2600);
+    save();
+  }
+  function syncBreakNote() {   // a sheet of paper taped to the drawn curtain, facing the lobby
+    var c = curtains.service; if (!c) return;
+    if (!breakNoteMesh) {
+      var g = new THREE.Group();
+      var paper = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.31), new THREE.MeshBasicMaterial({ map: textTex(['BACK IN 5 MINUTES', 'on a short break', 'please wait in line'], 440, 310, { size: 40, bold: true, bg: '#fbf8ef', color: '#3a3f46', titleColor: '#b5121b', line: 'rgba(0,0,0,0.25)' }) }));
+      g.add(paper);
+      [-0.16, 0.16].forEach(function (x) { var tape = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.03), colorMat(0xe9e2c8, 0.8)); tape.position.set(x, 0.15, 0.002); tape.rotation.z = x < 0 ? 0.35 : -0.35; g.add(tape); });
+      g.position.set(c.w / 2, 0.08, 0.075); g.rotation.z = -0.03; c.g.add(g); breakNoteMesh = g;
+    }
+    breakNoteMesh.visible = !!shop().breakNote && !curtainOpen('service');
+  }
+  // the shop closes: whoever is still outside turns round, whoever is already inside is served, smokes if they like, and leaves
+  function shopClosing() {
+    lineup.forEach(function (m) { if (m.c && (m.state === 'enter' || m.state === 'hold')) lineLeave(m, 'sad', pick(['Closed? I\'ll come back.', 'Oh. They\'re shut.', 'Locked. Typical.']), '#ffc857'); });
+    if (S.customer && npc.human && npc.state === 'enter' && npc.g.position.z > ROOM.z - 0.3) { npc.leaveSad(); S.customer = null; }
+    var out = robbers.filter(function (r) { return r.state === 'case' && !r.masked && (r.delay > 0 || !r.g || r.g.position.z > ROOM.z - 0.3); });
+    out.forEach(robberFlee); if (out.length && !robbers.some(function (r) { return r.state === 'case' || r.masked; })) heist.aborted = true;
+  }
+  function doorTraffic() {   // someone walking out while the shop is shut: the front door opens for them and shuts behind
+    var near = function (g) { return !!g && Math.abs(g.position.x) < 1.6 && Math.abs(g.position.z - ROOM.z) < 1.4; };
+    return lineup.some(function (m) { return m.state === 'leave' && near(m.g); }) || (!!npc.human && npc.state === 'leave' && near(npc.g)) || loungers.some(function (l) { return l.state === 'leave' && near(l.g); }) || robbers.some(function (r) { return r.state === 'flee' && near(r.g); });
+  }
   function updateCurtains(dt) {
     for (var k in curtains) { var c = curtains[k]; var target = curtainOpen(k) ? 0 : 1; c.t = lerp(c.t, target, 1 - Math.pow(0.02, dt)); var sx = 0.12 + c.t * 0.88; c.cloth.scale.x = sx; c.cloth.position.x = c.w * sx / 2; c.cloth.material.map.repeat.x = Math.max(1, Math.round(c.w * 1.5 * (0.4 + c.t * 0.6))); (c.g.userData.rings || []).forEach(function (r) { r.position.x = r.userData.ringT * c.w * sx; }); }
+    if (breakWait() && S.customer && S.customer.until) S.customer.until += dt * 1000;   /* the one at the window read the note too */
   }
   function buildShopControls() {
     Object.keys(curtains).forEach(function (k) { curtains[k].label = null; });
@@ -44,6 +83,7 @@
     addCurtain('service', 'window curtain', -1.3, 1.68, 3.82, 2.6, 1.25, 0);
     addCurtain('door', 'door curtain', -0.7, 1.15, ROOM.z - 0.12, 1.4, 2.2, 0);
     curtains.growWin.label = 'grow room curtain'; curtains.officeWin.label = 'office curtain'; curtains.frontL.label = 'left front curtain'; curtains.frontR.label = 'right front curtain'; curtains.service.label = 'window curtain'; curtains.door.label = 'door curtain';
+    breakNoteMesh = null; syncBreakNote();
     // staff door: hinged at x = 9.4 in the staff wall, swings into the lobby
     var g = new THREE.Group(); g.position.set(9.4, 0, 4); world.group.add(g); staffDoor.g = g;
     var leaf = new THREE.Mesh(new THREE.BoxGeometry(1.16, 2.24, 0.06), MAT.darkwood); leaf.position.set(0.6, 1.12, 0); leaf.castShadow = true; g.add(leaf);
@@ -143,7 +183,7 @@
   function syncStaffDoorObstacle() { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'staffdoor'; }); if (!shop().staffDoor) world.obstacles.push(staffDoor.obstacle); }
   function toggleStaffDoor() { shop().staffDoor = !shop().staffDoor; staffDoorAuto = false; syncStaffDoorObstacle(); sfx('door'); toast(shop().staffDoor ? 'Staff door open' : 'Staff door closed', ''); applyShopState(); save(); }
   function updateStaffDoor(dt) { if (!staffDoor.g) return; var staffNear = crew.some(function (r) { return r.g && Math.hypot(r.g.position.x - 10, r.g.position.z - 4) < 1.1; }) || (guard.h && guard.walking && Math.hypot(guard.h.position.x - 10, guard.h.position.z - 4) < 1.1); var target = (shop().staffDoor || staffNear) ? 1 : 0; staffDoor.t = lerp(staffDoor.t, target, 1 - Math.pow(0.01, dt)); staffDoor.g.rotation.y = -staffDoor.t * 1.75;
-    if (world.frontDoor) { var fd = world.frontDoor; var ft = shop().open ? 1 : 0; fd.t = lerp(fd.t, ft, 1 - Math.pow(0.01, dt)); fd.g.rotation.y = fd.t * 1.6; } }
+    if (world.frontDoor) { var fd = world.frontDoor; var ft = shop().open || doorTraffic() ? 1 : 0; fd.t = lerp(fd.t, ft, 1 - Math.pow(0.01, dt)); fd.g.rotation.y = fd.t * 1.6; } }
 
   // ── the control cabinet: doors, the hanging tablet and the switch bank talk to the same shop state the old panel did ──
   var CTL_PAGES = ['shop', 'rooms', 'curtains', 'doors', 'climate', 'radio'], CTL_LABEL = { shop: 'Shop', rooms: 'Rooms', curtains: 'Curtains', doors: 'Doors', climate: 'Climate', radio: 'Radio & price' };
@@ -249,6 +289,6 @@
   function buildSwitches() {
     lightSwitch(-2.2, 1.35, 3.89, Math.PI, 'hall'); lightSwitch(7.89, 1.35, -9.7, -Math.PI / 2, 'annex'); lightSwitch(-ROOM.x + 0.11, UP.y + 1.35, -2.0, Math.PI / 2, 'up');
   }
-  function toggleShopOpen() { var sh = shop(); sh.open = !sh.open; applyShopState(); sfx(sh.open ? 'rare' : 'bad'); toast(sh.open ? '🟢 The shop is open' : '🔴 The shop is closed. No new customers.', sh.open ? 'good' : ''); logEvent(sh.open ? 'Opened the shop' : 'Closed the shop', ''); if (!sh.open && S.customer) { npc.leaveSad(); S.customer = null; } save(); }
+  function toggleShopOpen() { var sh = shop(); sh.open = !sh.open; applyShopState(); sfx(sh.open ? 'rare' : 'bad'); toast(sh.open ? '🟢 The shop is open' : '🔴 The shop is closed. Nobody new comes in; everyone inside is served and sees themselves out.', sh.open ? 'good' : ''); logEvent(sh.open ? 'Opened the shop' : 'Closed the shop', ''); if (!sh.open) shopClosing(); save(); }
   function toggleLights() { var sh = shop(); sh.lights = !sh.lights; if (sh.lights) sh.rooms = {}; applyShopState(); sfx('click'); toast(sh.lights ? '💡 Lights on' : '🌑 Lights off', ''); save(); }
 
