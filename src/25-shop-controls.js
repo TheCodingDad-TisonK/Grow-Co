@@ -44,6 +44,7 @@
     sh.breakNote = now(); syncBreakNote(); sfx('rustle');
     toast('📝 "Back in 5 minutes" is up. The line waits for you for five minutes.', 'good'); logEvent('📝 Hung a "back in 5 minutes" note on the window', '');
     var m0 = lineup.filter(function (m) { return m.c && lineWaiting(m); })[0]; if (m0) lineSay(m0, pick(['Five minutes. Fine.', 'I\'ll wait.', 'A break? Lucky you.']), '#e8f1ea', 2600);
+    crew.forEach(function (r) { var cr = crewList()[r.idx]; if (!r.g || !cr || cr.off || cr.task !== 'serve') return; var was = worker; worker = r; workerSay(crewLine('onBreak'), '#6fdc8c', 2600); worker = was; });   /* the crew on the window take it with you */
     save();
   }
   function syncBreakNote() {   // a sheet of paper taped to the drawn curtain, facing the lobby

@@ -73,3 +73,21 @@ test('the break note goes on the drawn curtain from the customers\' side, and th
   h.T.press({ kind: 'curtain', key: 'service', label: 'window curtain' });   // E opens the curtain
   h.ok(!sh.breakNote, 'opening the curtain takes the note down');
 });
+
+test('the crew take the break too: nobody is served through a drawn curtain', async (h) => {
+  const S = h.S, sh = h.R.shop(), P = h.R.player; S.bank = 50000;
+  ['joints', 'bags', 'cookies'].forEach((k) => { S.lots[k] = { sunflower: { n: 40, qSum: 40 * 80, thcSum: 40 } }; });
+  h.T.hireWorker(); h.T.workerTask('serve', 0);
+  h.arrive(1);
+  h.until(() => S.customer && S.customer.arrived, 90, 'a customer at the window', h.patience);
+  sh.curtains.service = false; P.pos.set(0, 1.65, 5.6);
+  h.T.press({ kind: 'curtain', key: 'service', label: 'window curtain' }, true);
+  h.ok(sh.breakNote, 'the note is up');
+  const c = S.customer, sold = S.stats.sold || 0;
+  h.step(40);
+  h.eq(S.customer, c, 'the customer is still waiting at the window');
+  h.ok(!c.stage, 'and nobody has served them');
+  h.eq(S.stats.sold || 0, sold, 'no sale while the curtain is drawn');
+  h.T.press({ kind: 'curtain', key: 'service', label: 'window curtain' });   // E opens it again
+  h.until(() => c.stage || S.customer !== c, 60, 'the crew serve once the window is open', h.patience);
+});

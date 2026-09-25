@@ -102,7 +102,7 @@ Rough, low-quality bud isn't wasted. The **extraction lab** turns any quality in
 - Most customers are your regulars. Now and then a **new face** walks in: a stranger who orders like anyone else.
 - Rep brings people in. The better your name, the shorter the wait between customers, down to 60% of it.
 - **Closing the shop** locks the front door. Nobody new comes in, and anyone still on the way in turns round, but whoever is already inside is served: the line, the one at the window, a smoke in the lounge. They let themselves out when they are done.
-- **A break.** Draw the **window curtain**, walk round to the customers' side and press **Shift+E** on it to hang a "back in 5 minutes" note. For five minutes the line and the one at the window wait for you without losing patience. **Shift+E** takes it down, and opening the curtain takes it down too.
+- **A break.** Draw the **window curtain**, walk round to the customers' side and press **Shift+E** on it to hang a "back in 5 minutes" note. For five minutes the line and the one at the window wait for you without losing patience. **Shift+E** takes it down, and opening the curtain takes it down too. Your crew never serve through a drawn curtain, so with the note up they take the break with you.
 - The **markup** slider at the control box trades price against footfall.
 - Rain, storms and snow thin the street out. Weekends are busier, and there's a holiday week.
 - Events come and go. A **420 rush** puts prices up 20% for a little while. While the **Cannabis Cup** is in town, every sale at quality 70 or better earns double rep.

@@ -104,9 +104,9 @@
   function guardTaskLabel() { var t = GUARD_TASKS.filter(function (x) { return x[0] === (S.staff.guardTask || 'door'); })[0]; return t ? taskWords(t[1]) : 'Watch the door'; }
   // how each of the crew talks: Jo is cheerful and calls you boss, Mika keeps it short, Sam chats and calls you mate
   var CREW_VOICE = [
-    { onit: 'On it, boss: {x}.', brk: 'Ooh, a break. Cheers, boss.', out: 'We\'re out of {x}, boss.', part: 'Here\'s part of it. We\'re out of {x}, boss.', served: 'There you go.', locked: 'That one\'s locked, boss.', clean: 'Floor\'s clean, boss.', empty: 'Back room\'s empty, boss.', plants: 'Plants are all happy.', checkId: 'Check their ID first, boss.', nobody: 'Nobody at the window.', nothing: 'Nothing for me right now, boss.', chat: ['On it, boss.', 'All good here.', 'Need me somewhere?'] },
-    { onit: 'Right: {x}.', brk: 'Break. Good.', out: 'Out of {x}.', part: 'Part of it. Out of {x}.', served: 'Here.', locked: 'Locked.', clean: 'Floor\'s clean.', empty: 'Back room\'s empty.', plants: 'Plants are fine.', checkId: 'Their ID. Your call.', nobody: 'Nobody there.', nothing: 'Nothing to do.', chat: ['Yep.', 'Fine.', 'What do you need?'] },
-    { onit: 'No bother, mate: {x}.', brk: 'A break? Don\'t mind if I do, mate.', out: 'We\'re clean out of {x}, mate.', part: 'Got you some of it, mate, but we\'re out of {x}.', served: 'There you go, enjoy that.', locked: 'That one\'s locked, mate, and I\'ve no key for it.', clean: 'Floor\'s spotless, mate.', empty: 'Back room\'s bare, mate.', plants: 'Plants are happy as anything.', checkId: 'Their ID\'s your call, mate.', nobody: 'Nobody at the window, mate.', nothing: 'Nothing on, mate. What d\'you need?', chat: ['All sweet here, mate.', 'Busy one, eh?', 'Need me anywhere, mate?'] }
+    { onit: 'On it, boss: {x}.', brk: 'Ooh, a break. Cheers, boss.', out: 'We\'re out of {x}, boss.', part: 'Here\'s part of it. We\'re out of {x}, boss.', served: 'There you go.', locked: 'That one\'s locked, boss.', clean: 'Floor\'s clean, boss.', empty: 'Back room\'s empty, boss.', plants: 'Plants are all happy.', checkId: 'Check their ID first, boss.', nobody: 'Nobody at the window.', nothing: 'Nothing for me right now, boss.', shut: 'Window\'s shut, boss. I\'ll wait.', onBreak: 'On a break with you, boss.', chat: ['On it, boss.', 'All good here.', 'Need me somewhere?'] },
+    { onit: 'Right: {x}.', brk: 'Break. Good.', out: 'Out of {x}.', part: 'Part of it. Out of {x}.', served: 'Here.', locked: 'Locked.', clean: 'Floor\'s clean.', empty: 'Back room\'s empty.', plants: 'Plants are fine.', checkId: 'Their ID. Your call.', nobody: 'Nobody there.', nothing: 'Nothing to do.', shut: 'Window\'s shut.', onBreak: 'Break. Good.', chat: ['Yep.', 'Fine.', 'What do you need?'] },
+    { onit: 'No bother, mate: {x}.', brk: 'A break? Don\'t mind if I do, mate.', out: 'We\'re clean out of {x}, mate.', part: 'Got you some of it, mate, but we\'re out of {x}.', served: 'There you go, enjoy that.', locked: 'That one\'s locked, mate, and I\'ve no key for it.', clean: 'Floor\'s spotless, mate.', empty: 'Back room\'s bare, mate.', plants: 'Plants are happy as anything.', checkId: 'Their ID\'s your call, mate.', nobody: 'Nobody at the window, mate.', nothing: 'Nothing on, mate. What d\'you need?', shut: 'Window\'s shut, mate. Kettle on?', onBreak: 'Break time, is it? Lovely.', chat: ['All sweet here, mate.', 'Busy one, eh?', 'Need me anywhere, mate?'] }
   ];
   function crewLine(key, x) { var v = CREW_VOICE[((worker && worker.look) || 0) % CREW_VOICE.length]; var s = v[key]; if (Array.isArray(s)) s = pick(s); return String(s).replace('{x}', x === undefined ? '' : x); }
   var WORKER_NONE = { g: null, h: null, state: 'idle', path: [], t: 0, job: null, bubble: null, sayT: 0, idleT: 0, coolT: 0, hasBroom: false, idx: 0 };
@@ -229,6 +229,7 @@
     sfx('rustle'); worker.next = { x: WP.counter.x, z: WP.counter.z, dur: 1.0, done: workerServe };
   }
   function workerServe() {
+    if (!curtainOpen('service')) return;   /* the window curtain came across while they fetched it: the order waits until it opens */
     var c = S.customer; if (!c || !c.arrived || c.stage || c.idPending) return;
     var lines = orderLines(c); var still = lines.filter(function (l) { return l.given.n < l.qty; });
     if (still.length) { workerSay(crewLine('part', still.map(lineText).join(', ')), '#ffc857', 3000); worker.coolT = now() + 20000; hud(); return; }
@@ -306,7 +307,7 @@
   function workerNextJob(task) {
     var g = worker.g; function near(x, z) { return Math.hypot(g.position.x - x, g.position.z - z) < 0.35; }
     if (worker.carry && task !== 'restock') { var bf = rackFront(worker.carry.item); return { x: bf.x, z: bf.z, dur: 1.0, done: function () { carryBack(worker); sfx('putdown'); } }; }   /* given another job mid-errand: the crate goes back up first */
-    if (task === 'serve') { var c = S.customer; if (c && c.arrived && !c.stage && !c.idPending && npc.state === 'wait' && now() > worker.coolT) {   /* a card still held out is yours to check: the crew waits */ var gp = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: propPlacement('goodsShelf').x, z: propPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
+    if (task === 'serve') { var c = S.customer; if (curtainOpen('service') && c && c.arrived && !c.stage && !c.idPending && npc.state === 'wait' && now() > worker.coolT) {   /* a card still held out is yours to check: the crew waits */ var gp = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: propPlacement('goodsShelf').x, z: propPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
     if (task === 'restock') { var rj = restockJob(); if (rj) return rj; if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null; }
     if (task !== 'clean' && worker.hasBroom) return { x: ROOM.x - 0.65, z: -0.85, dur: 0.6, done: workerDropBroom };
     if (task === 'clean' && !worker.hasBroom) { if (!dustList().length) return null; return { x: ROOM.x - 0.65, z: -0.85, dur: 0.8, done: workerTakeBroom }; }
@@ -340,7 +341,7 @@
         var why = task === 'clean' ? crewLine('clean')
           : task === 'restock' ? crewLine('empty')
           : task === 'water' ? crewLine('plants')
-          : task === 'serve' ? (S.customer && S.customer.idPending ? crewLine('checkId') : crewLine('nobody')) : crewLine('nothing');
+          : task === 'serve' ? (!curtainOpen('service') ? crewLine(shop().breakNote ? 'onBreak' : 'shut') : S.customer && S.customer.idPending ? crewLine('checkId') : crewLine('nobody')) : crewLine('nothing');
         workerSay(why, '#ffc857', 2600);
       }
     } else worker.nagT = 0;
