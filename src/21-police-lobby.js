@@ -277,9 +277,8 @@
   function builtUnits(base) { return unitIds(base).filter(function (u) { return propInst[u] && !propPlacement(u).hidden; }); }
   function lobbyStop(kind, unit) {
     var t = LOBBY_STOPS[kind], open = unit ? [unit] : builtUnits(t.prop); if (!open.length) return null;
-    var P = propPlacement(pick(open)), r = ((P.rot % 4) + 4) % 4;
-    var dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r];   // the prop's front, in quarter turns: 0 is +z
-    return { x: P.x + dx * t.off, z: P.z + dz * t.off, yaw: Math.atan2(-dx, -dz), dur: t.dur, act: t.act };
+    var u = pick(open), f = propFront(u, t.off);
+    return { x: f.x, z: f.z, yaw: f.yaw, dur: t.dur, act: t.act, unit: u };
   }
   function freeLoungeSeat() {
     var free = LOUNGE_SEATS.filter(function (s) { return propInst[s.prop] && !loungers.some(function (l) { return l.seat === s; }); });
@@ -295,8 +294,8 @@
   function unitRoll(n, p) { for (var i = 0; i < Math.min(3, n); i++) if (Math.random() < p) return true; return false; }   // one roll per machine standing, up to three: a second machine catches people the first one missed
   function planFor(c) {
     var plan = [];
-    if (hasLic('catering') && vendKeys().length && unitRoll(builtUnits('vending').length, 0.35)) plan.push({ kind: 'vend' });
-    if (hasLic('catering') && S.upgrades.lobby && S.coffeeStock.cup > 0 && S.coffeeStock.beans > 0 && unitRoll(builtUnits('lobbyCoffee').length, 0.4)) plan.push({ kind: 'coffee' });
+    if (hasLic('catering')) { var vus = builtUnits('vending').filter(function (u) { return vendKeys(u).length; }); if (unitRoll(vus.length, 0.35)) plan.push({ kind: 'vend', unit: pick(vus) }); }   /* only a machine with something on its racks draws anyone */
+    if (hasLic('catering') && S.upgrades.lobby) { var cus = builtUnits('lobbyCoffee').filter(coffReady); if (unitRoll(cus.length, 0.4)) plan.push({ kind: 'coffee', unit: pick(cus) }); }
     if (hasLic('catering')) { var frs = lobbyFridges(); if (unitRoll(frs.length, 0.3)) plan.push({ kind: 'fridge', unit: pick(frs) }); }   /* a cold can from a fridge stood out in the lobby */
     if (hasLic('amusement') && unitRoll(builtUnits('arcade').length, 0.25)) plan.push({ kind: 'arcade' });
     if (hasLic('lounge') && c.want === 'joints' && Math.random() < 0.4) { var seat = freeLoungeSeat(); if (seat) plan.push({ kind: 'bench', seat: seat }); }
@@ -334,38 +333,39 @@
       var jd = lotDraw('joints', jid, 1), jp = Math.max(1, Math.round(jointPrice(jd.q, jd.thc))); S.till += jp; bookSale(jp); S.stats.sold++; syncGoods();
       logEvent('🪑 ' + l.who + ' bought a ' + strainById(jid).name + ' joint to smoke in the lounge (' + money(jp) + ' in the till)', '');
       l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
-    else { var s = lobbyStop(st.kind, st.unit); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useUnit = st.unit; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
+    else { var s = lobbyStop(st.kind, st.unit); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useUnit = s.unit; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
   }
   // the machine does its thing: you get paid, they get something to hold
   function lobbyServe(l) {
     var le = l.h.userData.parts.lArm.userData.elbow;
     if (l.useKind === 'arcade') {
-      S.box.arcade += 1; S.stats.arcade = (S.stats.arcade || 0) + 1; sfx('arcade');
+      coinPay(l.useUnit || 'arcade', 1); S.stats.arcade = (S.stats.arcade || 0) + 1; sfx('arcade');
       loungerSay(l, pick(['One more go.', 'High score.', 'Argh, so close.']), '#ffd166'); logEvent('🕹️ ' + l.who + ' played the arcade (+$1 in the coin box)', '');
       return;
     }
-    if (l.useKind === 'fridge') {   // $2 a can out of the fridge they walked up to, into the vending box
+    if (l.useKind === 'fridge') {   // $2 a can out of the fridge they walked up to, into that fridge's coin box
       var FM = machState(l.useUnit || 'fridge');
       if ((FM.fridge || 0) <= 0) { loungerSay(l, 'Fridge is empty?', '#ff6b6b'); logEvent('🧊 ' + l.who + ' found the drinks fridge empty', 'bad'); return; }
-      FM.fridge--; S.box.vend += 2; S.stats.fridge = (S.stats.fridge || 0) + 1; sfx('pickup'); syncFridge(l.useUnit || 'fridge');
+      FM.fridge--; coinPay(l.useUnit || 'fridge', 2); S.stats.fridge = (S.stats.fridge || 0) + 1; sfx('pickup'); syncFridge(l.useUnit || 'fridge');
       var cold = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(0x3ad0ff, 0.4, 0.3)); cold.position.set(0, -0.37, 0.03); le.add(cold);
       loungerSay(l, pick(['Ice cold.', 'Cheers.', 'Just what I needed.']), '#e8f1ea');
-      toast('🧊 ' + l.who + ' took a cold drink from the fridge (+$2 in the vending box)', ''); logEvent('🧊 ' + l.who + ' bought a cold drink from the fridge (+$2)', '');
+      toast('🧊 ' + l.who + ' took a cold drink from the fridge (+$2 in its coin box)', ''); logEvent('🧊 ' + l.who + ' bought a cold drink from the fridge (+$2)', '');
       return;
     }
     if (l.useKind === 'vend') {
-      var vks = vendKeys(); if (!vks.length) { loungerSay(l, 'Sold out?', '#ff6b6b'); logEvent('🥤 ' + l.who + ' found the vending machine empty', 'bad'); return; }
-      var vroll = Math.random() * vks.reduce(function (a, k) { return a + S.vendStock[k]; }, 0), vk = vks[vks.length - 1]; for (var vi = 0; vi < vks.length; vi++) { vroll -= S.vendStock[vks[vi]]; if (vroll < 0) { vk = vks[vi]; break; } }   /* whatever is on the racks, in proportion to how much of it there is */
-      var pickDrink = vk === 'drink'; S.vendStock[vk]--;
-      S.box.vend += 2; S.stats.vend = (S.stats.vend || 0) + 1; sfx('vend');
+      var vu = l.useUnit || 'vending', vst = machStock(vu), vks = vendKeys(vu); if (!vks.length) { loungerSay(l, 'Sold out?', '#ff6b6b'); logEvent('🥤 ' + l.who + ' found the vending machine empty', 'bad'); return; }
+      var vroll = Math.random() * vks.reduce(function (a, k) { return a + vst[k]; }, 0), vk = vks[vks.length - 1]; for (var vi = 0; vi < vks.length; vi++) { vroll -= vst[vks[vi]]; if (vroll < 0) { vk = vks[vi]; break; } }   /* whatever is on the racks, in proportion to how much of it there is */
+      var pickDrink = vk === 'drink'; vst[vk]--; syncVending(vu);
+      coinPay(vu, 2); S.stats.vend = (S.stats.vend || 0) + 1; sfx('vend');
       var can = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(pick([0xffd166, 0x3ad0ff, 0x6fdc8c, 0xff8c42]), 0.4, 0.3)); can.position.set(0, -0.37, 0.03); le.add(can);
       var vwhat = pickDrink ? 'a drink' : vk === 'snack' ? 'a snack' : 'something from the ' + itemName(vk).toLowerCase();
       toast('🥤 ' + l.who + ' got ' + vwhat + ' from the machine (+$2 in the box)', ''); logEvent('🥤 ' + l.who + ' bought ' + vwhat + ' from the vending machine (+$2)', '');
       if (propInst.vending) burst(ROOM.x - 1.0, 0.5, 6.8, 0xffffff, 6, 'up');
     } else {
-      if (S.coffeeStock.cup <= 0 || S.coffeeStock.beans <= 0) { loungerSay(l, 'No coffee?', '#ff6b6b'); logEvent('☕ ' + l.who + ' found the coffee machine empty', 'bad'); return; }
-      S.coffeeStock.cup--; S.coffeeStock.beans--;
-      S.box.coffee += 3; S.stats.coffee = (S.stats.coffee || 0) + 1; sfx('coffee');
+      var cu = l.useUnit || 'lobbyCoffee', cst = machStock(cu);
+      if (!coffReady(cu)) { loungerSay(l, 'No coffee?', '#ff6b6b'); logEvent('☕ ' + l.who + ' found the coffee machine empty', 'bad'); return; }
+      cst.cup--; cst.beans--; syncCoffee(cu);
+      coinPay(cu, 3); S.stats.coffee = (S.stats.coffee || 0) + 1; sfx('coffee');
       var cup = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.028, 0.09, 10), colorMat(0xf5f5f0, 0.5)); cup.position.set(0, -0.37, 0.03); le.add(cup);
       var lid = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.037, 0.012, 10), colorMat(0x3a2a1a, 0.6)); lid.position.y = 0.05; cup.add(lid);
       loungerSay(l, pick(['Ahh, coffee.', 'Cheers.', 'Needed that.']), '#e8f1ea');

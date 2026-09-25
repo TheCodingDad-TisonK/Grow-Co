@@ -2,7 +2,7 @@
   // ── Actions ───────────────────────────────────────────────────────
   function spend(n) { if (S.bank < n) { toast('Not enough in the bank (' + money(S.bank) + ' there)', 'bad'); return false; } S.bank -= n; return true; }
   // cash that is not in the bank yet: till, machine boxes, tip jar, vault and your pocket
-  function cashOnSite() { return S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips + S.vault + S.pocket; }
+  function cashOnSite() { return S.till + coinTotal() + S.tips + S.vault + S.pocket; }
   function takeCash(amount, what) { if (amount <= 0) { toast('Nothing in the ' + what, 'bad'); return false; } S.pocket += amount; sfx(what === 'till' ? 'drawer' : 'coins'); toast('👛 Took ' + money(amount) + ' from the ' + what + ' (pocket ' + money(S.pocket) + ')', 'good'); logEvent('👛 Emptied the ' + what + ': ' + money(amount), ''); return true; }
   function pendingDue(p) { return SET.dayNight === 'cycle' ? (S.day || 1) >= p.dueDay : now() >= p.dueAt; }
   function creditPending(offline) { if (!S.pending.length) return; var keep = []; S.pending.forEach(function (p) { if (pendingDue(p)) { S.bank += p.amount; logEvent('🏦 Bank deposit cleared: ' + money(p.amount), 'good'); if (!offline) toast('🏦 ' + money(p.amount) + ' landed in the bank', 'good'); } else keep.push(p); }); S.pending = keep; }

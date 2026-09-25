@@ -6,7 +6,7 @@
   function defProp(id, def) { PROPS[id] = def; PROP_ORDER.push(id); }
   // A prop marked `multi` can be owned more than once. Extra units are ordinary props under a
   // derived id (vending#2), so placement, edit mode, obstacles and the save file all work already.
-  // Stock and the cash float stay shop-wide: one storeroom and one float behind however many machines.
+  // Stock stays shop-wide (one storeroom behind however many machines), but each machine keeps its own coin box.
   function unitBase(id) { var i = id.indexOf('#'); return i < 0 ? id : id.slice(0, i); }
   function unitCount(base) { var d = PROPS[base]; if (!d || !d.multi) return 1; var n = (S.units && S.units[base]) || 1; return clamp(Math.round(n), 1, d.multi.max); }
   function unitIds(base) { var out = [base]; for (var n = 2; n <= unitCount(base); n++) out.push(base + '#' + n); return out; }
@@ -97,4 +97,8 @@
   }
   function buildAllProps() { PROP_ORDER.forEach(buildProp); defightSoon(); }
   function propWorld(id, lx, lz) { var inst = propInst[id]; inst.g.updateMatrixWorld(true); var v = new THREE.Vector3(lx, 0, lz); inst.g.localToWorld(v); return v; }   // fresh matrix: props are queried right after they are built, before any render
+  function propFront(id, off) {   // the spot a person stands on to use a prop, off metres out from its front (local +z), facing it
+    var P = propPlacement(id), r = ((P.rot % 4) + 4) % 4, dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r];
+    return { x: P.x + dx * off, z: P.z + dz * off, yaw: Math.atan2(-dx, -dz) };
+  }
 

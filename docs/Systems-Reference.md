@@ -11,6 +11,7 @@ Every system, where its state lives, and the functions to start reading from. Na
 | Stash and packed goods | `S.stash[strain]`, `S.lots[kind][strain]`, totals in `S.cured` and `S.pkg` | `stashAdd`, `stashDraw`, `lotAdd`, `lotDraw`, `syncTotals`, `syncGoods` |
 | Bench tasks | | `actions.*`, the task overlay (`taskStart`, Space only) |
 | Supplies and orders | `S.supplies`, `S.storage`, `S.order`, `S.deliveries` | `SUPPLIES`, `storageAdd`, `updateTruck` |
+| Storage racking | `S.storage`, `S.x.bays` (item to bay) | `RACK`, `rackBays`, `rackBayCode`, `rackFront`, `rackCrate`, `syncStorage`, `crateMesh` |
 | Prices | `S.market`, `shop().markup` | `unitPrice(kind, q, thc)`, `gramValue` |
 
 Quality `q` runs 20 to 100. `thc` is a multiplier of roughly 1.0 to 1.9, not a percentage.
@@ -32,13 +33,13 @@ Quality `q` runs 20 to 100. `thc` is a multiplier of roughly 1.0 to 1.9, not a p
 
 ## Money
 
-`S.bank`, `S.till`, `S.tips`, `S.vault`, `S.pocket`, `S.box`, `S.pending`. See `cashOnSite`, `takeCash`, `callCourier`, `courierHandOver`, and the bank counter in `cityPoiMenu('bank')`. Licences: `LICENCES`, `hasLic(id)`. Upgrades: `UPGRADES`, `S.upgrades`.
+`S.bank`, `S.till`, `S.tips`, `S.vault`, `S.pocket`, `S.pending`, and a coin box in each machine (`machState(id).box`: every vending machine, coffee machine, drinks fridge and arcade keeps its own). See `cashOnSite`, `takeCash`, `coinPay`, `coinEmpty`, `coinTotal`, `callCourier`, `courierHandOver`, and the bank counter in `cityPoiMenu('bank')`. Licences: `LICENCES`, `hasLic(id)`. Upgrades: `UPGRADES`, `S.upgrades`.
 
 ## People
 
 | Who | State | Entry points |
 |---|---|---|
-| Crew (Jo, Mika, Sam) | `S.staff.crew` (the old `S.staff.worker` is migrated by `crewList`) | `CREW_MAX`, `crewList`, `crewHireCost`, `WORKER_TASKS`, `workerNextJob`, `workerPick`, `workerServe` |
+| Crew (Jo, Mika, Sam) | `S.staff.crew` (the old `S.staff.worker` is migrated by `crewList`) | `CREW_MAX`, `crewList`, `crewHireCost`, `WORKER_TASKS`, `workerNextJob`, `workerPick`, `workerServe`; restocking one crate at a time: `restockJob`, `restockDest`, `restockTake`, `restockArrive`, `carrySet`, `carryBack` |
 | Guard | `S.staff.guardTask`, `S.staff.guardOff` | `GUARD_TASKS`, `updateGuard` |
 | Driver, operator, night guard | `S.x.staff` | `rosterMenu`, `expansionNewDay`, the operator block in `updateExpansion` |
 | Lobby visitors | | `updateLoungers`, `startFight`, `endFight` |

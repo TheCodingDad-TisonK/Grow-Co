@@ -12,7 +12,7 @@ The whole game is one JSON object, `S`, written to `localStorage` a fraction of 
 
 | Field | Meaning |
 |---|---|
-| `bank`, `till`, `tips`, `vault`, `pocket`, `box`, `pending` | where the money is; `pending` is courier cash that clears next day |
+| `bank`, `till`, `tips`, `vault`, `pocket`, `pending` | where the money is; `pending` is courier cash that clears next day. The machines' coins are in `S.x.mach` (below). Saves before 1.25 had one shared `box`; it is moved into the first machine of each kind on load |
 | `xp`, `level`, `rep`, `market`, `day`, `clock` | progress, the price multiplier, the calendar |
 | `plants`, `potSoil`, `tent`, `light` | the grow room |
 | `batches` | harvests drying and jars curing |
@@ -21,9 +21,10 @@ The whole game is one JSON object, `S`, written to `localStorage` a fraction of 
 | `stock` | packed goods locked in the stock cabinet |
 | `cured`, `pkg` | totals derived from `stash` and `lots` by `syncTotals()`; do not edit by hand |
 | `supplies`, `storage`, `order`, `deliveries` | what is on the supply rack, in the back room, on order |
-| `display`, `vendStock`, `coffeeStock` | the counter display and the machines |
+| `display` | the counter display. Each machine's own stock is in `S.x.mach` (below); saves before 1.25 had one shared `vendStock` and `coffeeStock`, moved into the first machine of each kind on load |
 | `upgrades`, `lic` | what you own, by id |
-| `staff` | the crew (`crew`, up to three, each with a job and whether they're off), the guard's job (`guardTask`) and whether he's off shift (`guardOff`) |
+| `staff` | the crew (`crew`, up to three, each with a job, whether they're off, and `carry`, a crate in their arms, which goes back on the racking when the save loads), the guard's job (`guardTask`) and whether he's off shift (`guardOff`) |
+| `tillWarnDay` | the last day the heavy-till warning was given |
 | `hotbar`, `slot` | the six things you carry and which is active |
 | `customer`, `courier`, `vip` | who is being served right now; a new face also carries `look`. The line behind the window is not saved |
 | `layout[propId]` | moved furniture: `{ x, z, rot }`, plus `hidden` for something taken down |
@@ -56,6 +57,8 @@ Created and defaulted by `xs()`.
 | `garage` | `{ trunk, engine, bar }` |
 | `weather` | `{ kind, until }` |
 | `bagline` | `{ on, t }` |
+| `mach` | one record per machine, keyed by its prop id (`vending`, `vending#2`, `fridge`, `arcade#3`...): its door, delivery tray, the cup under the spout, the cans in a fridge, `stock` (a vending machine's racks, or a coffee machine's cups and beans) and `box`, the coins in it |
+| `bays` | which bay of the storage racking each item in `S.storage` sits in, 0 (A1) to 23 (D6); freed when the item runs out |
 | `delivery` | the open phone order, or null |
 | `branch` | true once you own Green Leaf |
 | `blackoutUntil` | timestamp the power comes back |

@@ -57,7 +57,7 @@
 
   function paneShop() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🛒 Supplies</h3><div class="desc">Paid from the bank (' + money(S.bank) + '). Orders are boxed up and the supplier\'s van drops them in the back room a couple of minutes later. Carry crates from there to the supply rack or the machines.</div>' + (S.order ? '<div class="g3-chips"><span class="g3-chip amber">open order: ' + esc(orderSummary(S.order.items)) + '</span></div>' : '') + (S.deliveries.length ? '<div class="g3-chips">' + S.deliveries.map(function (d) { return '<span class="g3-chip">🚚 ' + esc(orderSummary(d.items)) + ' · ~' + Math.max(0, Math.ceil((d.due - now()) / 1000)) + ' s</span>'; }).join('') + '</div>' : '');
-    SUPPLIES.forEach(function (it) { var own = it.tool ? (S.supplies[it.id] ? 'owned' : 'not yet') : (S.supplies[it.id] || 0); h += '<div class="g3-row"><span class="ico">' + it.ico + '</span><span class="meta"><span class="n">' + it.name + '</span><span class="own">' + (it.stock === 'vend' ? 'machine: ' + (S.vendStock[it.id] || 0) : it.stock === 'coffee' ? 'machine: ' + (S.coffeeStock[it.id] || 0) : 'rack: ' + own) + ((S.storage[it.id] || 0) ? ' · back room: ' + S.storage[it.id] : '') + ' · ' + it.hint + '</span></span><span class="price">' + money(Math.round(it.price * supplyDisc())) + '</span><button class="g3-btn" data-act="buy" data-id="' + it.id + '"' + (it.tool && S.supplies[it.id] ? ' disabled' : '') + '>Buy</button></div>'; });
+    SUPPLIES.forEach(function (it) { var own = it.tool ? (S.supplies[it.id] ? 'owned' : 'not yet') : (S.supplies[it.id] || 0); h += '<div class="g3-row"><span class="ico">' + it.ico + '</span><span class="meta"><span class="n">' + it.name + '</span><span class="own">' + (it.stock === 'vend' ? 'machines: ' + stockTotal('vending', it.id) : it.stock === 'coffee' ? 'machines: ' + stockTotal('lobbyCoffee', it.id) : 'rack: ' + own) + ((S.storage[it.id] || 0) ? ' · back room: ' + S.storage[it.id] : '') + ' · ' + it.hint + '</span></span><span class="price">' + money(Math.round(it.price * supplyDisc())) + '</span><button class="g3-btn" data-act="buy" data-id="' + it.id + '"' + (it.tool && S.supplies[it.id] ? ' disabled' : '') + '>Buy</button></div>'; });
     h += '</div><div class="g3-box"><h3>🌿 Grow room</h3><div class="desc">What you have on hand right now.</div><div class="g3-chips">' +
       chip('cash', money(S.bank)) + chip('soil', S.supplies.soil || 0) + chip('pots free', (S.supplies.pot || 0) - S.plants.length) + chip('nutrients', S.supplies.nutrients || 0) + chip('spray', S.supplies.remedy || 0) + chip('baggies', S.supplies.bag || 0) + chip('papers', S.supplies.paper || 0) + chip('tips', S.supplies.tip || 0) + chip('jars', S.supplies.jar || 0) + '</div>' +
       '<div class="desc">Seeds in stock:</div><div class="g3-chips">' + STRAINS.map(function (s) { return chip(s.emoji + ' ' + s.name, S.supplies['seed_' + s.id] || 0); }).join('') + '</div>' +
@@ -118,7 +118,7 @@
     return h + '</div>';
   }
   function moneyRows() {
-    return '<div class="g3-chips">' + chip('bank', money(S.bank)) + chip('vault', money(S.vault)) + chip('pocket', money(S.pocket)) + '</div><div class="g3-chips">' + chip('till', money(S.till)) + chip('vending', money(S.box.vend)) + chip('coffee', money(S.box.coffee)) + chip('arcade', money(S.box.arcade)) + chip('tip jar', money(S.tips)) + '</div>';
+    return '<div class="g3-chips">' + chip('bank', money(S.bank)) + chip('vault', money(S.vault)) + chip('pocket', money(S.pocket)) + '</div><div class="g3-chips">' + chip('till', money(S.till)) + chip('vending', money(coinTotal('vending'))) + chip('fridges', money(coinTotal('fridge'))) + chip('coffee', money(coinTotal('lobbyCoffee'))) + chip('arcade', money(coinTotal('arcade'))) + chip('tip jar', money(S.tips)) + '</div>';
   }
   function paneVault() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🔒 Vault · ' + money(S.vault) + '</h3><div class="desc">Cash you carry in your pocket goes in here. The bank courier collects from your pocket, so take out what you booked before they arrive.</div>' + moneyRows();
@@ -143,7 +143,7 @@
     h += row('=', money(daily) + ' a day', 'what the business costs to stand still');
     h += row('$', money(B.dayGross) + ' taken today', money(B.monthGross) + ' so far this month');
     h += row('−', money(B.dayOther) + ' spent on the crop today', 'trimming, testing and compliance at $' + COST.processPerGram.toFixed(2) + ' a gram, ' + money(B.monthOther) + ' this month');
-    h += row('%', money(taxDue()) + ' tax owed', Math.round(ECON.excise * 100) + '% excise sits inside every sale, plus ' + Math.round(ECON.taxRate * 100) + '% on the month. Due on day ' + taxDay() + '.');
+    h += row('%', money(taxDue()) + ' tax owed', Math.round(ECON.excise * 100) + '% excise sits inside every sale, plus ' + Math.round(ECON.taxRate * 100) + '% on the month, and ' + Math.round(ECON.taxHighRate * 100) + '% on what the month takes over ' + money(ECON.taxHighFrom) + '. Due on day ' + taxDay() + '.');
     if (B.arrears > 0.5) h += row('!', money(B.arrears) + ' in arrears', 'unpaid bills. Rep falls every day this stands');
     if (L && L.short > 0.5) h += '<div class="desc">Day ' + L.day + ': ' + money(L.short) + ' of that morning\'s bill went unpaid.</div>';
     return h;
@@ -161,7 +161,7 @@
     var ids = Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; });
     var h = '<div class="g3-grid"><div class="g3-box"><h3>📦 Back room stock</h3><div class="desc">Take a crate from the racks (E) and carry it to where it goes: supplies and seeds to the supply rack in the office, drinks and snacks to the vending machine, cups and beans to the coffee machine.</div>';
     h += ids.length ? ids.map(function (k) { return '<div class="g3-row"><span class="ico">' + itemIcon(k) + '</span><span class="meta"><span class="n">' + esc(itemName(k)) + '</span><span class="own">' + S.storage[k] + ' in storage · goes to the ' + (k.indexOf('seed_') === 0 ? 'supply rack' : (supplyById(k) && supplyById(k).stock === 'vend') ? 'vending machine' : (supplyById(k) && supplyById(k).stock === 'coffee') ? 'coffee machine' : (supplyById(k) && supplyById(k).stock === 'display') ? 'counter display by the till' : 'supply rack') + '</span></span></div>'; }).join('') : '<div class="g3-empty">Empty. Order at the office laptop and the supplier\'s van drops it here.</div>';
-    h += '</div><div class="g3-box"><h3>🥤 Machines</h3><div class="g3-chips">' + chip('drinks', S.vendStock.drink) + chip('snacks', S.vendStock.snack) + chip('cups', S.coffeeStock.cup) + chip('beans', S.coffeeStock.beans) + '</div><h3 style="margin-top:12px">🚚 On the road</h3>' + (S.order ? '<div class="desc">Open order: ' + esc(orderSummary(S.order.items)) + '</div>' : '') + (S.deliveries.length ? S.deliveries.map(function (d) { return '<div class="g3-row"><span class="ico">🚚</span><span class="meta"><span class="n">' + esc(orderSummary(d.items)) + '</span><span class="own">~' + Math.max(0, Math.ceil((d.due - now()) / 1000)) + ' s</span></span></div>'; }).join('') : '<div class="g3-empty">nothing on the way</div>') + '</div></div>';
+    h += '</div><div class="g3-box"><h3>🥤 Machines</h3><div class="g3-chips">' + chip('drinks', stockTotal('vending', 'drink')) + chip('snacks', stockTotal('vending', 'snack')) + chip('cups', stockTotal('lobbyCoffee', 'cup')) + chip('beans', stockTotal('lobbyCoffee', 'beans')) + '</div><h3 style="margin-top:12px">🚚 On the road</h3>' + (S.order ? '<div class="desc">Open order: ' + esc(orderSummary(S.order.items)) + '</div>' : '') + (S.deliveries.length ? S.deliveries.map(function (d) { return '<div class="g3-row"><span class="ico">🚚</span><span class="meta"><span class="n">' + esc(orderSummary(d.items)) + '</span><span class="own">~' + Math.max(0, Math.ceil((d.due - now()) / 1000)) + ' s</span></span></div>'; }).join('') : '<div class="g3-empty">nothing on the way</div>') + '</div></div>';
     return h;
   }
   function paneStock() {
@@ -338,12 +338,12 @@
   function devAction(id) {
     var tp = function (x, z) { closeMenu(); standUp(); player.pos.set(x, 1.65, z); player.floor = 0; toast('📍 Teleported', ''); };
     switch (id) {
-      case 'money': S.bank += 1000; break; case 'pocket': S.pocket += 500; break; case 'till': S.till += 120; S.tips += 20; S.box.vend += 10; S.box.coffee += 10; S.box.arcade += 10; break;
+      case 'money': S.bank += 1000; break; case 'pocket': S.pocket += 500; break; case 'till': S.till += 120; S.tips += 20; ['vending', 'lobbyCoffee', 'fridge', 'arcade'].forEach(function (b) { unitIds(b).forEach(function (u) { coinPay(u, 10); }); }); break;
       case 'stash': STRAINS.forEach(function (st) { stashAdd(st.id, 20, 70 + st.lvl * 2, st.thc); }); break;
       case 'goods': STRAINS.forEach(function (st) { ['bags', 'joints', 'cookies'].forEach(function (k) { lotAdd(k, st.id, 5, 72, st.thc); }); }); break;
       case 'supplies': SUPPLIES.forEach(function (it) { if (it.tool) S.supplies[it.id] = 1; else S.supplies[it.id] = (S.supplies[it.id] || 0) + 10; }); STRAINS.forEach(function (st) { S.supplies['seed_' + st.id] = (S.supplies['seed_' + st.id] || 0) + 5; }); break;
       case 'storage': SUPPLIES.forEach(function (it) { if (!it.tool) S.storage[it.id] = (S.storage[it.id] || 0) + (it.qty || 10); }); STRAINS.forEach(function (st) { S.storage['seed_' + st.id] = (S.storage['seed_' + st.id] || 0) + 5; }); break;
-      case 'machines': S.vendStock.drink = 24; S.vendStock.snack = 24; S.coffeeStock.cup = 80; S.coffeeStock.beans = 80; S.display.lighter = 20; S.display.rpaper = 10; S.display.rgrinder = 5; unitIds('fridge').forEach(function (u) { machState(u).fridge = 16; }); break;   /* the fridge holds its own cans rather than drawing on the shop's, so it needs filling by name */
+      case 'machines': unitIds('vending').forEach(function (u) { var v = machStock(u); v.drink = 24; v.snack = 24; }); unitIds('lobbyCoffee').forEach(function (u) { var c = machStock(u); c.cup = 80; c.beans = 80; }); S.display.lighter = 20; S.display.rpaper = 10; S.display.rgrinder = 5; unitIds('fridge').forEach(function (u) { machState(u).fridge = 16; }); break;   /* the fridge holds its own cans rather than drawing on the shop's, so it needs filling by name */
       case 'plants': S.plants = []; S.potSoil = {}; for (var i = 0; i < slots(); i++) { var st2 = STRAINS[i % STRAINS.length]; S.potSoil[i] = true; S.plants.push({ id: 'p' + now() + i, strain: st2.id, progress: 1, quality: 75, thirst: 0.1, fed: true, hazard: null, slot: i }); } S.supplies.pot = Math.max(S.supplies.pot || 0, slots()); break;
       case 'batches': STRAINS.slice(0, 5).forEach(function (st, i) { S.batches.push({ id: 'b' + now() + i, grams: 18, quality: 70, baseQ: 70, thc: st.thc, startedAt: now(), cured: i >= 3, dry: i >= 3 ? 1 : 0.2, strain: st.id }); }); break;
       case 'customer': case 'premium': closeMenu(); if (!customerArrives(id === 'premium')) toast('The line is full (' + LINE_MAX + ' waiting)', ''); break;
@@ -425,7 +425,7 @@
   function hud() {
     syncTotals();
     var need = XP_PER_LEVEL(S.level);
-    $('h-cash').textContent = money(S.bank); var hv = $('h-vault'); if (hv) hv.textContent = money(S.vault) + (S.pocket > 0 ? ' · 👛' + money(S.pocket) : '');
+    $('h-cash').textContent = money(S.bank); var hv = $('h-vault'); if (hv) { var heavy = tillHeavy(); hv.textContent = money(S.vault) + (S.pocket > 0 ? ' · 👛' + money(S.pocket) : '') + (heavy ? ' · 🧾' + money((S.till || 0) + (S.tips || 0)) : ''); if (hv.parentNode && hv.parentNode.classList) hv.parentNode.classList.toggle('heavy', heavy); }   /* a till worth robbing shows up here, amber */
     $('h-cured').textContent = gram(S.cured.g) + (S.cured.g > 0 ? ' q' + Math.round(curedAvgQ()) : '');
     $('h-pkg').textContent = S.pkg.bags.n + ' / ' + S.pkg.joints.n + (S.pkg.cookies.n ? ' / 🍪' + S.pkg.cookies.n : '');
     $('h-rep').textContent = Math.floor(S.rep);

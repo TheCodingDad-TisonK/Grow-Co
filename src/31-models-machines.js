@@ -103,12 +103,30 @@
       X.mach.lobbyCoffee = { coffDoor: !!o.coffDoor, cup: o.cup || 0 };
       X.mach.fridge = { fridgeDoor: !!o.fridgeDoor, fridge: typeof o.fridge === 'number' ? o.fridge : 6 };   /* the fridge you start with comes stocked; any you buy later start empty */
     }
+    if (!X.mach.own) {   /* saves from before 1.25 kept one coin box and one stock for every machine of a kind: both go to the first machine of the kind */
+      X.mach.own = true; var ob = S.box || {}, first = function (b) { return X.mach[b] || (X.mach[b] = {}); };
+      [['vending', ob.vend], ['lobbyCoffee', ob.coffee], ['arcade', ob.arcade]].forEach(function (p) { if (p[1] > 0) { var u = first(p[0]); u.box = (u.box || 0) + p[1]; } });
+      first('vending').stock = Object.assign({}, S.vendStock || { drink: 12, snack: 12 });   /* a new shop's first machine comes stocked, as it always has */
+      first('lobbyCoffee').stock = Object.assign({}, S.coffeeStock || { cup: 40, beans: 40 });
+      delete S.box; delete S.vendStock; delete S.coffeeStock;
+    }
     var m = X.mach[id || 'vending'] || (X.mach[id || 'vending'] = {});
     if (!Array.isArray(m.tray)) m.tray = [];
     if (typeof m.cup !== 'number') m.cup = 0;
     if (typeof m.fridge !== 'number') m.fridge = 0;
+    if (!m.stock || typeof m.stock !== 'object') m.stock = {};
     return m;
   }
+  // every machine holds its own stock: a vending machine its racks, a coffee machine its cups and beans, loaded by
+  // hand, a crate at a time, by you or by the crew (restockJob in the staff code)
+  function machStock(id) { return machState(id).stock; }
+  function stockTotal(base, k) { return unitIds(base).reduce(function (a, u) { return a + (machStock(u)[k] || 0); }, 0); }
+  function coffReady(id) { var st = machStock(id); return (st.cup || 0) > 0 && (st.beans || 0) > 0; }
+  // every machine keeps its own coin box: a sale pays into the machine it came out of, and emptying one leaves the rest alone
+  function coinBox(id) { return machState(id).box || 0; }
+  function coinPay(id, n) { var m = machState(id); m.box = (m.box || 0) + n; }
+  function coinEmpty(id, what) { var m = machState(id); if (!takeCash(m.box || 0, what)) return false; m.box = 0; return true; }
+  function coinTotal(base) { var t = 0; (base ? [base] : ['vending', 'lobbyCoffee', 'fridge', 'arcade']).forEach(function (b) { unitIds(b).forEach(function (u) { t += coinBox(u); }); }); return t; }
   function syncMachines() { ['vending', 'lobbyCoffee', 'fridge'].forEach(function (b) { unitIds(b).forEach(function (u) { if (b === 'vending') syncVending(u); else if (b === 'lobbyCoffee') syncCoffee(u); else syncFridge(u); }); }); }
   function fridgeParts(id) {
     var inst = propInst[id || 'fridge']; if (!inst) return null; var p = inst.g.userData.frParts;
@@ -151,9 +169,9 @@
     var p = coffParts(id); if (!p) return;
     (p.cups.userData.slots || []).forEach(function (m) { p.cups.remove(m); });
     p.cups.userData.slots = [];
-    var stack = Math.min(Math.ceil((S.coffeeStock.cup || 0) / 6), 7);
+    var st = machStock(id), stack = Math.min(Math.ceil((st.cup || 0) / 6), 7);
     for (var i = 0; i < stack; i++) { var cu = cupMesh(1, false); cu.position.y = i * 0.022; p.cups.add(cu); p.cups.userData.slots.push(cu); }
-    if (p.beans) { var lvl = clamp((S.coffeeStock.beans || 0) / 40, 0.05, 1); p.beans.scale.y = lvl; p.beans.position.y = 1.40 + 0.06 * lvl; p.beans.visible = (S.coffeeStock.beans || 0) > 0; }
+    if (p.beans) { var lvl = clamp((st.beans || 0) / 40, 0.05, 1); p.beans.scale.y = lvl; p.beans.position.y = 1.40 + 0.06 * lvl; p.beans.visible = (st.beans || 0) > 0; }
     clearKids(p.brew);
     if (machState(id).cup > 0) { var c2 = cupMesh(1, true); p.brew.add(c2); }
     if (p.cupHit) p.cupHit.position.y = machState(id).cup > 0 ? 1.02 : -50;
@@ -170,11 +188,12 @@
   function coffBrew(id) {
     var M = machState(id);
     if (M.cup > 0) { toast('There\'s already a cup under the spout', ''); return; }
-    if ((S.coffeeStock.cup || 0) <= 0) { toast('Out of cups', 'bad'); return; }
-    if ((S.coffeeStock.beans || 0) <= 0) { toast('Out of beans', 'bad'); return; }
+    var st = machStock(id);
+    if ((st.cup || 0) <= 0) { toast('This machine is out of cups', 'bad'); return; }
+    if ((st.beans || 0) <= 0) { toast('This machine is out of beans', 'bad'); return; }
     if ((S.pocket || 0) < 2) { sfx('bad'); toast('A cup is $2 from your pocket, and your pocket is short', 'bad'); return; }
-    S.pocket -= 2; S.coffeeStock.cup--; S.coffeeStock.beans--; S.box.coffee = (S.box.coffee || 0) + 2; M.cup = 1; machAnim(id).brewT = 1.5;
-    sfx('coffee'); toast('☕ Pouring…', ''); syncCoffee(); save();   /* every machine draws on the same cups and beans, so they all restack */
+    S.pocket -= 2; st.cup--; st.beans--; coinPay(id, 2); M.cup = 1; machAnim(id).brewT = 1.5;
+    sfx('coffee'); toast('☕ Pouring…', ''); syncCoffee(id); save();
   }
   function coffTake(id) {
     var M = machState(id);
@@ -221,7 +240,7 @@
     var racks = p.racks;
     (racks.userData.slots || []).forEach(function (m) { racks.remove(m); });
     racks.userData.slots = [];
-    var drinks = Math.min(S.vendStock.drink || 0, 8), snacks = Math.min(S.vendStock.snack || 0, 8);
+    var st = machStock(id), drinks = Math.min(st.drink || 0, 8), snacks = Math.min(st.snack || 0, 8);
     for (var i = 0; i < drinks; i++) {
       var col = i % 4, row = Math.floor(i / 4);
       var d = drinkMesh(1); d.position.set(-0.225 + col * 0.15, 0.585 - row * 0.29, 0.02); racks.add(d); racks.userData.slots.push(d);
@@ -261,16 +280,16 @@
     vendDisplay(id, M.vendDoor ? 'SERVICE' : 'READY'); save();
   }
   function isVendItem(k) { var it = supplyById(k); return k === 'drink' || k === 'snack' || !!(it && it.stock === 'vend'); }   // anything a pack marks for the vending machine goes on its racks
-  function vendKeys() { return Object.keys(S.vendStock).filter(function (k) { return (S.vendStock[k] || 0) > 0 && isVendItem(k); }); }   // what is on the racks right now
+  function vendKeys(id) { var st = machStock(id); return Object.keys(st).filter(function (k) { return (st[k] || 0) > 0 && isVendItem(k); }); }   // what is on this machine's racks right now
   function vendDispense(id, item) {   // a coil turns, the item falls, and it lands in the tray
-    var M = machState(id);
-    if ((S.vendStock[item] || 0) <= 0) { toast('The machine is out of ' + (item === 'drink' ? 'drinks' : 'snacks'), 'bad'); vendDisplay(id, 'SOLD OUT'); return false; }
+    var M = machState(id), st = machStock(id);
+    if ((st[item] || 0) <= 0) { toast('The machine is out of ' + (item === 'drink' ? 'drinks' : 'snacks'), 'bad'); vendDisplay(id, 'SOLD OUT'); return false; }
     if ((S.pocket || 0) < 2) { sfx('bad'); toast('It takes $2 from your pocket, and your pocket is short', 'bad'); return false; }
-    S.pocket -= 2; S.vendStock[item]--; S.box.vend = (S.box.vend || 0) + 2; S.stats.vend = (S.stats.vend || 0) + 1;
+    S.pocket -= 2; st[item]--; coinPay(id, 2); S.stats.vend = (S.stats.vend || 0) + 1;
     var p = vendParts(id);
     if (p && p.tray) { var m = item === 'drink' ? drinkMesh(1) : snackMesh(1); var wp = new THREE.Vector3(); p.tray.getWorldPosition(wp); machAnim(id).drops.push({ m: m, t: 0, item: item }); m.position.set(wp.x, wp.y + 1.0, wp.z); world.group.add(m); }
     sfx('vend'); vendDisplay(id, 'THANK YOU');
-    M.tray.push(item); syncVending(); save();   /* the racks are a shared stock, so every machine thins out together */
+    M.tray.push(item); syncVending(id); save();
     return true;
   }
   function vendTakeTray(id) {

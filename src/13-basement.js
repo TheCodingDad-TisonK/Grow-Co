@@ -7,7 +7,7 @@
     cigLS: { name: 'RF Smoking Light 10s', type: 'light',  size: 10, price: 8,  col: 0xdfe6ee, top: 0x2f6b9a },
     cigLB: { name: 'RF Smoking Light 20s', type: 'light',  size: 20, price: 14, col: 0xdfe6ee, top: 0x2f6b9a }
   };
-  var TOB = { growT: 200, sowCost: 20, bayKg: 2, kilnMax: 8, kilnT: 60, cureYield: 0.2, shredKgS: 0.02, stickKg: { normal: 0.0008, light: 0.0006 }, sticksS: 6, packS: 1.2, matCost: 50, matUnits: 100, carton: 10 };
+  var TOB = { wholesale: 0.5, driverShare: 0.45, growT: 200, sowCost: 20, bayKg: 2, kilnMax: 8, kilnT: 60, cureYield: 0.2, shredKgS: 0.02, stickKg: { normal: 0.0008, light: 0.0006 }, sticksS: 6, packS: 1.2, matCost: 50, matUnits: 100, carton: 10 };
   var tobUI = { signs: {}, bays: [], beacons: {}, spin: [], beltItems: [], rackG: null, kilnGlow: null, t: 0, fade: null };
   function tobFresh() { return { bays: [{ stage: 'empty', t: 0 }, { stage: 'empty', t: 0 }, { stage: 'empty', t: 0 }, { stage: 'empty', t: 0 }], leaf: 0, kiln: { on: false, kg: 0, t: 0 }, cured: 0, shred: { on: false }, cut: 0, maker: { on: false, mode: 'normal' }, sticks: { normal: 0, light: 0 }, packer: { on: false, size: 10, type: 'normal', t: 0 }, mat: 0, packs: { cigNS: 0, cigNB: 0, cigLS: 0, cigLB: 0 }, made: 0 }; }
   function tob() { if (!S.tob || !S.tob.bays) S.tob = tobFresh(); return S.tob; }

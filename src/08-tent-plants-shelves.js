@@ -254,18 +254,59 @@
     });
     gg.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'goodsShelf'; });
   }
+  // ── The storage racking: four levels of six bays (A1 at the bottom left to D6 at the top right). An item keeps
+  // its bay while any of it is in stock, so crates never shuffle along when one runs out, and every bay has its
+  // label plate on the beam below it. Crates go back up by hand (E with a crate) and come down one at a time.
+  var RACK = { cols: 6, y: [0.12, 0.66, 1.2, 1.74], w: 3.0 };   /* 3 m long: it fits the annex wall to wall */
+  function rackBayX(i) { return -RACK.w / 2 + RACK.w / RACK.cols * (i % RACK.cols + 0.5); }
+  function rackBayY(i) { return RACK.y[Math.floor(i / RACK.cols)]; }
+  function rackBayCode(i) { return 'ABCD'.charAt(Math.floor(i / RACK.cols)) + (i % RACK.cols + 1); }
+  function rackBays() {   // item -> bay, kept in the save; a bay is freed when its item runs out
+    var X = xs(); if (!X.bays || typeof X.bays !== 'object') X.bays = {};
+    var B = X.bays, n = RACK.cols * RACK.y.length;
+    Object.keys(B).forEach(function (k) { if (!((S.storage[k] || 0) > 0) || !(B[k] >= 0 && B[k] < n)) delete B[k]; });
+    Object.keys(S.storage).forEach(function (k) {
+      if (!((S.storage[k] || 0) > 0) || B[k] !== undefined) return;
+      var used = {}; Object.keys(B).forEach(function (q) { used[B[q]] = true; });
+      for (var i = 0; i < n; i++) if (!used[i]) { B[k] = i; break; }
+    });
+    return B;
+  }
+  function rackFront(k) {   // where to stand to reach an item's bay
+    var i = rackBays()[k]; if (i === undefined || !propInst.storeRack) return { x: WP.annex.x, z: WP.annex.z };
+    var v = propWorld('storeRack', rackBayX(i), 0.8); return { x: v.x, z: v.z };
+  }
+  function rackCrate() {   // the crate in your hands goes back up, into its item's bay
+    var h = held(); if (!h || h.kind !== 'crate') return false;
+    S.storage[h.item] = (S.storage[h.item] || 0) + h.n; S.held = null; world.dirtyStorage = true;
+    var i = rackBays()[h.item]; sfx('putdown');
+    toast('📦 Racked ' + h.n + ' × ' + itemName(h.item) + (i !== undefined ? ' in bay ' + rackBayCode(i) : ' (the racking is full, so it is in the stock list)'), 'good'); save();
+    return true;
+  }
+  function crateMesh(id, w, h, d) {   // a taped kraft carton with the item's icon on its face
+    var G = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), prodMat('crateKraft', function () { return new THREE.MeshStandardMaterial({ color: 0xa8804a, roughness: 0.9 }); })); body.castShadow = true; G.add(body);
+    var tape = new THREE.Mesh(new THREE.BoxGeometry(w + 0.01, 0.025, d + 0.01), prodMat('crateTape', function () { return new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.9 }); })); G.add(tape);
+    var face = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, h) * 0.7, Math.min(w, h) * 0.7), prodMat('crateIco' + id, function () { return new THREE.MeshBasicMaterial({ map: textTex([itemIcon(id)], 96, 96, { size: 64, bg: '#f3e9cf', line: 'rgba(0,0,0,0)' }), transparent: true }); }));
+    face.position.z = d / 2 + 0.002; G.add(face);
+    return G;
+  }
   function syncStorage() {
     var inst = propInst.storeRack; if (!inst) return;
     var gg = inst.ctx.dynGroup(); clearKids(gg);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'storage'; });
-    var ids = Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }); var slotsY = [0.265, 0.965, 1.665];
-    ids.slice(0, 15).forEach(function (id, i) {
-      var col = i % 5, row = Math.floor(i / 5); var x = -1.28 + col * 0.64, y = slotsY[row];
-      var n = S.storage[id], stacks = Math.min(3, Math.ceil(n / itemPack(id)));
-      for (var s = 0; s < stacks; s++) { var crate = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.28, 0.36), colorMat(0xc9a96a, 0.9)); crate.position.set(x, y + 0.14 + s * 0.29, 0); crate.castShadow = true; gg.add(crate); var tape = new THREE.Mesh(new THREE.BoxGeometry(0.41, 0.03, 0.37), colorMat(0x8a6a3a, 0.9)); tape.position.set(x, y + 0.14 + s * 0.29, 0); gg.add(tape); }
-      var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.12), new THREE.MeshBasicMaterial({ map: textTex([itemIcon(id) + ' ' + itemName(id), n + ' in stock'], 240, 76, { size: 24, bg: '#f3e9cf', color: '#222', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(x, y + 0.14, 0.185); gg.add(lbl);
-      var hit = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.3 * stacks + 0.1, 0.4), MAT.none); hit.position.set(x, y + 0.15 * stacks + 0.05, 0); gg.add(hit); interactable(hit, { kind: 'storeItem', item: id }); hit.userData.dynGroup = 'storage'; hit.userData.propId = 'storeRack';
-    });
+    var B = rackBays(), byBay = {}; Object.keys(B).forEach(function (k) { byBay[B[k]] = k; });
+    var plateOpt = { size: 30, bg: '#f7f3e6', color: '#1c1f24', titleColor: '#1c1f24', line: 'rgba(0,0,0,0)' };
+    for (var i = 0; i < RACK.cols * RACK.y.length; i++) {
+      var x = rackBayX(i), y = rackBayY(i), id = byBay[i], code = rackBayCode(i);
+      var plateM = id ? new THREE.MeshBasicMaterial({ map: textTex([code + '  ' + itemIcon(id) + ' ' + itemName(id) + '  ×' + S.storage[id]], 500, 90, plateOpt) })
+        : prodMat('bayPlate' + code, function () { return new THREE.MeshBasicMaterial({ map: textTex([code + '  empty'], 500, 90, Object.assign({}, plateOpt, { color: '#8a8f96', titleColor: '#8a8f96' })) }); });
+      var plate = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.09), plateM); plate.position.set(x, y - 0.035, 0.296); gg.add(plate);
+      if (!id) continue;
+      var stacks = Math.min(2, Math.ceil(S.storage[id] / itemPack(id)));
+      for (var s = 0; s < stacks; s++) { var cr = crateMesh(id, 0.36, 0.2, 0.3); cr.position.set(x, y + 0.11 + s * 0.21, 0.04); gg.add(cr); }
+      var hit = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.21 * stacks + 0.1, 0.42), MAT.none); hit.position.set(x, y + 0.105 * stacks + 0.05, 0.02); gg.add(hit); interactable(hit, { kind: 'storeItem', item: id, bay: i }); hit.userData.dynGroup = 'storage'; hit.userData.propId = 'storeRack';
+    }
     gg.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'storeRack'; });
   }
   function syncDisplay() {

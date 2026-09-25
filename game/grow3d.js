@@ -130,16 +130,16 @@
     { id: 'retail',    ico: '🪪', name: 'Retail licence',       price: 800,  lvl: 2,  d: 'Customers may pay by card. Without it everyone pays cash.' },
     { id: 'catering',  ico: '☕', name: 'Vending & catering permit', price: 450, d: 'The vending machine and coffee machine may sell.' },
     { id: 'amusement', ico: '🕹️', name: 'Amusement permit',     price: 400,  d: 'The arcade cabinet may take coins.' },
-    { id: 'lounge',    ico: '🛋️', name: 'Lounge licence',       price: 700,  rep: 25, d: 'Customers may sit and smoke in the lobby, and each one buys a joint off the goods shelf to do it.' },
+    { id: 'lounge',    ico: '🛋️', name: 'Lounge licence',       price: 700,  rep: 200, d: 'Customers may sit and smoke in the lobby, and each one buys a joint off the goods shelf to do it.' },
     { id: 'cult2',     ico: '🌱', name: 'Cultivation permit II', price: 900, lvl: 3, d: 'Unlocks the ' + tentSizes('cult2') + ' tents and the roof greenhouse beds. Plants grow 5% faster.' },
     { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 6000, lvl: 6, req: 'cult2', d: 'Unlocks the ' + tentSizes('cult3') + ' tents.' },
     { id: 'wholesale', ico: '📦', name: 'Wholesale account',    price: 3600, lvl: 4, d: 'Supplies 15% cheaper and the van comes twice as fast.' },
-    { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 3000, d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
-    { id: 'firearm',   ico: '🔫', name: 'Firearms licence',     price: 3000, lvl: 4, rep: 30, d: 'Lets you buy and carry the pistol and shotgun from the weapon locker. Shoot a bystander and it\'s revoked.' },
-    { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 3000, rep: 40, d: 'Connoisseurs visit and pay 2.2× for quality.' },
-    { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 50, d: 'From 20:00 to 02:00 customers come a third more often and pay 5% more.' },
-    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 60, d: '+4% on every price.' },
-    { id: 'export',    ico: '🚢', name: 'Export licence',       price: 14000, lvl: 10, rep: 120, d: 'Bulk contracts under Bank on the office PC: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
+    { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 3000, lvl: 8, d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
+    { id: 'firearm',   ico: '🔫', name: 'Firearms licence',     price: 3000, lvl: 4, rep: 240, d: 'Lets you buy and carry the pistol and shotgun from the weapon locker. Shoot a bystander and it\'s revoked.' },
+    { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 3000, rep: 320, d: 'Connoisseurs visit and pay 2.2× for quality.' },
+    { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 400, d: 'From 20:00 to 02:00 customers come a third more often and pay 5% more.' },
+    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 480, d: '+4% on every price.' },
+    { id: 'export',    ico: '🚢', name: 'Export licence',       price: 14000, lvl: 10, rep: 960, d: 'Bulk contracts under Bank on the office PC: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
   ];
   function tentSizes(lic) {   // '9 and 12-slot': read off the tent table, so a pack tent that needs the permit is named with the rest
     var n = TENTS.filter(function (t) { return t.lic === lic; }).map(function (t) { return t.slots; });
@@ -159,7 +159,7 @@
     { p: 1.00, key: 'flower', label: 'Flowering' }
   ];
   function stageFor(p) { for (var i = 0; i < STAGES.length; i++) if (p < STAGES[i].p) return STAGES[i]; return { key: 'ready', label: 'Ready' }; }
-  var XP_PER_LEVEL = function (lvl) { return 60 + (lvl - 1) * 55; };
+  var XP_PER_LEVEL = function (lvl) { return 60 + (lvl - 1) * 55 + 35 * (lvl - 1) * (lvl - 1); };   /* level 10 on about day 24 of steady trade, not day 16 (docs/Balance.md) */
   var CUSTOMERS = [
     { who: 'Chill Chad', a: '🧑‍🌾', c: 0x4a7fbf }, { who: 'Nurse Nadia', a: '👩‍⚕️', c: 0xe9eef5 }, { who: 'Old Man Ferns', a: '🧓', c: 0x8a6b4a },
     { who: 'Festival Fi', a: '💃', c: 0xd64a9a }, { who: 'The Professor', a: '🧑‍🏫', c: 0x5a4a8a }, { who: 'Skater Sam', a: '🛹', c: 0x3aa36a }
@@ -192,9 +192,9 @@
   function fresh() {
     return {
       v: SAVE_V, bank: 220, xp: 0, level: 1, rep: 0,
-      till: 0, tips: 0, vault: 0, pocket: 0, box: { vend: 0, coffee: 0, arcade: 0 }, pending: [], courier: null,   // cash lives in places until you move it
+      till: 0, tips: 0, vault: 0, pocket: 0, pending: [], courier: null,   // cash lives in places until you move it
       units: { vending: 1, lobbyCoffee: 1, arcade: 1, fridge: 1 },   // how many of each machine the shop owns
-      storage: {}, vendStock: { drink: 12, snack: 12 }, coffeeStock: { cup: 40, beans: 40 }, order: null, deliveries: [],
+      storage: {}, order: null, deliveries: [],
       display: { lighter: 6, rpaper: 4, rgrinder: 1 }, noCustomersUntil: 0, courierBanUntil: 0,
       stock: { bags: {}, joints: {}, cookies: {} }, staff: { worker: false, task: 'idle', guardTask: 'door' },   // the back-room stock cabinet for packed goods; who works here and what they are on
       hotbar: [null, null, null, null, null, null], slot: 0,   // what you carry: six slots, the active one is what E and G act on   // counter display stock; cooldowns after trouble   // the back room and what the machines hold
@@ -425,7 +425,9 @@
     jointMarkup: 1.35,    // a pre-roll carries a convenience premium
     cookieShare: 0.40,    // one cookie is worth 0.40 x the gram it came from (six to a gram)
     excise: 0.15,         // sales tax inside the shelf price, held back and paid with the monthly bill
-    taxRate: 0.10         // business tax on the month's gross
+    taxRate: 0.10,        // business tax on the month's gross...
+    taxHighRate: 0.20,    // ...and on the part of a big month over taxHighFrom, so a finished shop still has a bill that grows with it
+    taxHighFrom: 60000
   };
   function gradeMult(q, thc) { return Math.pow((0.6 + (q / 100) * 0.8) * thc, ECON.gradeExp); }
   function premiumMult() { return 1 + Math.min(ECON.repCap, S.rep / 1000) + (hasLic('brand') ? ECON.brandBonus : 0) + (hasLic('latehours') && nightNow() ? ECON.lateBonus : 0) + (S.chill && S.chill.until > now() ? ECON.chillBonus : 0); }
@@ -520,7 +522,8 @@
     payWages(offline);
     monthlyTax(offline);
   }
-  function taxDue() { var B = books(); return Math.round(B.exciseDue + B.monthGross * ECON.taxRate); }
+  function bizTax(gross) { return Math.min(gross, ECON.taxHighFrom) * ECON.taxRate + Math.max(0, gross - ECON.taxHighFrom) * ECON.taxHighRate; }
+  function taxDue() { var B = books(); return Math.round(B.exciseDue + bizTax(B.monthGross)); }
   function taxDay() { return (Math.floor(((S.day || 1) - 1) / 28) + 1) * 28 + 1; }
   function monthlyTax(offline) {
     var B = books(), m = Math.floor(((S.day || 1) - 1) / 28) + 1;
@@ -549,7 +552,7 @@
   // ── Sim engine (same rules as the 2D game) ────────────────────────
   function step(dt, offline) {
     var L = lightObj(); var auto = !!S.upgrades.autowater;
-    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ var rolled = 0; while (S[dKey] >= 24) { if (offline && rolled >= 1) { S[dKey] %= 24; break; }   /* time away turns the calendar one day at most: the bills fall once, not once for every day the window was shut */ rolled++; S[dKey] -= 24; S.day = (S.day || 1) + 1; S.regDay = S.day; S.regSold = 0; payBills(offline); expansionNewDay(offline); if (binsFull()) { S.rep = Math.max(0, S.rep - 1); logEvent('🗑️ A full bin stood all night and the place smells of it (rep -1)', 'bad'); } if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(S.box.vend + S.box.coffee + S.box.arcade) + ' in the machines, ' + money(S.tips) + ' in the tip jar. Empty them into the vault.', ''); } }
+    { var dKey = SET.dayNight === 'cycle' ? 'clock' : 'dayAcc'; S[dKey] = (+S[dKey] || 0) + dt / 60 / (+SET.dayLength || 20) * 24;   /* with the sky pinned to one hour the days still pass, so rent, wages and tax still fall */ var rolled = 0; while (S[dKey] >= 24) { if (offline && rolled >= 1) { S[dKey] %= 24; break; }   /* time away turns the calendar one day at most: the bills fall once, not once for every day the window was shut */ rolled++; S[dKey] -= 24; S.day = (S.day || 1) + 1; S.regDay = S.day; S.regSold = 0; payBills(offline); expansionNewDay(offline); if (binsFull()) { S.rep = Math.max(0, S.rep - 1); logEvent('🗑️ A full bin stood all night and the place smells of it (rep -1)', 'bad'); } if (!offline) { logEvent('🌅 Day ' + S.day + ' begins', ''); toast('🌅 Day ' + S.day, ''); sfx('chime'); } var loose = S.till + coinTotal() + S.tips; if (loose > 0) logEvent('🧾 Overnight: ' + money(S.till) + ' in the till, ' + money(coinTotal()) + ' in the machines, ' + money(S.tips) + ' in the tip jar. Empty them into the vault.', ''); } }
     creditPending(offline); updateLogistics(dt, offline);
     // humidity: each room drifts toward its moisture load; a running dehumidifier pulls it down to its target
     var pull = S.upgrades.hvac ? 4.0 : S.upgrades.dehumid ? 1.6 : 0.8; var wetBatches = S.batches.filter(function (b) { return !b.cured; }).length;
@@ -664,7 +667,7 @@
   // ── Actions ───────────────────────────────────────────────────────
   function spend(n) { if (S.bank < n) { toast('Not enough in the bank (' + money(S.bank) + ' there)', 'bad'); return false; } S.bank -= n; return true; }
   // cash that is not in the bank yet: till, machine boxes, tip jar, vault and your pocket
-  function cashOnSite() { return S.till + S.box.vend + S.box.coffee + S.box.arcade + S.tips + S.vault + S.pocket; }
+  function cashOnSite() { return S.till + coinTotal() + S.tips + S.vault + S.pocket; }
   function takeCash(amount, what) { if (amount <= 0) { toast('Nothing in the ' + what, 'bad'); return false; } S.pocket += amount; sfx(what === 'till' ? 'drawer' : 'coins'); toast('👛 Took ' + money(amount) + ' from the ' + what + ' (pocket ' + money(S.pocket) + ')', 'good'); logEvent('👛 Emptied the ' + what + ': ' + money(amount), ''); return true; }
   function pendingDue(p) { return SET.dayNight === 'cycle' ? (S.day || 1) >= p.dueDay : now() >= p.dueAt; }
   function creditPending(offline) { if (!S.pending.length) return; var keep = []; S.pending.forEach(function (p) { if (pendingDue(p)) { S.bank += p.amount; logEvent('🏦 Bank deposit cleared: ' + money(p.amount), 'good'); if (!offline) toast('🏦 ' + money(p.amount) + ' landed in the bank', 'good'); } else keep.push(p); }); S.pending = keep; }
@@ -1860,18 +1863,59 @@
     });
     gg.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'goodsShelf'; });
   }
+  // ── The storage racking: four levels of six bays (A1 at the bottom left to D6 at the top right). An item keeps
+  // its bay while any of it is in stock, so crates never shuffle along when one runs out, and every bay has its
+  // label plate on the beam below it. Crates go back up by hand (E with a crate) and come down one at a time.
+  var RACK = { cols: 6, y: [0.12, 0.66, 1.2, 1.74], w: 3.0 };   /* 3 m long: it fits the annex wall to wall */
+  function rackBayX(i) { return -RACK.w / 2 + RACK.w / RACK.cols * (i % RACK.cols + 0.5); }
+  function rackBayY(i) { return RACK.y[Math.floor(i / RACK.cols)]; }
+  function rackBayCode(i) { return 'ABCD'.charAt(Math.floor(i / RACK.cols)) + (i % RACK.cols + 1); }
+  function rackBays() {   // item -> bay, kept in the save; a bay is freed when its item runs out
+    var X = xs(); if (!X.bays || typeof X.bays !== 'object') X.bays = {};
+    var B = X.bays, n = RACK.cols * RACK.y.length;
+    Object.keys(B).forEach(function (k) { if (!((S.storage[k] || 0) > 0) || !(B[k] >= 0 && B[k] < n)) delete B[k]; });
+    Object.keys(S.storage).forEach(function (k) {
+      if (!((S.storage[k] || 0) > 0) || B[k] !== undefined) return;
+      var used = {}; Object.keys(B).forEach(function (q) { used[B[q]] = true; });
+      for (var i = 0; i < n; i++) if (!used[i]) { B[k] = i; break; }
+    });
+    return B;
+  }
+  function rackFront(k) {   // where to stand to reach an item's bay
+    var i = rackBays()[k]; if (i === undefined || !propInst.storeRack) return { x: WP.annex.x, z: WP.annex.z };
+    var v = propWorld('storeRack', rackBayX(i), 0.8); return { x: v.x, z: v.z };
+  }
+  function rackCrate() {   // the crate in your hands goes back up, into its item's bay
+    var h = held(); if (!h || h.kind !== 'crate') return false;
+    S.storage[h.item] = (S.storage[h.item] || 0) + h.n; S.held = null; world.dirtyStorage = true;
+    var i = rackBays()[h.item]; sfx('putdown');
+    toast('📦 Racked ' + h.n + ' × ' + itemName(h.item) + (i !== undefined ? ' in bay ' + rackBayCode(i) : ' (the racking is full, so it is in the stock list)'), 'good'); save();
+    return true;
+  }
+  function crateMesh(id, w, h, d) {   // a taped kraft carton with the item's icon on its face
+    var G = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), prodMat('crateKraft', function () { return new THREE.MeshStandardMaterial({ color: 0xa8804a, roughness: 0.9 }); })); body.castShadow = true; G.add(body);
+    var tape = new THREE.Mesh(new THREE.BoxGeometry(w + 0.01, 0.025, d + 0.01), prodMat('crateTape', function () { return new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.9 }); })); G.add(tape);
+    var face = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, h) * 0.7, Math.min(w, h) * 0.7), prodMat('crateIco' + id, function () { return new THREE.MeshBasicMaterial({ map: textTex([itemIcon(id)], 96, 96, { size: 64, bg: '#f3e9cf', line: 'rgba(0,0,0,0)' }), transparent: true }); }));
+    face.position.z = d / 2 + 0.002; G.add(face);
+    return G;
+  }
   function syncStorage() {
     var inst = propInst.storeRack; if (!inst) return;
     var gg = inst.ctx.dynGroup(); clearKids(gg);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'storage'; });
-    var ids = Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }); var slotsY = [0.265, 0.965, 1.665];
-    ids.slice(0, 15).forEach(function (id, i) {
-      var col = i % 5, row = Math.floor(i / 5); var x = -1.28 + col * 0.64, y = slotsY[row];
-      var n = S.storage[id], stacks = Math.min(3, Math.ceil(n / itemPack(id)));
-      for (var s = 0; s < stacks; s++) { var crate = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.28, 0.36), colorMat(0xc9a96a, 0.9)); crate.position.set(x, y + 0.14 + s * 0.29, 0); crate.castShadow = true; gg.add(crate); var tape = new THREE.Mesh(new THREE.BoxGeometry(0.41, 0.03, 0.37), colorMat(0x8a6a3a, 0.9)); tape.position.set(x, y + 0.14 + s * 0.29, 0); gg.add(tape); }
-      var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.12), new THREE.MeshBasicMaterial({ map: textTex([itemIcon(id) + ' ' + itemName(id), n + ' in stock'], 240, 76, { size: 24, bg: '#f3e9cf', color: '#222', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(x, y + 0.14, 0.185); gg.add(lbl);
-      var hit = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.3 * stacks + 0.1, 0.4), MAT.none); hit.position.set(x, y + 0.15 * stacks + 0.05, 0); gg.add(hit); interactable(hit, { kind: 'storeItem', item: id }); hit.userData.dynGroup = 'storage'; hit.userData.propId = 'storeRack';
-    });
+    var B = rackBays(), byBay = {}; Object.keys(B).forEach(function (k) { byBay[B[k]] = k; });
+    var plateOpt = { size: 30, bg: '#f7f3e6', color: '#1c1f24', titleColor: '#1c1f24', line: 'rgba(0,0,0,0)' };
+    for (var i = 0; i < RACK.cols * RACK.y.length; i++) {
+      var x = rackBayX(i), y = rackBayY(i), id = byBay[i], code = rackBayCode(i);
+      var plateM = id ? new THREE.MeshBasicMaterial({ map: textTex([code + '  ' + itemIcon(id) + ' ' + itemName(id) + '  ×' + S.storage[id]], 500, 90, plateOpt) })
+        : prodMat('bayPlate' + code, function () { return new THREE.MeshBasicMaterial({ map: textTex([code + '  empty'], 500, 90, Object.assign({}, plateOpt, { color: '#8a8f96', titleColor: '#8a8f96' })) }); });
+      var plate = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.09), plateM); plate.position.set(x, y - 0.035, 0.296); gg.add(plate);
+      if (!id) continue;
+      var stacks = Math.min(2, Math.ceil(S.storage[id] / itemPack(id)));
+      for (var s = 0; s < stacks; s++) { var cr = crateMesh(id, 0.36, 0.2, 0.3); cr.position.set(x, y + 0.11 + s * 0.21, 0.04); gg.add(cr); }
+      var hit = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.21 * stacks + 0.1, 0.42), MAT.none); hit.position.set(x, y + 0.105 * stacks + 0.05, 0.02); gg.add(hit); interactable(hit, { kind: 'storeItem', item: id, bay: i }); hit.userData.dynGroup = 'storage'; hit.userData.propId = 'storeRack';
+    }
     gg.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'storeRack'; });
   }
   function syncDisplay() {
@@ -2150,7 +2194,7 @@
     var cs = NAV.cell; NAV.w = Math.ceil(26 / cs) + 1; NAV.h = Math.ceil(33 / cs) + 1;
     var grid = new Uint8Array(NAV.w * NAV.h), raw = new Uint8Array(NAV.w * NAV.h), staff = new Uint8Array(NAV.w * NAV.h), pad = NAV.pad;
     world.obstacles.forEach(function (o) {
-      if ((o.floorLevel || 0) === 1 || o.floorLevel === -1 || o.tag === 'guard') return;
+      if (((o.floorLevel || 0) !== 0 && o.floorLevel !== 'any') || o.tag === 'guard') return;   /* ground floor only: the roof beds (level 2) once walled off the hall */
       var isDoor = !!o.doorId || o.tag === 'staffdoor' || o.tag === 'frontdoor';
       var dd = o.doorId ? doorById[o.doorId] : null;
       var blocks = !isDoor || !!(dd && dd.locked);   /* a shut door you can open is not a wall; a locked one is */
@@ -2262,7 +2306,7 @@
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; rec.h.add(hb); interactable(hb, { kind: 'worker', idx: rec.idx });
   }
   function removeWorker(rec) {
-    rec = rec || worker; if (!rec.g) return;
+    rec = rec || worker; carryBack(rec, true); if (!rec.g) return;   /* a crate in their arms goes back into storage; the caller settles the saved record */
     rec.hasBroom = false; rec.broomMesh = null; syncBroom();
     world.group.remove(rec.g); disposeTree(rec.g);
     world.interact = world.interact.filter(function (m) { var d = m.userData.interact; return !(d && d.kind === 'worker' && (d.idx || 0) === (rec.idx || 0)); });   /* this one's hit box, not everybody's */
@@ -2275,9 +2319,9 @@
     crew = crew.filter(function (r) { return r.idx < list.length; });
     list.forEach(function (c, i) {
       var r = crew.filter(function (x) { return x.idx === i; })[0];
-      if (!r) { r = { idx: i, look: c.look, g: null, h: null, state: 'idle', path: [], t: 0, job: null, bubble: null, sayT: 0, idleT: 0, coolT: 0, hasBroom: false }; crew.push(r); }
+      if (!r) { r = { idx: i, look: c.look, g: null, h: null, state: 'idle', path: [], t: 0, job: null, bubble: null, sayT: 0, idleT: 0, coolT: 0, hasBroom: false }; crew.push(r); if (c.carry) { S.storage[c.carry.item] = (S.storage[c.carry.item] || 0) + c.carry.n; syncStorage(); } c.carry = null; }   /* a crate that was in their arms when the game was saved is back on the racking */
       r.look = c.look;
-      if (c.off) { removeWorker(r); r.job = null; r.path = []; r.state = 'idle'; } else buildWorker(r);
+      if (c.off) { removeWorker(r); c.carry = null; r.job = null; r.path = []; r.state = 'idle'; } else buildWorker(r);
     });
     crew.sort(function (a, b) { return a.idx - b.idx; });
     worker = crew[0] || WORKER_NONE;
@@ -2381,16 +2425,73 @@
   }
   function workerTakeBroom() { if (worker.hasBroom || !worker.h) return; var el = worker.h.userData.parts.rArm.userData.elbow; var bg = new THREE.Group(); bg.position.set(0.04, -0.32, 0.08); bg.rotation.x = 0.35; bg.rotation.z = -0.15; var hd = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 1.25, 8), MAT.wood); hd.position.y = 0.15; bg.add(hd); var head = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.05, 0.32), MAT.darkwood); head.position.y = -0.5; bg.add(head); for (var k = 0; k < 8; k++) { var br = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.2, 0.03), colorMat(k % 2 ? 0xb8925a : 0xa8843f, 1)); br.position.set(0, -0.62, -0.14 + k * 0.04); bg.add(br); } el.add(bg); worker.broomMesh = bg; worker.hasBroom = true; syncBroom(); sfx('pickup'); workerSay('got the broom', '#6fdc8c'); }
   function workerDropBroom() { if (!worker.hasBroom) return; if (worker.broomMesh && worker.broomMesh.parent) worker.broomMesh.parent.remove(worker.broomMesh); worker.broomMesh = null; worker.hasBroom = false; syncBroom(); sfx('putdown'); }
-  function workerRestock() {
-    var moved = []; Object.keys(S.storage).forEach(function (k) { var n = S.storage[k] || 0; if (n <= 0) return; var st = supplyById(k); var dest = k.indexOf('seed_') === 0 ? 'rack' : st && st.stock === 'vend' ? 'vend' : st && st.stock === 'coffee' ? 'coffee' : st && st.stock === 'display' ? 'display' : 'rack';
-      if (dest === 'rack') S.supplies[k] = (S.supplies[k] || 0) + n; else if (dest === 'vend') S.vendStock[k] = (S.vendStock[k] || 0) + n; else if (dest === 'coffee') S.coffeeStock[k] = (S.coffeeStock[k] || 0) + n; else S.display[k] = (S.display[k] || 0) + n;
-      S.storage[k] = 0; moved.push(n + ' ' + itemName(k)); });
-    syncStorage(); syncDisplay(); if (typeof syncRack === 'function') syncRack(); sfx('putdown'); if (moved.length) { toast('📦 ' + crewName(worker.idx) + ' put away: ' + moved.join(', '), 'good'); logEvent('📦 ' + crewName(worker.idx) + ' restocked: ' + moved.join(', '), ''); } world.dirty = true;
+  // ── Restocking, one crate at a time ──
+  // A crew member fetches one crate from its bay on the storage racking, carries it in both arms to where it goes,
+  // opens the machine, loads it, shuts it again and goes back for the next. They never touch a machine's coins.
+  function restockDest(k) {   // where a crate of k goes: the emptiest machine of its kind, the counter display or the supply rack; null if nowhere
+    var st = supplyById(k), kind = k.indexOf('seed_') === 0 ? 'rack' : st && st.stock === 'vend' ? 'vend' : st && st.stock === 'coffee' ? 'coffee' : st && st.stock === 'display' ? 'display' : 'rack';
+    if (kind === 'vend' || kind === 'coffee') {
+      var us = builtUnits(kind === 'vend' ? 'vending' : 'lobbyCoffee'); if (!us.length) return null;
+      var u = us.reduce(function (b, x) { return (machStock(x)[k] || 0) < (machStock(b)[k] || 0) ? x : b; });
+      var f = propFront(u, 0.8); return { kind: kind, unit: u, x: f.x, z: f.z, yaw: f.yaw };
+    }
+    if (kind === 'display') return { kind: 'display', x: WP.counter.x + 1.2, z: WP.counter.z, yaw: 0 };   /* behind the counter, reaching over to the display */
+    if (!propInst.rack) return null;
+    var fr = propFront('rack', 0.75); return { kind: 'rack', x: fr.x, z: fr.z, yaw: fr.yaw };
+  }
+  function restockNext() { return Object.keys(S.storage).filter(function (k) { return (S.storage[k] || 0) > 0 && restockDest(k); })[0] || null; }
+  function carrySet(rec, c, unsaved) {   // what a crew member has in their arms; kept on their saved record so a reload never loses it
+    var saved = !unsaved && crewList()[rec.idx]; if (saved) saved.carry = c ? { item: c.item, n: c.n } : null;
+    if (rec.carryMesh && rec.carryMesh.parent) { rec.carryMesh.parent.remove(rec.carryMesh); disposeTree(rec.carryMesh); }
+    rec.carryMesh = null; rec.carry = c || null;
+    if (c && rec.h) { var m = crateMesh(c.item, 0.4, 0.26, 0.32); m.position.set(0, 0.3, 0.3); rec.h.userData.parts.torso.add(m); rec.carryMesh = m; }
+  }
+  function carryBack(rec, unsaved) {   // a crate still in their arms goes back into storage
+    if (!rec || !rec.carry) return; var c = rec.carry; S.storage[c.item] = (S.storage[c.item] || 0) + c.n; carrySet(rec, null, unsaved); syncStorage();
+  }
+  function carryPose() {   // both arms forward, hands under the crate
+    if (!worker.carry || !worker.h) return; var P = worker.h.userData.parts;
+    P.lArm.rotation.x = P.rArm.rotation.x = -0.5; P.lArm.rotation.z = P.rArm.rotation.z = 0;
+    P.lArm.userData.elbow.rotation.x = P.rArm.userData.elbow.rotation.x = -0.6;
+  }
+  function restockTake(k) {   // at the bay: one crate down off the racking
+    var have = S.storage[k] || 0; if (have <= 0) return;
+    var n = Math.min(have, itemPack(k)); S.storage[k] = have - n; carrySet(worker, { item: k, n: n }); syncStorage(); sfx('crate');
+  }
+  function restockArrive(d) {   // at the machine: open it, load the crate, shut it; at the rack or the display: put it in
+    var rec = worker, c = rec.carry; if (!c) return; if (rec.g) rec.g.rotation.y = d.yaw;
+    var what = c.n + ' × ' + itemName(c.item);
+    if (d.kind === 'vend' || d.kind === 'coffee') {
+      var M = machState(d.unit), key = d.kind === 'vend' ? 'vendDoor' : 'coffDoor', wasOpen = !!M[key];
+      if (!wasOpen) { M[key] = true; sfx('drawer'); if (d.kind === 'vend') vendDisplay(d.unit, 'SERVICE'); }
+      rec.next = { x: d.x, z: d.z, dur: 1.6, done: function () {
+        var st = machStock(d.unit); st[c.item] = (st[c.item] || 0) + c.n; carrySet(rec, null); sfx('putdown');
+        if (d.kind === 'vend') syncVending(d.unit); else syncCoffee(d.unit);
+        logEvent('📦 ' + crewName(rec.idx) + ' loaded ' + what + ' into the ' + (d.kind === 'vend' ? 'vending' : 'coffee') + ' machine', '');
+        rec.next = { x: d.x, z: d.z, dur: 0.8, done: function () { if (!wasOpen) { M[key] = false; sfx('close'); if (d.kind === 'vend') vendDisplay(d.unit, 'READY'); } save(); } };   /* shut it again, unless you had it open */
+      } };
+      return;
+    }
+    rec.next = { x: d.x, z: d.z, dur: 1.2, done: function () {
+      if (d.kind === 'display') { S.display[c.item] = (S.display[c.item] || 0) + c.n; syncDisplay(); }
+      else { S.supplies[c.item] = (S.supplies[c.item] || 0) + c.n; syncRack(); }
+      carrySet(rec, null); sfx('putdown'); logEvent('📦 ' + crewName(rec.idx) + ' put ' + what + (d.kind === 'display' ? ' in the counter display' : ' on the supply rack'), ''); save();
+    } };
+  }
+  function restockJob() {
+    if (worker.carry) {   /* a crate in their arms: take it where it goes, or back up if there is nowhere for it now */
+      var d = restockDest(worker.carry.item);
+      if (!d) { var rf = rackFront(worker.carry.item); return { x: rf.x, z: rf.z, dur: 1.0, done: function () { carryBack(worker); sfx('putdown'); } }; }
+      return { x: d.x, z: d.z, dur: 0.4, done: function () { restockArrive(d); } };
+    }
+    var k = restockNext(); if (!k) return null;
+    var f = rackFront(k); return { x: f.x, z: f.z, dur: 1.2, done: function () { restockTake(k); } };
   }
   function workerNextJob(task) {
     var g = worker.g; function near(x, z) { return Math.hypot(g.position.x - x, g.position.z - z) < 0.35; }
+    if (worker.carry && task !== 'restock') { var bf = rackFront(worker.carry.item); return { x: bf.x, z: bf.z, dur: 1.0, done: function () { carryBack(worker); sfx('putdown'); } }; }   /* given another job mid-errand: the crate goes back up first */
     if (task === 'serve') { var c = S.customer; if (c && c.arrived && !c.stage && !c.idPending && npc.state === 'wait' && now() > worker.coolT) {   /* a card still held out is yours to check: the crew waits */ var gp = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: propPlacement('goodsShelf').x, z: propPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
-    if (task === 'restock') { if (Object.keys(S.storage).some(function (k) { return S.storage[k] > 0; })) return { x: WP.annex.x, z: WP.annex.z, dur: 3, done: workerRestock }; if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null; }
+    if (task === 'restock') { var rj = restockJob(); if (rj) return rj; if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null; }
     if (task !== 'clean' && worker.hasBroom) return { x: ROOM.x - 0.65, z: -0.85, dur: 0.6, done: workerDropBroom };
     if (task === 'clean' && !worker.hasBroom) { if (!dustList().length) return null; return { x: ROOM.x - 0.65, z: -0.85, dur: 0.8, done: workerTakeBroom }; }
     if (task === 'clean' && worker.hasBroom && !dustList().length) return { x: ROOM.x - 0.65, z: -0.85, dur: 0.6, done: workerDropBroom };
@@ -2411,9 +2512,9 @@
   function updateOneWorker(dt) {
     if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0, true); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = now() + 6000; workerSay(crewLine('locked'), '#ffc857', 2600); } }   /* a locked door is the end of that errand, not something to walk through */
     if (!worker.g) buildWorker(); var g = worker.g, spd = 1.5;
-    if (worker.state === 'walk') { if (walkAlong(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animateHuman(worker.h, dt, 'walk', spd, null); return; }
-    if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z, 'staff'); worker.state = 'walk'; } } return; }
-    animateHuman(worker.h, dt, 'idle', 0, player.pos); worker.idleT += dt; if (worker.idleT < 0.7) return; worker.idleT = 0;
+    if (worker.state === 'walk') { if (walkAlong(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animateHuman(worker.h, dt, 'walk', spd, null); carryPose(); return; }
+    if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.carry) carryPose(); else if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z, 'staff'); worker.state = 'walk'; } } return; }
+    animateHuman(worker.h, dt, 'idle', 0, player.pos); carryPose(); worker.idleT += dt; if (worker.idleT < 0.7) return; worker.idleT = 0;
     var task = (crewList()[worker.idx] || {}).task || 'idle';
     var job = workerNextJob(task);
     if (!job && task !== 'idle') {   /* nothing to do is not the same as broken: say so */
@@ -2770,7 +2871,7 @@
     cigLS: { name: 'RF Smoking Light 10s', type: 'light',  size: 10, price: 8,  col: 0xdfe6ee, top: 0x2f6b9a },
     cigLB: { name: 'RF Smoking Light 20s', type: 'light',  size: 20, price: 14, col: 0xdfe6ee, top: 0x2f6b9a }
   };
-  var TOB = { growT: 200, sowCost: 20, bayKg: 2, kilnMax: 8, kilnT: 60, cureYield: 0.2, shredKgS: 0.02, stickKg: { normal: 0.0008, light: 0.0006 }, sticksS: 6, packS: 1.2, matCost: 50, matUnits: 100, carton: 10 };
+  var TOB = { wholesale: 0.5, driverShare: 0.45, growT: 200, sowCost: 20, bayKg: 2, kilnMax: 8, kilnT: 60, cureYield: 0.2, shredKgS: 0.02, stickKg: { normal: 0.0008, light: 0.0006 }, sticksS: 6, packS: 1.2, matCost: 50, matUnits: 100, carton: 10 };
   var tobUI = { signs: {}, bays: [], beacons: {}, spin: [], beltItems: [], rackG: null, kilnGlow: null, t: 0, fade: null };
   function tobFresh() { return { bays: [{ stage: 'empty', t: 0 }, { stage: 'empty', t: 0 }, { stage: 'empty', t: 0 }, { stage: 'empty', t: 0 }], leaf: 0, kiln: { on: false, kg: 0, t: 0 }, cured: 0, shred: { on: false }, cut: 0, maker: { on: false, mode: 'normal' }, sticks: { normal: 0, light: 0 }, packer: { on: false, size: 10, type: 'normal', t: 0 }, mat: 0, packs: { cigNS: 0, cigNB: 0, cigLS: 0, cigLB: 0 }, made: 0 }; }
   function tob() { if (!S.tob || !S.tob.bays) S.tob = tobFresh(); return S.tob; }
@@ -4091,7 +4192,7 @@
   }
   function expansionNewDay(offline) {
     var X = xs(), wages = (X.staff.driver ? 90 : 0) + (X.staff.operator ? 80 : 0) + (X.staff.night ? 70 : 0); if (wages) { var wPaid = drawFunds(wages); if (wages - wPaid > 0.5) books().arrears += wages - wPaid; if (!offline) logEvent('💼 Extra staff wages: ' + money(wages), ''); }
-    if (X.staff.driver) { var T = tob(), val = 0, n = 0; CIG_KEYS.forEach(function (k) { var sell = Math.max(0, T.packs[k] - COST.driverKeep); n += sell; val += sell * CIG_SKUS[k].price * 0.55; T.packs[k] -= sell; });   /* he leaves a few of each kind on the rack so the round jobs can still be filled */ if (n) { S.bank += Math.round(val); bookSale(Math.round(val)); syncTobRack(); if (!offline) { logEvent('🚚 Your driver sold ' + n + ' packs wholesale for ' + money(Math.round(val)), 'good'); toast('🚚 Driver: ' + n + ' packs wholesaled · ' + money(Math.round(val)), 'good'); } } }
+    if (X.staff.driver) { var T = tob(), val = 0, n = 0; CIG_KEYS.forEach(function (k) { var sell = Math.max(0, T.packs[k] - COST.driverKeep); n += sell; val += sell * CIG_SKUS[k].price * TOB.driverShare; T.packs[k] -= sell; });   /* a little under the tobacconist: he saves you the drive */   /* he leaves a few of each kind on the rack so the round jobs can still be filled */ if (n) { S.bank += Math.round(val); bookSale(Math.round(val)); syncTobRack(); if (!offline) { logEvent('🚚 Your driver sold ' + n + ' packs wholesale for ' + money(Math.round(val)), 'good'); toast('🚚 Driver: ' + n + ' packs wholesaled · ' + money(Math.round(val)), 'good'); } } }
     if (X.branch) { var bu = Math.min(BRANCH_CAP, X.branchUnits || 0), inc = Math.round(bu * BRANCH_PAY + Math.max(0, S.rep) * 2); X.branchUnits = 0; S.bank += inc; bookSale(inc); logEvent('🏪 Green Leaf (your branch) sent over ' + money(inc) + ': ' + bu + ' units you dropped off at ' + money(BRANCH_PAY) + ' each, plus ' + money(Math.max(0, S.rep) * 2) + ' on your name', inc > 0 ? 'good' : ''); if (!offline) toast('🏪 Branch takings: ' + money(inc) + (bu ? '' : ' (nothing dropped off yesterday, stock it at the blue beacon)'), bu ? 'good' : ''); }
     if (!offline && weekend()) toast('📅 It\'s the weekend. Expect more people through the door.', ''); if (!offline && (S.day % 28) === 25) toast('🎉 Holiday week starts. Footfall is up by half.', 'rare');
   }
@@ -4112,7 +4213,7 @@
     ctxOpen('🧪 Extraction lab', 'carts, gummies and chocolate from bud of any quality', lines);
   }
   function rosterMenu() {
-    var X = xs(), lines = []; [['driver', '🚚 Driver', 90, 'wholesales every pack above ' + COST.driverKeep + ' of each kind each morning (55%), and runs phone deliveries for you · counts as staff on the payroll'], ['operator', '🏭 Basement operator', 80, 'sows and cuts the bays, keeps the machines on, reorders materials · covers the two staff the basement needs'], ['night', '🌙 Night guard', 70, 'nobody breaks into the basement or strips the roof beds · counts as staff on the payroll']].forEach(function (s) { var on = X.staff[s[0]]; lines.push({ label: s[1] + ' · ' + money(s[2]) + ' a day <small>' + s[3] + '</small>', cls: on ? 'on' : '', act: function () { X.staff[s[0]] = !on; sfx('click'); toast(s[1] + (on ? ' let go' : ' hired'), on ? '' : 'good'); save(); } }); });
+    var X = xs(), lines = []; [['driver', '🚚 Driver', 90, 'wholesales every pack above ' + COST.driverKeep + ' of each kind each morning (' + Math.round(TOB.driverShare * 100) + '%), and runs phone deliveries for you · counts as staff on the payroll'], ['operator', '🏭 Basement operator', 80, 'sows and cuts the bays, keeps the machines on, reorders materials · covers the two staff the basement needs'], ['night', '🌙 Night guard', 70, 'nobody breaks into the basement or strips the roof beds · counts as staff on the payroll']].forEach(function (s) { var on = X.staff[s[0]]; lines.push({ label: s[1] + ' · ' + money(s[2]) + ' a day <small>' + s[3] + '</small>', cls: on ? 'on' : '', act: function () { X.staff[s[0]] = !on; sfx('click'); toast(s[1] + (on ? ' let go' : ' hired'), on ? '' : 'good'); save(); } }); });
     ctxOpen('💼 Staff roster', 'wages come out at the start of each day', lines);
   }
   function wsPlaceMenu(poi) {   // the generic counter behind a pack place: a discount shop list, a paid service, or both
@@ -4137,8 +4238,8 @@
   function expPoiMenu(poi) {
     var X = xs(), lines = [];
     if (wsPlaceMenu(poi)) return true;
-    if (poi === 'tobac') { var near = carNear(40, 14, 30), n = 0, val = 0, vs = carState(); Object.keys(vs.cigs).forEach(function (k) { n += vs.cigs[k]; val += vs.cigs[k] * CIG_SKUS[k].price * 0.6; }); val = Math.round(val);
-      lines.push({ label: '🚬 Sell the ' + n + ' packs in your car · ' + money(val) + ' <small>60% of shop price, paid straight to the bank' + (near ? '' : ' · bring the car round') + '</small>', cls: n && near ? '' : 'muted', act: n && near ? function () { S.bank += val; bookSale(val); vs.cigs = {}; S.stats.wholesale = (S.stats.wholesale || 0) + val; sfx('cash'); toast('🚬 Wholesaled ' + n + ' packs for ' + money(val), 'good'); logEvent('🚬 Wholesaled ' + n + ' packs to the Corner Tobacconist for ' + money(val), 'good'); hud(); save(); } : null });
+    if (poi === 'tobac') { var near = carNear(40, 14, 30), n = 0, val = 0, vs = carState(); Object.keys(vs.cigs).forEach(function (k) { n += vs.cigs[k]; val += vs.cigs[k] * CIG_SKUS[k].price * TOB.wholesale; }); val = Math.round(val);
+      lines.push({ label: '🚬 Sell the ' + n + ' packs in your car · ' + money(val) + ' <small>' + Math.round(TOB.wholesale * 100) + '% of shop price, paid straight to the bank' + (near ? '' : ' · bring the car round') + '</small>', cls: n && near ? '' : 'muted', act: n && near ? function () { S.bank += val; bookSale(val); vs.cigs = {}; S.stats.wholesale = (S.stats.wholesale || 0) + val; sfx('cash'); toast('🚬 Wholesaled ' + n + ' packs for ' + money(val), 'good'); logEvent('🚬 Wholesaled ' + n + ' packs to the Corner Tobacconist for ' + money(val), 'good'); hud(); save(); } : null });
       lines.push({ label: 'Load cartons at home: Shift+E on the car or the van.', cls: 'muted' }); ctxOpen('🚬 Corner Tobacconist', 'he takes as many RF Smoking cartons as you can bring', lines); return true; }
     if (poi === 'police') { var h = Math.round(X.heat), cost = 100 + h * 8; lines.push({ label: '🌡️ Your heat: ' + h + ' / 100 <small>' + (h >= 60 ? 'inspections are coming' : h >= 30 ? 'they have noticed you' : 'nobody is looking at you') + ' · park deals, fines and shootings raise it, time lowers it</small>', cls: 'muted' });
       lines.push({ label: '🤝 Donate ' + money(cost) + ' to the benevolent fund <small>heat -30</small>', cls: h > 0 && S.bank >= cost ? '' : 'muted', act: h > 0 && S.bank >= cost ? function () { S.bank -= cost; X.heat = Math.max(0, X.heat - 30); exp.heatBand = 0; sfx('cash'); toast('🤝 A generous citizen. Heat down to ' + Math.round(X.heat), 'good'); hud(); save(); } : null }); ctxOpen('🚔 Police precinct', 'front desk', lines); return true; }
@@ -4334,6 +4435,16 @@
     return '<p>Step <b>' + (I.i + 1) + ' of ' + INTRO_STEPS.length + '</b>: ' + INTRO_STEPS[I.i].t + '</p><p class="desc">Finish every step and ' + money(INTRO_BONUS) + ' goes into the bank. Skipping costs you the bonus; the guide stays available either way.</p><div class="g3-chips"><button class="g3-btn danger" data-act="introSkip">Skip the intro</button></div>';
   }
   // ── Robberies: four kinds of trouble, each running in stages: casing the lobby, masking up, the demand, an escalation, a second target in the back, the getaway ──
+  // a robber takes everything in the till and the tip jar, so a heavy till says so: the vault readout turns amber and, once a day, a word of warning
+  var TILL_HEAVY = 250;
+  function tillHeavy() { return (S.till || 0) + (S.tips || 0) >= TILL_HEAVY; }
+  function tillWatch() {
+    if (!tillHeavy() || S.tillWarnDay === S.day) return;
+    S.tillWarnDay = S.day; var amt = money((S.till || 0) + (S.tips || 0));
+    toast('🧾 The till and the tip jar hold ' + amt + '. A robber takes all of it: empty them into the vault, or book the courier.', 'bad');
+    logEvent('🧾 ' + amt + ' sitting in the till and the tip jar', 'bad');
+    if (guard.h && !guardOff() && guard.say) guard.say('That till\'s getting heavy, boss.', '#ffc857', 3000);
+  }
   var ROB_KINDS = {
     snatch: { label: 'snatch thief', armed: false, weapon: null,      speed: 2.7, demandT: 0,  bat: 1,    pepper: 1,    taser: 1,    guard: 0.25 },
     knife:  { label: 'knife robber', armed: true,  weapon: 'knife',   speed: 2.4, demandT: 13, bat: 0.65, pepper: 0.85, taser: 0.95, guard: 0 },
@@ -4840,9 +4951,8 @@
   function builtUnits(base) { return unitIds(base).filter(function (u) { return propInst[u] && !propPlacement(u).hidden; }); }
   function lobbyStop(kind, unit) {
     var t = LOBBY_STOPS[kind], open = unit ? [unit] : builtUnits(t.prop); if (!open.length) return null;
-    var P = propPlacement(pick(open)), r = ((P.rot % 4) + 4) % 4;
-    var dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r];   // the prop's front, in quarter turns: 0 is +z
-    return { x: P.x + dx * t.off, z: P.z + dz * t.off, yaw: Math.atan2(-dx, -dz), dur: t.dur, act: t.act };
+    var u = pick(open), f = propFront(u, t.off);
+    return { x: f.x, z: f.z, yaw: f.yaw, dur: t.dur, act: t.act, unit: u };
   }
   function freeLoungeSeat() {
     var free = LOUNGE_SEATS.filter(function (s) { return propInst[s.prop] && !loungers.some(function (l) { return l.seat === s; }); });
@@ -4858,8 +4968,8 @@
   function unitRoll(n, p) { for (var i = 0; i < Math.min(3, n); i++) if (Math.random() < p) return true; return false; }   // one roll per machine standing, up to three: a second machine catches people the first one missed
   function planFor(c) {
     var plan = [];
-    if (hasLic('catering') && vendKeys().length && unitRoll(builtUnits('vending').length, 0.35)) plan.push({ kind: 'vend' });
-    if (hasLic('catering') && S.upgrades.lobby && S.coffeeStock.cup > 0 && S.coffeeStock.beans > 0 && unitRoll(builtUnits('lobbyCoffee').length, 0.4)) plan.push({ kind: 'coffee' });
+    if (hasLic('catering')) { var vus = builtUnits('vending').filter(function (u) { return vendKeys(u).length; }); if (unitRoll(vus.length, 0.35)) plan.push({ kind: 'vend', unit: pick(vus) }); }   /* only a machine with something on its racks draws anyone */
+    if (hasLic('catering') && S.upgrades.lobby) { var cus = builtUnits('lobbyCoffee').filter(coffReady); if (unitRoll(cus.length, 0.4)) plan.push({ kind: 'coffee', unit: pick(cus) }); }
     if (hasLic('catering')) { var frs = lobbyFridges(); if (unitRoll(frs.length, 0.3)) plan.push({ kind: 'fridge', unit: pick(frs) }); }   /* a cold can from a fridge stood out in the lobby */
     if (hasLic('amusement') && unitRoll(builtUnits('arcade').length, 0.25)) plan.push({ kind: 'arcade' });
     if (hasLic('lounge') && c.want === 'joints' && Math.random() < 0.4) { var seat = freeLoungeSeat(); if (seat) plan.push({ kind: 'bench', seat: seat }); }
@@ -4897,38 +5007,39 @@
       var jd = lotDraw('joints', jid, 1), jp = Math.max(1, Math.round(jointPrice(jd.q, jd.thc))); S.till += jp; bookSale(jp); S.stats.sold++; syncGoods();
       logEvent('🪑 ' + l.who + ' bought a ' + strainById(jid).name + ' joint to smoke in the lounge (' + money(jp) + ' in the till)', '');
       l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
-    else { var s = lobbyStop(st.kind, st.unit); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useUnit = st.unit; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
+    else { var s = lobbyStop(st.kind, st.unit); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useUnit = s.unit; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
   }
   // the machine does its thing: you get paid, they get something to hold
   function lobbyServe(l) {
     var le = l.h.userData.parts.lArm.userData.elbow;
     if (l.useKind === 'arcade') {
-      S.box.arcade += 1; S.stats.arcade = (S.stats.arcade || 0) + 1; sfx('arcade');
+      coinPay(l.useUnit || 'arcade', 1); S.stats.arcade = (S.stats.arcade || 0) + 1; sfx('arcade');
       loungerSay(l, pick(['One more go.', 'High score.', 'Argh, so close.']), '#ffd166'); logEvent('🕹️ ' + l.who + ' played the arcade (+$1 in the coin box)', '');
       return;
     }
-    if (l.useKind === 'fridge') {   // $2 a can out of the fridge they walked up to, into the vending box
+    if (l.useKind === 'fridge') {   // $2 a can out of the fridge they walked up to, into that fridge's coin box
       var FM = machState(l.useUnit || 'fridge');
       if ((FM.fridge || 0) <= 0) { loungerSay(l, 'Fridge is empty?', '#ff6b6b'); logEvent('🧊 ' + l.who + ' found the drinks fridge empty', 'bad'); return; }
-      FM.fridge--; S.box.vend += 2; S.stats.fridge = (S.stats.fridge || 0) + 1; sfx('pickup'); syncFridge(l.useUnit || 'fridge');
+      FM.fridge--; coinPay(l.useUnit || 'fridge', 2); S.stats.fridge = (S.stats.fridge || 0) + 1; sfx('pickup'); syncFridge(l.useUnit || 'fridge');
       var cold = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(0x3ad0ff, 0.4, 0.3)); cold.position.set(0, -0.37, 0.03); le.add(cold);
       loungerSay(l, pick(['Ice cold.', 'Cheers.', 'Just what I needed.']), '#e8f1ea');
-      toast('🧊 ' + l.who + ' took a cold drink from the fridge (+$2 in the vending box)', ''); logEvent('🧊 ' + l.who + ' bought a cold drink from the fridge (+$2)', '');
+      toast('🧊 ' + l.who + ' took a cold drink from the fridge (+$2 in its coin box)', ''); logEvent('🧊 ' + l.who + ' bought a cold drink from the fridge (+$2)', '');
       return;
     }
     if (l.useKind === 'vend') {
-      var vks = vendKeys(); if (!vks.length) { loungerSay(l, 'Sold out?', '#ff6b6b'); logEvent('🥤 ' + l.who + ' found the vending machine empty', 'bad'); return; }
-      var vroll = Math.random() * vks.reduce(function (a, k) { return a + S.vendStock[k]; }, 0), vk = vks[vks.length - 1]; for (var vi = 0; vi < vks.length; vi++) { vroll -= S.vendStock[vks[vi]]; if (vroll < 0) { vk = vks[vi]; break; } }   /* whatever is on the racks, in proportion to how much of it there is */
-      var pickDrink = vk === 'drink'; S.vendStock[vk]--;
-      S.box.vend += 2; S.stats.vend = (S.stats.vend || 0) + 1; sfx('vend');
+      var vu = l.useUnit || 'vending', vst = machStock(vu), vks = vendKeys(vu); if (!vks.length) { loungerSay(l, 'Sold out?', '#ff6b6b'); logEvent('🥤 ' + l.who + ' found the vending machine empty', 'bad'); return; }
+      var vroll = Math.random() * vks.reduce(function (a, k) { return a + vst[k]; }, 0), vk = vks[vks.length - 1]; for (var vi = 0; vi < vks.length; vi++) { vroll -= vst[vks[vi]]; if (vroll < 0) { vk = vks[vi]; break; } }   /* whatever is on the racks, in proportion to how much of it there is */
+      var pickDrink = vk === 'drink'; vst[vk]--; syncVending(vu);
+      coinPay(vu, 2); S.stats.vend = (S.stats.vend || 0) + 1; sfx('vend');
       var can = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(pick([0xffd166, 0x3ad0ff, 0x6fdc8c, 0xff8c42]), 0.4, 0.3)); can.position.set(0, -0.37, 0.03); le.add(can);
       var vwhat = pickDrink ? 'a drink' : vk === 'snack' ? 'a snack' : 'something from the ' + itemName(vk).toLowerCase();
       toast('🥤 ' + l.who + ' got ' + vwhat + ' from the machine (+$2 in the box)', ''); logEvent('🥤 ' + l.who + ' bought ' + vwhat + ' from the vending machine (+$2)', '');
       if (propInst.vending) burst(ROOM.x - 1.0, 0.5, 6.8, 0xffffff, 6, 'up');
     } else {
-      if (S.coffeeStock.cup <= 0 || S.coffeeStock.beans <= 0) { loungerSay(l, 'No coffee?', '#ff6b6b'); logEvent('☕ ' + l.who + ' found the coffee machine empty', 'bad'); return; }
-      S.coffeeStock.cup--; S.coffeeStock.beans--;
-      S.box.coffee += 3; S.stats.coffee = (S.stats.coffee || 0) + 1; sfx('coffee');
+      var cu = l.useUnit || 'lobbyCoffee', cst = machStock(cu);
+      if (!coffReady(cu)) { loungerSay(l, 'No coffee?', '#ff6b6b'); logEvent('☕ ' + l.who + ' found the coffee machine empty', 'bad'); return; }
+      cst.cup--; cst.beans--; syncCoffee(cu);
+      coinPay(cu, 3); S.stats.coffee = (S.stats.coffee || 0) + 1; sfx('coffee');
       var cup = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.028, 0.09, 10), colorMat(0xf5f5f0, 0.5)); cup.position.set(0, -0.37, 0.03); le.add(cup);
       var lid = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.037, 0.012, 10), colorMat(0x3a2a1a, 0.6)); lid.position.y = 0.05; cup.add(lid);
       loungerSay(l, pick(['Ahh, coffee.', 'Cheers.', 'Needed that.']), '#e8f1ea');
@@ -6236,7 +6347,7 @@
   function defProp(id, def) { PROPS[id] = def; PROP_ORDER.push(id); }
   // A prop marked `multi` can be owned more than once. Extra units are ordinary props under a
   // derived id (vending#2), so placement, edit mode, obstacles and the save file all work already.
-  // Stock and the cash float stay shop-wide: one storeroom and one float behind however many machines.
+  // Stock stays shop-wide (one storeroom behind however many machines), but each machine keeps its own coin box.
   function unitBase(id) { var i = id.indexOf('#'); return i < 0 ? id : id.slice(0, i); }
   function unitCount(base) { var d = PROPS[base]; if (!d || !d.multi) return 1; var n = (S.units && S.units[base]) || 1; return clamp(Math.round(n), 1, d.multi.max); }
   function unitIds(base) { var out = [base]; for (var n = 2; n <= unitCount(base); n++) out.push(base + '#' + n); return out; }
@@ -6327,6 +6438,10 @@
   }
   function buildAllProps() { PROP_ORDER.forEach(buildProp); defightSoon(); }
   function propWorld(id, lx, lz) { var inst = propInst[id]; inst.g.updateMatrixWorld(true); var v = new THREE.Vector3(lx, 0, lz); inst.g.localToWorld(v); return v; }   // fresh matrix: props are queried right after they are built, before any render
+  function propFront(id, off) {   // the spot a person stands on to use a prop, off metres out from its front (local +z), facing it
+    var P = propPlacement(id), r = ((P.rot % 4) + 4) % 4, dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r];
+    return { x: P.x + dx * off, z: P.z + dz * off, yaw: Math.atan2(-dx, -dz) };
+  }
 
   // ── prop definitions ───────────────────────────────────────────────
   // Every prop is built with its FRONT toward local +z. rot (quarter turns) then points that front into the room:
@@ -6755,11 +6870,13 @@
     c.sign(['STOCK', 'packed goods · locked'], 0.5, 0.16, 0, 1.7, 0.3, 0, { size: 22, bg: '#f3e9cf', color: '#222', titleColor: '#1a6a2a', line: 'rgba(0,0,0,.3)' });
     c.hit(1.3, 2.0, 0.8, 0, 1.0, 0.1, { kind: 'stock' });
   } });
-  defProp('storeRack', { label: 'storage racking', x: 0.5, z: -10.75, rot: 1, build: function (c) {
-    var shelfM = colorMat(0x8a8f96, 0.35, 0.8); for (var s = 0; s < 3; s++) c.box(3.2, 0.03, 0.55, shelfM, 0, 0.25 + s * 0.7, 0);
-    [[-1.58, -0.25], [1.58, -0.25], [-1.58, 0.25], [1.58, 0.25], [0, -0.25], [0, 0.25]].forEach(function (p) { c.box(0.04, 2.0, 0.04, shelfM, p[0], 1.0, p[1]); });
-    c.solid(-1.65, 1.65, -0.32, 0.32); c.hit(3.3, 2.0, 0.6, 0, 1.0, 0, { kind: 'storage' });
-    c.sign(['STORAGE', 'deliveries land here · E to take a crate'], 1.6, 0.34, 0, 2.2, 0.02, 0, { titleColor: '#ffc857' }); c.dynGroup();
+  // pallet racking: blue frames, orange beams, wire decks, four levels of six bays, a label plate on the beam under every bay
+  defProp('storeRack', { label: 'storage racking', x: 0.5, z: -10.85, rot: 1, build: function (c) {
+    var frameM = colorMat(0x2a5aa8, 0.45, 0.5), beamM = colorMat(0xe07a1f, 0.45, 0.4), deckM = colorMat(0x9aa0a6, 0.4, 0.8);
+    [-1.5, 0, 1.5].forEach(function (x) { [-0.26, 0.26].forEach(function (z) { c.box(0.06, 2.3, 0.06, frameM, x, 1.15, z); }); for (var b = 0; b < 5; b++) c.box(0.03, 0.03, 0.5, frameM, x, 0.25 + b * 0.45, 0); });   /* uprights with their cross braces */
+    RACK.y.forEach(function (y) { [-0.27, 0.27].forEach(function (z) { c.box(3.06, 0.07, 0.04, beamM, 0, y - 0.035, z); }); c.box(2.96, 0.015, 0.5, deckM, 0, y + 0.005, 0); });
+    c.solid(-1.55, 1.55, -0.32, 0.32); c.hit(3.1, 2.3, 0.6, 0, 1.15, 0, { kind: 'storage' });
+    c.sign(['STORAGE', 'deliveries land here · E takes a crate · E with a crate racks it'], 1.9, 0.32, 0, 2.5, 0.02, 0, { titleColor: '#ffc857' }); c.dynGroup();
   }, after: function () { syncStorage(); } });
   // office vault: cash you carry in goes in here; the bank courier collects from your pocket
   defProp('bagLine', { label: 'trim & bag line', x: 4.5, z: 2.9, rot: 1, build: function (c) {
@@ -7170,12 +7287,30 @@
       X.mach.lobbyCoffee = { coffDoor: !!o.coffDoor, cup: o.cup || 0 };
       X.mach.fridge = { fridgeDoor: !!o.fridgeDoor, fridge: typeof o.fridge === 'number' ? o.fridge : 6 };   /* the fridge you start with comes stocked; any you buy later start empty */
     }
+    if (!X.mach.own) {   /* saves from before 1.25 kept one coin box and one stock for every machine of a kind: both go to the first machine of the kind */
+      X.mach.own = true; var ob = S.box || {}, first = function (b) { return X.mach[b] || (X.mach[b] = {}); };
+      [['vending', ob.vend], ['lobbyCoffee', ob.coffee], ['arcade', ob.arcade]].forEach(function (p) { if (p[1] > 0) { var u = first(p[0]); u.box = (u.box || 0) + p[1]; } });
+      first('vending').stock = Object.assign({}, S.vendStock || { drink: 12, snack: 12 });   /* a new shop's first machine comes stocked, as it always has */
+      first('lobbyCoffee').stock = Object.assign({}, S.coffeeStock || { cup: 40, beans: 40 });
+      delete S.box; delete S.vendStock; delete S.coffeeStock;
+    }
     var m = X.mach[id || 'vending'] || (X.mach[id || 'vending'] = {});
     if (!Array.isArray(m.tray)) m.tray = [];
     if (typeof m.cup !== 'number') m.cup = 0;
     if (typeof m.fridge !== 'number') m.fridge = 0;
+    if (!m.stock || typeof m.stock !== 'object') m.stock = {};
     return m;
   }
+  // every machine holds its own stock: a vending machine its racks, a coffee machine its cups and beans, loaded by
+  // hand, a crate at a time, by you or by the crew (restockJob in the staff code)
+  function machStock(id) { return machState(id).stock; }
+  function stockTotal(base, k) { return unitIds(base).reduce(function (a, u) { return a + (machStock(u)[k] || 0); }, 0); }
+  function coffReady(id) { var st = machStock(id); return (st.cup || 0) > 0 && (st.beans || 0) > 0; }
+  // every machine keeps its own coin box: a sale pays into the machine it came out of, and emptying one leaves the rest alone
+  function coinBox(id) { return machState(id).box || 0; }
+  function coinPay(id, n) { var m = machState(id); m.box = (m.box || 0) + n; }
+  function coinEmpty(id, what) { var m = machState(id); if (!takeCash(m.box || 0, what)) return false; m.box = 0; return true; }
+  function coinTotal(base) { var t = 0; (base ? [base] : ['vending', 'lobbyCoffee', 'fridge', 'arcade']).forEach(function (b) { unitIds(b).forEach(function (u) { t += coinBox(u); }); }); return t; }
   function syncMachines() { ['vending', 'lobbyCoffee', 'fridge'].forEach(function (b) { unitIds(b).forEach(function (u) { if (b === 'vending') syncVending(u); else if (b === 'lobbyCoffee') syncCoffee(u); else syncFridge(u); }); }); }
   function fridgeParts(id) {
     var inst = propInst[id || 'fridge']; if (!inst) return null; var p = inst.g.userData.frParts;
@@ -7218,9 +7353,9 @@
     var p = coffParts(id); if (!p) return;
     (p.cups.userData.slots || []).forEach(function (m) { p.cups.remove(m); });
     p.cups.userData.slots = [];
-    var stack = Math.min(Math.ceil((S.coffeeStock.cup || 0) / 6), 7);
+    var st = machStock(id), stack = Math.min(Math.ceil((st.cup || 0) / 6), 7);
     for (var i = 0; i < stack; i++) { var cu = cupMesh(1, false); cu.position.y = i * 0.022; p.cups.add(cu); p.cups.userData.slots.push(cu); }
-    if (p.beans) { var lvl = clamp((S.coffeeStock.beans || 0) / 40, 0.05, 1); p.beans.scale.y = lvl; p.beans.position.y = 1.40 + 0.06 * lvl; p.beans.visible = (S.coffeeStock.beans || 0) > 0; }
+    if (p.beans) { var lvl = clamp((st.beans || 0) / 40, 0.05, 1); p.beans.scale.y = lvl; p.beans.position.y = 1.40 + 0.06 * lvl; p.beans.visible = (st.beans || 0) > 0; }
     clearKids(p.brew);
     if (machState(id).cup > 0) { var c2 = cupMesh(1, true); p.brew.add(c2); }
     if (p.cupHit) p.cupHit.position.y = machState(id).cup > 0 ? 1.02 : -50;
@@ -7237,11 +7372,12 @@
   function coffBrew(id) {
     var M = machState(id);
     if (M.cup > 0) { toast('There\'s already a cup under the spout', ''); return; }
-    if ((S.coffeeStock.cup || 0) <= 0) { toast('Out of cups', 'bad'); return; }
-    if ((S.coffeeStock.beans || 0) <= 0) { toast('Out of beans', 'bad'); return; }
+    var st = machStock(id);
+    if ((st.cup || 0) <= 0) { toast('This machine is out of cups', 'bad'); return; }
+    if ((st.beans || 0) <= 0) { toast('This machine is out of beans', 'bad'); return; }
     if ((S.pocket || 0) < 2) { sfx('bad'); toast('A cup is $2 from your pocket, and your pocket is short', 'bad'); return; }
-    S.pocket -= 2; S.coffeeStock.cup--; S.coffeeStock.beans--; S.box.coffee = (S.box.coffee || 0) + 2; M.cup = 1; machAnim(id).brewT = 1.5;
-    sfx('coffee'); toast('☕ Pouring…', ''); syncCoffee(); save();   /* every machine draws on the same cups and beans, so they all restack */
+    S.pocket -= 2; st.cup--; st.beans--; coinPay(id, 2); M.cup = 1; machAnim(id).brewT = 1.5;
+    sfx('coffee'); toast('☕ Pouring…', ''); syncCoffee(id); save();
   }
   function coffTake(id) {
     var M = machState(id);
@@ -7288,7 +7424,7 @@
     var racks = p.racks;
     (racks.userData.slots || []).forEach(function (m) { racks.remove(m); });
     racks.userData.slots = [];
-    var drinks = Math.min(S.vendStock.drink || 0, 8), snacks = Math.min(S.vendStock.snack || 0, 8);
+    var st = machStock(id), drinks = Math.min(st.drink || 0, 8), snacks = Math.min(st.snack || 0, 8);
     for (var i = 0; i < drinks; i++) {
       var col = i % 4, row = Math.floor(i / 4);
       var d = drinkMesh(1); d.position.set(-0.225 + col * 0.15, 0.585 - row * 0.29, 0.02); racks.add(d); racks.userData.slots.push(d);
@@ -7328,16 +7464,16 @@
     vendDisplay(id, M.vendDoor ? 'SERVICE' : 'READY'); save();
   }
   function isVendItem(k) { var it = supplyById(k); return k === 'drink' || k === 'snack' || !!(it && it.stock === 'vend'); }   // anything a pack marks for the vending machine goes on its racks
-  function vendKeys() { return Object.keys(S.vendStock).filter(function (k) { return (S.vendStock[k] || 0) > 0 && isVendItem(k); }); }   // what is on the racks right now
+  function vendKeys(id) { var st = machStock(id); return Object.keys(st).filter(function (k) { return (st[k] || 0) > 0 && isVendItem(k); }); }   // what is on this machine's racks right now
   function vendDispense(id, item) {   // a coil turns, the item falls, and it lands in the tray
-    var M = machState(id);
-    if ((S.vendStock[item] || 0) <= 0) { toast('The machine is out of ' + (item === 'drink' ? 'drinks' : 'snacks'), 'bad'); vendDisplay(id, 'SOLD OUT'); return false; }
+    var M = machState(id), st = machStock(id);
+    if ((st[item] || 0) <= 0) { toast('The machine is out of ' + (item === 'drink' ? 'drinks' : 'snacks'), 'bad'); vendDisplay(id, 'SOLD OUT'); return false; }
     if ((S.pocket || 0) < 2) { sfx('bad'); toast('It takes $2 from your pocket, and your pocket is short', 'bad'); return false; }
-    S.pocket -= 2; S.vendStock[item]--; S.box.vend = (S.box.vend || 0) + 2; S.stats.vend = (S.stats.vend || 0) + 1;
+    S.pocket -= 2; st[item]--; coinPay(id, 2); S.stats.vend = (S.stats.vend || 0) + 1;
     var p = vendParts(id);
     if (p && p.tray) { var m = item === 'drink' ? drinkMesh(1) : snackMesh(1); var wp = new THREE.Vector3(); p.tray.getWorldPosition(wp); machAnim(id).drops.push({ m: m, t: 0, item: item }); m.position.set(wp.x, wp.y + 1.0, wp.z); world.group.add(m); }
     sfx('vend'); vendDisplay(id, 'THANK YOU');
-    M.tray.push(item); syncVending(); save();   /* the racks are a shared stock, so every machine thins out together */
+    M.tray.push(item); syncVending(id); save();
     return true;
   }
   function vendTakeTray(id) {
@@ -7736,17 +7872,17 @@
     if (d.kind === 'deskboard') { var hz = deskBoard.hotZone; return 'Shop dashboard <small>' + (hz ? 'tap: ' + esc(hz.label) : DESK_PAGE_LABEL[DESK_PAGES[deskBoard.page]] + ' · touch screen: look and press E, wheel flips') + '</small>'; }
     if (d.kind === 'switch') return (roomLit(d.room) ? 'Lights off' : 'Lights on') + ' <small>' + ROOM_NAMES[d.room] + '</small>';
     if (d.kind === 'dehum') return 'Dehumidifier <small>' + dehumLabel(d.zone) + ' · RH ' + Math.round(S.rh[d.zone]) + '% · E next setting</small>';
-    if (d.kind === 'storeItem') { var sn = S.storage[d.item] || 0; if (h && (h.kind !== 'crate' || h.item !== d.item) && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; return 'Take a crate of ' + itemName(d.item) + ' <small>' + sn + ' in the back room · E takes ' + Math.min(sn, itemPack(d.item)) + ' · Shift+E all' + (h ? ' · adds to the crate' : '') + '</small>'; }
-    if (d.kind === 'storage') return 'Storage racks <small>' + (Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }).length || 'no') + ' items · aim at a crate to take it · Shift+E for the stock list</small>';
+    if (d.kind === 'storeItem') { var sn = S.storage[d.item] || 0, bayT = d.bay !== undefined ? 'bay ' + rackBayCode(d.bay) + ' · ' : ''; if (h && h.kind === 'crate') return 'Rack your crate <small>' + h.n + ' × ' + itemName(h.item) + (h.item === d.item ? ' back in ' + bayT + 'Shift+E takes the rest of this bay instead' : ' goes in its own bay') + '</small>'; if (h && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; return 'Take a crate of ' + itemName(d.item) + ' <small>' + bayT + sn + ' in stock · E takes ' + Math.min(sn, itemPack(d.item)) + ' · Shift+E all</small>'; }
+    if (d.kind === 'storage') { if (h && h.kind === 'crate') return 'Rack your crate <small>' + h.n + ' × ' + itemName(h.item) + ' goes in its own labelled bay</small>'; return 'Storage racking <small>' + (Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }).length || 'no') + ' items · aim at a crate to take it · Shift+E for the stock list</small>'; }
     if (d.kind === 'vault') return S.pocket > 0 ? 'Put ' + money(S.pocket) + ' in the vault <small>holds ' + money(S.vault) + ' · Shift+E opens it</small>' : 'Open the vault <small>holds ' + money(S.vault) + '</small>';
     if (d.kind === 'tips') return S.tips > 0 ? 'Empty the tip jar <small>' + money(S.tips) + '</small>' : 'Tip jar <small>empty</small>';
-    if (d.kind === 'vending') { var MM = machState(d.propId); if (h && h.kind === 'crate') return isVendItem(h.item) ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That doesn\'t go in here'; if (MM.vendDoor) return 'Machine open <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks · E buys one for $2' + (S.box.vend > 0 ? ' · Shift+E opens it, the box holds ' + money(S.box.vend) : ' · Shift+E opens it') + '</small>'; }
-    if (d.kind === 'fridge') { var FM2 = machState(d.propId); if (h && h.kind === 'crate') return h.item === 'drink' ? (FM2.fridgeDoor ? 'Load ' + h.n + ' drinks into the fridge' : 'Open the fridge first <small>Shift+E</small>') : 'Only drinks go in the fridge'; return 'Drinks fridge <small>' + (FM2.fridge || 0) + ' cold' + (FM2.fridgeDoor ? ' · E takes one · Shift+E shuts it' : ' · E takes one · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'vending') { var MM = machState(d.propId); if (h && h.kind === 'crate') return isVendItem(h.item) ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That doesn\'t go in here'; var vbox = coinBox(d.propId), vst = machStock(d.propId), vtxt = (vst.drink || 0) + ' drinks · ' + (vst.snack || 0) + ' snacks'; if (MM.vendDoor) return (vbox > 0 ? 'Empty the coin box <small>' + money(vbox) + ' · ' : 'Machine open <small>') + vtxt + ' on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + vtxt + ' · E buys one for $2' + (vbox > 0 ? ' · Shift+E opens it, the box holds ' + money(vbox) : ' · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'fridge') { var FM2 = machState(d.propId), fbox = coinBox(d.propId); if (h && h.kind === 'crate') return h.item === 'drink' ? (FM2.fridgeDoor ? 'Load ' + h.n + ' drinks into the fridge' : 'Open the fridge first <small>Shift+E</small>') : 'Only drinks go in the fridge'; if (FM2.fridgeDoor && fbox > 0) return 'Empty the coin box <small>' + money(fbox) + ' · ' + (FM2.fridge || 0) + ' cold · Shift+E shuts it</small>'; return 'Drinks fridge <small>' + (FM2.fridge || 0) + ' cold' + (FM2.fridgeDoor ? ' · E takes one · Shift+E shuts it' : ' · E takes one' + (fbox > 0 ? ' · Shift+E opens it, the box holds ' + money(fbox) : ' · Shift+E opens it')) + '</small>'; }
     if (d.kind === 'coffeeCup') { var CM2 = machState(d.propId); return CM2.cup > 0 ? (machAnim(d.propId).brewT > 0 ? 'Pouring… <small>give it a second</small>' : 'Fresh coffee <small>E takes the cup</small>') : ''; }
     if (d.kind === 'vendTray') { var MT = machState(d.propId); return MT.tray.length ? 'Delivery tray <small>' + MT.tray.length + ' waiting · E takes one</small>' : ''; }
-    if (d.kind === 'lobbyCoffee') { var CD = machState(d.propId); if (h && h.kind === 'crate') return (h.item === 'cup' || h.item === 'beans') ? (CD.coffDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' into the hopper' : 'Lift the hopper lid first <small>Shift+E</small>') : 'That doesn\'t go in here'; return (S.box.coffee > 0 ? 'Empty the cash box <small>' + money(S.box.coffee) + ' · ' : 'Coffee machine <small>') + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' servings of beans</small>'; }
+    if (d.kind === 'lobbyCoffee') { var CD = machState(d.propId); if (h && h.kind === 'crate') return (h.item === 'cup' || h.item === 'beans') ? (CD.coffDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' into the hopper' : 'Lift the hopper lid first <small>Shift+E</small>') : 'That doesn\'t go in here'; var cbox = coinBox(d.propId), cst = machStock(d.propId), cstock = (cst.cup || 0) + ' cups · ' + (cst.beans || 0) + ' servings of beans'; if (CD.coffDoor) return (cbox > 0 ? 'Empty the coin box <small>' + money(cbox) + ' · ' : 'Hopper open <small>') + cstock + ' · Shift+E closes it</small>'; return 'Coffee machine <small>E pours one for $2 · ' + cstock + (cbox > 0 ? ' · Shift+E opens it, the box holds ' + money(cbox) : ' · Shift+E opens it') + '</small>'; }
     if (d.kind === 'atm') return 'Use the ATM <small>bank ' + money(S.bank) + ' · pocket ' + money(S.pocket) + ' · deposits clear at once, 2% fee</small>';
-    if (d.kind === 'arcade') return S.box.arcade > 0 ? 'Empty the coin box <small>' + money(S.box.arcade) + '</small>' : 'Arcade cabinet <small>coin box empty</small>';
+    if (d.kind === 'arcade') { var abox = coinBox(d.propId); return abox > 0 ? 'Empty the coin box <small>' + money(abox) + '</small>' : 'Arcade cabinet <small>coin box empty</small>'; }
     if (d.kind === 'courier') return 'Hand the courier ' + money(S.courier ? S.courier.amount : 0) + ' <small>pocket ' + money(S.pocket) + '</small>';
     if (d.kind === 'roller') return (world.rollerOpen ? 'Close' : 'Open') + ' the roller door';
     if (d.kind === 'gate') return (world.gateOpen ? 'Close' : 'Open') + ' the yard gate';
@@ -7872,13 +8008,15 @@
     else if (d.kind === 'dust') sweep(d.id);
     else if (d.kind === 'deskboard') deskTap();
     else if (d.kind === 'storeItem') {
+      var shS = player.keys.ShiftLeft || player.keys.ShiftRight;
+      if (h && h.kind === 'crate' && !(shS && h.item === d.item)) { rackCrate(); return; }   /* a crate in your hands goes back up; Shift+E on its own bay takes the rest of it instead */
       var have = S.storage[d.item] || 0; if (have < 1) { toast('Nothing left there', 'bad'); return; }
       if (h && (h.kind !== 'crate' || h.item !== d.item)) { var other2 = S.hotbar.map(function (x, i2) { return x && x.kind === 'crate' && x.item === d.item ? i2 : -1; }).filter(function (i2) { return i2 >= 0; })[0]; if (other2 !== undefined) { S.slot = other2; h = held(); } else if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } else h = null; }
       var take_n = (player.keys.ShiftLeft || player.keys.ShiftRight) ? have : Math.min(have, itemPack(d.item)); S.storage[d.item] = have - take_n;
       if (h) h.n += take_n; else take({ kind: 'crate', item: d.item, n: take_n });
       world.dirtyStorage = true; toast('📦 Took ' + take_n + ' × ' + itemName(d.item), 'good');
     }
-    else if (d.kind === 'storage') { if (player.keys.ShiftLeft || player.keys.ShiftRight) ui.openPanel('storage'); else toast('Aim at a crate to take it · Shift+E for the stock list', ''); }
+    else if (d.kind === 'storage') { if (player.keys.ShiftLeft || player.keys.ShiftRight) ui.openPanel('storage'); else if (h && h.kind === 'crate') rackCrate(); else toast('Aim at a crate to take it · Shift+E for the stock list', ''); }
     else if (d.kind === 'vault') { if (S.pocket > 0 && !(player.keys.ShiftLeft || player.keys.ShiftRight)) { var dep = S.pocket; S.vault += dep; S.pocket = 0; sfx('vault'); toast('🔒 ' + money(dep) + ' into the vault (now ' + money(S.vault) + ')', 'good'); logEvent('🔒 Vault deposit: ' + money(dep) + ' (vault ' + money(S.vault) + ')', ''); } else ui.openPanel('vault'); }
     else if (d.kind === 'tips') { var tp = S.tips; if (takeCash(tp, 'tip jar')) S.tips = 0; }
     else if (d.kind === 'vending') {
@@ -7887,10 +8025,10 @@
       else if (h && h.kind === 'crate') {
         if (!isVendItem(h.item)) toast('That doesn\'t go in the vending machine', 'bad');
         else if (!MD.vendDoor) toast('Open the machine first (Shift+E)', 'bad');
-        else { S.vendStock[h.item] = (S.vendStock[h.item] || 0) + h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + vendKeys().map(function (k) { return S.vendStock[k] + ' ' + itemName(k).toLowerCase(); }).join(' · ') + ' on the racks)', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncVending(); }
+        else { var VS = machStock(d.propId); VS[h.item] = (VS[h.item] || 0) + h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + vendKeys(d.propId).map(function (k) { return VS[k] + ' ' + itemName(k).toLowerCase(); }).join(' · ') + ' on the racks)', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncVending(d.propId); save(); }
       }
-      else if (MD.vendDoor) { var vb2 = S.box.vend; if (vb2 > 0 && takeCash(vb2, 'vending machine')) { S.box.vend = 0; vendDisplay(d.propId, 'SERVICE'); } else toast('Load drinks or snacks onto the racks, or Shift+E to shut it', ''); }
-      else { var pickV = vendKeys().sort(function (a, b) { return (S.vendStock[b] || 0) - (S.vendStock[a] || 0); })[0] || ((S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'); vendDispense(d.propId, pickV); }
+      else if (MD.vendDoor) { if (coinBox(d.propId) > 0 && coinEmpty(d.propId, 'vending machine')) vendDisplay(d.propId, 'SERVICE'); else toast('Load drinks or snacks onto the racks, or Shift+E to shut it', ''); }
+      else { var VP = machStock(d.propId), pickV = vendKeys(d.propId).sort(function (a, b) { return (VP[b] || 0) - (VP[a] || 0); })[0] || ((VP.drink || 0) >= (VP.snack || 0) ? 'drink' : 'snack'); vendDispense(d.propId, pickV); }
     }
     else if (d.kind === 'vendTray') { vendTakeTray(d.propId); }
     else if (d.kind === 'fridge') {
@@ -7901,6 +8039,7 @@
         else if (!FI.fridgeDoor) toast('Open the fridge first (Shift+E)', 'bad');
         else { FI.fridge = (FI.fridge || 0) + h.n; sfx('putdown'); toast('🧊 ' + h.n + ' drinks chilling (' + FI.fridge + ' in the fridge)', 'good'); S.held = null; syncFridge(d.propId); save(); }
       }
+      else if (FI.fridgeDoor && coinBox(d.propId) > 0) { coinEmpty(d.propId, 'fridge'); save(); }   /* open, the coin box comes first; once it is empty E takes a can again */
       else fridgeTake(d.propId);
     }
     else if (d.kind === 'coffeeCup') { coffTake(d.propId); }
@@ -7910,13 +8049,13 @@
       else if (h && h.kind === 'crate') {
         if (h.item !== 'cup' && h.item !== 'beans') toast('That doesn\'t go in the coffee machine', 'bad');
         else if (!CI.coffDoor) toast('Lift the hopper lid first (Shift+E)', 'bad');
-        else { S.coffeeStock[h.item] += h.n; sfx('putdown'); toast('☕ Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' beans)', 'good'); logEvent('☕ Restocked the coffee machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncCoffee(); save(); }
+        else { var CS = machStock(d.propId); CS[h.item] = (CS[h.item] || 0) + h.n; sfx('putdown'); toast('☕ Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + (CS.cup || 0) + ' cups · ' + (CS.beans || 0) + ' beans)', 'good'); logEvent('☕ Restocked the coffee machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncCoffee(d.propId); save(); }
       }
-      else if (CI.coffDoor) { var cb2 = S.box.coffee; if (cb2 > 0 && takeCash(cb2, 'coffee machine')) S.box.coffee = 0; else toast('Load cups or beans, or Shift+E to close the hopper', ''); }
+      else if (CI.coffDoor) { if (!(coinBox(d.propId) > 0 && coinEmpty(d.propId, 'coffee machine'))) toast('Load cups or beans, or Shift+E to close the hopper', ''); }
       else coffBrew(d.propId);
     }
     else if (d.kind === 'atm') { ui.openPanel('atm'); }
-    else if (d.kind === 'arcade') { var ab = S.box.arcade; if (takeCash(ab, 'arcade coin box')) S.box.arcade = 0; }
+    else if (d.kind === 'arcade') { coinEmpty(d.propId, 'arcade coin box'); }
     else if (d.kind === 'courier') { courierHandOver(); }
     else if (d.kind === 'roller') { rollerSet(!world.rollerOpen); }
     else if (d.kind === 'gate') { gateSet(!world.gateOpen); }
@@ -8072,7 +8211,7 @@
 
   function paneShop() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🛒 Supplies</h3><div class="desc">Paid from the bank (' + money(S.bank) + '). Orders are boxed up and the supplier\'s van drops them in the back room a couple of minutes later. Carry crates from there to the supply rack or the machines.</div>' + (S.order ? '<div class="g3-chips"><span class="g3-chip amber">open order: ' + esc(orderSummary(S.order.items)) + '</span></div>' : '') + (S.deliveries.length ? '<div class="g3-chips">' + S.deliveries.map(function (d) { return '<span class="g3-chip">🚚 ' + esc(orderSummary(d.items)) + ' · ~' + Math.max(0, Math.ceil((d.due - now()) / 1000)) + ' s</span>'; }).join('') + '</div>' : '');
-    SUPPLIES.forEach(function (it) { var own = it.tool ? (S.supplies[it.id] ? 'owned' : 'not yet') : (S.supplies[it.id] || 0); h += '<div class="g3-row"><span class="ico">' + it.ico + '</span><span class="meta"><span class="n">' + it.name + '</span><span class="own">' + (it.stock === 'vend' ? 'machine: ' + (S.vendStock[it.id] || 0) : it.stock === 'coffee' ? 'machine: ' + (S.coffeeStock[it.id] || 0) : 'rack: ' + own) + ((S.storage[it.id] || 0) ? ' · back room: ' + S.storage[it.id] : '') + ' · ' + it.hint + '</span></span><span class="price">' + money(Math.round(it.price * supplyDisc())) + '</span><button class="g3-btn" data-act="buy" data-id="' + it.id + '"' + (it.tool && S.supplies[it.id] ? ' disabled' : '') + '>Buy</button></div>'; });
+    SUPPLIES.forEach(function (it) { var own = it.tool ? (S.supplies[it.id] ? 'owned' : 'not yet') : (S.supplies[it.id] || 0); h += '<div class="g3-row"><span class="ico">' + it.ico + '</span><span class="meta"><span class="n">' + it.name + '</span><span class="own">' + (it.stock === 'vend' ? 'machines: ' + stockTotal('vending', it.id) : it.stock === 'coffee' ? 'machines: ' + stockTotal('lobbyCoffee', it.id) : 'rack: ' + own) + ((S.storage[it.id] || 0) ? ' · back room: ' + S.storage[it.id] : '') + ' · ' + it.hint + '</span></span><span class="price">' + money(Math.round(it.price * supplyDisc())) + '</span><button class="g3-btn" data-act="buy" data-id="' + it.id + '"' + (it.tool && S.supplies[it.id] ? ' disabled' : '') + '>Buy</button></div>'; });
     h += '</div><div class="g3-box"><h3>🌿 Grow room</h3><div class="desc">What you have on hand right now.</div><div class="g3-chips">' +
       chip('cash', money(S.bank)) + chip('soil', S.supplies.soil || 0) + chip('pots free', (S.supplies.pot || 0) - S.plants.length) + chip('nutrients', S.supplies.nutrients || 0) + chip('spray', S.supplies.remedy || 0) + chip('baggies', S.supplies.bag || 0) + chip('papers', S.supplies.paper || 0) + chip('tips', S.supplies.tip || 0) + chip('jars', S.supplies.jar || 0) + '</div>' +
       '<div class="desc">Seeds in stock:</div><div class="g3-chips">' + STRAINS.map(function (s) { return chip(s.emoji + ' ' + s.name, S.supplies['seed_' + s.id] || 0); }).join('') + '</div>' +
@@ -8133,7 +8272,7 @@
     return h + '</div>';
   }
   function moneyRows() {
-    return '<div class="g3-chips">' + chip('bank', money(S.bank)) + chip('vault', money(S.vault)) + chip('pocket', money(S.pocket)) + '</div><div class="g3-chips">' + chip('till', money(S.till)) + chip('vending', money(S.box.vend)) + chip('coffee', money(S.box.coffee)) + chip('arcade', money(S.box.arcade)) + chip('tip jar', money(S.tips)) + '</div>';
+    return '<div class="g3-chips">' + chip('bank', money(S.bank)) + chip('vault', money(S.vault)) + chip('pocket', money(S.pocket)) + '</div><div class="g3-chips">' + chip('till', money(S.till)) + chip('vending', money(coinTotal('vending'))) + chip('fridges', money(coinTotal('fridge'))) + chip('coffee', money(coinTotal('lobbyCoffee'))) + chip('arcade', money(coinTotal('arcade'))) + chip('tip jar', money(S.tips)) + '</div>';
   }
   function paneVault() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🔒 Vault · ' + money(S.vault) + '</h3><div class="desc">Cash you carry in your pocket goes in here. The bank courier collects from your pocket, so take out what you booked before they arrive.</div>' + moneyRows();
@@ -8158,7 +8297,7 @@
     h += row('=', money(daily) + ' a day', 'what the business costs to stand still');
     h += row('$', money(B.dayGross) + ' taken today', money(B.monthGross) + ' so far this month');
     h += row('−', money(B.dayOther) + ' spent on the crop today', 'trimming, testing and compliance at $' + COST.processPerGram.toFixed(2) + ' a gram, ' + money(B.monthOther) + ' this month');
-    h += row('%', money(taxDue()) + ' tax owed', Math.round(ECON.excise * 100) + '% excise sits inside every sale, plus ' + Math.round(ECON.taxRate * 100) + '% on the month. Due on day ' + taxDay() + '.');
+    h += row('%', money(taxDue()) + ' tax owed', Math.round(ECON.excise * 100) + '% excise sits inside every sale, plus ' + Math.round(ECON.taxRate * 100) + '% on the month, and ' + Math.round(ECON.taxHighRate * 100) + '% on what the month takes over ' + money(ECON.taxHighFrom) + '. Due on day ' + taxDay() + '.');
     if (B.arrears > 0.5) h += row('!', money(B.arrears) + ' in arrears', 'unpaid bills. Rep falls every day this stands');
     if (L && L.short > 0.5) h += '<div class="desc">Day ' + L.day + ': ' + money(L.short) + ' of that morning\'s bill went unpaid.</div>';
     return h;
@@ -8176,7 +8315,7 @@
     var ids = Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; });
     var h = '<div class="g3-grid"><div class="g3-box"><h3>📦 Back room stock</h3><div class="desc">Take a crate from the racks (E) and carry it to where it goes: supplies and seeds to the supply rack in the office, drinks and snacks to the vending machine, cups and beans to the coffee machine.</div>';
     h += ids.length ? ids.map(function (k) { return '<div class="g3-row"><span class="ico">' + itemIcon(k) + '</span><span class="meta"><span class="n">' + esc(itemName(k)) + '</span><span class="own">' + S.storage[k] + ' in storage · goes to the ' + (k.indexOf('seed_') === 0 ? 'supply rack' : (supplyById(k) && supplyById(k).stock === 'vend') ? 'vending machine' : (supplyById(k) && supplyById(k).stock === 'coffee') ? 'coffee machine' : (supplyById(k) && supplyById(k).stock === 'display') ? 'counter display by the till' : 'supply rack') + '</span></span></div>'; }).join('') : '<div class="g3-empty">Empty. Order at the office laptop and the supplier\'s van drops it here.</div>';
-    h += '</div><div class="g3-box"><h3>🥤 Machines</h3><div class="g3-chips">' + chip('drinks', S.vendStock.drink) + chip('snacks', S.vendStock.snack) + chip('cups', S.coffeeStock.cup) + chip('beans', S.coffeeStock.beans) + '</div><h3 style="margin-top:12px">🚚 On the road</h3>' + (S.order ? '<div class="desc">Open order: ' + esc(orderSummary(S.order.items)) + '</div>' : '') + (S.deliveries.length ? S.deliveries.map(function (d) { return '<div class="g3-row"><span class="ico">🚚</span><span class="meta"><span class="n">' + esc(orderSummary(d.items)) + '</span><span class="own">~' + Math.max(0, Math.ceil((d.due - now()) / 1000)) + ' s</span></span></div>'; }).join('') : '<div class="g3-empty">nothing on the way</div>') + '</div></div>';
+    h += '</div><div class="g3-box"><h3>🥤 Machines</h3><div class="g3-chips">' + chip('drinks', stockTotal('vending', 'drink')) + chip('snacks', stockTotal('vending', 'snack')) + chip('cups', stockTotal('lobbyCoffee', 'cup')) + chip('beans', stockTotal('lobbyCoffee', 'beans')) + '</div><h3 style="margin-top:12px">🚚 On the road</h3>' + (S.order ? '<div class="desc">Open order: ' + esc(orderSummary(S.order.items)) + '</div>' : '') + (S.deliveries.length ? S.deliveries.map(function (d) { return '<div class="g3-row"><span class="ico">🚚</span><span class="meta"><span class="n">' + esc(orderSummary(d.items)) + '</span><span class="own">~' + Math.max(0, Math.ceil((d.due - now()) / 1000)) + ' s</span></span></div>'; }).join('') : '<div class="g3-empty">nothing on the way</div>') + '</div></div>';
     return h;
   }
   function paneStock() {
@@ -8345,12 +8484,12 @@
   function devAction(id) {
     var tp = function (x, z) { closeMenu(); standUp(); player.pos.set(x, 1.65, z); player.floor = 0; toast('📍 Teleported', ''); };
     switch (id) {
-      case 'money': S.bank += 1000; break; case 'pocket': S.pocket += 500; break; case 'till': S.till += 120; S.tips += 20; S.box.vend += 10; S.box.coffee += 10; S.box.arcade += 10; break;
+      case 'money': S.bank += 1000; break; case 'pocket': S.pocket += 500; break; case 'till': S.till += 120; S.tips += 20; ['vending', 'lobbyCoffee', 'fridge', 'arcade'].forEach(function (b) { unitIds(b).forEach(function (u) { coinPay(u, 10); }); }); break;
       case 'stash': STRAINS.forEach(function (st) { stashAdd(st.id, 20, 70 + st.lvl * 2, st.thc); }); break;
       case 'goods': STRAINS.forEach(function (st) { ['bags', 'joints', 'cookies'].forEach(function (k) { lotAdd(k, st.id, 5, 72, st.thc); }); }); break;
       case 'supplies': SUPPLIES.forEach(function (it) { if (it.tool) S.supplies[it.id] = 1; else S.supplies[it.id] = (S.supplies[it.id] || 0) + 10; }); STRAINS.forEach(function (st) { S.supplies['seed_' + st.id] = (S.supplies['seed_' + st.id] || 0) + 5; }); break;
       case 'storage': SUPPLIES.forEach(function (it) { if (!it.tool) S.storage[it.id] = (S.storage[it.id] || 0) + (it.qty || 10); }); STRAINS.forEach(function (st) { S.storage['seed_' + st.id] = (S.storage['seed_' + st.id] || 0) + 5; }); break;
-      case 'machines': S.vendStock.drink = 24; S.vendStock.snack = 24; S.coffeeStock.cup = 80; S.coffeeStock.beans = 80; S.display.lighter = 20; S.display.rpaper = 10; S.display.rgrinder = 5; unitIds('fridge').forEach(function (u) { machState(u).fridge = 16; }); break;   /* the fridge holds its own cans rather than drawing on the shop's, so it needs filling by name */
+      case 'machines': unitIds('vending').forEach(function (u) { var v = machStock(u); v.drink = 24; v.snack = 24; }); unitIds('lobbyCoffee').forEach(function (u) { var c = machStock(u); c.cup = 80; c.beans = 80; }); S.display.lighter = 20; S.display.rpaper = 10; S.display.rgrinder = 5; unitIds('fridge').forEach(function (u) { machState(u).fridge = 16; }); break;   /* the fridge holds its own cans rather than drawing on the shop's, so it needs filling by name */
       case 'plants': S.plants = []; S.potSoil = {}; for (var i = 0; i < slots(); i++) { var st2 = STRAINS[i % STRAINS.length]; S.potSoil[i] = true; S.plants.push({ id: 'p' + now() + i, strain: st2.id, progress: 1, quality: 75, thirst: 0.1, fed: true, hazard: null, slot: i }); } S.supplies.pot = Math.max(S.supplies.pot || 0, slots()); break;
       case 'batches': STRAINS.slice(0, 5).forEach(function (st, i) { S.batches.push({ id: 'b' + now() + i, grams: 18, quality: 70, baseQ: 70, thc: st.thc, startedAt: now(), cured: i >= 3, dry: i >= 3 ? 1 : 0.2, strain: st.id }); }); break;
       case 'customer': case 'premium': closeMenu(); if (!customerArrives(id === 'premium')) toast('The line is full (' + LINE_MAX + ' waiting)', ''); break;
@@ -8424,7 +8563,7 @@
   function hud() {
     syncTotals();
     var need = XP_PER_LEVEL(S.level);
-    $('h-cash').textContent = money(S.bank); var hv = $('h-vault'); if (hv) hv.textContent = money(S.vault) + (S.pocket > 0 ? ' · 👛' + money(S.pocket) : '');
+    $('h-cash').textContent = money(S.bank); var hv = $('h-vault'); if (hv) { var heavy = tillHeavy(); hv.textContent = money(S.vault) + (S.pocket > 0 ? ' · 👛' + money(S.pocket) : '') + (heavy ? ' · 🧾' + money((S.till || 0) + (S.tips || 0)) : ''); if (hv.parentNode && hv.parentNode.classList) hv.parentNode.classList.toggle('heavy', heavy); }   /* a till worth robbing shows up here, amber */
     $('h-cured').textContent = gram(S.cured.g) + (S.cured.g > 0 ? ' q' + Math.round(curedAvgQ()) : '');
     $('h-pkg').textContent = S.pkg.bags.n + ' / ' + S.pkg.joints.n + (S.pkg.cookies.n ? ' / 🍪' + S.pkg.cookies.n : '');
     $('h-rep').textContent = Math.floor(S.rep);
@@ -8621,7 +8760,7 @@
     step(1, false); maybeEvent(); maybeCustomer(); S.lastTick = now(); S.steps3d++; save();
     var after = JSON.stringify([S.plants.map(function (p) { return p.hazard; }), S.batches.map(function (b) { return b.cured; }), !!S.customer]);
     if (before !== after) { syncShelf(); syncRack(); }
-    updateDust(); hud(); if (new Date().getSeconds() === 0) drawCtlScreen(); if (ui.panelOpen && (ui.panelKind === 'register' || ui.panelKind === 'bench')) ui.render();
+    updateDust(); tillWatch(); hud(); if (new Date().getSeconds() === 0) drawCtlScreen(); if (ui.panelOpen && (ui.panelKind === 'register' || ui.panelKind === 'bench')) ui.render();
     if (focus) setFocus(focus);
   }
   setInterval(simTick, 1000);
@@ -8710,7 +8849,9 @@
     lineCount: lineCount, lineShown: lineShown, exitPath: exitPath, ropeGates: function () { return ropeGates; }, ropeSegs: function () { return ropeSegList; },
     robbers: function () { return robbers; }, heist: function () { return heist; }, maskUp: maskUp, npc: npc, guard: guard, useHeld: useHeld, trigger: trigger, scope: scope,
     price: { bag: bagPrice, joint: jointPrice, cookie: cookiePrice, unit: unitPrice, repMult: repMult, footfall: footfall, bagGrams: bagGrams },
-    bills: billLines, dailyFixed: dailyFixed, headcount: headcount,
-    data: { STRAINS: STRAINS, SUPPLIES: SUPPLIES, ACC: ACC, LIGHTS: LIGHTS, TENTS: TENTS, UPGRADES: UPGRADES, LICENCES: LICENCES, ECON: ECON, COST: COST, WEAPONS: WEAPONS, ROB_KINDS: ROB_KINDS, CIG_SKUS: CIG_SKUS, TOB: TOB, XP_PER_LEVEL: XP_PER_LEVEL, CUSTOMERS: CUSTOMERS, CURE_CAP_BASE: CURE_CAP_BASE, DRY_MS_BASE: DRY_MS_BASE, WORKER_WAGE: WORKER_WAGE, WALKUP_RATE: WALKUP_RATE, WALKUP_CAP: WALKUP_CAP }
+    bills: billLines, dailyFixed: dailyFixed, headcount: headcount, taxDue: taxDue, bizTax: bizTax, tillWatch: tillWatch, tillHeavy: tillHeavy,
+    press: function (data, shift) { player.keys.ShiftLeft = !!shift; setFocus({ mesh: null, data: data, dist: 1 }); interact(); player.keys.ShiftLeft = false; setFocus(null); },   /* E (or Shift+E) on a thing, as if the crosshair were on it */
+    prompt: promptFor, coinBox: coinBox, coinTotal: coinTotal, machStock: machStock, stockTotal: stockTotal, planFor: planFor, crew: function () { return crew; }, crewList: crewList, crewShift: crewShift, hireWorker: hireWorker, workerTask: workerTask, rackBays: rackBays, rackBayCode: rackBayCode, loungers: function () { return loungers; }, cashOnSite: cashOnSite,
+    data: { STRAINS: STRAINS, SUPPLIES: SUPPLIES, ACC: ACC, LIGHTS: LIGHTS, TENTS: TENTS, UPGRADES: UPGRADES, LICENCES: LICENCES, ECON: ECON, COST: COST, WEAPONS: WEAPONS, ROB_KINDS: ROB_KINDS, CIG_SKUS: CIG_SKUS, TOB: TOB, TILL_HEAVY: TILL_HEAVY, XP_PER_LEVEL: XP_PER_LEVEL, CUSTOMERS: CUSTOMERS, CURE_CAP_BASE: CURE_CAP_BASE, DRY_MS_BASE: DRY_MS_BASE, WORKER_WAGE: WORKER_WAGE, WALKUP_RATE: WALKUP_RATE, WALKUP_CAP: WALKUP_CAP }
   };
 })();

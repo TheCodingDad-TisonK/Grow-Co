@@ -47,7 +47,7 @@
     step(1, false); maybeEvent(); maybeCustomer(); S.lastTick = now(); S.steps3d++; save();
     var after = JSON.stringify([S.plants.map(function (p) { return p.hazard; }), S.batches.map(function (b) { return b.cured; }), !!S.customer]);
     if (before !== after) { syncShelf(); syncRack(); }
-    updateDust(); hud(); if (new Date().getSeconds() === 0) drawCtlScreen(); if (ui.panelOpen && (ui.panelKind === 'register' || ui.panelKind === 'bench')) ui.render();
+    updateDust(); tillWatch(); hud(); if (new Date().getSeconds() === 0) drawCtlScreen(); if (ui.panelOpen && (ui.panelKind === 'register' || ui.panelKind === 'bench')) ui.render();
     if (focus) setFocus(focus);
   }
   setInterval(simTick, 1000);
@@ -140,7 +140,9 @@
     lineCount: lineCount, lineShown: lineShown, exitPath: exitPath, ropeGates: function () { return ropeGates; }, ropeSegs: function () { return ropeSegList; },
     robbers: function () { return robbers; }, heist: function () { return heist; }, maskUp: maskUp, npc: npc, guard: guard, useHeld: useHeld, trigger: trigger, scope: scope,
     price: { bag: bagPrice, joint: jointPrice, cookie: cookiePrice, unit: unitPrice, repMult: repMult, footfall: footfall, bagGrams: bagGrams },
-    bills: billLines, dailyFixed: dailyFixed, headcount: headcount,
-    data: { STRAINS: STRAINS, SUPPLIES: SUPPLIES, ACC: ACC, LIGHTS: LIGHTS, TENTS: TENTS, UPGRADES: UPGRADES, LICENCES: LICENCES, ECON: ECON, COST: COST, WEAPONS: WEAPONS, ROB_KINDS: ROB_KINDS, CIG_SKUS: CIG_SKUS, TOB: TOB, XP_PER_LEVEL: XP_PER_LEVEL, CUSTOMERS: CUSTOMERS, CURE_CAP_BASE: CURE_CAP_BASE, DRY_MS_BASE: DRY_MS_BASE, WORKER_WAGE: WORKER_WAGE, WALKUP_RATE: WALKUP_RATE, WALKUP_CAP: WALKUP_CAP }
+    bills: billLines, dailyFixed: dailyFixed, headcount: headcount, taxDue: taxDue, bizTax: bizTax, tillWatch: tillWatch, tillHeavy: tillHeavy,
+    press: function (data, shift) { player.keys.ShiftLeft = !!shift; setFocus({ mesh: null, data: data, dist: 1 }); interact(); player.keys.ShiftLeft = false; setFocus(null); },   /* E (or Shift+E) on a thing, as if the crosshair were on it */
+    prompt: promptFor, coinBox: coinBox, coinTotal: coinTotal, machStock: machStock, stockTotal: stockTotal, planFor: planFor, crew: function () { return crew; }, crewList: crewList, crewShift: crewShift, hireWorker: hireWorker, workerTask: workerTask, rackBays: rackBays, rackBayCode: rackBayCode, loungers: function () { return loungers; }, cashOnSite: cashOnSite,
+    data: { STRAINS: STRAINS, SUPPLIES: SUPPLIES, ACC: ACC, LIGHTS: LIGHTS, TENTS: TENTS, UPGRADES: UPGRADES, LICENCES: LICENCES, ECON: ECON, COST: COST, WEAPONS: WEAPONS, ROB_KINDS: ROB_KINDS, CIG_SKUS: CIG_SKUS, TOB: TOB, TILL_HEAVY: TILL_HEAVY, XP_PER_LEVEL: XP_PER_LEVEL, CUSTOMERS: CUSTOMERS, CURE_CAP_BASE: CURE_CAP_BASE, DRY_MS_BASE: DRY_MS_BASE, WORKER_WAGE: WORKER_WAGE, WALKUP_RATE: WALKUP_RATE, WALKUP_CAP: WALKUP_CAP }
   };
 })();

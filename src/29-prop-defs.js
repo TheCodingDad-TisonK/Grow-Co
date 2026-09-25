@@ -426,11 +426,13 @@
     c.sign(['STOCK', 'packed goods · locked'], 0.5, 0.16, 0, 1.7, 0.3, 0, { size: 22, bg: '#f3e9cf', color: '#222', titleColor: '#1a6a2a', line: 'rgba(0,0,0,.3)' });
     c.hit(1.3, 2.0, 0.8, 0, 1.0, 0.1, { kind: 'stock' });
   } });
-  defProp('storeRack', { label: 'storage racking', x: 0.5, z: -10.75, rot: 1, build: function (c) {
-    var shelfM = colorMat(0x8a8f96, 0.35, 0.8); for (var s = 0; s < 3; s++) c.box(3.2, 0.03, 0.55, shelfM, 0, 0.25 + s * 0.7, 0);
-    [[-1.58, -0.25], [1.58, -0.25], [-1.58, 0.25], [1.58, 0.25], [0, -0.25], [0, 0.25]].forEach(function (p) { c.box(0.04, 2.0, 0.04, shelfM, p[0], 1.0, p[1]); });
-    c.solid(-1.65, 1.65, -0.32, 0.32); c.hit(3.3, 2.0, 0.6, 0, 1.0, 0, { kind: 'storage' });
-    c.sign(['STORAGE', 'deliveries land here · E to take a crate'], 1.6, 0.34, 0, 2.2, 0.02, 0, { titleColor: '#ffc857' }); c.dynGroup();
+  // pallet racking: blue frames, orange beams, wire decks, four levels of six bays, a label plate on the beam under every bay
+  defProp('storeRack', { label: 'storage racking', x: 0.5, z: -10.85, rot: 1, build: function (c) {
+    var frameM = colorMat(0x2a5aa8, 0.45, 0.5), beamM = colorMat(0xe07a1f, 0.45, 0.4), deckM = colorMat(0x9aa0a6, 0.4, 0.8);
+    [-1.5, 0, 1.5].forEach(function (x) { [-0.26, 0.26].forEach(function (z) { c.box(0.06, 2.3, 0.06, frameM, x, 1.15, z); }); for (var b = 0; b < 5; b++) c.box(0.03, 0.03, 0.5, frameM, x, 0.25 + b * 0.45, 0); });   /* uprights with their cross braces */
+    RACK.y.forEach(function (y) { [-0.27, 0.27].forEach(function (z) { c.box(3.06, 0.07, 0.04, beamM, 0, y - 0.035, z); }); c.box(2.96, 0.015, 0.5, deckM, 0, y + 0.005, 0); });
+    c.solid(-1.55, 1.55, -0.32, 0.32); c.hit(3.1, 2.3, 0.6, 0, 1.15, 0, { kind: 'storage' });
+    c.sign(['STORAGE', 'deliveries land here · E takes a crate · E with a crate racks it'], 1.9, 0.32, 0, 2.5, 0.02, 0, { titleColor: '#ffc857' }); c.dynGroup();
   }, after: function () { syncStorage(); } });
   // office vault: cash you carry in goes in here; the bank courier collects from your pocket
   defProp('bagLine', { label: 'trim & bag line', x: 4.5, z: 2.9, rot: 1, build: function (c) {

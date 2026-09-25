@@ -77,7 +77,8 @@
       const acc = D.ACC, accItems = Object.keys(acc), accPrice = accItems.reduce((a, k) => a + acc[k].price, 0) / accItems.length;
       const accCost = { lighter: 10 / 20, rpaper: 12 / 10, rgrinder: 30 / 5 }, accCostMean = accItems.reduce((a, k) => a + (accCost[k] || 0), 0) / accItems.length;
       const accN = 0.45 * (1 + 0.35);   // src/10 newCustomer: 45% want something off the counter, a third of those two things
-      return { units, revenue, grams, pack, accRevenue: accN * accPrice, accMargin: accN * (accPrice - accCostMean), rep: 2, mult };
+      const rep = 2.5 + Math.round((c.q || 0) / 25);   // src/05-actions.js: randi(1, 4) plus a point for every 25 of quality
+      return { units, revenue, grams, pack, accRevenue: accN * accPrice, accMargin: accN * (accPrice - accCostMean), rep, mult };
     }
 
     // ── the morning bill: src/03-log-sound.js billLines, headcount; wages in src/10-staff-paths.js payWages ──
@@ -96,9 +97,12 @@
       const wages = (b.crew || 0) * D.WORKER_WAGE;
       return { rent, power, water, payroll, guard, manager, wages, need, total: rent + power + water + payroll + guard + manager + wages };
     }
-    const taxShare = E.excise + E.taxRate;   // src/03-log-sound.js monthlyTax: excise and business tax, both on gross takings
+    // src/03-log-sound.js bizTax and taxDue: excise on every sale, business tax on the month's gross, at a higher rate above taxHighFrom
+    function bizTax(month) { return Math.min(month, E.taxHighFrom) * E.taxRate + Math.max(0, month - E.taxHighFrom) * E.taxHighRate; }
+    function taxOnDay(gross) { return gross * E.excise + bizTax(gross * 28) / 28; }   // a day's share of the month's bill, at steady takings (a month is 28 days)
+    const taxShare = E.excise + E.taxRate;   // the rate on a month that stays under taxHighFrom
 
-    // ── the basement line: src/13-basement.js TOB and updateTobacco; wholesale in src/18-deliveries.js (60% of shop price) ──
+    // ── the basement line: src/13-basement.js TOB and updateTobacco; wholesale in src/18-deliveries.js (TOB.wholesale of shop price) ──
     function tobacco(t) {
       t = t || {}; const T = D.TOB, dayLen = t.dayLen || 20, daySec = dayLen * 60;
       const kgCured = 4 * T.bayKg * T.cureYield;                                  // four bays, cured at the kiln
@@ -106,12 +110,12 @@
       const sticksNeeded = kgCured / T.stickKg.normal, makerSec = sticksNeeded / T.sticksS;
       const limitSec = Math.max(cycleSec, makerSec);                               // the slowest stage sets the pace
       const packsPerCycle = sticksNeeded / 20, packsPerDay = packsPerCycle * daySec / limitSec;
-      const sku = D.CIG_SKUS.cigNB, wholesale = sku.price * (t.wholesaleShare || 0.6);
+      const sku = D.CIG_SKUS.cigNB, wholesale = sku.price * (t.wholesaleShare || T.wholesale);
       const sow = 4 * T.sowCost * daySec / limitSec, materials = packsPerDay * T.matCost / T.matUnits;
       return { packsPerDay, bottleneck: makerSec > cycleSec ? 'the cigarette maker' : 'the grow bays', revenueWholesale: packsPerDay * wholesale, revenueShop: packsPerDay * sku.price, sow, materials, staffIfUnfilled: 2 * C.payRate, rent: C.rentBasement, licence: byId(D.LICENCES, 'tobacco').price };
     }
 
-    return { D, gradeMult, premium, gramValue, unit, unitGrams, unitPack, plant, customersPerDay, orderMix, perCustomer, bills, taxShare, tobacco, byId };
+    return { D, gradeMult, premium, gramValue, unit, unitGrams, unitPack, plant, customersPerDay, orderMix, perCustomer, bills, bizTax, taxOnDay, taxShare, tobacco, byId };
   }
   return { create };
 });

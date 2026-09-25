@@ -31,7 +31,7 @@ You start with **$220**, a small tent, one pot and an empty shop. There's no see
 A new shop gets the **guided intro**, a card on the left of the screen that ticks off nine steps as you do them. Finish all nine and **$1,200** goes into the bank. You can switch it off under **Guided intro** in the pause menu, but skipping it costs you the bonus.
 
 1. Walk to the **office PC** in the office (the room left of the hall). Order **soil** and **baggies** under **Supplies** and a **seed** in the **Seed bank**. Get a **grinder** too. The workbench won't bag or roll without one.
-2. Orders come round the back in the supplier's van. What arrives lands on the **supply rack** beside the office PC, or as crates in the **back room**. Carry crates to the supply rack yourself, or hire crew later to do it.
+2. Orders come round the back in the supplier's van. What arrives lands on the **supply rack** beside the office PC, or as crates on the **storage racking** in the back room. Every item gets its own bay with a label on the beam (A1 at the bottom left to D6 at the top right) and keeps it while any is left. **E** takes a crate, **Shift+E** takes the whole bay, and **E** with a crate in your hands puts it back. Carry crates where they go yourself, or hire crew later to do it.
 3. Take a bag of soil to the **grow tent** and fill the pot. Fetch the seed from the supply rack and plant it.
 4. When the plant says it's thirsty, grab the **watering can** next to the tent. Feed it **nutrients** once for quality. Spray pests or mould straight away.
 5. A plant that's ready glows. Harvest it with empty hands, carry the bunch to the **drying line** in the dry room and hang it up.
@@ -107,7 +107,9 @@ Rough, low-quality bud isn't wasted. The **extraction lab** turns any quality in
 
 ## Money and the bank
 
-Money sits in places: the **till**, the **tip jar**, the machine cash boxes, your **pocket**, the **vault** and the **bank**. Only the bank is safe, and only the bank pays for orders and licences.
+Money sits in places: the **till**, the **tip jar**, each machine's coin box, your **pocket**, the **vault** and the **bank**. Only the bank is safe, and only the bank pays for orders and licences. When the till and the tip jar hold $250 or more, the vault readout turns amber and shows them, because a robber takes all of it.
+
+Tax is paid once a month: 15% excise sits inside every sale, business tax is 10% of the month's takings, and 20% on what a month takes over $60,000.
 
 - Empty the till into your pocket, then put it in the **vault** in the office.
 - Book a **courier** under **Bank** on the office PC. He collects from your pocket at the back door and it clears the next morning.
@@ -131,6 +133,7 @@ Each crew member has their own look, their own job and their own wage.
 - Set each one's job at the office PC under **Staff**, or with **Shift+E** on them: serve the window, restock, sweep, tend the plants, or take a break.
 - **Send home** takes someone off the floor for the day. They draw no wage while they're off, and **Call in** brings them back. The guard can be sent home the same way. **Ctrl+E** on a crew member sends them home on the spot.
 - **Shift+E**, then **Send them somewhere**, posts a crew member. Walk to the spot and press **E**. That's where they wait between jobs until you clear it from the same menu.
+- On **restock** they fetch one crate at a time from its bay on the storage racking, carry it to where it goes, open the machine, load it and shut it again, then go back for the next. The emptiest machine of a kind is filled first. They never touch a machine's coins.
 - If they've nothing to do, they say so instead of standing there: no dust to sweep, an empty back room, plants already fine.
 
 ## ID checks
@@ -170,7 +173,7 @@ Robberies run in stages: a robber walks in looking like any other customer, the 
 
 ## The basement: RF Smoking
 
-The steel hatch in the hall leads down to a pre-installed cigarette line. You need the **tobacco manufacturing licence** to switch anything on.
+The steel hatch in the hall leads down to a pre-installed cigarette line. You need the **tobacco manufacturing licence** (from level 8) to switch anything on.
 
 1. **Bays**: sow ($20), wait a few minutes, cut the leaf.
 2. **Kiln**: cures up to 8 kg a load, and the leaf dries to a fifth of its weight. Left on, it reloads itself.
@@ -273,8 +276,8 @@ Four kinds of machine earn on their own, and you can own more than one of each: 
 
 - A machine you buy lands beside the one you already have, in the first clear space along the same wall. Press **F2** and drag it where you actually want it. Where you leave it is where it stays.
 - Every machine is its own machine. Its door, its delivery tray, the cup under its spout and the cans on its shelves belong to it alone. Open one and the others stay shut.
-- Stock and money are the shop's, not the machine's. All your vending machines sell from the same drinks and snacks, all your coffee machines pour from the same cups and beans, and each kind pays into one cash box. Empty it at any of them.
-- The drinks fridge is the exception. Each fridge holds its own cans, because you load it by hand with a case of drinks. A fridge that stands in the lobby sells customers a cold can for $2, into the vending cash box.
+- Stock and money belong to the machine too. Each vending machine sells from its own racks and each coffee machine from its own cups and beans, so a new one starts empty until you load it. Each keeps its own coin box: open one (Shift+E) and press E to empty it; the others keep theirs. An arcade cabinet empties with a plain E.
+- The drinks fridge holds its own cans as well, because you load it by hand with a case of drinks. A fridge that stands in the lobby sells customers a cold can for $2, into its own coin box: open it with Shift+E, and E empties the box before it hands you a can.
 - Extra vending machines come in their own livery, so a row of them doesn't look like the same machine four times.
 - You need the **Lobby coffee machine** upgrade before you can buy a second coffee machine. Vending, coffee and the fridge need the **Vending & catering permit**, and the arcade the **Amusement permit**.
 - Customers who stay a while use your machines, and every extra machine of a kind catches trade the first one missed, up to three of each.
@@ -293,7 +296,7 @@ Four kinds of machine earn on their own, and you can own more than one of each: 
 - **I can't pick something up.** Your hands are full. G puts things back, and 1 to 6 switches slot.
 - **The customer refuses my goods.** Wrong kind, or a connoisseur and it's under his quality bar.
 - **The machines won't start.** The tobacco line needs its licence. Everything stops in a power cut unless you own the generator.
-- **I can't buy a gun.** Get the firearms licence first (level 4, rep 30).
+- **I can't buy a gun.** Get the firearms licence first (level 4, rep 240).
 - **My car is wedged.** Reverse with S and swing the wheel. The yard is tight, so pull forward a little, then steer towards the gate. Leaving the garage, open the roller door first (E).
 - **A menu won't close.** Right-click, or Esc.
 - **I lost the control box, a sign or the roster.** F2, look at it, and Backspace puts it back where it started.

@@ -106,16 +106,16 @@
     { id: 'retail',    ico: '🪪', name: 'Retail licence',       price: 800,  lvl: 2,  d: 'Customers may pay by card. Without it everyone pays cash.' },
     { id: 'catering',  ico: '☕', name: 'Vending & catering permit', price: 450, d: 'The vending machine and coffee machine may sell.' },
     { id: 'amusement', ico: '🕹️', name: 'Amusement permit',     price: 400,  d: 'The arcade cabinet may take coins.' },
-    { id: 'lounge',    ico: '🛋️', name: 'Lounge licence',       price: 700,  rep: 25, d: 'Customers may sit and smoke in the lobby, and each one buys a joint off the goods shelf to do it.' },
+    { id: 'lounge',    ico: '🛋️', name: 'Lounge licence',       price: 700,  rep: 200, d: 'Customers may sit and smoke in the lobby, and each one buys a joint off the goods shelf to do it.' },
     { id: 'cult2',     ico: '🌱', name: 'Cultivation permit II', price: 900, lvl: 3, d: 'Unlocks the ' + tentSizes('cult2') + ' tents and the roof greenhouse beds. Plants grow 5% faster.' },
     { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 6000, lvl: 6, req: 'cult2', d: 'Unlocks the ' + tentSizes('cult3') + ' tents.' },
     { id: 'wholesale', ico: '📦', name: 'Wholesale account',    price: 3600, lvl: 4, d: 'Supplies 15% cheaper and the van comes twice as fast.' },
-    { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 3000, d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
-    { id: 'firearm',   ico: '🔫', name: 'Firearms licence',     price: 3000, lvl: 4, rep: 30, d: 'Lets you buy and carry the pistol and shotgun from the weapon locker. Shoot a bystander and it\'s revoked.' },
-    { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 3000, rep: 40, d: 'Connoisseurs visit and pay 2.2× for quality.' },
-    { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 50, d: 'From 20:00 to 02:00 customers come a third more often and pay 5% more.' },
-    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 60, d: '+4% on every price.' },
-    { id: 'export',    ico: '🚢', name: 'Export licence',       price: 14000, lvl: 10, rep: 120, d: 'Bulk contracts under Bank on the office PC: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
+    { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 3000, lvl: 8, d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
+    { id: 'firearm',   ico: '🔫', name: 'Firearms licence',     price: 3000, lvl: 4, rep: 240, d: 'Lets you buy and carry the pistol and shotgun from the weapon locker. Shoot a bystander and it\'s revoked.' },
+    { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 3000, rep: 320, d: 'Connoisseurs visit and pay 2.2× for quality.' },
+    { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 400, d: 'From 20:00 to 02:00 customers come a third more often and pay 5% more.' },
+    { id: 'brand',     ico: '®️', name: 'Brand registration',   price: 4000, rep: 480, d: '+4% on every price.' },
+    { id: 'export',    ico: '🚢', name: 'Export licence',       price: 14000, lvl: 10, rep: 960, d: 'Bulk contracts under Bank on the office PC: sell up to 100 g of a strain at 70% of gram value, paid next day.' }
   ];
   function tentSizes(lic) {   // '9 and 12-slot': read off the tent table, so a pack tent that needs the permit is named with the rest
     var n = TENTS.filter(function (t) { return t.lic === lic; }).map(function (t) { return t.slots; });
@@ -135,7 +135,7 @@
     { p: 1.00, key: 'flower', label: 'Flowering' }
   ];
   function stageFor(p) { for (var i = 0; i < STAGES.length; i++) if (p < STAGES[i].p) return STAGES[i]; return { key: 'ready', label: 'Ready' }; }
-  var XP_PER_LEVEL = function (lvl) { return 60 + (lvl - 1) * 55; };
+  var XP_PER_LEVEL = function (lvl) { return 60 + (lvl - 1) * 55 + 35 * (lvl - 1) * (lvl - 1); };   /* level 10 on about day 24 of steady trade, not day 16 (docs/Balance.md) */
   var CUSTOMERS = [
     { who: 'Chill Chad', a: '🧑‍🌾', c: 0x4a7fbf }, { who: 'Nurse Nadia', a: '👩‍⚕️', c: 0xe9eef5 }, { who: 'Old Man Ferns', a: '🧓', c: 0x8a6b4a },
     { who: 'Festival Fi', a: '💃', c: 0xd64a9a }, { who: 'The Professor', a: '🧑‍🏫', c: 0x5a4a8a }, { who: 'Skater Sam', a: '🛹', c: 0x3aa36a }

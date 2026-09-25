@@ -10,7 +10,7 @@
     var cs = NAV.cell; NAV.w = Math.ceil(26 / cs) + 1; NAV.h = Math.ceil(33 / cs) + 1;
     var grid = new Uint8Array(NAV.w * NAV.h), raw = new Uint8Array(NAV.w * NAV.h), staff = new Uint8Array(NAV.w * NAV.h), pad = NAV.pad;
     world.obstacles.forEach(function (o) {
-      if ((o.floorLevel || 0) === 1 || o.floorLevel === -1 || o.tag === 'guard') return;
+      if (((o.floorLevel || 0) !== 0 && o.floorLevel !== 'any') || o.tag === 'guard') return;   /* ground floor only: the roof beds (level 2) once walled off the hall */
       var isDoor = !!o.doorId || o.tag === 'staffdoor' || o.tag === 'frontdoor';
       var dd = o.doorId ? doorById[o.doorId] : null;
       var blocks = !isDoor || !!(dd && dd.locked);   /* a shut door you can open is not a wall; a locked one is */
@@ -122,7 +122,7 @@
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; rec.h.add(hb); interactable(hb, { kind: 'worker', idx: rec.idx });
   }
   function removeWorker(rec) {
-    rec = rec || worker; if (!rec.g) return;
+    rec = rec || worker; carryBack(rec, true); if (!rec.g) return;   /* a crate in their arms goes back into storage; the caller settles the saved record */
     rec.hasBroom = false; rec.broomMesh = null; syncBroom();
     world.group.remove(rec.g); disposeTree(rec.g);
     world.interact = world.interact.filter(function (m) { var d = m.userData.interact; return !(d && d.kind === 'worker' && (d.idx || 0) === (rec.idx || 0)); });   /* this one's hit box, not everybody's */
@@ -135,9 +135,9 @@
     crew = crew.filter(function (r) { return r.idx < list.length; });
     list.forEach(function (c, i) {
       var r = crew.filter(function (x) { return x.idx === i; })[0];
-      if (!r) { r = { idx: i, look: c.look, g: null, h: null, state: 'idle', path: [], t: 0, job: null, bubble: null, sayT: 0, idleT: 0, coolT: 0, hasBroom: false }; crew.push(r); }
+      if (!r) { r = { idx: i, look: c.look, g: null, h: null, state: 'idle', path: [], t: 0, job: null, bubble: null, sayT: 0, idleT: 0, coolT: 0, hasBroom: false }; crew.push(r); if (c.carry) { S.storage[c.carry.item] = (S.storage[c.carry.item] || 0) + c.carry.n; syncStorage(); } c.carry = null; }   /* a crate that was in their arms when the game was saved is back on the racking */
       r.look = c.look;
-      if (c.off) { removeWorker(r); r.job = null; r.path = []; r.state = 'idle'; } else buildWorker(r);
+      if (c.off) { removeWorker(r); c.carry = null; r.job = null; r.path = []; r.state = 'idle'; } else buildWorker(r);
     });
     crew.sort(function (a, b) { return a.idx - b.idx; });
     worker = crew[0] || WORKER_NONE;
@@ -241,16 +241,73 @@
   }
   function workerTakeBroom() { if (worker.hasBroom || !worker.h) return; var el = worker.h.userData.parts.rArm.userData.elbow; var bg = new THREE.Group(); bg.position.set(0.04, -0.32, 0.08); bg.rotation.x = 0.35; bg.rotation.z = -0.15; var hd = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 1.25, 8), MAT.wood); hd.position.y = 0.15; bg.add(hd); var head = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.05, 0.32), MAT.darkwood); head.position.y = -0.5; bg.add(head); for (var k = 0; k < 8; k++) { var br = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.2, 0.03), colorMat(k % 2 ? 0xb8925a : 0xa8843f, 1)); br.position.set(0, -0.62, -0.14 + k * 0.04); bg.add(br); } el.add(bg); worker.broomMesh = bg; worker.hasBroom = true; syncBroom(); sfx('pickup'); workerSay('got the broom', '#6fdc8c'); }
   function workerDropBroom() { if (!worker.hasBroom) return; if (worker.broomMesh && worker.broomMesh.parent) worker.broomMesh.parent.remove(worker.broomMesh); worker.broomMesh = null; worker.hasBroom = false; syncBroom(); sfx('putdown'); }
-  function workerRestock() {
-    var moved = []; Object.keys(S.storage).forEach(function (k) { var n = S.storage[k] || 0; if (n <= 0) return; var st = supplyById(k); var dest = k.indexOf('seed_') === 0 ? 'rack' : st && st.stock === 'vend' ? 'vend' : st && st.stock === 'coffee' ? 'coffee' : st && st.stock === 'display' ? 'display' : 'rack';
-      if (dest === 'rack') S.supplies[k] = (S.supplies[k] || 0) + n; else if (dest === 'vend') S.vendStock[k] = (S.vendStock[k] || 0) + n; else if (dest === 'coffee') S.coffeeStock[k] = (S.coffeeStock[k] || 0) + n; else S.display[k] = (S.display[k] || 0) + n;
-      S.storage[k] = 0; moved.push(n + ' ' + itemName(k)); });
-    syncStorage(); syncDisplay(); if (typeof syncRack === 'function') syncRack(); sfx('putdown'); if (moved.length) { toast('📦 ' + crewName(worker.idx) + ' put away: ' + moved.join(', '), 'good'); logEvent('📦 ' + crewName(worker.idx) + ' restocked: ' + moved.join(', '), ''); } world.dirty = true;
+  // ── Restocking, one crate at a time ──
+  // A crew member fetches one crate from its bay on the storage racking, carries it in both arms to where it goes,
+  // opens the machine, loads it, shuts it again and goes back for the next. They never touch a machine's coins.
+  function restockDest(k) {   // where a crate of k goes: the emptiest machine of its kind, the counter display or the supply rack; null if nowhere
+    var st = supplyById(k), kind = k.indexOf('seed_') === 0 ? 'rack' : st && st.stock === 'vend' ? 'vend' : st && st.stock === 'coffee' ? 'coffee' : st && st.stock === 'display' ? 'display' : 'rack';
+    if (kind === 'vend' || kind === 'coffee') {
+      var us = builtUnits(kind === 'vend' ? 'vending' : 'lobbyCoffee'); if (!us.length) return null;
+      var u = us.reduce(function (b, x) { return (machStock(x)[k] || 0) < (machStock(b)[k] || 0) ? x : b; });
+      var f = propFront(u, 0.8); return { kind: kind, unit: u, x: f.x, z: f.z, yaw: f.yaw };
+    }
+    if (kind === 'display') return { kind: 'display', x: WP.counter.x + 1.2, z: WP.counter.z, yaw: 0 };   /* behind the counter, reaching over to the display */
+    if (!propInst.rack) return null;
+    var fr = propFront('rack', 0.75); return { kind: 'rack', x: fr.x, z: fr.z, yaw: fr.yaw };
+  }
+  function restockNext() { return Object.keys(S.storage).filter(function (k) { return (S.storage[k] || 0) > 0 && restockDest(k); })[0] || null; }
+  function carrySet(rec, c, unsaved) {   // what a crew member has in their arms; kept on their saved record so a reload never loses it
+    var saved = !unsaved && crewList()[rec.idx]; if (saved) saved.carry = c ? { item: c.item, n: c.n } : null;
+    if (rec.carryMesh && rec.carryMesh.parent) { rec.carryMesh.parent.remove(rec.carryMesh); disposeTree(rec.carryMesh); }
+    rec.carryMesh = null; rec.carry = c || null;
+    if (c && rec.h) { var m = crateMesh(c.item, 0.4, 0.26, 0.32); m.position.set(0, 0.3, 0.3); rec.h.userData.parts.torso.add(m); rec.carryMesh = m; }
+  }
+  function carryBack(rec, unsaved) {   // a crate still in their arms goes back into storage
+    if (!rec || !rec.carry) return; var c = rec.carry; S.storage[c.item] = (S.storage[c.item] || 0) + c.n; carrySet(rec, null, unsaved); syncStorage();
+  }
+  function carryPose() {   // both arms forward, hands under the crate
+    if (!worker.carry || !worker.h) return; var P = worker.h.userData.parts;
+    P.lArm.rotation.x = P.rArm.rotation.x = -0.5; P.lArm.rotation.z = P.rArm.rotation.z = 0;
+    P.lArm.userData.elbow.rotation.x = P.rArm.userData.elbow.rotation.x = -0.6;
+  }
+  function restockTake(k) {   // at the bay: one crate down off the racking
+    var have = S.storage[k] || 0; if (have <= 0) return;
+    var n = Math.min(have, itemPack(k)); S.storage[k] = have - n; carrySet(worker, { item: k, n: n }); syncStorage(); sfx('crate');
+  }
+  function restockArrive(d) {   // at the machine: open it, load the crate, shut it; at the rack or the display: put it in
+    var rec = worker, c = rec.carry; if (!c) return; if (rec.g) rec.g.rotation.y = d.yaw;
+    var what = c.n + ' × ' + itemName(c.item);
+    if (d.kind === 'vend' || d.kind === 'coffee') {
+      var M = machState(d.unit), key = d.kind === 'vend' ? 'vendDoor' : 'coffDoor', wasOpen = !!M[key];
+      if (!wasOpen) { M[key] = true; sfx('drawer'); if (d.kind === 'vend') vendDisplay(d.unit, 'SERVICE'); }
+      rec.next = { x: d.x, z: d.z, dur: 1.6, done: function () {
+        var st = machStock(d.unit); st[c.item] = (st[c.item] || 0) + c.n; carrySet(rec, null); sfx('putdown');
+        if (d.kind === 'vend') syncVending(d.unit); else syncCoffee(d.unit);
+        logEvent('📦 ' + crewName(rec.idx) + ' loaded ' + what + ' into the ' + (d.kind === 'vend' ? 'vending' : 'coffee') + ' machine', '');
+        rec.next = { x: d.x, z: d.z, dur: 0.8, done: function () { if (!wasOpen) { M[key] = false; sfx('close'); if (d.kind === 'vend') vendDisplay(d.unit, 'READY'); } save(); } };   /* shut it again, unless you had it open */
+      } };
+      return;
+    }
+    rec.next = { x: d.x, z: d.z, dur: 1.2, done: function () {
+      if (d.kind === 'display') { S.display[c.item] = (S.display[c.item] || 0) + c.n; syncDisplay(); }
+      else { S.supplies[c.item] = (S.supplies[c.item] || 0) + c.n; syncRack(); }
+      carrySet(rec, null); sfx('putdown'); logEvent('📦 ' + crewName(rec.idx) + ' put ' + what + (d.kind === 'display' ? ' in the counter display' : ' on the supply rack'), ''); save();
+    } };
+  }
+  function restockJob() {
+    if (worker.carry) {   /* a crate in their arms: take it where it goes, or back up if there is nowhere for it now */
+      var d = restockDest(worker.carry.item);
+      if (!d) { var rf = rackFront(worker.carry.item); return { x: rf.x, z: rf.z, dur: 1.0, done: function () { carryBack(worker); sfx('putdown'); } }; }
+      return { x: d.x, z: d.z, dur: 0.4, done: function () { restockArrive(d); } };
+    }
+    var k = restockNext(); if (!k) return null;
+    var f = rackFront(k); return { x: f.x, z: f.z, dur: 1.2, done: function () { restockTake(k); } };
   }
   function workerNextJob(task) {
     var g = worker.g; function near(x, z) { return Math.hypot(g.position.x - x, g.position.z - z) < 0.35; }
+    if (worker.carry && task !== 'restock') { var bf = rackFront(worker.carry.item); return { x: bf.x, z: bf.z, dur: 1.0, done: function () { carryBack(worker); sfx('putdown'); } }; }   /* given another job mid-errand: the crate goes back up first */
     if (task === 'serve') { var c = S.customer; if (c && c.arrived && !c.stage && !c.idPending && npc.state === 'wait' && now() > worker.coolT) {   /* a card still held out is yours to check: the crew waits */ var gp = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: propPlacement('goodsShelf').x, z: propPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
-    if (task === 'restock') { if (Object.keys(S.storage).some(function (k) { return S.storage[k] > 0; })) return { x: WP.annex.x, z: WP.annex.z, dur: 3, done: workerRestock }; if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null; }
+    if (task === 'restock') { var rj = restockJob(); if (rj) return rj; if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null; }
     if (task !== 'clean' && worker.hasBroom) return { x: ROOM.x - 0.65, z: -0.85, dur: 0.6, done: workerDropBroom };
     if (task === 'clean' && !worker.hasBroom) { if (!dustList().length) return null; return { x: ROOM.x - 0.65, z: -0.85, dur: 0.8, done: workerTakeBroom }; }
     if (task === 'clean' && worker.hasBroom && !dustList().length) return { x: ROOM.x - 0.65, z: -0.85, dur: 0.6, done: workerDropBroom };
@@ -271,9 +328,9 @@
   function updateOneWorker(dt) {
     if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0, true); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = now() + 6000; workerSay(crewLine('locked'), '#ffc857', 2600); } }   /* a locked door is the end of that errand, not something to walk through */
     if (!worker.g) buildWorker(); var g = worker.g, spd = 1.5;
-    if (worker.state === 'walk') { if (walkAlong(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animateHuman(worker.h, dt, 'walk', spd, null); return; }
-    if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z, 'staff'); worker.state = 'walk'; } } return; }
-    animateHuman(worker.h, dt, 'idle', 0, player.pos); worker.idleT += dt; if (worker.idleT < 0.7) return; worker.idleT = 0;
+    if (worker.state === 'walk') { if (walkAlong(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animateHuman(worker.h, dt, 'walk', spd, null); carryPose(); return; }
+    if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.carry) carryPose(); else if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z, 'staff'); worker.state = 'walk'; } } return; }
+    animateHuman(worker.h, dt, 'idle', 0, player.pos); carryPose(); worker.idleT += dt; if (worker.idleT < 0.7) return; worker.idleT = 0;
     var task = (crewList()[worker.idx] || {}).task || 'idle';
     var job = workerNextJob(task);
     if (!job && task !== 'idle') {   /* nothing to do is not the same as broken: say so */

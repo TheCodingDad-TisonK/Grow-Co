@@ -118,17 +118,17 @@
 //#endif
     if (d.kind === 'switch') return (roomLit(d.room) ? 'Lights off' : 'Lights on') + ' <small>' + ROOM_NAMES[d.room] + '</small>';
     if (d.kind === 'dehum') return 'Dehumidifier <small>' + dehumLabel(d.zone) + ' · RH ' + Math.round(S.rh[d.zone]) + '% · E next setting</small>';
-    if (d.kind === 'storeItem') { var sn = S.storage[d.item] || 0; if (h && (h.kind !== 'crate' || h.item !== d.item) && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; return 'Take a crate of ' + itemName(d.item) + ' <small>' + sn + ' in the back room · E takes ' + Math.min(sn, itemPack(d.item)) + ' · Shift+E all' + (h ? ' · adds to the crate' : '') + '</small>'; }
-    if (d.kind === 'storage') return 'Storage racks <small>' + (Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }).length || 'no') + ' items · aim at a crate to take it · Shift+E for the stock list</small>';
+    if (d.kind === 'storeItem') { var sn = S.storage[d.item] || 0, bayT = d.bay !== undefined ? 'bay ' + rackBayCode(d.bay) + ' · ' : ''; if (h && h.kind === 'crate') return 'Rack your crate <small>' + h.n + ' × ' + itemName(h.item) + (h.item === d.item ? ' back in ' + bayT + 'Shift+E takes the rest of this bay instead' : ' goes in its own bay') + '</small>'; if (h && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; return 'Take a crate of ' + itemName(d.item) + ' <small>' + bayT + sn + ' in stock · E takes ' + Math.min(sn, itemPack(d.item)) + ' · Shift+E all</small>'; }
+    if (d.kind === 'storage') { if (h && h.kind === 'crate') return 'Rack your crate <small>' + h.n + ' × ' + itemName(h.item) + ' goes in its own labelled bay</small>'; return 'Storage racking <small>' + (Object.keys(S.storage).filter(function (k) { return S.storage[k] > 0; }).length || 'no') + ' items · aim at a crate to take it · Shift+E for the stock list</small>'; }
     if (d.kind === 'vault') return S.pocket > 0 ? 'Put ' + money(S.pocket) + ' in the vault <small>holds ' + money(S.vault) + ' · Shift+E opens it</small>' : 'Open the vault <small>holds ' + money(S.vault) + '</small>';
     if (d.kind === 'tips') return S.tips > 0 ? 'Empty the tip jar <small>' + money(S.tips) + '</small>' : 'Tip jar <small>empty</small>';
-    if (d.kind === 'vending') { var MM = machState(d.propId); if (h && h.kind === 'crate') return isVendItem(h.item) ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That doesn\'t go in here'; if (MM.vendDoor) return 'Machine open <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + S.vendStock.drink + ' drinks · ' + S.vendStock.snack + ' snacks · E buys one for $2' + (S.box.vend > 0 ? ' · Shift+E opens it, the box holds ' + money(S.box.vend) : ' · Shift+E opens it') + '</small>'; }
-    if (d.kind === 'fridge') { var FM2 = machState(d.propId); if (h && h.kind === 'crate') return h.item === 'drink' ? (FM2.fridgeDoor ? 'Load ' + h.n + ' drinks into the fridge' : 'Open the fridge first <small>Shift+E</small>') : 'Only drinks go in the fridge'; return 'Drinks fridge <small>' + (FM2.fridge || 0) + ' cold' + (FM2.fridgeDoor ? ' · E takes one · Shift+E shuts it' : ' · E takes one · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'vending') { var MM = machState(d.propId); if (h && h.kind === 'crate') return isVendItem(h.item) ? (MM.vendDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' onto the racks' : 'Open the machine first <small>Shift+E</small>') : 'That doesn\'t go in here'; var vbox = coinBox(d.propId), vst = machStock(d.propId), vtxt = (vst.drink || 0) + ' drinks · ' + (vst.snack || 0) + ' snacks'; if (MM.vendDoor) return (vbox > 0 ? 'Empty the coin box <small>' + money(vbox) + ' · ' : 'Machine open <small>') + vtxt + ' on the racks · Shift+E to shut it</small>'; return 'Vending machine <small>' + vtxt + ' · E buys one for $2' + (vbox > 0 ? ' · Shift+E opens it, the box holds ' + money(vbox) : ' · Shift+E opens it') + '</small>'; }
+    if (d.kind === 'fridge') { var FM2 = machState(d.propId), fbox = coinBox(d.propId); if (h && h.kind === 'crate') return h.item === 'drink' ? (FM2.fridgeDoor ? 'Load ' + h.n + ' drinks into the fridge' : 'Open the fridge first <small>Shift+E</small>') : 'Only drinks go in the fridge'; if (FM2.fridgeDoor && fbox > 0) return 'Empty the coin box <small>' + money(fbox) + ' · ' + (FM2.fridge || 0) + ' cold · Shift+E shuts it</small>'; return 'Drinks fridge <small>' + (FM2.fridge || 0) + ' cold' + (FM2.fridgeDoor ? ' · E takes one · Shift+E shuts it' : ' · E takes one' + (fbox > 0 ? ' · Shift+E opens it, the box holds ' + money(fbox) : ' · Shift+E opens it')) + '</small>'; }
     if (d.kind === 'coffeeCup') { var CM2 = machState(d.propId); return CM2.cup > 0 ? (machAnim(d.propId).brewT > 0 ? 'Pouring… <small>give it a second</small>' : 'Fresh coffee <small>E takes the cup</small>') : ''; }
     if (d.kind === 'vendTray') { var MT = machState(d.propId); return MT.tray.length ? 'Delivery tray <small>' + MT.tray.length + ' waiting · E takes one</small>' : ''; }
-    if (d.kind === 'lobbyCoffee') { var CD = machState(d.propId); if (h && h.kind === 'crate') return (h.item === 'cup' || h.item === 'beans') ? (CD.coffDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' into the hopper' : 'Lift the hopper lid first <small>Shift+E</small>') : 'That doesn\'t go in here'; return (S.box.coffee > 0 ? 'Empty the cash box <small>' + money(S.box.coffee) + ' · ' : 'Coffee machine <small>') + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' servings of beans</small>'; }
+    if (d.kind === 'lobbyCoffee') { var CD = machState(d.propId); if (h && h.kind === 'crate') return (h.item === 'cup' || h.item === 'beans') ? (CD.coffDoor ? 'Load ' + h.n + ' × ' + itemName(h.item) + ' into the hopper' : 'Lift the hopper lid first <small>Shift+E</small>') : 'That doesn\'t go in here'; var cbox = coinBox(d.propId), cst = machStock(d.propId), cstock = (cst.cup || 0) + ' cups · ' + (cst.beans || 0) + ' servings of beans'; if (CD.coffDoor) return (cbox > 0 ? 'Empty the coin box <small>' + money(cbox) + ' · ' : 'Hopper open <small>') + cstock + ' · Shift+E closes it</small>'; return 'Coffee machine <small>E pours one for $2 · ' + cstock + (cbox > 0 ? ' · Shift+E opens it, the box holds ' + money(cbox) : ' · Shift+E opens it') + '</small>'; }
     if (d.kind === 'atm') return 'Use the ATM <small>bank ' + money(S.bank) + ' · pocket ' + money(S.pocket) + ' · deposits clear at once, 2% fee</small>';
-    if (d.kind === 'arcade') return S.box.arcade > 0 ? 'Empty the coin box <small>' + money(S.box.arcade) + '</small>' : 'Arcade cabinet <small>coin box empty</small>';
+    if (d.kind === 'arcade') { var abox = coinBox(d.propId); return abox > 0 ? 'Empty the coin box <small>' + money(abox) + '</small>' : 'Arcade cabinet <small>coin box empty</small>'; }
     if (d.kind === 'courier') return 'Hand the courier ' + money(S.courier ? S.courier.amount : 0) + ' <small>pocket ' + money(S.pocket) + '</small>';
     if (d.kind === 'roller') return (world.rollerOpen ? 'Close' : 'Open') + ' the roller door';
     if (d.kind === 'gate') return (world.gateOpen ? 'Close' : 'Open') + ' the yard gate';
@@ -254,13 +254,15 @@
     else if (d.kind === 'dust') sweep(d.id);
     else if (d.kind === 'deskboard') deskTap();
     else if (d.kind === 'storeItem') {
+      var shS = player.keys.ShiftLeft || player.keys.ShiftRight;
+      if (h && h.kind === 'crate' && !(shS && h.item === d.item)) { rackCrate(); return; }   /* a crate in your hands goes back up; Shift+E on its own bay takes the rest of it instead */
       var have = S.storage[d.item] || 0; if (have < 1) { toast('Nothing left there', 'bad'); return; }
       if (h && (h.kind !== 'crate' || h.item !== d.item)) { var other2 = S.hotbar.map(function (x, i2) { return x && x.kind === 'crate' && x.item === d.item ? i2 : -1; }).filter(function (i2) { return i2 >= 0; })[0]; if (other2 !== undefined) { S.slot = other2; h = held(); } else if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } else h = null; }
       var take_n = (player.keys.ShiftLeft || player.keys.ShiftRight) ? have : Math.min(have, itemPack(d.item)); S.storage[d.item] = have - take_n;
       if (h) h.n += take_n; else take({ kind: 'crate', item: d.item, n: take_n });
       world.dirtyStorage = true; toast('📦 Took ' + take_n + ' × ' + itemName(d.item), 'good');
     }
-    else if (d.kind === 'storage') { if (player.keys.ShiftLeft || player.keys.ShiftRight) ui.openPanel('storage'); else toast('Aim at a crate to take it · Shift+E for the stock list', ''); }
+    else if (d.kind === 'storage') { if (player.keys.ShiftLeft || player.keys.ShiftRight) ui.openPanel('storage'); else if (h && h.kind === 'crate') rackCrate(); else toast('Aim at a crate to take it · Shift+E for the stock list', ''); }
     else if (d.kind === 'vault') { if (S.pocket > 0 && !(player.keys.ShiftLeft || player.keys.ShiftRight)) { var dep = S.pocket; S.vault += dep; S.pocket = 0; sfx('vault'); toast('🔒 ' + money(dep) + ' into the vault (now ' + money(S.vault) + ')', 'good'); logEvent('🔒 Vault deposit: ' + money(dep) + ' (vault ' + money(S.vault) + ')', ''); } else ui.openPanel('vault'); }
     else if (d.kind === 'tips') { var tp = S.tips; if (takeCash(tp, 'tip jar')) S.tips = 0; }
     else if (d.kind === 'vending') {
@@ -269,10 +271,10 @@
       else if (h && h.kind === 'crate') {
         if (!isVendItem(h.item)) toast('That doesn\'t go in the vending machine', 'bad');
         else if (!MD.vendDoor) toast('Open the machine first (Shift+E)', 'bad');
-        else { S.vendStock[h.item] = (S.vendStock[h.item] || 0) + h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + vendKeys().map(function (k) { return S.vendStock[k] + ' ' + itemName(k).toLowerCase(); }).join(' · ') + ' on the racks)', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncVending(); }
+        else { var VS = machStock(d.propId); VS[h.item] = (VS[h.item] || 0) + h.n; sfx('putdown'); toast('🥤 Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + vendKeys(d.propId).map(function (k) { return VS[k] + ' ' + itemName(k).toLowerCase(); }).join(' · ') + ' on the racks)', 'good'); logEvent('🥤 Restocked the vending machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncVending(d.propId); save(); }
       }
-      else if (MD.vendDoor) { var vb2 = S.box.vend; if (vb2 > 0 && takeCash(vb2, 'vending machine')) { S.box.vend = 0; vendDisplay(d.propId, 'SERVICE'); } else toast('Load drinks or snacks onto the racks, or Shift+E to shut it', ''); }
-      else { var pickV = vendKeys().sort(function (a, b) { return (S.vendStock[b] || 0) - (S.vendStock[a] || 0); })[0] || ((S.vendStock.drink || 0) >= (S.vendStock.snack || 0) ? 'drink' : 'snack'); vendDispense(d.propId, pickV); }
+      else if (MD.vendDoor) { if (coinBox(d.propId) > 0 && coinEmpty(d.propId, 'vending machine')) vendDisplay(d.propId, 'SERVICE'); else toast('Load drinks or snacks onto the racks, or Shift+E to shut it', ''); }
+      else { var VP = machStock(d.propId), pickV = vendKeys(d.propId).sort(function (a, b) { return (VP[b] || 0) - (VP[a] || 0); })[0] || ((VP.drink || 0) >= (VP.snack || 0) ? 'drink' : 'snack'); vendDispense(d.propId, pickV); }
     }
     else if (d.kind === 'vendTray') { vendTakeTray(d.propId); }
     else if (d.kind === 'fridge') {
@@ -283,6 +285,7 @@
         else if (!FI.fridgeDoor) toast('Open the fridge first (Shift+E)', 'bad');
         else { FI.fridge = (FI.fridge || 0) + h.n; sfx('putdown'); toast('🧊 ' + h.n + ' drinks chilling (' + FI.fridge + ' in the fridge)', 'good'); S.held = null; syncFridge(d.propId); save(); }
       }
+      else if (FI.fridgeDoor && coinBox(d.propId) > 0) { coinEmpty(d.propId, 'fridge'); save(); }   /* open, the coin box comes first; once it is empty E takes a can again */
       else fridgeTake(d.propId);
     }
     else if (d.kind === 'coffeeCup') { coffTake(d.propId); }
@@ -292,13 +295,13 @@
       else if (h && h.kind === 'crate') {
         if (h.item !== 'cup' && h.item !== 'beans') toast('That doesn\'t go in the coffee machine', 'bad');
         else if (!CI.coffDoor) toast('Lift the hopper lid first (Shift+E)', 'bad');
-        else { S.coffeeStock[h.item] += h.n; sfx('putdown'); toast('☕ Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + S.coffeeStock.cup + ' cups · ' + S.coffeeStock.beans + ' beans)', 'good'); logEvent('☕ Restocked the coffee machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncCoffee(); save(); }
+        else { var CS = machStock(d.propId); CS[h.item] = (CS[h.item] || 0) + h.n; sfx('putdown'); toast('☕ Loaded ' + h.n + ' × ' + itemName(h.item) + ' (' + (CS.cup || 0) + ' cups · ' + (CS.beans || 0) + ' beans)', 'good'); logEvent('☕ Restocked the coffee machine: ' + h.n + ' × ' + itemName(h.item), ''); S.held = null; syncCoffee(d.propId); save(); }
       }
-      else if (CI.coffDoor) { var cb2 = S.box.coffee; if (cb2 > 0 && takeCash(cb2, 'coffee machine')) S.box.coffee = 0; else toast('Load cups or beans, or Shift+E to close the hopper', ''); }
+      else if (CI.coffDoor) { if (!(coinBox(d.propId) > 0 && coinEmpty(d.propId, 'coffee machine'))) toast('Load cups or beans, or Shift+E to close the hopper', ''); }
       else coffBrew(d.propId);
     }
     else if (d.kind === 'atm') { ui.openPanel('atm'); }
-    else if (d.kind === 'arcade') { var ab = S.box.arcade; if (takeCash(ab, 'arcade coin box')) S.box.arcade = 0; }
+    else if (d.kind === 'arcade') { coinEmpty(d.propId, 'arcade coin box'); }
     else if (d.kind === 'courier') { courierHandOver(); }
     else if (d.kind === 'roller') { rollerSet(!world.rollerOpen); }
     else if (d.kind === 'gate') { gateSet(!world.gateOpen); }

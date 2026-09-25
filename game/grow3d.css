@@ -293,3 +293,5 @@ button { font: inherit; cursor: pointer; }
 .g3-wheel-center { position: absolute; left: 50%; top: 50%; width: 200px; margin-left: -100px; transform: translateY(-50%); text-align: center; pointer-events: none; }
 .g3-wheel-center b { display: block; font-size: 16px; }
 .g3-wheel-center span { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.g3-stat.heavy { border-color: var(--amber); }
+.g3-stat.heavy .v { color: var(--amber); }   /* the till holds enough to be worth robbing */

@@ -116,7 +116,9 @@
     jointMarkup: 1.35,    // a pre-roll carries a convenience premium
     cookieShare: 0.40,    // one cookie is worth 0.40 x the gram it came from (six to a gram)
     excise: 0.15,         // sales tax inside the shelf price, held back and paid with the monthly bill
-    taxRate: 0.10         // business tax on the month's gross
+    taxRate: 0.10,        // business tax on the month's gross...
+    taxHighRate: 0.20,    // ...and on the part of a big month over taxHighFrom, so a finished shop still has a bill that grows with it
+    taxHighFrom: 60000
   };
   function gradeMult(q, thc) { return Math.pow((0.6 + (q / 100) * 0.8) * thc, ECON.gradeExp); }
   function premiumMult() { return 1 + Math.min(ECON.repCap, S.rep / 1000) + (hasLic('brand') ? ECON.brandBonus : 0) + (hasLic('latehours') && nightNow() ? ECON.lateBonus : 0) + (S.chill && S.chill.until > now() ? ECON.chillBonus : 0); }
@@ -211,7 +213,8 @@
     payWages(offline);
     monthlyTax(offline);
   }
-  function taxDue() { var B = books(); return Math.round(B.exciseDue + B.monthGross * ECON.taxRate); }
+  function bizTax(gross) { return Math.min(gross, ECON.taxHighFrom) * ECON.taxRate + Math.max(0, gross - ECON.taxHighFrom) * ECON.taxHighRate; }
+  function taxDue() { var B = books(); return Math.round(B.exciseDue + bizTax(B.monthGross)); }
   function taxDay() { return (Math.floor(((S.day || 1) - 1) / 28) + 1) * 28 + 1; }
   function monthlyTax(offline) {
     var B = books(), m = Math.floor(((S.day || 1) - 1) / 28) + 1;

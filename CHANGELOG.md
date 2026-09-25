@@ -1,6 +1,40 @@
 # Changelog
 
-## v1.24
+## v1.25: the back room
+
+**Every machine is its own machine.**
+
+- **Its own coin box.** Every vending machine, coffee machine, drinks fridge and arcade cabinet keeps its own coins. Emptying one used to empty them all, because they shared one box; now the others keep theirs.
+- **The drinks fridge has a coin box.** The $2 a lounge customer pays for a cold can used to land in the vending machine's box, so there was nothing to collect at the fridge. It goes into the fridge now: open it with Shift+E, and E empties the box before it hands you a can.
+- **Its own stock.** Each vending machine sells from its own racks and each coffee machine pours from its own cups and beans, so a new machine starts empty until it is loaded. Customers only walk up to a machine with something in it.
+- Old saves: whatever sat in the shared boxes and the shared stock goes into the first machine of each kind. Nothing is lost.
+
+**Storage racking.** The racking in the back room is pallet racking now: blue frames, orange beams, four levels of six bays. Every item gets its own bay, with a label plate on the beam (A1 at the bottom left to D6 at the top right), and keeps it while any is left, so crates no longer shuffle along when one runs out. E with a crate in your hands puts it back up in its bay.
+
+**The crew restock one crate at a time.** On restock, a crew member fetches one crate from its bay, carries it in both arms to where it goes, opens the machine, loads it, shuts it again and goes back for the next. The emptiest machine of a kind is filled first. They never touch a machine's coins. Give them another job or send them home mid-errand and the crate goes back on the racking; a crate in someone's arms when the game is saved is back on the racking when it loads.
+
+**The crew actually walk there.** The roof greenhouse beds were being counted as walls on the ground floor, so a crew member sent from the hall to the back room or the lobby stopped halfway and did the job from where they stood. They walk all the way now.
+
+**Pacing**, from the balance report (docs/Balance.md):
+
+- **Levels take longer.** Each level asks for more XP than the last, so level 10 comes about day 24 of steady trade instead of day 16.
+- **Reputation gates are higher.** Lounge licence 200, Firearms licence 240, Connoisseur permit 320, Late-hours licence 400, Brand registration 480, Export licence 960. They open over the first two weeks instead of the first few days.
+- **The tobacco line is a mid-game business.** The licence needs level 8, the Corner Tobacconist pays 50% of shop price instead of 60%, and the driver 45% instead of 55%.
+- **Big months pay more tax.** Business tax is 20% instead of 10% on what a month takes over $60,000. A young shop never reaches it.
+- **A heavy till warns you.** When the till and the tip jar hold $250 or more, the vault readout turns amber and shows them, and once a day a warning says a robber would take all of it.
+
+**For people who work on the game.** The code is written in parts in `src/` and built into the game (and the desk build) by `npm run build`. `npm test` runs 42 tests against the real game in a hidden window, on every push. `npm run balance` writes docs/Balance.md from the numbers in the code.
+
+## v1.24: the busy shop
+
+**A real line at the window.** Customers no longer wait outside until the window is free. Up to four queue along the rope while you serve, and the next one steps up the moment you finish. Anyone left waiting in line for more than a minute and a half gives up and walks out (rep -1).
+
+- **V uses what you hold, anywhere.** Drink a water, coffee or cold can, eat a snack or one of your own cookies, or light a joint and carry on working. An empty goes straight into a bin with room if one is a few steps away.
+- **Two new guns.** A hunting rifle with a scope on right-click, and an AK-47 that fires full auto while you hold the button. Both need the firearms licence.
+- **The police look like police.** Peaked caps, vests lettered POLICE, a badge, a radio and a holster. The patrol car is lettered down both sides.
+- **Robbers are harder to spot.** They dress like anyone off the street. Most join the line like a customer and pull the mask at the window; others browse the lobby, and a partner may come in later. The guard's ID check catches some of them on a fake card. Strangers walk in and order like anyone else, and E on anyone in the line has a word.
+- **The rope is a gate.** Once the guard has checked a customer's ID he unhooks the rope, holds it while they walk through and hooks it back. People leaving walk round it. With the guard sent home it stays unhooked.
+- **Rope lines you arrange.** Change the colour, length, style and posts, turn it, put up another beside it or take it down. F2 moves it.
 
 **Small things that were in the way.**
 

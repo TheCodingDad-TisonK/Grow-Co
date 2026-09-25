@@ -14,6 +14,7 @@ const WANT = {
   '03-log-sound.js': ['ECON', 'COST'],
   '10-staff-paths.js': ['WORKER_HIRE', 'WORKER_WAGE', 'CREW_MAX'],
   '13-basement.js': ['CIG_SKUS', 'TOB'],
+  '20-robberies.js': ['TILL_HEAVY'],
   '31-models-machines.js': ['WALKUP_RATE', 'WALKUP_CAP'],
 };
 

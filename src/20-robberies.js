@@ -1,5 +1,15 @@
 //@ robberies and weapons
   // ── Robberies: four kinds of trouble, each running in stages: casing the lobby, masking up, the demand, an escalation, a second target in the back, the getaway ──
+  // a robber takes everything in the till and the tip jar, so a heavy till says so: the vault readout turns amber and, once a day, a word of warning
+  var TILL_HEAVY = 250;
+  function tillHeavy() { return (S.till || 0) + (S.tips || 0) >= TILL_HEAVY; }
+  function tillWatch() {
+    if (!tillHeavy() || S.tillWarnDay === S.day) return;
+    S.tillWarnDay = S.day; var amt = money((S.till || 0) + (S.tips || 0));
+    toast('🧾 The till and the tip jar hold ' + amt + '. A robber takes all of it: empty them into the vault, or book the courier.', 'bad');
+    logEvent('🧾 ' + amt + ' sitting in the till and the tip jar', 'bad');
+    if (guard.h && !guardOff() && guard.say) guard.say('That till\'s getting heavy, boss.', '#ffc857', 3000);
+  }
   var ROB_KINDS = {
     snatch: { label: 'snatch thief', armed: false, weapon: null,      speed: 2.7, demandT: 0,  bat: 1,    pepper: 1,    taser: 1,    guard: 0.25 },
     knife:  { label: 'knife robber', armed: true,  weapon: 'knife',   speed: 2.4, demandT: 13, bat: 0.65, pepper: 0.85, taser: 0.95, guard: 0 },

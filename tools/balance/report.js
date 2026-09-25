@@ -37,7 +37,7 @@ function day(s) {
   const inputs = plantsPerDay * (st.seed + (4 + (up.doser ? 0 : 6)) * supplyDisc) + plantsPerDay * p.wet * D.COST.processPerGram;
   const packaging = (served * pc.pack + Math.min(D.WALKUP_CAP, leftG) * M.unitPack('joints')) * supplyDisc + served * (pc.accRevenue - pc.accMargin);
   const bill = M.bills({ day: s.day == null ? 30 : s.day, slots, light: L, plants: slots, lic, up, guard: s.guard !== false, crew: s.crew || 0 });
-  const tax = gross * M.taxShare;
+  const tax = M.taxOnDay(gross);
   const net = gross - inputs - packaging - bill.total - tax;
   return { p, pc, slots, supplyG, arrivals, serveCap, served, soldG, leftG, gross, inputs, packaging, bill, tax, net, limit: served >= arrivals - 1e-9 ? 'customers' : served >= serveCap - 1e-9 ? 'serving speed' : 'stock' };
 }
@@ -57,16 +57,16 @@ if (firstFull) {
 const strainRows = D.STRAINS.map((st) => { const p = M.plant({ strain: st, light: 'led' }); const v = p.grams * M.gramValue(p.qFinal, st.thc) / p.days; return { st, p, v }; });
 strainRows.forEach((x) => { const better = strainRows.filter((y) => y.st.lvl < x.st.lvl && y.v >= x.v); if (better.length) findings.push('**' + x.st.name + ' is outclassed.** It unlocks at level ' + x.st.lvl + ' but grows less value per slot per day ($' + r1(x.v) + ' under an LED) than ' + better.map((y) => y.st.name + ' (level ' + y.st.lvl + ', $' + r1(y.v) + ')').join(' and ') + '. A player who works that out never plants it.'); });
 // 3. rep gates
-const repPerDay = 2 * Math.min(M.customersPerDay({ dayLen: A.dayLen }), A.dayLen * 60 / A.serveSec);
+const firstCust = Math.min(M.customersPerDay({ dayLen: A.dayLen }), A.dayLen * 60 / A.serveSec), repSale = M.perCustomer({ q: 80, thc: 1 }).rep, repPerDay = firstCust * repSale;
 const repGates = D.LICENCES.filter((l) => l.rep).map((l) => l.name + ' ' + l.rep);
-findings.push('**Reputation gates open almost at once.** Every sale adds 1 to 3 rep and nothing takes it away except penalties, so a shop serving its first ' + Math.round(repPerDay / 2) + ' customers a day gains about ' + Math.round(repPerDay) + ' rep a day. The gates (' + repGates.join(', ') + ') are all behind the player within a few days of steady trade, and rep stops mattering to price at 100 (+' + pct(D.ECON.repCap) + ') and to footfall at 133.');
+const repFindingAt = findings.length; findings.push('');   // written once the simulation below says when each gate opens
 // 4. markup when stock is short
 const early = { strain: 'sunflower', light: 'led', tent: 1, day: 20 };
 const bm = bestMarkup(early), flat = day(early);
 if (bm.mk > 1 && flat.limit === 'stock') findings.push('**The markup slider is free money while stock is short.** With too little to sell (a 6-slot tent under an LED), the best markup is ' + Math.round(bm.mk * 100) + '%: ' + $(bm.d.net) + ' a day against ' + $(flat.net) + ' at 100%, because every gram sells anyway and the lost customers were never going to be served. The slider only starts to cost money once there is more stock than customers.');
 // 5. the basement against the shop
 const tob = M.tobacco({ dayLen: A.dayLen });
-const tobNet = tob.revenueWholesale * (1 - M.taxShare) - tob.sow - tob.materials - tob.staffIfUnfilled - tob.rent;   // wholesale goes through bookSale, so it is taxed like any sale
+const tobNet = tob.revenueWholesale - M.taxOnDay(tob.revenueWholesale) - tob.sow - tob.materials - tob.staffIfUnfilled - tob.rent;   // wholesale goes through bookSale, so it is taxed like any sale
 const bigShop = day({ strain: 'runtz', light: 'array', tent: D.TENTS.length - 1, up: { trimmer2: 1, hydro: 1, skylight: 1, billboard: 1 }, lic: { cult2: 1, cult3: 1, brand: 1 }, rep: 200, crew: 3 });
 const tobFindingAt = findings.length; findings.push('');   // written once the simulation below says when the licence is affordable
 // 6. demand against supply as the shop grows
@@ -85,7 +85,7 @@ function simulate(opts) {
   const s = { strain: 'sunflower', light: 'none', tent: 0, up: {}, lic: {}, rep: 0, crew: 0, day: 1, markup: 1 };
   const firstPlanting = 4 * (strain('sunflower').seed + 4 + 6);
   let cash = 220 - 60 - 36 - firstPlanting;   // the grinder, three more pots and the first four plants, before anything sells
-  let xp = 0, level = 1, firstHarvest = null, level10 = null, affordTob = null; const log = [], bought = [], netByDay = {};
+  let xp = 0, level = 1, firstHarvest = null, level10 = null, affordTob = null; const log = [], bought = [], netByDay = {}, gateDay = {};
   const cands = () => {
     const out = [];
     if (s.tent + 1 < D.TENTS.length) { const T = D.TENTS[s.tent + 1]; if (!T.lic || s.lic[T.lic]) out.push({ what: T.slots + '-slot tent', price: T.price + (T.slots - D.TENTS[s.tent].slots) * 12, apply: () => { s.tent++; } }); }
@@ -93,11 +93,12 @@ function simulate(opts) {
     [['trimmer'], ['trimmer2', 'trimmer'], ['hydro', 'autowater'], ['autowater'], ['skylight'], ['sign'], ['billboard', 'sign'], ['solar'], ['doser']].forEach(([id, req]) => { const u = M.byId(D.UPGRADES, id); if (!u || s.up[id] || (req && !s.up[req]) || (u.lvl && level < u.lvl)) return; out.push({ what: u.name, price: u.price, apply: () => { s.up[id] = 1; } }); });
     ['cult2', 'cult3', 'wholesale', 'brand'].forEach((id) => { const l = M.byId(D.LICENCES, id); if (s.lic[id] || (l.lvl && level < l.lvl) || (l.rep && s.rep < l.rep) || (l.req && !s.lic[l.req])) return; out.push({ what: l.name, price: l.price, apply: () => { s.lic[id] = 1; } }); });
     if (s.crew < D.CREW_MAX) out.push({ what: 'crew member ' + (s.crew + 1), price: Math.round(D.WORKER_HIRE * Math.pow(1.6, s.crew)), apply: () => { s.crew++; } });
-    if (opts.tobacco && !s.lic.tobacco) out.push({ what: 'Tobacco licence (and the basement line)', price: tob.licence, apply: () => { s.lic.tobacco = 1; } });
+    const tl = M.byId(D.LICENCES, 'tobacco');
+    if (opts.tobacco && !s.lic.tobacco && !(tl.lvl && level < tl.lvl) && !(tl.rep && s.rep < tl.rep)) out.push({ what: 'Tobacco licence (and the basement line)', price: tob.licence, apply: () => { s.lic.tobacco = 1; } });
     return out;
   };
   // the basement's takings on top of the shop's day: its rent and its two staff are already in the shop's bill once the licence is held
-  const netOf = () => { const b = bestMarkup(s); return { d: b.d, mk: b.mk, extra: s.lic.tobacco ? tob.revenueWholesale * (1 - M.taxShare) - tob.sow - tob.materials : 0 }; };
+  const netOf = () => { const b = bestMarkup(s); return { d: b.d, mk: b.mk, extra: s.lic.tobacco ? tob.revenueWholesale - (M.taxOnDay(b.d.gross + tob.revenueWholesale) - M.taxOnDay(b.d.gross)) - tob.sow - tob.materials : 0 }; };   /* the basement's takings share the shop's month, so they are taxed at the month's top rate */
   for (s.day = 1; s.day <= (opts.days || 60); s.day++) {
     // unlocks: the best strain the level allows
     D.STRAINS.filter((st) => st.lvl <= level).forEach((st) => { const cur = day(Object.assign({}, s, { strain: s.strain })).net, alt = day(Object.assign({}, s, { strain: st.id })).net; if (alt > cur) s.strain = st.id; });
@@ -106,10 +107,12 @@ function simulate(opts) {
     const selling = s.day > growing;
     const today = selling ? n.d.net + n.extra : -n.d.bill.total;   // before the first harvest only the bills fall (the first plants are already paid for)
     cash += today; netByDay[s.day] = selling ? n.d.net + n.extra : 0;
-    if (affordTob == null && cash >= tob.licence + 2 * n.d.bill.total) affordTob = s.day;
-    if (selling) { xp += n.d.gross / 8 + n.d.slots / n.d.p.days * n.d.p.wet; s.rep += 2 * n.d.served; }
+    const tlic = M.byId(D.LICENCES, 'tobacco');
+    if (affordTob == null && cash >= tob.licence + 2 * n.d.bill.total && !(tlic.lvl && level < tlic.lvl) && !(tlic.rep && s.rep < tlic.rep)) affordTob = s.day;   // the first day the licence is both allowed and affordable
+    if (selling) { xp += n.d.gross / 8 + n.d.slots / n.d.p.days * n.d.p.wet; s.rep += n.d.pc.rep * n.d.served; }
     while (xp >= D.XP_PER_LEVEL(level)) { xp -= D.XP_PER_LEVEL(level); level++; }
     if (level >= 10 && level10 == null) level10 = s.day;
+    D.LICENCES.forEach((l) => { if ((l.rep || l.lvl) && gateDay[l.id] == null && !(l.lvl && level < l.lvl) && !(l.rep && s.rep < l.rep)) gateDay[l.id] = s.day; });
     // spend: the purchase that pays back fastest, while two days of bills stay in the bank
     for (let k = 0; k < 6; k++) {
       const base = netOf().d.net + netOf().extra; let best = null;
@@ -119,7 +122,7 @@ function simulate(opts) {
     }
     if ([1, 3, 5, 10, 11, 15, 20, 30, 45, 60, 90].includes(s.day)) log.push([s.day, $(cash), level, Math.round(s.rep), D.TENTS[s.tent].slots, light(s.light).name, strain(s.strain).name, Math.round(s.markup * 100) + '%', selling ? $(n.d.net + n.extra) : 'growing', selling ? n.d.limit : '']);
   }
-  return { log, bought, cash, level, level10, affordTob, netByDay, firstPlanting, lastBuy: bought.length ? +/^day (\d+)/.exec(bought[bought.length - 1])[1] : null, s };
+  return { log, bought, cash, level, level10, affordTob, netByDay, gateDay, firstPlanting, lastBuy: bought.length ? +/^day (\d+)/.exec(bought[bought.length - 1])[1] : null, s };
 }
 
 // ── the simulated player, and the findings that need it ──
@@ -127,11 +130,17 @@ const hrs = (days) => r1(days * A.dayLen / 60) + ' hours of play';
 const sim = simulate({ days: 90 });
 const simT = simulate({ days: 90, tobacco: true });
 const shopThen = sim.affordTob ? sim.netByDay[sim.affordTob] : null;
-findings[tobFindingAt] = '**The basement line is the best money in the game early on, and costs nothing to unlock.** It turns out about ' + Math.round(tob.packsPerDay) + ' packs of 20 a game day (' + tob.bottleneck + ' sets the pace), and the Corner Tobacconist takes every one at 60% of shop price with no cap: ' + $(tob.revenueWholesale) + ' a day, ' + $(tobNet) + ' after tax, seed, materials, the basement rent and the two staff it needs. The licence costs ' + $(tob.licence) + ' with no level or rep gate. The simulated player could first afford it on day ' + sim.affordTob + ' (' + hrs(sim.affordTob) + '), when the shop itself was netting ' + $(shopThen) + ' a day, so buying it ' + (tobNet > shopThen ? 'more than doubles' : 'adds ' + pct(tobNet / shopThen) + ' to') + ' the income at that point. A fully built shop nets ' + $(day({ strain: 'runtz', light: 'array', tent: D.TENTS.length - 1, up: { trimmer2: 1, hydro: 1, skylight: 1, billboard: 1 }, lic: { cult2: 1, cult3: 1, brand: 1 }, rep: 200, crew: 3 }).net) + ' a day, so the basement stays worth having but stops dominating late. Over 90 days the player with the licence ends with ' + $(simT.cash) + ' against ' + $(sim.cash) + '.';
+// reputation: when each gate opens for the simulated player
+const repLics = D.LICENCES.filter((l) => l.rep), repDays = repLics.map((l) => sim.gateDay[l.id]).filter((d) => d != null);
+findings[repFindingAt] = (repDays.length && Math.max.apply(null, repDays) <= 10 ? '**Reputation gates open almost at once.**' : '**Reputation gates pace the first weeks.**') + ' Every sale adds 1 to 4 rep plus a point for every 25 of quality (about ' + repSale + ' at quality 80), and nothing takes it away except penalties, so a shop serving its first ' + Math.round(firstCust) + ' customers a day gains about ' + Math.round(repPerDay) + ' rep a day, and more as it grows. The simulated player passes the gates on these days: ' + repLics.map((l) => l.name + ' (' + l.rep + (l.lvl ? ' and level ' + l.lvl : '') + ') day ' + (sim.gateDay[l.id] || 'never')).join(', ') + '. Rep stops mattering to price at 100 (+' + pct(D.ECON.repCap) + ') and to footfall at 133.';
+// the basement against the shop
+const tlic = M.byId(D.LICENCES, 'tobacco'), tobGate = tlic.lvl || tlic.rep ? ' and needs ' + [tlic.lvl ? 'level ' + tlic.lvl : '', tlic.rep ? tlic.rep + ' rep' : ''].filter(Boolean).join(' and ') : ' with no level or rep gate';
+const tobShare = shopThen ? tobNet / shopThen : 0;
+findings[tobFindingAt] = (tobShare > 0.8 ? '**The basement line is the best money in the game early on.**' : '**The basement line is a solid mid-game side business.**') + ' It turns out about ' + Math.round(tob.packsPerDay) + ' packs of 20 a game day (' + tob.bottleneck + ' sets the pace), and the Corner Tobacconist takes every one at ' + pct(D.TOB.wholesale) + ' of shop price with no cap: ' + $(tob.revenueWholesale) + ' a day, ' + $(tobNet) + ' after tax, seed, materials, the basement rent and the two staff it needs. The licence costs ' + $(tob.licence) + tobGate + '. The simulated player could first get it on day ' + sim.affordTob + ' (' + hrs(sim.affordTob) + '), when the shop itself was netting ' + $(shopThen) + ' a day, so it ' + (tobShare > 1 ? 'more than doubles' : 'adds ' + pct(tobShare) + ' to') + ' the income at that point. A fully built shop nets ' + $(bigShop.net) + ' a day. Over 90 days the player with the licence ends with ' + $(simT.cash) + ' against ' + $(sim.cash) + '. The model sells every pack to the tobacconist; the counter (full price, to customers who ask) and the tablet rounds (about 125% of it, for the drive) pay more for the packs they take.';
 // levels stop unlocking anything at 10
 const lvlGates = [].concat(D.STRAINS.map((x) => x.lvl), D.UPGRADES.filter((u) => u.lvl).map((u) => u.lvl), D.LICENCES.filter((l) => l.lvl).map((l) => l.lvl));
 const topGate = Math.max.apply(null, lvlGates);
-findings.push('**Levels run out fast.** The last thing a level unlocks is at level ' + topGate + ', and the simulated player gets there on day ' + sim.level10 + ' (' + hrs(sim.level10) + '). After that a level-up unlocks nothing, and the player was level ' + sim.level + ' by day 90. XP is an eighth of every sale plus a point per gram harvested, so it grows with the shop.');
+findings.push((sim.level10 <= 16 ? '**Levels run out fast.**' : '**Levels run out in the mid-game.**') + ' The last thing a level unlocks is at level ' + topGate + ', and the simulated player gets there on day ' + sim.level10 + ' (' + hrs(sim.level10) + '). After that a level-up unlocks nothing, and the player was level ' + sim.level + ' by day 90. XP is an eighth of every sale plus a point per gram harvested, so it grows with the shop, and each level asks for more than the last: ' + D.XP_PER_LEVEL(1) + ' XP for level 2, ' + D.XP_PER_LEVEL(topGate - 1) + ' for level ' + topGate + '.');
 // demand caps the grow room
 const maxCust = M.customersPerDay({ dayLen: A.dayLen, up: { billboard: 1 }, rep: 200 });
 const topGrow = M.plant({ strain: 'runtz', light: 'array', up: { trimmer2: 1, hydro: 1, skylight: 1 }, lic: { cult2: 1 } });
@@ -139,16 +148,17 @@ const perSlot = topGrow.grams / topGrow.days, needG = maxCust * M.perCustomer({ 
 const enoughTent = D.TENTS.filter((T) => T.slots >= slotsNeeded)[0];
 findings.push('**The customers run out before the grow room does.** With the billboard and full reputation about ' + Math.round(maxCust) + ' customers come a game day, wanting about ' + Math.round(needG) + ' g. A fully upgraded slot grows ' + r1(perSlot) + ' g a day, so about ' + Math.ceil(slotsNeeded) + ' slots already cover every customer the shop can get' + (enoughTent ? ' (the ' + enoughTent.slots + '-slot tent)' : '') + '. The bigger tents past that, and Cultivation permit III ($' + M.byId(D.LICENCES, 'cult3').price.toLocaleString('en-US') + '), only pay through side channels: the till\'s walk-up sales (12 a day), deliveries, the van, street deals, export contracts and the branch. (The simulated player, which only buys what pays back on its own, stopped at ' + D.TENTS[sim.s.tent].slots + ' slots: the permit earns nothing until the tent it unlocks is bought as well, and the same goes for the Auto-waterer that the Hydroponic loop needs.)');
 // the late game has little to spend on
-findings.push('**Money piles up late.** The simulated player had bought everything that pays back within 40 days by day ' + sim.lastBuy + ' (' + hrs(sim.lastBuy) + ') and then banked about ' + $(sim.netByDay[90]) + ' a day, ending day 90 with ' + $(sim.cash) + '. The only big sinks are the Green Leaf buy-out ($180,000, which then pays daily), the export licence and the cosmetic upgrades.');
+const lateDay = day(sim.s), bigMonthTax = M.taxOnDay(lateDay.gross) - lateDay.gross * M.taxShare;
+findings.push('**Money piles up late.** The simulated player had bought everything that pays back within 40 days by day ' + sim.lastBuy + ' (' + hrs(sim.lastBuy) + ') and then banked about ' + $(sim.netByDay[90]) + ' a day, ending day 90 with ' + $(sim.cash) + '.' + (bigMonthTax > 0.5 ? ' The tax on big months (' + pct(D.ECON.taxHighRate) + ' instead of ' + pct(D.ECON.taxRate) + ' on what a month takes over ' + $(D.ECON.taxHighFrom) + ') costs that shop about ' + $(bigMonthTax) + ' a day; a young shop never reaches it.' : '') + ' The only big things left to buy are the Green Leaf buy-out ($180,000, which then pays daily), the export licence and the cosmetic upgrades.');
 // robberies against an unemptied till
 const eventsPerDay = A.dayLen * 60 / (105 + 0.3 * 35 + 0.2 * 60), robPerDay = eventsPerDay * 0.07;
-findings.push('**Robberies are a tax on a full till.** Random events come about every two minutes and 7% of them are a robbery once the till and tip jar hold $30 (3% with the guard on patrol): about ' + r1(robPerDay) + ' robberies a game day. A robber takes whatever is in the till and the tip jar, and a gunman goes for the vault next. A player who empties the till into the vault once a day loses on average about ' + pct(robPerDay * 0.5) + ' of a day\'s cash takings to robberies; one who empties it after every few sales loses almost nothing. That is the right lesson, but nothing in the game tells the player the numbers.');
+findings.push('**Robberies are a tax on a full till.** Random events come about every two minutes and 7% of them are a robbery once the till and tip jar hold $30 (3% with the guard on patrol): about ' + r1(robPerDay) + ' robberies a game day. A robber takes whatever is in the till and the tip jar, and a gunman goes for the vault next. A player who empties the till into the vault once a day loses on average about ' + pct(robPerDay * 0.5) + ' of a day\'s cash takings to robberies; one who empties it after every few sales loses almost nothing.' + (D.TILL_HEAVY ? ' The vault readout turns amber, and a warning comes once a day, when the till and the tip jar hold ' + $(D.TILL_HEAVY) + ' or more.' : ' Nothing in the game tells the player the numbers.'));
 
 // ── write it up ──
 const out = [];
 out.push('# Balance report\n');
 out.push('Generated by `npm run balance` from the numbers in `src/` (' + new Date().toISOString().slice(0, 10) + '). The formulas are in `tools/balance/model.js`, and `tests/balance-model.test.js` checks them against the running game: prices, the morning bill, harvest weights and what customers order.\n');
-out.push('A game day is ' + A.dayLen + ' minutes of real time. Where the code cannot say what a player does, the report assumes: one customer served every ' + A.serveSec + ' s by the player alone (' + Math.round(A.dayLen * 60 / A.serveSec) + ' a day) and ' + A.crewServe + ' more a day for each crew member, hand-trimming at ' + pct(A.trimScore) + ' of a perfect trim, and footfall at 1.0 (weather, weekends and the holiday week roughly cancel out). Money is after the 25% tax on takings (' + pct(D.ECON.excise) + ' excise and ' + pct(D.ECON.taxRate) + ' business tax, paid monthly).\n');
+out.push('A game day is ' + A.dayLen + ' minutes of real time. Where the code cannot say what a player does, the report assumes: one customer served every ' + A.serveSec + ' s by the player alone (' + Math.round(A.dayLen * 60 / A.serveSec) + ' a day) and ' + A.crewServe + ' more a day for each crew member, hand-trimming at ' + pct(A.trimScore) + ' of a perfect trim, and footfall at 1.0 (weather, weekends and the holiday week roughly cancel out). Money is after tax: ' + pct(D.ECON.excise) + ' excise on every sale, ' + pct(D.ECON.taxRate) + ' business tax on a month\'s takings and ' + pct(D.ECON.taxHighRate) + ' on what a month takes over ' + $(D.ECON.taxHighFrom) + ', paid monthly.\n');
 out.push('## Findings\n');
 findings.forEach((f, i) => out.push((i + 1) + '. ' + f + '\n'));
 
@@ -184,6 +194,6 @@ const pcx = M.perCustomer({ q: 100, thc: 1.5 });
 out.push('\nAn ordinary customer takes ' + r1(pcx.grams) + ' g (' + r1(pcx.units.joints) + ' joints, ' + r1(pcx.units.bags) + ' bags and ' + r1(pcx.units.cookies) + ' cookies on average) and spends ' + $(pcx.revenue + pcx.accRevenue) + ' on Green Widow at quality 100, counter extras included.\n');
 
 out.push('\n## The basement line\n');
-out.push(table(['', 'A game day'], [['Packs of 20', Math.round(tob.packsPerDay)], ['Pace set by', tob.bottleneck], ['At the Corner Tobacconist (60%)', $(tob.revenueWholesale)], ['At shop price, if customers took them all', $(tob.revenueShop)], ['Seed', $(tob.sow)], ['Materials', $(tob.materials)], ['Two staff, unless the crew covers them', $(tob.staffIfUnfilled)], ['Basement rent', $(tob.rent)], ['Net at the tobacconist', $(tobNet)]]));
+out.push(table(['', 'A game day'], [['Packs of 20', Math.round(tob.packsPerDay)], ['Pace set by', tob.bottleneck], ['At the Corner Tobacconist (' + pct(D.TOB.wholesale) + ')', $(tob.revenueWholesale)], ['At shop price, if customers took them all', $(tob.revenueShop)], ['Seed', $(tob.sow)], ['Materials', $(tob.materials)], ['Two staff, unless the crew covers them', $(tob.staffIfUnfilled)], ['Basement rent', $(tob.rent)], ['Net at the tobacconist', $(tobNet)]]));
 
 process.stdout.write(out.join('\n'));

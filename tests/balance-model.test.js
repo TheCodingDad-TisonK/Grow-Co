@@ -49,3 +49,8 @@ test('the model orders what customers really order', async (h) => {
   Object.keys(got).forEach((k) => h.near(got[k] / n, want[k], want[k] * 0.08 + 0.02, 'units of ' + k + ' per customer'));
   h.near(acc / n, 0.45 * 1.35, 0.06, 'counter extras per customer');
 });
+
+test('the model taxes a month exactly as the game does', async (h) => {
+  const M = model(h), B = h.S.books;
+  [0, 25000, 60000, 60001, 140000].forEach((g) => { B.monthGross = g; B.exciseDue = 0; h.eq(Math.round(M.bizTax(g)), h.T.taxDue(), 'business tax on a month of ' + g); });
+});
