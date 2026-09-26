@@ -110,7 +110,7 @@
     { id: 'cult2',     ico: '🌱', name: 'Cultivation permit II', price: 900, lvl: 3, d: 'Unlocks the ' + tentSizes('cult2') + ' tents and the roof greenhouse beds. Plants grow 5% faster.' },
     { id: 'cult3',     ico: '🌳', name: 'Cultivation permit III', price: 6000, lvl: 6, req: 'cult2', d: 'Unlocks the ' + tentSizes('cult3') + ' tents.' },
     { id: 'wholesale', ico: '📦', name: 'Wholesale account',    price: 3600, lvl: 4, d: 'Supplies 15% cheaper and the van comes twice as fast.' },
-    { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 3000, lvl: 8, d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
+    { id: 'tobacco',   ico: '🚬', name: 'Tobacco manufacturing licence', price: 3000, lvl: 8, dlc: 'tobacco', d: 'Run the RF Smoking line in the basement: grow, cure, roll and pack your own cigarettes.' },
     { id: 'firearm',   ico: '🔫', name: 'Firearms licence',     price: 3000, lvl: 4, rep: 240, d: 'Lets you buy and carry the pistol and shotgun from the weapon locker. Shoot a bystander and it\'s revoked.' },
     { id: 'premium',   ico: '🎩', name: 'Connoisseur permit',   price: 3000, rep: 320, d: 'Connoisseurs visit and pay 2.2× for quality.' },
     { id: 'latehours', ico: '🌙', name: 'Late-hours licence',   price: 1000, rep: 400, d: 'From 20:00 to 02:00 customers come a third more often and pay 5% more.' },
@@ -122,7 +122,12 @@
     return n.length ? (n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1] : n[0]) + '-slot' : 'bigger';
   }
   function licById(id) { for (var i = 0; i < LICENCES.length; i++) if (LICENCES[i].id === id) return LICENCES[i]; return null; }
-  function hasLic(id) { return !!(S.lic && S.lic[id]); }
+  function hasLic(id) { if (id === 'tobacco' && !dlcOn('tobacco')) return false; return !!(S.lic && S.lic[id]); }   /* with the Tobacco Works switched off the licence sleeps: the save keeps it */
+  // DLC (Workshop and DLC in the main menu): tobacco, lab, greenhouse and dev. The game asks here before it lets you in.
+  var DLC_NAME = { tobacco: 'RF Smoking: the Tobacco Works', lab: 'The Extraction Lab', greenhouse: 'The Roof Greenhouse', dev: 'Dev Tools' };
+  function dlcOn(id) { var W = window.RF_WORKSHOP; return !W || typeof W.dlc !== 'function' || W.dlc(id); }
+  function dlcOff(id) { sfx('bad'); toast('🧩 ' + DLC_NAME[id] + ' is a DLC. Switch it on under Workshop and DLC in the main menu.', 'bad'); }
+  function dlcNote(id) { return '<h4>' + DLC_NAME[id] + '</h4><p>This is a DLC, and it is switched off. It\'s free: switch it on under <b>Workshop and DLC</b> in the main menu.</p>'; }
   function nightNow() { var h = gameHour(); return h >= 20 || h < 2; }
   function bagGrams() { return S.upgrades.scale ? 3.2 : 3.5; }
   function jointGrams() { return S.upgrades.cones ? 0.8 : 1; }

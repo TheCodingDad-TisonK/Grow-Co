@@ -446,18 +446,22 @@
     for (var s = -1.5; s <= 1.5; s += 0.1) box(0.06, 0.86, 0.02, slatM, s, 0.5, 3.19, { cast: false });
     box(3.2, 0.1, 0.02, MAT.chrome, 0, 0.05, 3.19, { cast: false });
     box(3.44, 0.06, 0.84, MAT.counterTop, 0, 1.03, 3.55, { cast: false }); box(3.5, 0.03, 0.9, MAT.counterTop, 0, 1.005, 3.55, { cast: false });
-    // register: body, drawer, keypad, arm-mounted screen, receipt printer, card reader
+    // register: body, drawer, keypad, arm-mounted screen, receipt printer, card reader. The whole till is one table
+    // fixture (build mode carries it along the counter or anywhere flat), and so are the tip jar, the bell and the cards.
+    fixtureFromBuild('counterTill', 'till', 0, function () {
     var reg = box(0.52, 0.1, 0.44, MAT.register, -1.0, 1.11, 3.55);
     box(0.5, 0.03, 0.42, MAT.plastic, -1.0, 1.05, 3.55, { cast: false }); box(0.36, 0.02, 0.01, MAT.chrome, -1.0, 1.08, 3.335, { cast: false });
     // the till is a tablet on a stand: its screen is a touch screen (look at it, press E), and the cash drawer sits under it
     world.reg = { drawerT: 0, lastSale: null };
     buildPos(-1.0, 3.62);
-    var scrGlow = new THREE.PointLight(0x6fdc8c, 0.12, 1.0); scrGlow.position.set(-1.0, 1.3, 3.5); scene.add(scrGlow);
+    var scrGlow = new THREE.PointLight(0x6fdc8c, 0.12, 1.0); scrGlow.position.set(-1.0, 1.3, 3.5); world.group.add(scrGlow);   /* in the group, so the glow goes where the till goes */
     var drawer = new THREE.Group(); drawer.position.set(-1.0, 1.07, 3.55); world.group.add(drawer); world.reg.drawer = drawer; var dbody = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.06, 0.38), colorMat(0x2a3138, 0.5, 0.3)); drawer.add(dbody); var dface = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.075, 0.02), MAT.register); dface.position.z = -0.2; drawer.add(dface); var dhandle = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.015, 0.015), MAT.chrome); dhandle.position.set(0, 0, -0.215); drawer.add(dhandle); [[-0.16, 0x9ff0b5], [-0.06, 0xe8e8ee], [0.04, 0xffd766], [0.14, 0x9ad0ff]].forEach(function (sl) { var s2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.28), colorMat(0x3a4148, 0.5)); s2.position.set(sl[0], 0.03, 0.02); drawer.add(s2); var notes = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.012, 0.15), colorMat(sl[1], 0.7)); notes.position.set(sl[0], 0.045, -0.02); drawer.add(notes); }); for (var cn = 0; cn < 4; cn++) { var cs = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.03, 12), MAT.chrome); cs.position.set(-0.16 + cn * 0.1, 0.05, 0.13); drawer.add(cs); }
     drawRegister();
     box(0.2, 0.08, 0.14, MAT.plastic, -0.68, 1.12, 3.68); box(0.12, 0.002, 0.06, MAT.white, -0.68, 1.161, 3.66, { cast: false });
     var reader = box(0.09, 0.14, 0.05, MAT.black, -0.5, 1.13, 3.75); reader.rotation.x = 0.4; var rscr = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.05), MAT.screen); rscr.position.set(-0.5, 1.16, 3.777); rscr.rotation.x = 0.4; world.group.add(rscr);
     interactable(reg, { kind: 'register', label: 'Till', prompt: 'Sell & serve' });
+    }, { table: true, baseY: 1.06 });
+    world.reg.drawerZ = world.reg.drawer.position.z;   /* the drawer now slides in the till's own frame, wherever the till stands */
     // counter display for lighters, papers and grinders: a small tiered stand beside the register, contents synced from the save
     box(0.5, 0.02, 0.26, MAT.darkwood, 0.95, 1.075, 4.25, { cast: false }); box(0.5, 0.02, 0.12, MAT.darkwood, 0.95, 1.145, 4.18, { cast: false }); box(0.5, 0.06, 0.02, MAT.darkwood, 0.95, 1.115, 4.125, { cast: false });
     var dispLbl = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['LIGHTERS · PAPERS · GRINDERS'], 300, 50, { size: 18, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); dispLbl.position.set(0.95, 1.09, 4.375); dispLbl.rotation.x = -0.5; world.group.add(dispLbl);
@@ -467,9 +471,9 @@
     interactable(box(0.2, 0.9, 0.2, MAT.none, -1.72, 0.45, 3.25, { cast: false }), { kind: 'bat' });
     interactable(box(3.2, 1.0, 0.7, MAT.counter, 0, 0.5, 3.55, { cast: false, receive: false }), { kind: 'register', label: 'Counter', prompt: 'Sell & serve' }).visible = false;
     // tip jar with coins, business cards, a desk bell
-    cyl(0.08, 0.08, 0.18, MAT.jar, 1.2, 1.15, 3.55); cyl(0.09, 0.09, 0.02, MAT.jarLid, 1.2, 1.25, 3.55); interactable(box(0.22, 0.26, 0.22, MAT.none, 1.2, 1.15, 3.55, { cast: false }), { kind: 'tips' }); for (var c = 0; c < 6; c++) { var coin = cyl(0.02, 0.02, 0.004, MAT.chrome, 1.2 + randf(-0.04, 0.04), 1.07 + c * 0.006, 3.55 + randf(-0.04, 0.04), null, 10); coin.rotation.set(randf(-0.3, 0.3), 0, randf(-0.3, 0.3)); }
-    box(0.1, 0.03, 0.07, MAT.white, 0.8, 1.075, 3.5, { cast: false }); box(0.1, 0.005, 0.07, colorMat(0x6fdc8c), 0.8, 1.093, 3.5, { cast: false });
-    cyl(0.05, 0.06, 0.03, MAT.chrome, 0.4, 1.075, 3.5, null, 16); var bell = new THREE.Mesh(new THREE.SphereGeometry(0.045, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), MAT.chrome); bell.position.set(0.4, 1.09, 3.5); world.group.add(bell); cyl(0.008, 0.008, 0.02, MAT.black, 0.4, 1.14, 3.5, null, 8);
+    fixtureFromBuild('tipJar', 'tip jar', 0, function () { cyl(0.08, 0.08, 0.18, MAT.jar, 1.2, 1.15, 3.55); cyl(0.09, 0.09, 0.02, MAT.jarLid, 1.2, 1.25, 3.55); interactable(box(0.22, 0.26, 0.22, MAT.none, 1.2, 1.15, 3.55, { cast: false }), { kind: 'tips' }); for (var c = 0; c < 6; c++) { var coin = cyl(0.02, 0.02, 0.004, MAT.chrome, 1.2 + randf(-0.04, 0.04), 1.07 + c * 0.006, 3.55 + randf(-0.04, 0.04), null, 10); coin.rotation.set(randf(-0.3, 0.3), 0, randf(-0.3, 0.3)); } }, { table: true, baseY: 1.06 });
+    fixtureFromBuild('bizCards', 'business cards', 0, function () { box(0.1, 0.03, 0.07, MAT.white, 0.8, 1.075, 3.5, { cast: false }); box(0.1, 0.005, 0.07, colorMat(0x6fdc8c), 0.8, 1.093, 3.5, { cast: false }); box(0.16, 0.08, 0.13, MAT.none, 0.8, 1.1, 3.5, { cast: false }); }, { table: true, baseY: 1.06 });   /* the invisible box is only something to aim at in build mode */
+    fixtureFromBuild('deskBell', 'desk bell', 0, function () { cyl(0.05, 0.06, 0.03, MAT.chrome, 0.4, 1.075, 3.5, null, 16); var bell = new THREE.Mesh(new THREE.SphereGeometry(0.045, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), MAT.chrome); bell.position.set(0.4, 1.09, 3.5); world.group.add(bell); cyl(0.008, 0.008, 0.02, MAT.black, 0.4, 1.14, 3.5, null, 8); box(0.16, 0.12, 0.16, MAT.none, 0.4, 1.12, 3.5, { cast: false }); }, { table: true, baseY: 1.06 });
     // lobby: menu board, framed posters, queue posts with a sagging rope, a guard podium
     signPlane(['MENU', 'eighths · joints', 'ask for the good stuff'], 1.4, 0.8, -3.4, 2.1, 4.12, 0, { titleColor: '#ffc857' });
     framedPoster(TEX.poster1, 0.6, 0.9, -8.0, 1.9, 4.12, 0); framedPoster(TEX.poster2, 0.6, 0.9, -6.8, 1.9, 4.12, 0); framedPoster(TEX.poster3, 0.6, 0.9, 7.2, 1.9, 4.12, 0);

@@ -47,20 +47,26 @@
   function radioNext() { var i = STATION_ORDER.indexOf(shop().radio); var next = STATION_ORDER[(i + 1) % STATION_ORDER.length]; radio.set(next); applyShopState(); toast('♪ ' + STATIONS[next].name, ''); save(); }
 
   // The satellite panels: the same switches, only the ones that belong in that room.
+  var FRONT_CURTAINS = ['frontL', 'door', 'frontR'];   /* the shop front: left pane, the door, right pane */
   var MINI_CTL = {
-    front:  { title: '🏪 Front panel', shop: true, roller: true, lights: ['hall', 'lobby'], doors: [] },
+    front:  { title: '🏪 Front panel', shop: true, roller: false, curtains: FRONT_CURTAINS, lights: ['hall', 'lobby'], doors: [] },   /* the roller door is out back: it stays on the control box */
     office: { title: '🗄️ Office panel', shop: false, roller: false, lights: ['office', 'grow', 'dry'], doors: ['office'] }
   };
   function paneMiniCtl(scope) {
     var M = MINI_CTL[scope] || MINI_CTL.front, sh = shop();
     var h = '<div class="g3-grid"><div class="g3-box"><h3>' + M.title + '</h3>';
     if (M.shop) {
-      h += '<div class="desc">The front door and the lights over the hall and lounge. The full board is in the security room.</div>';
+      h += '<div class="desc">Open or close the shop, draw the three front curtains and switch the lights over the hall and lounge. The full board is in the security room.</div>';
       h += '<button class="g3-btn wide ' + (sh.open ? 'danger' : 'primary') + '" data-act="shopToggle">' + (sh.open ? '🔴 Close the shop' : '🟢 Open the shop') + '</button>';
     } else {
       h += '<div class="desc">The lights back here and the office door. The full board is in the security room.</div>';
     }
     if (M.roller) h += '<button class="g3-btn wide' + (world.rollerOpen ? ' primary' : '') + '" data-act="rollerToggle">' + (world.rollerOpen ? '🚪 Close the shutter' : '🚪 Open the shutter') + '</button>';
+    if (M.curtains) {
+      var mc = M.curtains.filter(function (k) { return curtains[k]; }), allOpen = mc.length && mc.every(curtainOpen);
+      h += '<h3 style="margin-top:12px">🪟 Front curtains</h3><div class="g3-chips">' + mc.map(function (k) { return '<button class="g3-btn' + (curtainOpen(k) ? ' primary' : '') + '" data-act="curtainToggle" data-id="' + k + '">' + esc(curtains[k].label) + ' <b>' + (curtainOpen(k) ? 'open' : 'closed') + '</b></button>'; }).join('') + '</div>';
+      h += '<button class="g3-btn wide' + (allOpen ? '' : ' primary') + '" data-act="frontCurtains" data-id="' + (allOpen ? 'close' : 'open') + '">' + (allOpen ? 'Close all three' : 'Open all three') + '</button>';
+    }
     h += '<h3 style="margin-top:12px">💡 Lights</h3><div class="g3-chips">' + M.lights.map(function (r) {
       return '<button class="g3-btn' + (sh.rooms && sh.rooms[r] === false ? '' : ' primary') + '" data-act="roomLight" data-id="' + r + '">' + ROOM_NAMES[r] + '</button>';
     }).join('') + '</div>';
@@ -77,6 +83,8 @@
       '<button class="g3-btn wide ' + (sh.open ? 'danger' : 'primary') + '" data-act="shopToggle">' + (sh.open ? '🔴 Close the shop' : '🟢 Open the shop') + '</button>' +
       '<button class="g3-btn wide" data-act="lightsToggle">' + (sh.lights ? '🌑 Lights off' : '💡 Lights on') + '</button>' +
       '<button class="g3-btn wide" data-act="staffDoorToggle">' + (sh.staffDoor ? '🚪 Close the staff door' : '🚪 Open the staff door') + '</button>' +
+      '<button class="g3-btn wide' + (staffDoorLocked() ? ' danger' : '') + '" data-act="staffDoorLock">' + (staffDoorLocked() ? '🔓 Unlock the staff door' : '🔒 Lock the staff door') + '</button>' +
+      '<button class="g3-btn wide' + (staffKey('staff') ? ' primary' : '') + '" data-act="staffDoorKey">' + (staffKey('staff') ? '🔑 The crew have a staff door key' : '🔑 The crew have no staff door key') + '</button>' +
       '<h3 style="margin-top:12px">💡 Lights by room</h3><div class="g3-chips">' + Object.keys(ROOM_NAMES).map(function (r) { return '<button class="g3-btn' + (sh.lights && powerOn() && roomLit(r) ? ' primary' : '') + '" data-act="roomLight" data-id="' + r + '">' + ROOM_NAMES[r] + '</button>'; }).join('') + '</div>' +
       '<h3 style="margin-top:12px">🚪 Doors</h3><div class="g3-chips"><button class="g3-btn' + (world.rollerOpen ? ' primary' : '') + '" data-act="rollerToggle">Roller door ' + (world.rollerOpen ? 'open' : 'closed') + '</button><button class="g3-btn' + (world.gateOpen ? ' primary' : '') + '" data-act="gateToggle">Yard gate ' + (world.gateOpen ? 'open' : 'closed') + '</button><button class="g3-btn" data-act="tvNext">📺 TV: next channel</button></div>' +
       '<div class="desc" style="margin-top:8px">Sliding doors: shut, open or lock each one from here. Your crew and the guard hold a key to every door marked staff key: they unlock it, walk through and it locks again behind them. Take a key back and they stop at that door. Anyone else has to force a locked door, and a door someone walks through slides shut 4 s after they are clear.</div>' + DOORS.map(function (d) { return '<div class="inv-row" style="display:flex;gap:6px;align-items:center;margin-top:4px"><span style="flex:1">' + (d.locked ? '🔒 ' : '🚪 ') + esc(d.name) + '</span><button class="g3-btn' + (d.open ? ' primary' : '') + '" data-act="doorToggle" data-id="' + d.id + '">' + (d.open ? 'open' : 'shut') + '</button><button class="g3-btn' + (d.locked ? ' primary' : '') + '" data-act="doorLock" data-id="' + d.id + '">' + (d.locked ? 'locked' : 'lock') + '</button><button class="g3-btn' + (staffKey(d.id) ? ' primary' : '') + '" data-act="doorKey" data-id="' + d.id + '">' + (staffKey(d.id) ? '🔑 staff key' : 'no staff key') + '</button></div>'; }).join('') +

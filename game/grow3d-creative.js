@@ -1,5 +1,5 @@
 /* ============================================================
-   Grow Co.: creative mode.
+   Grow Co.: the build catalogue (part of build mode, F2).
    Build anything in the shop: place catalogue furniture, or compose
    your own objects from primitives (box / cylinder / sphere / cone /
    wedge / plank / pole), stack them on surfaces, paint, scale, rotate,
@@ -139,24 +139,21 @@
 
   // ── the mode itself ───────────────────────────────────────────────
   var cr = { on: false, placing: null, ghost: null, hover: null, helper: null, y: 0, grabbing: null, hitY: 0, snap: true, lastAim: null, panelTab: 'seating', prim: { type: 'box', p: { w: 0.5, h: 0.5, d: 0.5 }, color: 0xf2f2f2, finish: 'matte', text: 'YOUR TEXT' }, lastColor: null };
-  var banner = document.createElement('div'); banner.className = 'g3-editbanner g3-creative'; banner.hidden = true; $('g3-hud').appendChild(banner);
   var hint = document.createElement('div'); hint.className = 'g3-creative-hint'; hint.hidden = true; $('g3-hud').appendChild(hint);
-  function bannerText() { return '🧱 Creative · <b>C</b> catalogue · <b>E</b> or click to place or grab · <b>R</b> rotate · <b>[ ]</b> scale · <b>wheel</b> raise · <b>P</b> paint · <b>X</b> copy · <b>Del</b> remove · <b>F3</b> done'; }
+  // One build mode. F2 (or F3) switches the game's edit mode, and the game switches this with it through hooks.editMode.
+  // Here: the catalogue, the piece you are placing, and your own builds. Built-in furniture and signs stay the game's.
   function toggle(on) {
-    if (on === undefined) on = !cr.on; if (on === cr.on) return;
-    cr.on = on; banner.hidden = !on; hint.hidden = !on; banner.innerHTML = bannerText();
-    if (on && I.edit.on) I.editToggle();
-    if (!on) { if (cr.propGrab) propDrop(); dropGhost(); helper(null); I.toast('Creative mode off · your build is saved', 'good'); I.save(); }
-    else { I.setFocus(null); I.toast('🧱 Creative mode: press C to open the catalogue', ''); }
-    I.sfx('click');
+    if (on === undefined) { I.editToggle(); return; }   /* the old entry point flips build mode itself */
+    if (on === cr.on) return;
+    cr.on = on; hint.hidden = !on;
+    if (!on) { cancelPlacing(); dropGhost(); helper(null); I.save(); }   /* something of yours in your hands goes back where it was: it used to vanish until the next load */
   }
+  if (R.hooks.editMode) R.hooks.editMode.push(function (on) { toggle(!!on); return false; });
+  function editBusy() { return !!(I.edit.grabbed || I.edit.grabbedFx); }   /* build mode is carrying furniture or a sign */
+  function editYield() { I.edit.hover = null; I.edit.hoverFx = null; I.editHelper(null); }   /* your own build has the crosshair: the furniture keys stand down */
   function helper(obj) { if (!obj) { if (cr.helper) cr.helper.visible = false; return; } if (!cr.helper) { cr.helper = new THREE.BoxHelper(obj, 0xffc857); scene.add(cr.helper); } cr.helper.visible = true; cr.helper.setFromObject(obj); }
-  // built-in furniture in creative mode: move, rotate, remove (hide) and restore through the panel
-  function propGrabStart() { var id = cr.propHover; if (!id) return; cr.propGrab = id; cr.propFrom = JSON.stringify(R.propPlacement(id)); world.obstacles = world.obstacles.filter(function (o) { return o.prop !== id; }); I.sfx('pickup'); }
-  function propDrop() { var id = cr.propGrab; if (!id) return; var g = R.props[id].g; var S = R.S; if (!S.layout) S.layout = {}; S.layout[id] = { x: Math.round(g.position.x * 100) / 100, z: Math.round(g.position.z * 100) / 100, rot: R.props[id].P.rot }; cr.propGrab = null; R.buildProp(id); helper(null); I.save(); I.sfx('putdown'); I.toast('Placed the ' + R.PROPS[id].label, 'good'); }
-  function propCancel() { var id = cr.propGrab; if (!id) return false; cr.propGrab = null; R.buildProp(id); helper(null); I.toast('Put the ' + R.PROPS[id].label + ' back', ''); return true; }
-  function propRotate() { var id = cr.propGrab || cr.propHover; if (!id) return false; var inst2 = R.props[id]; inst2.P.rot = (inst2.P.rot + 1) % 4; inst2.g.rotation.y = inst2.P.rot * Math.PI / 2; if (!cr.propGrab) { var S = R.S; if (!S.layout) S.layout = {}; S.layout[id] = { x: inst2.g.position.x, z: inst2.g.position.z, rot: inst2.P.rot }; R.buildProp(id); I.save(); } I.sfx('click'); return true; }
-  function propRemove() { var id = cr.propGrab || cr.propHover; if (!id) return false; var S = R.S; if (!S.layout) S.layout = {}; var cur = S.layout[id] || {}; cur.hidden = true; S.layout[id] = cur; cr.propGrab = null; cr.propHover = null; R.buildProp(id); helper(null); I.save(); I.sfx('bad'); I.toast('Removed the ' + R.PROPS[id].label + '. Restore it from the catalogue (C).', ''); return true; }
+  // built-in furniture: the game's build mode moves it; Del removes it (the whole of it) and the catalogue restores it
+  function propRemove(id) { if (!id || id === 'tent' || !R.PROPS[id]) return false; var S = R.S; if (!S.layout) S.layout = {}; var cur = S.layout[id] || {}; cur.hidden = true; S.layout[id] = cur; I.edit.hover = null; I.editHelper(null); R.buildProp(id); I.save(); I.sfx('bad'); I.toast('Removed the ' + R.PROPS[id].label + '. Restore it from the catalogue (C).', ''); return true; }
   function propRestore(id) { var S = R.S; if (S.layout && S.layout[id]) { delete S.layout[id].hidden; } R.buildProp(id); I.save(); I.toast('Restored the ' + R.PROPS[id].label, 'good'); }
   function dropGhost() { if (cr.ghost) { world.group.remove(cr.ghost.g); cr.ghost = null; } cr.placing = null; cr.grabbing = null; helper(null); var pr = $('h-prompt'); if (pr) pr.hidden = true; hint.hidden = true; }
   // stop carrying: a grabbed piece goes back where it was, a fresh one is discarded
@@ -165,7 +162,7 @@
   function aimPoint() {
     // where the crosshair lands: on any surface (floors, tables, walls, other builds) within 8 m, else 2.5 m ahead on the floor
     I.ray.setFromCamera(I.center, R.camera); I.ray.far = 8;
-    var meshes = []; world.group.traverse(function (m) { if (m.isMesh && m.visible && m.material !== MAT.none && !(cr.ghost && isDescendant(m, cr.ghost.g)) && !(cr.grabbing && m.userData.customId === cr.grabbing)) meshes.push(m); });
+    var meshes = []; world.group.traverseVisible(function (m) { if (m.isMesh && m.material !== MAT.none && !(cr.ghost && isDescendant(m, cr.ghost.g)) && !(cr.grabbing && m.userData.customId === cr.grabbing)) meshes.push(m); });
     var hits = I.ray.intersectObjects(meshes, false); I.ray.far = 3.4;
     var floorY = R.player.floor === 1 ? UP.y : 0;
     if (hits.length) { var h = hits[0]; var n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld) : new THREE.Vector3(0, 1, 0); return { p: h.point, n: n, obj: h.object, wall: Math.abs(n.y) < 0.4 }; }
@@ -178,8 +175,11 @@
   function update(dt) {
     if (!cr.on) return;
     if (R.ui.blocked()) { hint.hidden = true; return; }
-    var pr = $('h-prompt'); var aim = aimPoint(); cr.lastAim = aim;
+    hint.hidden = false; var pr = $('h-prompt');
+    if (editBusy()) { helper(null); cr.hover = null; hint.innerHTML = 'moving built-in furniture · E puts it down · Backspace puts it back'; return; }
+    var aim = aimPoint(); cr.lastAim = aim;
     if (cr.placing && cr.ghost) {
+      editYield();
       var o = cr.placing; var it = o.kind === 'item' ? catItem(o.type) : null;
       var px = aim.p.x, pz = aim.p.z, py = aim.p.y;
       if (aim.wall && (it && it.wall)) { // wall-mounted: sit on the wall face, facing out of it
@@ -191,16 +191,9 @@
       hint.innerHTML = 'y ' + o.y.toFixed(2) + ' · rot ' + Math.round(((o.rot || 0) * 180 / Math.PI) % 360) + '° · scale ' + sc.toFixed(2) + (aim.obj && aim.obj.userData.customId ? ' · stacking on your build' : aim.obj && aim.obj.userData.propId ? ' · on the ' + aim.obj.userData.propId : '');
       return;
     }
-    if (cr.propGrab) {   // carrying a built-in piece: it follows the aim point on the floor, like the layout editor
-      var pg = R.props[cr.propGrab].g; var fy = R.player.floor === 1 ? UP.y : 0; var ax = aim.wall ? aim.p.x + aim.n.x * 0.4 : aim.p.x, az = aim.wall ? aim.p.z + aim.n.z * 0.4 : aim.p.z;
-      pg.position.x = clamp(snapv(ax), -ROOM.x + 0.3, ROOM.x - 0.3); pg.position.z = clamp(snapv(az), -ROOM.z - 9.5, ROOM.z - 0.3); pg.position.y = fy;
-      helper(pg); pr.hidden = false; pr.innerHTML = '<b>E</b>Put down the ' + R.PROPS[cr.propGrab].label + ' <small>R rotate · Del remove · Esc cancel</small>'; hint.innerHTML = 'moving built-in furniture · x ' + pg.position.x.toFixed(2) + ' z ' + pg.position.z.toFixed(2); return;
-    }
-    var id = aim.obj && aim.obj.userData.customId ? aim.obj.userData.customId : null; cr.hover = id;
-    var pid = !id && aim.obj && aim.obj.userData.propId && R.PROPS[aim.obj.userData.propId] ? aim.obj.userData.propId : null; cr.propHover = pid;
-    if (pid) { helper(R.props[pid].g); pr.hidden = false; pr.innerHTML = '<b>E</b>Move the ' + R.PROPS[pid].label + ' <small>R rotate · Del remove · built-in furniture</small>'; hint.innerHTML = 'built-in · ' + R.PROPS[pid].label; }
-    else if (id && inst[id]) { helper(inst[id].g); pr.hidden = false; pr.innerHTML = '<b>E</b>Grab ' + labelOf(inst[id].o) + ' <small>R rotate · [ ] scale · P paint · X copy · Del remove</small>'; hint.innerHTML = 'your build · ' + customList().length + ' objects'; }
-    else { helper(null); pr.hidden = true; hint.innerHTML = 'C catalogue · ' + customList().length + ' objects placed' + (aim.obj && aim.obj.userData.propId ? ' · aiming at the ' + aim.obj.userData.propId : ''); }
+    var id = aim.obj && aim.obj.userData.customId ? aim.obj.userData.customId : null; cr.hover = id && inst[id] ? id : null;
+    if (cr.hover) { editYield(); helper(inst[id].g); pr.hidden = false; pr.innerHTML = '<b>E</b>Grab ' + labelOf(inst[id].o) + ' <small>R rotate · [ ] scale · P paint · X copy · Del remove</small>'; hint.innerHTML = 'your build · ' + customList().length + ' objects'; }
+    else { helper(null); hint.innerHTML = 'C catalogue · ' + customList().length + ' of your own placed'; }   /* the game's build mode has the prompt for furniture and signs */
   }
   function labelOf(o) { if (o.kind === 'prim') return (PRIMS[o.type] || {}).name || o.type; if (o.kind === 'design') return o.type; var it = catItem(o.type); return it ? it.name : o.type; }
   function confirmPlace() {
@@ -212,36 +205,42 @@
     var again = o.kind !== 'item' || !cr.grabbing; cr.grabbing = null;
     if (again && !o.wasGrab) { var next = JSON.parse(JSON.stringify(copy)); next.id = null; delete next.id; startPlacing(next); } else dropGhost();
   }
-  function grab() { var id = cr.hover; if (!id || !inst[id]) return; var o = JSON.parse(JSON.stringify(inst[id].o)); o.wasGrab = true; remove(id, true); cr.grabbing = id; cr.y = 0; startPlacing(o); I.sfx('click'); }
+  function grab() { var id = cr.hover; if (!id || !inst[id]) return; var o = JSON.parse(JSON.stringify(inst[id].o)); o.wasGrab = true; remove(id, true); cr.y = 0; startPlacing(o); cr.grabbing = id; I.sfx('click'); }   /* after startPlacing, which clears it: set before, a piece deleted in your hands stayed in the save and came back on the next load */
   function rotate(dir) { var o = cr.placing || (cr.hover && objById(cr.hover)); if (!o) return; o.rot = ((o.rot || 0) + (dir || 1) * Math.PI / 8); if (!cr.placing) { place(o); I.save(); } I.sfx('click'); }
   function scale(f) { var o = cr.placing || (cr.hover && objById(cr.hover)); if (!o) return; o.scale = clamp((o.scale || 1) * f, 0.2, 4); if (!cr.placing) { place(o); I.save(); } I.sfx('click'); }
   function paint() { var o = cr.placing || (cr.hover && objById(cr.hover)); if (!o) return; var cur = o.color === undefined ? -1 : PALETTE.indexOf(o.color); o.color = PALETTE[(cur + 1) % PALETTE.length]; if (cr.placing) { var keep = cr.placing; dropGhost(); startPlacing(keep); } else { place(o); I.save(); } I.sfx('click'); I.toast('🎨 painted', ''); }
   function copyHover() { if (!cr.hover || !inst[cr.hover]) return; var o = JSON.parse(JSON.stringify(inst[cr.hover].o)); delete o.id; cr.y = 0; startPlacing(o); I.toast('Copy in hand · E to place', ''); }
   function refund(id) { var o = objById(id); if (o && o.paid) { var back = Math.round(o.paid * 0.5); R.S.bank += back; I.toast('Sold back for ' + money(back), ''); } }
-  function del() { if (cr.placing) { if (cr.grabbing) { var id = cr.grabbing; refund(id); remove(id); } dropGhost(); I.save(); I.toast('Removed', ''); return; } if (!cr.hover) return; refund(cr.hover); remove(cr.hover); I.save(); I.sfx('bad'); I.toast('Removed', ''); }
+  function del() { if (cr.placing) { var gid = cr.grabbing || (cr.placing.wasGrab && cr.placing.id); if (gid) { refund(gid); remove(gid); } dropGhost(); I.save(); I.sfx('bad'); I.toast('Removed', ''); return; } if (!cr.hover) return; refund(cr.hover); remove(cr.hover); I.save(); I.sfx('bad'); I.toast('Removed', ''); }
   function raise(d) { cr.y = clamp(cr.y + d, 0, 3.0); }
 
   // ── keys / mouse ──────────────────────────────────────────────────
   R.hooks.keydown.push(function (e) {
-    if (e.code === 'F3') { toggle(); return true; }
     if (R.drive && R.drive.on) return false;   /* at the wheel every letter key belongs to the car, C included */
-    if (!cr.on) { if (e.code === 'KeyC' && !R.ui.blocked()) { I.toast('Press F3 for creative mode first, then C opens the catalogue', ''); return true; } return false; }
+    if (e.code === 'F3') { I.editToggle(); return true; }   /* F3 was creative mode: it is build mode now, the same as F2 */
+    if (!cr.on) { if (e.code === 'KeyC' && !R.ui.blocked()) { I.toast('Press F2 for build mode first, then C opens the catalogue', ''); return true; } return false; }
+    var mine = !editBusy() && !!(cr.placing || cr.hover);   /* the piece you are placing, or your own build under the crosshair; anything else is furniture */
     if (e.code === 'KeyC') { R.ui.openPanel('creative', cr.panelTab); return true; }
-    if (e.code === 'KeyE') { if (cr.placing) confirmPlace(); else if (cr.propGrab) propDrop(); else if (cr.propHover) propGrabStart(); else grab(); return true; }
-    if (e.code === 'KeyR') { if ((cr.propGrab || cr.propHover) && !cr.placing) propRotate(); else rotate(e.shiftKey ? -1 : 1); return true; }
+    if (e.code === 'KeyE') { if (cr.placing) { confirmPlace(); return true; } if (mine) { grab(); return true; } return false; }
+    if (e.code === 'KeyR') { if (mine) { rotate(e.shiftKey ? -1 : 1); return true; } return false; }
     if (e.code === 'BracketLeft') { scale(1 / 1.15); return true; }
     if (e.code === 'BracketRight') { scale(1.15); return true; }
     if (e.code === 'KeyP') { paint(); return true; }
     if (e.code === 'KeyX') { copyHover(); return true; }
-    if (e.code === 'Delete' || e.code === 'Backspace') { if ((cr.propGrab || (cr.propHover && !cr.hover)) && !cr.placing) propRemove(); else del(); return true; }
+    if (e.code === 'Delete') { if (mine) del(); else if (!editBusy() && I.edit.hover) propRemove(I.edit.hover); return true; }
+    if (e.code === 'Backspace') { if (mine) { del(); return true; } return false; }   /* on furniture Backspace puts it back where it started */
     if (e.code === 'KeyN') { cr.snap = !cr.snap; I.toast('Snap ' + (cr.snap ? 'on (5 cm)' : 'off'), ''); return true; }
-    if (e.code === 'Escape' && cr.propGrab) { propCancel(); return true; }
     if (e.code === 'Escape' && cr.placing) { cancelPlacing(); I.toast('Put down', ''); return true; }
     return false;
   });
   // the browser swallows Esc while the pointer is locked and only reports the lock loss: treat that as cancel too, instead of opening the menu over a carried piece
-  R.hooks.unlock.push(function () { if (cr.on && cr.propGrab) { propCancel(); I.toast('Move cancelled · click to carry on', ''); I.lockPointer(); return true; } if (!cr.on || !cr.placing) return false; cancelPlacing(); I.toast('Placement cancelled · click to carry on', ''); I.lockPointer(); return true; });
-  R.hooks.mousedown.push(function (e) { if (!cr.on || R.ui.blocked()) return false; if (e.button === 0) { if (cr.placing) confirmPlace(); else if (cr.propGrab) propDrop(); else if (cr.propHover) propGrabStart(); else grab(); return true; } if (e.button === 2) { rotate(1); return true; } return false; });
+  R.hooks.unlock.push(function () { if (!cr.on || !cr.placing) return false; cancelPlacing(); I.toast('Placement cancelled · click to carry on', ''); I.lockPointer(); return true; });
+  R.hooks.mousedown.push(function (e) {
+    if (!cr.on || R.ui.blocked()) return false; var mine = !editBusy() && !!(cr.placing || cr.hover);
+    if (e.button === 0) { if (cr.placing) { confirmPlace(); return true; } if (mine) { grab(); return true; } return false; }   /* a click on furniture is the game's: grab or drop */
+    if (e.button === 2) { if (mine) { rotate(1); return true; } if (I.edit.grabbed || I.edit.grabbedFx || I.edit.hover || I.edit.hoverFx) { I.editRotate(); return true; } return false; }
+    return false;
+  });
   document.addEventListener('wheel', function (e) { if (!cr.on || R.ui.blocked() || !R.player.locked) return; raise(e.deltaY < 0 ? 0.05 : -0.05); }, { passive: true });
   R.hooks.frame.push(function (dt) { update(dt); return false; });
   R.hooks.blockFocus.push(function () { return cr.on; });
@@ -272,9 +271,9 @@
       var items = CATALOG.filter(function (it) { return it.cat === tab; });
       body = '<div class="g3-box"><h3>' + (CATS.filter(function (c) { return c[0] === tab; })[0] || ['', tab])[1] + '</h3><div class="desc">Click a piece to carry it. Aim where it should go and press <b>E</b>. Coloured pieces can be repainted with <b>P</b> once placed.' + (tab === 'decor' ? ' Posters, clocks and mirrors hang on whatever wall you aim at.' : '') + '</div><div class="g3-cards">' + items.map(card).join('') + '</div></div>';
     }
-    var hid = R.hiddenProps(); if (hid.length) body += '<div class="g3-box" style="margin-top:10px"><h3>🪑 Removed built-in furniture</h3><div class="desc">Pieces you removed in creative mode. Restore any of them here.</div><div class="g3-chips">' + hid.map(function (pid) { return '<button class="g3-btn" data-act="crRestore" data-id="' + pid + '">↺ ' + R.PROPS[pid].label + '</button>'; }).join('') + '</div></div>';
+    var hid = R.hiddenProps(); if (hid.length) body += '<div class="g3-box" style="margin-top:10px"><h3>🪑 Removed built-in furniture</h3><div class="desc">Pieces you removed with Del in build mode. Restore any of them here.</div><div class="g3-chips">' + hid.map(function (pid) { return '<button class="g3-btn" data-act="crRestore" data-id="' + pid + '">↺ ' + R.PROPS[pid].label + '</button>'; }).join('') + '</div></div>';
     body += '<div class="g3-chips" style="margin-top:10px"><span class="g3-chip">placed <b>' + customList().length + '</b></span><span class="g3-chip">snap <b>' + (cr.snap ? 'on' : 'off') + '</b></span><button class="g3-btn" data-act="crClearAll" style="margin-left:auto">🗑 Remove all my builds</button></div>';
-    return { title: '🧱 Creative catalogue', tabs: CATS, body: body };
+    return { title: '🧱 Build catalogue', tabs: CATS, body: body };
   }
   R.hooks.panel.creative = panel;
   R.hooks.panelClick.push(function (act, el) {
@@ -288,7 +287,7 @@
     if (act === 'crSaveDesign') { saveDesign(cr.designName || 'My furniture'); R.ui.panelTab = 'mine'; R.ui.render(); return true; }
     if (act === 'crDesign') { cr.y = 0; startPlacing({ kind: 'design', type: id, rot: 0, scale: 1 }); R.ui.closePanel(); I.toast('Carrying ' + id + ' · aim and press E', ''); return true; }
     if (act === 'crDelDesign') { var d = designs(); for (var i = d.length - 1; i >= 0; i--) if (d[i].name === id) d.splice(i, 1); I.save(); R.ui.render(); return true; }
-    if (act === 'crClearAll') { if (confirm('Remove every object you built in creative mode?')) { customList().slice().forEach(function (o) { remove(o.id); }); I.save(); R.ui.render(); } return true; }
+    if (act === 'crClearAll') { if (confirm('Remove every object you built yourself?')) { customList().slice().forEach(function (o) { remove(o.id); }); I.save(); R.ui.render(); } return true; }
     return false;
   });
   R.hooks.panelInput.push(function (el) {

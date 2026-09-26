@@ -61,11 +61,15 @@
     logEvent(d.multi.ico + ' Installed ' + d.label + ' ' + (have + 1), 'rare');
     world.dirty = true; save();
   }
+  var PROP_DLC = { cellarHatch: ['tobacco', 'lab'], cigCabinet: ['tobacco', 'lab'], tabletDock: ['tobacco'] };   /* built only while one of these DLC is on: the lab's door is in the basement and its stock sells from the cabinet */
+  function dlcProp(id) { var need = PROP_DLC[unitBase(id)]; return !need || need.some(dlcOn); }
   function propPlacement(id) {
     var d = PROPS[id]; var o = (S.layout && S.layout[id]) || {}; var base = unitBase(id);
     var owned = base === id || unitIds(base).indexOf(id) >= 0;   /* a unit you sold or reset away keeps its prop record but builds nothing */
-    return { x: typeof o.x === 'number' ? o.x : d.x, z: typeof o.z === 'number' ? o.z : d.z, rot: typeof o.rot === 'number' ? o.rot : (d.rot || 0), floor: d.floor || 0, unit: d.unit || 1, hidden: !!o.hidden || !owned };
+    return { x: typeof o.x === 'number' ? o.x : d.x, z: typeof o.z === 'number' ? o.z : d.z, rot: typeof o.rot === 'number' ? o.rot : (d.rot || 0), floor: d.floor || 0, unit: d.unit || 1, hidden: !!o.hidden || !owned || !dlcProp(id) };
   }
+  function propGone(id) { var i = propInst[id]; return !!(i && i.P && i.P.hidden); }   /* removed in build mode (Del), or a machine you don't own */
+  function inGoneProp(o) { for (var p = o; p; p = p.parent) { var id = p.userData && p.userData.propId; if (id && propInst[id]) return propGone(id); } return false; }
   function hiddenProps() { return PROP_ORDER.filter(function (id) { return S.layout && S.layout[id] && S.layout[id].hidden; }); }
   function propCtx(g, id, floorLevel) {
     var obs = [];
@@ -90,10 +94,11 @@
     var P = propPlacement(id); var g = new THREE.Group(); g.position.set(P.x, P.floor === 1 ? UP.y : 0, P.z); g.rotation.y = P.rot * Math.PI / 2; g.userData.propId = id; world.group.add(g);
     var ctx = propCtx(g, id, P.floor); var inst = { g: g, def: def, P: P, ctx: ctx, lights: [] }; propInst[id] = inst;
     ctx.light = function (l, x, y, z) { l.position.set(x, y, z); g.add(l); inst.lights.push(l); return l; };
-    if (!P.hidden) def.build(ctx, P);   // removed in creative mode: the prop exists but builds nothing until restored
+    if (!P.hidden) def.build(ctx, P);   // removed in build mode: the prop exists but builds nothing until restored
+    g.visible = !P.hidden;   /* and whatever a sync later puts in its group (piles on a shelf, cans in a machine) stays out of sight with it */
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = id; });
     ctx.obstacles.forEach(function (o) { var r = rotAABB(o, P.rot); world.obstacles.push({ x1: P.x + Math.min(r.x1, r.x2), x2: P.x + Math.max(r.x1, r.x2), z1: P.z + Math.min(r.z1, r.z2), z2: P.z + Math.max(r.z1, r.z2), tag: 'prop', prop: id, floorLevel: P.floor }); });
-    if (def.after) def.after(ctx, P, inst, id);
+    if (def.after && !P.hidden) def.after(ctx, P, inst, id);   /* a removed shelf is not refilled */
   }
   function buildAllProps() { PROP_ORDER.forEach(buildProp); defightSoon(); }
   function propWorld(id, lx, lz) { var inst = propInst[id]; inst.g.updateMatrixWorld(true); var v = new THREE.Vector3(lx, 0, lz); inst.g.localToWorld(v); return v; }   // fresh matrix: props are queried right after they are built, before any render

@@ -13,7 +13,9 @@
   function doorObstacle(d) { world.obstacles = world.obstacles.filter(function (o) { return o.doorId !== d.id; }); if (!d.open) world.obstacles.push({ x1: d.x - (d.alongX ? 0.62 : 0.12), x2: d.x + (d.alongX ? 0.62 : 0.12), z1: d.z - (d.alongX ? 0.12 : 0.62), z2: d.z + (d.alongX ? 0.12 : 0.62), tag: 'door', doorId: d.id, floorLevel: d.floor }); }
   function doorLed(d) { var c = d.locked ? 0xff3030 : 0x39d353; d.led.material.color.setHex(c); d.led.material.emissive.setHex(c); }
   function setDoor(id, open, locked) { var d = doorById[id]; if (!d) return; if (locked !== undefined) { d.locked = locked; d.relock = false; } else if (!open && d.relock) { d.locked = true; d.relock = false; } if (d.locked) open = false; d.open = open; d.auto = 0; d.autoT = 0; if (!S.doors) S.doors = {}; if (!S.doorLocks) S.doorLocks = {}; S.doors[id] = d.open; S.doorLocks[id] = d.locked; doorObstacle(d); doorLed(d); }
-  function doorsAll(what) { DOORS.forEach(function (d) { if (what === 'open') setDoor(d.id, true, false); else if (what === 'close') setDoor(d.id, false); else if (what === 'lock') setDoor(d.id, false, true); else setDoor(d.id, d.open, false); }); sfx('curtain'); save(); }
+  function doorsAll(what) { DOORS.forEach(function (d) { if (what === 'open') setDoor(d.id, true, false); else if (what === 'close') setDoor(d.id, false); else if (what === 'lock') setDoor(d.id, false, true); else setDoor(d.id, d.open, false); });
+    if (staffDoor.g) { if (what === 'lock') setStaffDoorLock(true); else if (what === 'open' || what === 'unlock') setStaffDoorLock(false); if (what === 'open' || what === 'close') { shop().staffDoor = what === 'open'; staffDoorAuto = false; syncStaffDoorObstacle(); applyShopState(); } }   /* the staff door is one of the doors */
+    sfx('curtain'); save(); }
   function toggleDoor(id) { var d = doorById[id]; if (!d) return; if (d.locked) { sfx('bad'); toast('🔒 Locked. Unlock it at the control box, or Shift+E with the keyring.', 'bad'); return; } if (d.open && player.floor === d.floor && Math.hypot(player.pos.x - d.x, player.pos.z - d.z) < 0.55) { toast('Step out of the doorway first', ''); return; } d.open = !d.open; d.auto = 0; if (!S.doors) S.doors = {}; S.doors[id] = d.open; if (!d.open && d.relock) { d.locked = true; d.relock = false; if (!S.doorLocks) S.doorLocks = {}; S.doorLocks[id] = true; doorLed(d); } doorObstacle(d); sfx('curtain'); save(); }
   function staffKey(id) { return !(S.staffKeys && S.staffKeys[id] === false); }   // the crew and the guard carry a key to every door unless you take it back at the control box
   function staffPass(d) { setDoor(d.id, true, false); d.relock = true; d.auto = 1; d.autoT = 0; if (!S.doorLocks) S.doorLocks = {}; S.doorLocks[d.id] = true; sfx('curtain'); }   /* a keyholder unlocks it, walks through and it locks again when it shuts; the save keeps it locked */
@@ -26,9 +28,10 @@
     loungers.forEach(function (l) { if (l.g) folk.push(l.g.position); });
     lineup.forEach(function (m) { folk.push(m.g.position); });
     robbers.forEach(function (r) { if (r.g && r.state !== 'away' && r.state !== 'force') folk.push(r.g.position); });   /* a robber mid-break is handled by his own state, not by standing close */
-    if (!shop().staffDoor && folk.length) {
-      for (var sdi = 0; sdi < folk.length; sdi++) {
-        if (Math.abs(folk[sdi].x - 10) < 1.3 && Math.abs(folk[sdi].z - 4) < 1.1) { shop().staffDoor = true; staffDoorAuto = true; staffDoorClearT = 0; syncStaffDoorObstacle(); sfx('curtain'); save(); break; }
+    var sdFolk = staffDoorLocked() ? (staffKey('staff') ? keyed : []) : folk;   /* locked: only a keyholder lets themselves through */
+    if (!shop().staffDoor && sdFolk.length) {
+      for (var sdi = 0; sdi < sdFolk.length; sdi++) {
+        if (Math.abs(sdFolk[sdi].x - 10) < 1.3 && Math.abs(sdFolk[sdi].z - 4) < 1.1) { shop().staffDoor = true; staffDoorAuto = true; staffDoorClearT = 0; syncStaffDoorObstacle(); sfx('curtain'); save(); break; }
       }
     } else if (shop().staffDoor && staffDoorAuto) {   /* shuts 4 s after the last person is clear of it */
       if (folkNear(folk, 10, 4, 1.4)) staffDoorClearT = 0; else if ((staffDoorClearT += dt) >= 4) { staffDoorAuto = false; staffDoorClearT = 0; shop().staffDoor = false; syncStaffDoorObstacle(); sfx('curtain'); save(); }
@@ -75,12 +78,19 @@
   function doorPrompt(d) { if (d.kind !== 'door') return ''; var o = doorById[d.id]; if (!o) return ''; var k = hasKeys(); if (o.locked) return '🔒 ' + o.name + ' <small>' + (k ? 'Shift+E unlocks it' : 'locked · the keyring hangs in the office') + '</small>'; return (o.open ? 'Slide the ' + o.label + ' shut' : 'Slide the ' + o.label + ' open') + (k ? ' <small>Shift+E locks it</small>' : ''); }
   // ── Fixtures: wall-hung things (every sign, the desk screen, the staff roster) that F2 edit mode can carry. Unlike furniture they move in 3D and snap flat onto whatever surface you look at ──
   var FIXTURES = [], fxById = {}, fxSignCount = {}, fxRay = new THREE.Raycaster(), fxTick = 0; fxRay.layers.enable(TOWN_LAYER);
-  function fixtureAdd(id, label, objs, baseYaw) {
+  // opts.table: it stands on a flat top instead of hanging on a wall. Its origin is its base (opts.baseY, or the lowest
+  // visible point), it only settles on a surface that faces up, and turning it is left to R.
+  function fixtureAdd(id, label, objs, baseYaw, opts) {
     objs.forEach(function (o) { var old = o.userData.fxId; if (old && fxById[old]) { FIXTURES.splice(FIXTURES.indexOf(fxById[old]), 1); delete fxById[old]; } });   // a sign that belongs to a bigger fixture stops being its own
-    var root = objs[0], grouped = objs.length > 1; if (grouped) { root = new THREE.Group(); root.position.copy(objs[0].getWorldPosition(new THREE.Vector3())); world.group.add(root); objs.forEach(function (o) { root.attach(o); }); }
-    var fx = { id: id, label: label, root: root, grouped: grouped, baseYaw: baseYaw || 0, base: null }; root.traverse(function (o) { o.userData.fxId = id; }); FIXTURES.push(fx); fxById[id] = fx; return fx;
+    var table = !!(opts && opts.table), root = objs[0], grouped = objs.length > 1 || table;
+    if (grouped) {
+      root = new THREE.Group(); root.position.copy(objs[0].getWorldPosition(new THREE.Vector3()));
+      if (table) { var bb = new THREE.Box3(); objs.forEach(function (o) { o.updateMatrixWorld(true); o.traverse(function (m) { if (m.isMesh && m.material !== MAT.none) bb.expandByObject(m); }); }); var bc = bb.getCenter(new THREE.Vector3()); root.position.set(bc.x, opts.baseY !== undefined ? opts.baseY : bb.min.y, bc.z); }
+      world.group.add(root); objs.forEach(function (o) { root.attach(o); });
+    }
+    var fx = { id: id, label: label, root: root, grouped: grouped, baseYaw: baseYaw || 0, base: null, table: table }; root.traverse(function (o) { o.userData.fxId = id; }); FIXTURES.push(fx); fxById[id] = fx; return fx;
   }
-  function fixtureFromBuild(id, label, baseYaw, fn) { var n0 = world.group.children.length; fn(); var objs = world.group.children.slice(n0); if (objs.length) fixtureAdd(id, label, objs, baseYaw); }
+  function fixtureFromBuild(id, label, baseYaw, fn, opts) { var n0 = world.group.children.length; fn(); var objs = world.group.children.slice(n0); if (objs.length) fixtureAdd(id, label, objs, baseYaw, opts); }
   function fixtureSign(m, lines) { var key = 'sign:' + String(lines && lines[0] || 'sign').slice(0, 32); fxSignCount[key] = (fxSignCount[key] || 0) + 1; fixtureAdd(key + '#' + fxSignCount[key], 'sign “' + String(lines && lines[0] || '').slice(0, 24) + '”', [m], 0); }
   function applyFixtures() {
     if (!S.fixtures || typeof S.fixtures !== 'object') S.fixtures = {};
@@ -90,11 +100,13 @@
   function fxCarry(fx) {   // follow the crosshair: stick flat to the surface under it, or float in front of you when there is none in reach
     fxRay.setFromCamera(center, camera); fxRay.far = 5; fxRay.camera = camera; var o = fxRay.ray.origin, d = fxRay.ray.direction; var hits = fxRay.intersectObjects(world.group.children, true), pick = null;
     for (var i = 0; i < hits.length; i++) { var ob = hits[i].object; if (!ob.isMesh || !hits[i].face || ob.userData.fxId === fx.id) continue; var m = ob.material; if (!m || m === MAT.none || m.visible === false || (m.transparent && m.opacity < 0.5)) continue; var vis = true; for (var p = ob; p; p = p.parent) if (!p.visible) vis = false; if (!vis) continue; if (hits[i].distance < 0.5) continue; pick = hits[i]; break; }
-    if (pick) { var n = pick.face.normal.clone().transformDirection(pick.object.matrixWorld); fx.root.position.copy(pick.point).add(n.clone().multiplyScalar(0.045)); if (Math.abs(n.y) < 0.5) fxFace(fx, Math.atan2(n.x, n.z)); }
+    var pn = pick ? pick.face.normal.clone().transformDirection(pick.object.matrixWorld) : null;
+    if (fx.table) { if (pn && pn.y > 0.7) fx.root.position.copy(pick.point); else fx.root.position.set(o.x + d.x * 1.6, o.y + d.y * 1.6, o.z + d.z * 1.6); return; }   /* a counter, a desk, a shelf: never a wall */
+    if (pick) { fx.root.position.copy(pick.point).add(pn.clone().multiplyScalar(0.045)); if (Math.abs(pn.y) < 0.5) fxFace(fx, Math.atan2(pn.x, pn.z)); }
     else fx.root.position.set(o.x + d.x * 2.2, o.y + d.y * 2.2, o.z + d.z * 2.2);
   }
   function fxHover(meshes) { FIXTURES.forEach(function (fx) { fx.root.traverse(function (o) { if (o.isMesh && o.visible) meshes.push(o); }); }); }   /* invisible hit boxes count here: a small sign or hook is easier to grab by the generous box the game already uses for E */
-  function fxDrop() { var fx = edit.grabbedFx; if (!fx) return; edit.grabbedFx = null; var r = fx.root; S.fixtures[fx.id] = { x: Math.round(r.position.x * 100) / 100, y: Math.round(r.position.y * 100) / 100, z: Math.round(r.position.z * 100) / 100, ry: r.rotation.y }; save(); sfx('ok'); toast('Hung the ' + fx.label, 'good'); }
+  function fxDrop() { var fx = edit.grabbedFx; if (!fx) return; edit.grabbedFx = null; var r = fx.root; S.fixtures[fx.id] = { x: Math.round(r.position.x * 100) / 100, y: Math.round(r.position.y * 100) / 100, z: Math.round(r.position.z * 100) / 100, ry: r.rotation.y }; save(); sfx('ok'); toast((fx.table ? 'Put down the ' : 'Hung the ') + fx.label, 'good'); }
   function fxReset(fx) { edit.grabbedFx = null; delete S.fixtures[fx.id]; fx.root.position.set(fx.base.x, fx.base.y, fx.base.z); fx.root.rotation.y = fx.base.ry; save(); toast('Put the ' + fx.label + ' back where it was', ''); }
   // ── Guided intro ─────────────────────────────────────────────────
   // Nine steps that walk a new shop from its first order to its first sale. Each step watches the save

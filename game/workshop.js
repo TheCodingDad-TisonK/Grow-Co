@@ -14,6 +14,9 @@
 //     "city":     { grow: 60, rows: 2 },
 //     "models":   { "item:joints": "joints.glb" } }
 //
+// A DLC is a built-in pack with "dlc": "<id>" and no tables: it switches a whole part of the game on, and the game
+// asks RF_WORKSHOP.dlc(id) before it lets you in. An imported pack can never be a DLC (validate() drops the field).
+//
 // A bundle is a pack with "bundle": ["id", "id"] and no content of its own.
 // Packs in the same "group" are mutually exclusive (the tuning packs use this).
 //
@@ -28,6 +31,20 @@
   // Only tables the game genuinely reads. Nothing here adds an upgrade or a cigarette SKU,
   // because those need code behind them and would sit in your shop doing nothing.
   var BUILTIN = [
+    // DLC: parts of the game that are not in a new shop until you switch them on. All free. Switching one off hides it
+    // and keeps the save exactly as it is, so switching it back on brings everything back.
+    { id: 'rf.dlc.tobacco', dlc: 'tobacco', name: 'RF Smoking: the Tobacco Works', icon: '🚬', author: 'TheCodingDad', kind: 'DLC',
+      what: 'the basement works · tablet rounds',
+      blurb: 'The cigarette line in the basement, the tobacco licence, the delivery tablet and its rounds, and the Corner Tobacconist.' },
+    { id: 'rf.dlc.lab', dlc: 'lab', name: 'The Extraction Lab', icon: '🧪', author: 'TheCodingDad', kind: 'DLC',
+      what: 'carts · gummies · chocolate · hash',
+      blurb: 'The lab off the basement turns low-grade bud into vape carts, gummies, chocolate and pressed hash for the cabinet.' },
+    { id: 'rf.dlc.greenhouse', dlc: 'greenhouse', name: 'The Roof Greenhouse', icon: '🌿', author: 'TheCodingDad', kind: 'DLC',
+      what: 'six roof beds',
+      blurb: 'Six beds on the roof, up the ladder in the flat. They grow on daylight, with the Cultivation permit II.' },
+    { id: 'rf.dlc.dev', dlc: 'dev', name: 'Dev Tools', icon: '🛠', author: 'TheCodingDad', kind: 'DLC',
+      what: 'cheats in the pause menu',
+      blurb: 'The cheat menu: money, stock, customers and robberies on demand, the clock, levels and teleports.' },
     { id: 'rf.seeds.heritage', name: 'Heritage Genetics', icon: '🌱', author: 'TheCodingDad', kind: 'Seeds',
       blurb: 'Four old-school cultivars for the early and middle game.',
       strains: [
@@ -126,10 +143,30 @@
   }
   function writeState(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); return true; } catch (e) { return false; } }
   var state = readState();
+  // DLC arrived in v1.26, switched off. A shop that already uses one keeps it: the first time this version runs, any
+  // save holding the tobacco licence, lab stock or a sown roof bed switches that DLC on. Dev Tools always start off.
+  function dlcFromSaves(saves) {
+    var on = {};
+    saves.forEach(function (s) {
+      if (!s || typeof s !== 'object') return;
+      var x = s.x && typeof s.x === 'object' ? s.x : {}, lab = x.lab && typeof x.lab === 'object' ? x.lab : {}, out = lab.out || {}, cab = s.cigStock || {};
+      if (s.lic && s.lic.tobacco) on['rf.dlc.tobacco'] = 1;
+      if (lab.job || ['cart', 'hash', 'gummy', 'choc'].some(function (k) { return out[k] > 0 || cab[k] > 0; })) on['rf.dlc.lab'] = 1;
+      if (Array.isArray(x.roof) && x.roof.some(function (b) { return b && b.stage && b.stage !== 'empty'; })) on['rf.dlc.greenhouse'] = 1;
+    });
+    return Object.keys(on);
+  }
+  function savesOnDisk() {   // every save of either build: rfgrowco-slot1..3 and developer saves, the desk's rf-grow-v1 and rf-grow-<name>
+    var out = [];
+    try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (!/^(rfgrowco-|rf-grow-)/.test(k) || /-(broken|workshop|settings)$/.test(k)) continue; try { var s = JSON.parse(localStorage.getItem(k)); if (s && typeof s === 'object' && !Array.isArray(s) && (typeof s.bank === 'number' || typeof s.day === 'number')) out.push(s); } catch (e) {} } } catch (e) {}
+    return out;
+  }
+  if (!state.dlcSeeded) { state.dlcSeeded = true; dlcFromSaves(savesOnDisk()).forEach(function (id) { if (state.on.indexOf(id) < 0) state.on.push(id); }); writeState(state); }
 
   function allPacks() { return BUILTIN.concat(state.user); }
   function byId(id) { var a = allPacks(); for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
   function isOn(id) { return state.on.indexOf(id) >= 0; }
+  function dlc(id) { for (var i = 0; i < BUILTIN.length; i++) if (BUILTIN[i].dlc === id) return isOn(BUILTIN[i].id); return false; }
   function isBuiltin(id) { for (var i = 0; i < BUILTIN.length; i++) if (BUILTIN[i].id === id) return true; return false; }
 
   function setOn(id, on) {
@@ -298,8 +335,8 @@
 
   window.RF_WORKSHOP = {
     version: 1,
-    packs: function () { return allPacks().map(function (p) { return { id: p.id, name: p.name, author: p.author, icon: p.icon, kind: p.kind, blurb: p.blurb, group: p.group, bundle: p.bundle || null, user: !!p.user, on: effectiveOn(p), counts: counts(p) }; }); },
-    isOn: isOn, setOn: setOn,
+    packs: function () { return allPacks().map(function (p) { return { id: p.id, name: p.name, author: p.author, icon: p.icon, kind: p.kind, blurb: p.blurb, group: p.group, bundle: p.bundle || null, user: !!p.user, dlc: p.dlc || null, on: effectiveOn(p), counts: counts(p) }; }); },
+    isOn: isOn, setOn: setOn, dlc: dlc, dlcFromSaves: dlcFromSaves,
     strains: function () { return collect('strains'); },
     lights: function () { return collect('lights'); },
     tents: function () { return collect('tents'); },
@@ -324,6 +361,7 @@
   };
   function counts(p) {
     if (p.bundle) return p.bundle.length + ' packs';
+    if (p.dlc) return p.what || 'DLC';
     var bits = [];
     if (p.strains) bits.push(p.strains.length + ' strain' + (p.strains.length === 1 ? '' : 's'));
     if (p.lights) bits.push(p.lights.length + ' lamp' + (p.lights.length === 1 ? '' : 's'));

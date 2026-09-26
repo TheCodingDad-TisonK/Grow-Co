@@ -45,7 +45,7 @@
     else if (SLOTS) { var rows = ''; for (var n = 1; n <= SLOTS; n++) rows += slotRow(n); head = '<div class="rf-slots">' + rows + '</div>'; }
     else { var one = readSlot(1); head = '<div class="rf-menu-btns"><button class="primary" data-rf="play">' + (used(one) ? '▶ Continue' : '▶ Start your shop') + '</button></div><div class="rf-menu-save">' + (used(one) ? line(one) : 'No shop yet. It starts with ' + money(220) + ', a tent and one pot, but no seed.') + '</div>'; }
     var WS = window.RF_WORKSHOP, wsn = WS ? WS.activeCount() : 0;
-    body(head + '<div class="rf-menu-btns row"><button data-rf="how">📖 Guide</button>' + (WS ? '<button data-rf="shop">🧩 Workshop' + (wsn ? ' <b class="rf-pill">' + wsn + '</b>' : '') + '</button>' : '') + (CFG.bug ? '<button data-rf="bug">🐞 Report a bug</button>' : '') + '</div>' +
+    body(head + '<div class="rf-menu-btns row"><button data-rf="how">📖 Guide</button>' + (WS ? '<button data-rf="shop">🧩 Workshop and DLC' + (wsn ? ' <b class="rf-pill">' + wsn + '</b>' : '') + '</button>' : '') + (CFG.bug ? '<button data-rf="bug">🐞 Report a bug</button>' : '') + '</div>' +
       '<div class="rf-menu-btns row"><button data-rf="discord">💬 Discord</button><button data-rf="site">🌐 realisticfarming.com</button><button data-rf="quit">' + (CFG.quitLabel || '⏏ Quit') + '</button></div>');
   }
   // ── Workshop: turn content packs on and off, and bring in your own ──
@@ -54,13 +54,14 @@
     var WS = window.RF_WORKSHOP; if (!WS) return showMain();
     card.classList.add('wide');
     var list = WS.packs(), groups = {};
-    list.forEach(function (p) { var k = p.bundle ? 'Bundles' : (p.user ? 'Yours' : p.kind || 'Packs'); (groups[k] = groups[k] || []).push(p); });
-    var order = Object.keys(groups).sort(function (a, b) { return (a === 'Yours' ? 2 : a === 'Bundles' ? 1 : 0) - (b === 'Yours' ? 2 : b === 'Bundles' ? 1 : 0); });
+    list.forEach(function (p) { var k = p.dlc ? 'DLC' : p.bundle ? 'Bundles' : (p.user ? 'Yours' : p.kind || 'Packs'); (groups[k] = groups[k] || []).push(p); });
+    function rank(k) { return k === 'DLC' ? -1 : k === 'Yours' ? 2 : k === 'Bundles' ? 1 : 0; }
+    var order = Object.keys(groups).sort(function (a, b) { return rank(a) - rank(b); });
     var html = '<div class="rf-ws"><p class="rf-ws-lead">Content packs change what the game has in it. Turn as many on or off as you like, then apply once and the shop rebuilds. Your saves aren\'t touched. A pack only adds things you can then buy.</p>';
     if (wsMsg) html += '<div class="rf-ws-msg">' + wsMsg + '</div>';
     if (wsDirty) html += '<div class="rf-ws-msg rf-ws-pending">Changes are waiting. <button class="primary" data-rf="ws-apply">↻ Apply and rebuild the shop</button></div>';
     order.forEach(function (k) {
-      html += '<h3 class="rf-ws-head">' + k + '</h3><div class="rf-ws-grid">';
+      html += '<h3 class="rf-ws-head">' + k + '</h3>' + (k === 'DLC' ? '<p class="rf-ws-lead">Whole parts of the game, all free. Switch one on and it\'s in every save. Switch it off and it\'s hidden, but nothing in your saves is lost: switch it back on and it\'s all still there.</p>' : '') + '<div class="rf-ws-grid">';
       groups[k].forEach(function (p) {
         html += '<div class="rf-ws-card' + (p.on ? ' on' : '') + '">' +
           '<div class="rf-ws-ico">' + esc(p.icon) + '</div>' +

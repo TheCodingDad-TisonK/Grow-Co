@@ -8,7 +8,7 @@
     ray.setFromCamera(center, camera);
     var hits = ray.intersectObjects(world.interact, false);
     var best = null;
-    for (var i = 0; i < hits.length; i++) { var h = hits[i]; var hd = h.object.userData.interact; if (!hd) continue; if (hd.kind === 'curtain' && curtainOpen(hd.key) && hasAnyBehind(hits, i)) continue; if (isContainer(hd.kind) && hasSpecificBehind(hits, i)) continue; best = h; break; }
+    for (var i = 0; i < hits.length; i++) { var h = hits[i]; var hd = h.object.userData.interact; if (!hd || inGoneProp(h.object) || (hd.dlc && !dlcOn(hd.dlc))) continue;   /* a removed piece of furniture takes no E, and neither does anything left inside it */ if (hd.kind === 'curtain' && curtainOpen(hd.key) && hasAnyBehind(hits, i)) continue; if (isContainer(hd.kind) && hasSpecificBehind(hits, i)) continue; best = h; break; }
     if (!best) { setFocus(null); return; }
     var data = best.object.userData.interact;
     if (data.kind === 'slot' && !data.noPot && plantAtSlot(data.slot)) data = { kind: 'plant', pid: plantAtSlot(data.slot).id };
@@ -51,7 +51,7 @@
     if (d.kind === 'bench') { if (h && h.kind === 'jar') return 'Empty jar into the ' + strainById(h.strain || 'sunflower').name + ' stash <small>' + gram(h.grams) + '</small>'; if (h && h.kind === 'harvest') return 'Hang it on the drying line first'; return 'Workbench <small>' + gram(S.cured.g) + ' cured · ' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints</small>'; }
     if (d.kind === 'lot' && !shutterOpen('goodsShelf')) return 'Goods shelf <small>' + (isLocked('goodsShelf') ? '🔒 locked' : 'gate down') + '</small>';
     if (d.kind === 'lot') { var lot0 = lotOf(d.item, d.strain), sn = strainById(d.strain).name; if (h && (h.kind !== d.item || (h.strain && h.strain !== d.strain)) && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; var lot = pileLot(d.item, h, d.strain); return 'Take 1 ' + sn + ' ' + kindName(d.item, 1) + ' <small>' + lot0.n + ' on the shelf · q' + Math.round(lot0.n ? lot0.qSum / lot0.n : 0) + ' · Shift+E takes ' + lot + (S.customer && S.customer.arrived && S.customer.want === d.item ? ' · ' + S.customer.who + ' wants ' + wantText(S.customer) : '') + '</small>'; }
-    if (d.kind === 'goodsShelf') { if (isLocked('goodsShelf')) return 'Goods shelf <small>🔒 locked · Shift+E with the keyring</small>'; if (!shutterOpen('goodsShelf')) return 'Goods shelf <small>gate down · E rolls it up' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; return 'Goods shelf <small>' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints · aim at a strain' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; }
+    if (d.kind === 'goodsShelf') { if (isLocked('goodsShelf')) return 'Goods shelf <small>🔒 locked · Shift+E with the keyring</small>'; if (!shutterOpen('goodsShelf')) return 'Goods shelf <small>gate down · E rolls it up' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; return 'Goods shelf <small>' + S.pkg.bags.n + ' bags · ' + S.pkg.joints.n + ' joints · aim at a strain · E rolls the gate down' + (hasKeys() ? ' · Shift+E locks it' : '') + '</small>'; }
     if ((d.kind === 'register' || d.kind === 'pos') && heistDemander()) return 'Hand over the till <small>' + money(S.till + S.tips) + ' · nobody gets hurt</small>';
     if (d.kind === 'ctlDoor') return world.ctl.doorOpen ? 'Close the control cabinet' : 'Open the control cabinet <small>the tablet and the switches are inside</small>';
     if (d.kind === 'ctlTablet') return touchPrompt(world.ctl.sc, 'Controls tablet', CTL_LABEL[CTL_PAGES[world.ctl.page || 0]] + ' · touch screen: E taps, wheel flips');
@@ -103,11 +103,11 @@
     if (d.kind === 'kfridge') return h ? (h.kind === 'snack' ? 'Put the snack back' : 'Hands full <small>G to put down</small>') : 'Open the fridge <small>grab a snack</small>';
     if (d.kind === 'eatspot') return h && h.kind === 'snack' ? 'Eat at the ' + d.label : 'Dining table <small>bring food from the fridge</small>';
     if (d.kind === 'bed') return sit.on ? 'Get up' : 'Sleep until morning <small>skips to 06:00 · plants keep growing</small>';
-    if (d.kind === 'miniFront') return 'Front panel <small>' + (shop().open ? 'open' : 'closed') + ' · hall and lounge lights · E</small>';
+    if (d.kind === 'miniFront') return 'Front panel <small>' + (shop().open ? 'open' : 'closed') + ' · front curtains · hall and lounge lights · E</small>';
     if (d.kind === 'miniOffice') return 'Office panel <small>lights back here and the office door · E</small>';
     if (d.kind === 'controls') return 'Control box <small>' + (shop().open ? 'open' : 'closed') + ' · lights ' + (shop().lights ? 'on' : 'off') + ' · radio ' + STATIONS[shop().radio].name + '</small>';
     if (d.kind === 'curtain') { var ct = (curtainOpen(d.key) ? 'Close ' : 'Open ') + d.label; if (d.key === 'service') { if (shop().breakNote && !curtainOpen('service')) return ct + ' <small>Shift+E takes the break note down</small>'; if (lobbySide()) return ct + (curtainOpen('service') ? ' <small>draw it, then Shift+E hangs a "back in 5 minutes" note</small>' : ' <small>Shift+E hangs a "back in 5 minutes" note</small>'); } return ct; }
-    if (d.kind === 'staffdoor') return (shop().staffDoor ? 'Close' : 'Open') + ' the staff door';
+    if (d.kind === 'staffdoor') { var sdl = staffDoorLocked(), sdk = hasKeys(); if (sdl && !shop().staffDoor) return '🔒 Staff door <small>' + (sdk ? 'Shift+E unlocks it' : 'locked · the keyring hangs in the office') + '</small>'; return (shop().staffDoor ? 'Close' : 'Open') + ' the staff door' + (sdk ? ' <small>Shift+E ' + (sdl ? 'unlocks' : 'locks') + ' it</small>' : ''); }
     if (d.kind === 'frontdoor') return shop().open ? 'Lock the front door <small>closes the shop</small>' : 'Unlock the front door <small>opens the shop</small>';
     if (d.kind === 'broom') return h && h.kind === 'broom' ? 'Hang the broom back up' : (h ? 'Hands full <small>G to put down</small>' : 'Take the broom <small>' + dustList().length + ' dusty spot' + (dustList().length === 1 ? '' : 's') + '</small>');
     if (d.kind === 'dust') return h && h.kind === 'broom' ? 'Sweep up the dirt' : 'Dirt on the floor <small>grab the broom in the processing room</small>';
@@ -195,9 +195,9 @@
       if (h && (h.kind !== d.item || (h.strain && h.strain !== d.strain))) { var other = S.hotbar.map(function (x, i2) { return x && x.kind === d.item && (!x.strain || x.strain === d.strain) ? i2 : -1; }).filter(function (i2) { return i2 >= 0; })[0]; if (other !== undefined) { S.slot = other; h = held(); } else if (hotbarFull()) { toast('Your hands are full. Put something down first (G).', 'bad'); return; } else h = null; }
       var n = (player.keys.ShiftLeft || player.keys.ShiftRight) ? pileLot(d.item, h, d.strain) : 1; var dr = lotDraw(d.item, d.strain, n);
       if (h) { h.n += dr.n; h.qSum += dr.q * dr.n; h.thcSum += dr.thc * dr.n; h.strain = d.strain; } else take({ kind: d.item, n: dr.n, qSum: dr.q * dr.n, thcSum: dr.thc * dr.n, strain: d.strain });
-      world.dirtyShelf = true; toast('Took ' + dr.n + ' ' + strainById(d.strain).name + ' ' + d.item, 'good');
+      world.dirtyShelf = true; world.lotTakeT = now(); toast('Took ' + dr.n + ' ' + strainById(d.strain).name + ' ' + d.item, 'good');
     }
-    else if (d.kind === 'goodsShelf') { if (player.keys.ShiftLeft || player.keys.ShiftRight) toggleLock('goodsShelf'); else if (lockedStop('goodsShelf')) { } else if (!shutterOpen('goodsShelf')) setShutter('goodsShelf', true); else { setShutter('goodsShelf', false); toast('Gate rolled down over the goods shelf', ''); } }
+    else if (d.kind === 'goodsShelf') { if (player.keys.ShiftLeft || player.keys.ShiftRight) toggleLock('goodsShelf'); else if (lockedStop('goodsShelf')) { } else if (!shutterOpen('goodsShelf')) setShutter('goodsShelf', true); else if (now() - (world.lotTakeT || 0) < 1500) { } else { setShutter('goodsShelf', false); toast('Gate rolled down over the goods shelf', ''); } }   /* taking one rebuilds the piles, and a quick second click landed on the shelf itself for a moment and shut the gate */
     else if (d.kind === 'switch') { toggleRoomLight(d.room); }
     else if (d.kind === 'dehum') { dehumCycle(d.zone); }
     else if (d.kind === 'register' && heistDemander()) complyHeist();
@@ -248,7 +248,7 @@
     else if (d.kind === 'miniFront') ui.openPanel('miniFront');
     else if (d.kind === 'miniOffice') ui.openPanel('miniOffice');
     else if (d.kind === 'curtain') { if (d.key === 'service' && (player.keys.ShiftLeft || player.keys.ShiftRight)) breakNoteToggle(); else toggleCurtain(d.key); }
-    else if (d.kind === 'staffdoor') toggleStaffDoor();
+    else if (d.kind === 'staffdoor') { if (player.keys.ShiftLeft || player.keys.ShiftRight) keyStaffDoor(); else toggleStaffDoor(); }
     else if (d.kind === 'frontdoor') toggleShopOpen();
     else if (d.kind === 'broom') { if (h && h.kind === 'broom') { S.held = null; toast('Broom back on the hook', ''); } else if (hotbarFull()) toast('Your hands are full (G puts things down)', 'bad'); else { take({ kind: 'broom' }); toast('🧹 Got the broom. E on the dust sweeps it.', 'good'); } }
     else if (d.kind === 'dust') sweep(d.id);

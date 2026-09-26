@@ -9,7 +9,7 @@ Grow Co. is deliberately simple to run and a little unusual to read. This page i
 - **Written in parts.** That file is built from the parts in `src/` (see below). Edit the parts, never `game/grow3d.js`.
 - **One save object.** The whole game state is `S`, a JSON-safe object written to `localStorage`.
 - **One loop.** `frame()` runs every animation frame and calls each system's `update…(dt)` in a fixed order, then renders.
-- **One handle.** `window.RFGROW` exposes the running game for the creative mode plug-in, for the console, and for tests.
+- **One handle.** `window.RFGROW` exposes the running game for the build catalogue plug-in, for the console, and for tests.
 
 Players and hosts need no build step: `game/` is committed ready to run. Open the page and it runs.
 
@@ -67,7 +67,7 @@ Sections are marked with banner comments: `// ── Robberies: … ──`. Sea
 | People | `makeHuman(spec)`, `animateHuman`, the guard, the crew (Jo, Mika and Sam), customers, loungers |
 | Pathfinding | a grid A* over the obstacle boxes: `navBuild`, `navPath`, `routeTo` |
 | RF Smoking, The city, Upstairs, Expansion, Sliding doors, Fixtures, Robberies | the large feature blocks, each self-contained |
-| Props | `defProp(id, {…})`, `buildProp`, `propWorld`, the edit mode |
+| Props | `defProp(id, {…})`, `buildProp`, `propWorld`, build mode |
 | Player, hands, interaction | `updatePlayer`, the hotbar, `updateFocus`, `interact()` |
 | Panels and menus | `ui`, `ctxOpen`, the panel renderers, the pause menu, `devAction` |
 | Boot | the one line that calls every `build…()` in order, then `frame()` |

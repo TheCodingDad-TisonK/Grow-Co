@@ -44,6 +44,9 @@
   // a seeded Math.random: the same test draws the same numbers every run, so a failure can be run again and looked at
   function seeded(seed) { let a = seed >>> 0; return function () { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
+  // every DLC on, before workshop.js reads its state: the suite tests the whole game (tests/dlc.test.js switches them off)
+  try { localStorage.setItem('rfgrowco-workshop', JSON.stringify({ on: ['rf.dlc.tobacco', 'rf.dlc.lab', 'rf.dlc.greenhouse', 'rf.dlc.dev'], user: [], dlcSeeded: true })); } catch (e) {}
+
   const seedArg = new URLSearchParams(location.search).get('seed');
   if (seedArg) Math.random = seeded(+seedArg);   // before any game script runs, so the whole page is reproducible
 

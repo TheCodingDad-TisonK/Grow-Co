@@ -54,8 +54,9 @@
     [-0.75, 0.75].forEach(function (z) { vm(new THREE.BoxGeometry(0.06, 0.16, 0.3), glowMat(0xfff4d0, 1.2), 3.02, 0.95, z); vm(new THREE.BoxGeometry(0.06, 0.16, 0.24), glowMat(0xff3030, 0.9), -2.42, 1.0, z); });
     [-1.05, 1.05].forEach(function (z) { var mir = vm(new THREE.BoxGeometry(0.1, 0.16, 0.08), dark, 2.0, 1.55, z); vm(new THREE.BoxGeometry(0.04, 0.04, 0.12), dark, 2.0, 1.55, z * 0.95); });
     [[1.6, 1.02], [1.6, -1.02], [-1.5, 1.02], [-1.5, -1.02]].forEach(function (w) { var wh = vm(new THREE.CylinderGeometry(0.38, 0.38, 0.28, 18), colorMat(0x1a1a1a, 0.9), w[0], 0.38, w[1]); wh.rotation.x = Math.PI / 2; var rim = vm(new THREE.CylinderGeometry(0.22, 0.22, 0.29, 12), colorMat(0xc8ccd2, 0.3, 0.8), w[0], 0.38, w[1]); rim.rotation.x = Math.PI / 2; var hub = vm(new THREE.CylinderGeometry(0.06, 0.06, 0.3, 10), dark, w[0], 0.38, w[1]); hub.rotation.x = Math.PI / 2; var arch = vm(new THREE.TorusGeometry(0.44, 0.05, 6, 16, Math.PI), dark, w[0], 0.4, w[1] * 0.97); arch.rotation.y = w[1] > 0 ? 0 : Math.PI; });
-    vm(new THREE.BoxGeometry(0.02, 1.3, 0.9), colorMat(0xd8d8d8, 0.4), -0.6, 1.2, 1.03); vm(new THREE.BoxGeometry(0.04, 0.03, 0.2), MAT.chrome, -0.62, 1.1, 1.04);   // sliding door line + handle
-    vm(new THREE.BoxGeometry(0.02, 0.9, 1.0), colorMat(0xd8d8d8, 0.4), 1.5, 1.0, 1.02); vm(new THREE.BoxGeometry(0.04, 0.03, 0.2), MAT.chrome, 1.6, 1.15, 1.03);      // cab door line
+    /* the long axis is x here, so a door panel is long in x and thin in z: built the other way round they stood out from the side like fins */
+    [-1.05, -0.15].forEach(function (x) { vm(new THREE.BoxGeometry(0.015, 1.3, 0.008), dark, x, 1.2, 1.029); }); vm(new THREE.BoxGeometry(0.915, 0.015, 0.008), dark, -0.6, 1.85, 1.029); vm(new THREE.BoxGeometry(0.16, 0.03, 0.04), MAT.chrome, -0.25, 1.1, 1.045);   // the sliding door: its seams (the livery runs across them) and the handle
+    [-1, 1].forEach(function (sz) { vm(new THREE.BoxGeometry(0.95, 0.75, 0.02), colorMat(0xd8d8d8, 0.4), 1.5, 0.95, sz * 1.015); vm(new THREE.BoxGeometry(0.16, 0.03, 0.04), MAT.chrome, 1.12, 1.15, sz * 1.035); });      // a cab door each side, under the side window
     var logoTex = textTex(logoLines, 512, 200, { size: 46, titleColor: '#6fdc8c', bg: 'rgba(255,255,255,0)', line: 'rgba(0,0,0,0)', color: '#1a2a44' });
     var logo = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.9), new THREE.MeshBasicMaterial({ map: logoTex, transparent: true })); logo.position.set(-0.9, 1.35, 1.03); van.add(logo);
     var logo2 = logo.clone(); logo2.position.z = -1.03; logo2.rotation.y = Math.PI; van.add(logo2);
@@ -168,7 +169,7 @@
   }
   function registerSale(text) { if (!world.reg) return; world.reg.lastSale = text; world.reg.drawerT = 1; drawRegister(); sfx('drawer'); }
   function updateProps(dt) {
-    if (world.reg && world.reg.drawer) { var open = world.reg.drawerT > 0 ? 1 : 0; world.reg.drawerT = Math.max(0, world.reg.drawerT - dt * 0.35); world.reg.drawer.position.z = 3.55 - lerp(0, 0.22, clamp(world.reg.drawerT * 4, 0, 1)); }
+    if (world.reg && world.reg.drawer) { var open = world.reg.drawerT > 0 ? 1 : 0; world.reg.drawerT = Math.max(0, world.reg.drawerT - dt * 0.35); world.reg.drawer.position.z = (world.reg.drawerZ !== undefined ? world.reg.drawerZ : 3.55) - lerp(0, 0.22, clamp(world.reg.drawerT * 4, 0, 1)); }
     if (world.clipFan) world.clipFan.rotation.z += dt * 22;
     cabinetTick(dt);
     if (world.fanBlades) { world.fanBlades.rotation.z += dt * 18; world.fanHead.rotation.y = world.fanBaseYaw + Math.sin(world.time * 0.6) * 0.6; }

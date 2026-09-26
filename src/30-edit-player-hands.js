@@ -1,19 +1,22 @@
 //@ edit mode, particles, the player and carrying
-  // ── Edit mode: grab, carry, rotate and drop props; placements persist in the save ──
+  // ── Build mode (F2): grab, carry, rotate and drop props and fixtures; placements persist in the save. The creative
+  //    catalogue (grow3d-creative.js) is part of the same mode through hooks.editMode: it takes the keys only for your
+  //    own builds and the piece you are placing, and everything else here stays furniture. ──
   var edit = { on: false, grabbed: null, hover: null, helper: null, tentDelta: null };
   function editTarget(id) { return id === 'tent' ? world.tentGroup : (propInst[id] && propInst[id].g); }
   function editToggle() {
     if (edit.grabbed || edit.grabbedFx) editDrop();
-    edit.on = !edit.on; $('h-edit').hidden = !edit.on;
+    edit.on = !edit.on; var eb = $('h-edit'); eb.hidden = !edit.on; eb.innerHTML = '🛠️ Build mode · E grab or place · R turn · Backspace put back · Del remove · C catalogue · F2 done';
     if (!edit.on && edit.helper) { scene.remove(edit.helper); edit.helper = null; }
-    if (edit.on) { setFocus(null); toast('🛠️ Edit mode: furniture, signs (the basement ones too), the desk screen and the roster · E grab or drop · R turn · Backspace reset · F2 done', ''); } else { toast('Layout saved', 'good'); save(); }
+    runHooks(hooks.editMode, edit.on);
+    if (edit.on) { setFocus(null); toast('🛠️ Build mode: aim at furniture, a sign or a screen and E grabs it · C opens the catalogue to build your own · F2 done', ''); } else { toast('Layout saved', 'good'); save(); }
     sfx('click');
   }
   function editHelper(obj) { if (!obj) { if (edit.helper) edit.helper.visible = false; return; } if (!edit.helper) { edit.helper = new THREE.BoxHelper(obj, 0x6fdc8c); scene.add(edit.helper); } edit.helper.visible = true; edit.helper.setFromObject(obj); }
   function editUpdate() {
     if (!edit.on) return;
     var pr = $('h-prompt');
-    if (edit.grabbedFx) { fxTick++; if (fxTick % 2 === 0) fxCarry(edit.grabbedFx); editHelper(edit.grabbedFx.root); pr.hidden = false; pr.innerHTML = '<b>E</b>Hang the ' + edit.grabbedFx.label + ' here <small>it sticks to the surface you look at · R turn · Backspace reset</small>'; return; }
+    if (edit.grabbedFx) { fxTick++; if (fxTick % 2 === 0) fxCarry(edit.grabbedFx); editHelper(edit.grabbedFx.root); pr.hidden = false; pr.innerHTML = edit.grabbedFx.table ? '<b>E</b>Put the ' + edit.grabbedFx.label + ' down here <small>it stands on the flat top you look at · R turn · Backspace reset</small>' : '<b>E</b>Hang the ' + edit.grabbedFx.label + ' here <small>it sticks to the surface you look at · R turn · Backspace reset</small>'; return; }
     if (edit.grabbed) {
       ray.setFromCamera(center, camera); var y = player.floor === 1 ? UP.y : 0; var dir = ray.ray.direction; var t = (y - ray.ray.origin.y) / dir.y; var pt;
       if (dir.y < -0.05 && t > 0 && t < 10) pt = ray.ray.origin.clone().add(dir.clone().multiplyScalar(t)); else { var flat = dir.clone(); flat.y = 0; flat.normalize(); pt = ray.ray.origin.clone().add(flat.multiplyScalar(2.6)); pt.y = y; }
@@ -23,13 +26,13 @@
       editHelper(editTarget(edit.grabbed)); pr.hidden = false; pr.innerHTML = '<b>E</b>Drop ' + PROPS[edit.grabbed].label + ' <small>R rotate · Backspace reset</small>'; return;
     }
     ray.setFromCamera(center, camera); ray.far = 7; var meshes = [];
-    PROP_ORDER.forEach(function (id) { var tgt = editTarget(id); if (!tgt) return; if (PROPS[id].floor !== player.floor && !(PROPS[id].floor === undefined && player.floor === 0)) return; tgt.traverse(function (o) { if (o.isMesh && o.visible && o.material !== MAT.none) meshes.push(o); }); });
+    PROP_ORDER.forEach(function (id) { var tgt = editTarget(id); if (!tgt || propGone(id)) return; if (PROPS[id].floor !== player.floor && !(PROPS[id].floor === undefined && player.floor === 0)) return; tgt.traverse(function (o) { if (o.isMesh && o.visible && o.material !== MAT.none) meshes.push(o); }); });
     fxHover(meshes); var hits = ray.intersectObjects(meshes, false); ray.far = 3.4;
     var id = hits.length ? hits[0].object.userData.propId : null; if (id === undefined) id = null;
     edit.hoverFx = hits.length && !id && hits[0].object.userData.fxId ? fxById[hits[0].object.userData.fxId] : null;
     edit.hover = id;
-    if (edit.hoverFx) { pr.hidden = false; pr.innerHTML = '<b>E</b>Take down the ' + edit.hoverFx.label + ' <small>R turn · Backspace reset · F2 done</small>'; editHelper(edit.hoverFx.root); return; }
-    if (id) { pr.hidden = false; pr.innerHTML = '<b>E</b>Grab ' + PROPS[id].label + ' <small>R rotate · Backspace reset · F2 done</small>'; editHelper(editTarget(id)); }
+    if (edit.hoverFx) { pr.hidden = false; pr.innerHTML = '<b>E</b>' + (edit.hoverFx.table ? 'Pick up the ' : 'Take down the ') + edit.hoverFx.label + ' <small>R turn · Backspace reset · F2 done</small>'; editHelper(edit.hoverFx.root); return; }
+    if (id) { pr.hidden = false; pr.innerHTML = '<b>E</b>Grab ' + PROPS[id].label + ' <small>R rotate · Backspace reset' + (id !== 'tent' ? ' · Del remove' : '') + ' · F2 done</small>'; editHelper(editTarget(id)); }
     else { pr.hidden = true; editHelper(null); }
   }
   function editGrab() {
@@ -111,7 +114,7 @@
     var gy = groundY(player.pos.x, player.pos.z) + (player.crouch ? 1.0 : 1.65);
     if (player.air) { player.jumpV -= 9.8 * dt; player.pos.y += player.jumpV * dt; if (player.jumpV < 0 && player.pos.y <= gy) { player.pos.y = gy; player.air = false; player.jumpV = 0; sfx('step', floorSurface()); } }   // a Space hop: 0.8 m at most, well under every ceiling (ground 3.4, upstairs 3.0, basement 3.2)
     else player.pos.y = lerp(player.pos.y, sit.on ? groundY(player.pos.x, player.pos.z) + (sit.spot && sit.spot.eye ? sit.spot.eye : 1.15) : gy, 1 - Math.pow(0.0005, dt));   /* a seat can set its own eye height: the van stool is up in the cargo box */
-    if (!player.locked || ui.blocked()) return;
+    if (!player.locked || ui.blocked()) { if (sit.on) { camera.position.set(player.pos.x, player.pos.y, player.pos.z); camera.rotation.set(player.pitch, player.yaw, 0); } return; }   /* seated behind a screen (the office PC): the view still settles into the chair */
     var k = player.keys; var f = 0, s = 0;
     if (sit.on) { if (k.KeyW || k.KeyS || k.KeyA || k.KeyD) standUp(); camera.position.set(player.pos.x, player.pos.y, player.pos.z); camera.rotation.set(player.pitch, player.yaw, 0); return; }
     if (k.KeyW || k.ArrowUp) f += 1; if (k.KeyS || k.ArrowDown) f -= 1; if (k.KeyD || k.ArrowRight) s += 1; if (k.KeyA || k.ArrowLeft) s -= 1;

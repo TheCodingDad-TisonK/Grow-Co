@@ -1,5 +1,49 @@
 # Changelog
 
+## v1.26: build mode and DLC
+
+**One build mode.** F2 edit mode and F3 creative mode are one mode now, so they no longer fight over the same keys. F2 (or F3, it does the same) opens build mode:
+
+- **Furniture, signs and screens**: aim at one and E grabs it, R turns it, E puts it down, Backspace puts it back where it started, Del removes it.
+- **Your own builds**: C opens the catalogue. Aim at something you built and E picks it up, R turns it, [ ] scale it, P paints it, X copies it, Del removes it.
+- The pause menu has one **Build mode** button in place of Edit layout and Creative mode.
+
+**Deleted means deleted.** Del in build mode takes the whole thing away: nothing left to see, to take or to walk into, and it stays gone after the next load. A removed shelf used to keep its piles and their pick-up spots floating where it stood. One of your own builds deleted while you were carrying it came back on the next load, and one you were carrying when you left build mode vanished until then. Removed furniture comes back from the catalogue (C) whenever you want it.
+
+**The counter is yours to arrange.** The till, the tip jar, the desk bell and the business cards move in build mode like the signs do, and stand on any flat top you put them on: along the counter, on a desk, on a shelf. The cash drawer opens out of the till wherever it stands.
+
+**DLC.** Four parts of the game are DLC now, all free, under **Workshop and DLC** in the main menu:
+
+- **RF Smoking: the Tobacco Works**: the basement cigarette line, the tobacco licence, the delivery tablet and its rounds, and the Corner Tobacconist.
+- **The Extraction Lab**: vape carts, gummies, chocolate and pressed hash from low-grade bud.
+- **The Roof Greenhouse**: six beds on the roof that grow on daylight.
+- **Dev Tools**: the cheat menu in the pause menu.
+
+A new shop starts with all four off. Your shop keeps what it already uses: the first time v1.26 runs, a save that holds the tobacco licence, lab stock or a sown roof bed switches that DLC on. Dev Tools start off either way. Switching a DLC off hides it and keeps everything in your save, so switching it back on brings it all back: a running lab batch and a growing roof bed simply wait, and a tablet round left open is called off without costing any rep.
+
+Switched off, a DLC's things leave the shop too, so there is nothing standing around that does nothing:
+
+- **The Tobacco Works** takes the tablet dock with it. The Corner Tobacconist won't buy cartons, the car has no cartons to load, and the staff roster offers no basement operator (one you already hired stays on it, so you can let them go).
+- **The Tobacco Works and the Lab both off** take the cellar hatch and the cigarette cabinet. With the Lab on they stay: its door is in the basement and what it makes sells from the cabinet.
+- **The Roof Greenhouse** takes the ladder in the flat, the hatch on the roof, the glasshouse and its beds.
+
+**The staff door locks.** Like every other door: Shift+E with the keyring, the lock button on the control box, or Lock all. A light on both sides shows red while it's locked. Locked, it opens only for your crew and the guard, and only while they hold its key (the control box can take it back).
+
+**The front panel runs the front curtains.** The small panel by the till has a button for each of the three curtains across the shop front, and Open all three or Close all three. Its roller door button is gone: the control box in the security room still has it. The panel also hangs on the side wall by the fire extinguisher now. Its old spot was inside the cigarette cabinet, so you couldn't see it. If you had moved it with F2, it stays where you put it.
+
+**Fixes**
+
+- **Customers stopped spinning at the window.** Someone stepping up from the line could turn a full circle on the spot before facing you. They turn the short way round now, and so do robbers at the window.
+- **A quick second click on the goods shelf no longer shuts the gate.** Taking a joint rebuilds the piles, and a fast second click to take another landed on the shelf itself and rolled the gate down.
+- **The office PC sits you down straight away.** The view used to stay standing until you closed the desktop.
+- **The car keeps its shadow all over town.** The sun's shadows only reached a block or so around the shop. They follow you now, on foot or at the wheel.
+- **Traffic stopped driving in pairs.** Cars in one lane drove at different speeds, so the faster one caught up and sat on the slower one's bumper for good. Each lane has one speed, and a car that gets too close eases off until there is a gap again.
+- **The delivery van's side doors sit flat.** The two panels on its right side stood straight out from the van. The sliding door is a seam and a handle now, and the cab has a door on each side.
+- **Reset save resets everything.** Bought machines, moved and removed furniture, your builds and the counter pieces all went back to a fresh shop only on the next start. Reset now starts the fresh shop straight away.
+- **Dev tools fill with what your level allows.** Filling the shelf, the stash, the tent or the seed rack used every strain in the game, level 9 ones included. It uses the strains the seed bank would sell you at your level now, and a content pack's strains once the pack is on and your level reaches them.
+
+**For people who work on the game.** 25 new tests: tests/fixes.test.js, tests/dlc.test.js and tests/build-mode.test.js. Each one was checked by putting the old behaviour back and watching it fail. tools/test/preload.js switches every DLC on, so the rest of the suite still covers the whole game.
+
 ## v1.25: the back room
 
 **Every machine is its own machine.**

@@ -30,9 +30,9 @@ The whole game is one JSON object, `S`, written to `localStorage` a fraction of 
 | `customer`, `courier`, `vip` | who is being served right now; a new face also carries `look`. The line behind the window is not saved |
 | `layout[propId]` | moved furniture: `{ x, z, rot }`, plus `hidden` for something taken down |
 | `ropes[propId]` | each rope line's style: `{ color, len, posts, kind, open }`; `open` leaves it unhooked for good |
-| `fixtures[id]` | moved signs and screens: `{ x, y, z, ry }` |
+| `fixtures[id]` | moved signs, screens and counter pieces (`counterTill`, `tipJar`, `deskBell`, `bizCards`): `{ x, y, z, ry }` |
 | `doors[id]`, `doorLocks[id]` | sliding doors: open, locked |
-| `custom`, `designs` | creative mode objects and saved designs |
+| `custom`, `designs` | your own builds from the build catalogue, and saved designs |
 | `armory` | weapons owned and ammunition |
 | `tob` | the cigarette line: bays, kiln, stocks between machines, finished packs |
 | `cigStock`, `cigShutter` | the cigarette cabinet behind the counter |

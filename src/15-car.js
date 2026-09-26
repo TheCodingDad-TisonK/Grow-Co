@@ -129,11 +129,14 @@
     ctx.textAlign = 'left'; ctx.fillStyle = ja >= 0 ? '#6fdc8c' : 'rgba(143,165,150,.9)'; ctx.font = (ja >= 0 ? 'bold ' : '') + '14px system-ui, sans-serif';
     ctx.fillText(ja >= 0 ? 'E hands over drop #' + (ja + 1) + ' · ' + cs2.jobs[ja].qty + ' × ' + jobGoods(cs2.jobs[ja]) : !on ? 'I starts the engine' : cs.brake ? 'P releases the handbrake' : carAnyOpen() ? 'Something is open: T boot · B bonnet' : carInBay() ? 'In your bay: E gets out, Shift+E loads' : 'L lights · T boot · M map · E gets out', 258, 186);
   }
+  function laneCount(z) { var n = 0; for (var i = 0; i < traffic.length; i++) if (traffic[i].z === z) n++; return n; }
   function updateCity(dt) {
     traffic.forEach(function (c) {
       var p = c.g.position, ahead = (drive.g.position.x - p.x) * c.dir, side = Math.abs(drive.g.position.z - c.z), pa = (player.pos.x - p.x) * c.dir, ps = Math.abs(player.pos.z - c.z); var stop = (drive.on && ahead > 0 && ahead < 9 && side < 2.4) || (!drive.on && player.floor === 0 && pa > 0 && pa < 7 && ps < 2.2);
-      traffic.forEach(function (o) { if (o === c || o.z !== c.z) return; var d = (o.g.position.x - p.x) * c.dir; if (d > 0 && d < 8) stop = true; });
-      c.cur = lerp(c.cur, stop ? 0 : c.v, 1 - Math.pow(0.05, dt)); p.x += c.cur * c.dir * dt; if (p.x * c.dir > CITY.x - 2) p.x = -c.dir * (CITY.x - 2);
+      var loop = 2 * (CITY.x - 2), gap = loop, keep = Math.min(45, loop / Math.max(1, laneCount(c.z)) * 0.75);   /* the lane is a loop: a car that has just wrapped round is still the one ahead */
+      traffic.forEach(function (o) { if (o === c || o.z !== c.z) return; var d = (o.g.position.x - p.x) * c.dir; if (d < 0) d += loop; if (d < gap) gap = d; });
+      var want = stop || gap < 8 ? 0 : gap < keep ? c.v * clamp((gap - 8) / (keep - 8), 0.35, 1) : c.v;   /* closer than its distance, a car eases off until the gap opens again */
+      c.cur = lerp(c.cur, want, 1 - Math.pow(0.05, dt)); p.x += c.cur * c.dir * dt; if (p.x * c.dir > CITY.x - 2) p.x = -c.dir * (CITY.x - 2);
     });
     parkFolk.forEach(function (f) { if (f.coolT > 0) f.coolT -= dt; });
     updateCarParts(dt);

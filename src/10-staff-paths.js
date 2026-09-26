@@ -4,7 +4,7 @@
   var ROOM_DOORS = { grow: ['growDoor'], dry: ['dryDoor'], annex: ['dryDoor', 'annexDoor'], security: ['dryDoor', 'annexDoor'], office: ['officeDoor'], proc: ['procDoor'], lobby: ['procDoor', 'staffIn', 'staffDoor'], hall: [] };
   // ── Ground-floor pathfinding: A* over a 25 cm grid built from the obstacle boxes, then string-pulled so staff cut clean corners but never walls ──
   var NAV = { cell: 0.2, x0: -13, z0: -19, w: 0, h: 0, grid: null, raw: null, key: '', pad: 0.2 };   /* grid: locked doors are walls. raw: every door is open, which is how a man with a crowbar sees the place */
-  function navKey() { var k = world.obstacles.length, s = 0; for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (o.tag === 'guard') continue; s += o.x1 * 3.1 + o.z2 * 1.7; if (o.doorId) { var dk = doorById[o.doorId]; if (dk && dk.locked) s += 91.7 + (staffKey(dk.id) ? 0 : 13.3); } }   /* doors count now, and locking one changes the key, so the grid is rebuilt the moment it matters */
+  function navKey() { var k = world.obstacles.length, s = 0; for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (o.tag === 'guard') continue; s += o.x1 * 3.1 + o.z2 * 1.7; if (o.doorId) { var dk = doorById[o.doorId]; if (dk && dk.locked) s += 91.7 + (staffKey(dk.id) ? 0 : 13.3); } if (o.tag === 'staffdoor' && staffDoorLocked()) s += 57.3 + (staffKey('staff') ? 0 : 11.1); }   /* doors count now, and locking one changes the key, so the grid is rebuilt the moment it matters */
     return k + ':' + s.toFixed(2); }
   function navBuild() {
     var cs = NAV.cell; NAV.w = Math.ceil(26 / cs) + 1; NAV.h = Math.ceil(33 / cs) + 1;
@@ -13,8 +13,9 @@
       if (((o.floorLevel || 0) !== 0 && o.floorLevel !== 'any') || o.tag === 'guard') return;   /* ground floor only: the roof beds (level 2) once walled off the hall */
       var isDoor = !!o.doorId || o.tag === 'staffdoor' || o.tag === 'frontdoor';
       var dd = o.doorId ? doorById[o.doorId] : null;
-      var blocks = !isDoor || !!(dd && dd.locked);   /* a shut door you can open is not a wall; a locked one is */
-      var staffBlocks = !isDoor || !!(dd && dd.locked && !staffKey(dd.id));   /* unless your crew hold a key to it */
+      var sdl = o.tag === 'staffdoor' && staffDoorLocked();
+      var blocks = !isDoor || !!(dd && dd.locked) || sdl;   /* a shut door you can open is not a wall; a locked one is */
+      var staffBlocks = !isDoor || !!(dd && dd.locked && !staffKey(dd.id)) || (sdl && !staffKey('staff'));   /* unless your crew hold a key to it */
       var x1 = Math.max(0, Math.round((o.x1 - pad - NAV.x0) / cs)), x2 = Math.min(NAV.w - 1, Math.round((o.x2 + pad - NAV.x0) / cs));
       var z1 = Math.max(0, Math.round((o.z1 - pad - NAV.z0) / cs)), z2 = Math.min(NAV.h - 1, Math.round((o.z2 + pad - NAV.z0) / cs));
       for (var cz = z1; cz <= z2; cz++) for (var cx = x1; cx <= x2; cx++) { var ix = cz * NAV.w + cx; if (blocks) grid[ix] = 1; if (staffBlocks) staff[ix] = 1; if (!isDoor) raw[ix] = 1; }

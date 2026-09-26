@@ -153,7 +153,7 @@
       npc.leaveHappy(); S.customer = null;
     },
     buyLic: function (id) {
-      var L = licById(id); if (!L || hasLic(id)) return; if (!S.lic) S.lic = {};
+      var L = licById(id); if (!L) return; if (L.dlc && !dlcOn(L.dlc)) { dlcOff(L.dlc); return; } if (hasLic(id)) return; if (!S.lic) S.lic = {};
       if (L.req && !hasLic(L.req)) { toast('Needs the ' + licById(L.req).name + ' first', 'bad'); return; } if (L.lvl && S.level < L.lvl) { toast('Unlocks at level ' + L.lvl, 'bad'); return; } if (L.rep && S.rep < L.rep) { toast('Needs ' + L.rep + ' rep', 'bad'); return; }
       if (!spend(L.price)) return; S.lic[id] = true; sfx('rare'); logEvent('🪪 Licence granted: ' + L.name, 'rare'); toast('🪪 ' + L.name, 'rare'); save();
     },
@@ -184,6 +184,6 @@
   };
 
   // ── Extension hooks (creative mode lives in grow3d-creative.js) ──
-  var hooks = { frame: [], keydown: [], mousedown: [], panel: {}, panelClick: [], panelInput: [], boot: [], blockFocus: [], unlock: [] };
+  var hooks = { frame: [], keydown: [], mousedown: [], panel: {}, panelClick: [], panelInput: [], boot: [], blockFocus: [], unlock: [], editMode: [] };   /* editMode(on): build mode switched; the creative catalogue rides along */
   function runHooks(list, a, b) { for (var i = 0; i < list.length; i++) { if (list[i](a, b)) return true; } return false; }
 

@@ -1,6 +1,6 @@
 //@ day and night, and input
   // ── Day / night ───────────────────────────────────────────────────
-  var skyCol = new THREE.Color(), snowFog = new THREE.Color();
+  var skyCol = new THREE.Color(), snowFog = new THREE.Color(), sunFocus = { x: 0, z: 0 };
   function updateDayNight() {
     var h = gameHour();
     var sunAlt = Math.sin((h - 6) / 12 * Math.PI); // 1 at noon, -1 at midnight
@@ -15,7 +15,10 @@
     else if (wk === 'rain' || wk === 'storm') fogCol.lerp(RAIN_FOG, 0.3);
     scene.fog.color.copy(fogCol);
     sun.intensity = 0.1 + day * 0.9; sun.color.setRGB(1, lerp(0.7, 0.95, day) + dusk * 0.0, lerp(0.5, 0.85, day) - dusk * 0.2);
-    var ang = (h - 6) / 12 * Math.PI; sun.position.set(Math.cos(ang) * 30, Math.max(2, Math.sin(ang) * 30), 12); sun.target.position.set(0, 0, 0);
+    /* the shadow box is 68 m across: centred on the shop, the car lost its shadow a block down Main St. It follows whoever you are (you, or the car you drive) in 4 m steps, so it is not redrawn for every stride */
+    var fx = drive.on && drive.g ? drive.g.position.x : player.pos.x, fz = drive.on && drive.g ? drive.g.position.z : player.pos.z; if (player.floor === -1) { fx = 0; fz = 0; }   /* the basement rooms sit far out on x, under ground: nothing there takes the sun */
+    fx = Math.round(fx / 4) * 4; fz = Math.round(fz / 4) * 4; if (fx !== sunFocus.x || fz !== sunFocus.z) { sunFocus.x = fx; sunFocus.z = fz; renderer.shadowMap.needsUpdate = true; }
+    var ang = (h - 6) / 12 * Math.PI; sun.position.set(fx + Math.cos(ang) * 30, Math.max(2, Math.sin(ang) * 30), fz + 12); sun.target.position.set(fx, 0, fz);
     hemi.intensity = (0.12 + day * 0.28) * (wk === 'snow' ? 1 + 0.2 * wxm : wk === 'storm' ? 0.85 : 1); hemi.color.setRGB(lerp(0.3, 0.75, day), lerp(0.35, 0.85, day), lerp(0.6, 1.0, day));
     var indoor = 1 - day * 0.5; roomLight.intensity = 0.2 + indoor * 0.3; roomLight2.intensity = roomLight3.intensity = 0.15 + indoor * 0.25;
     if (world.streetLights) world.streetLights.forEach(function (l) { l.intensity = 0.1 + (1 - day) * 1.2; });

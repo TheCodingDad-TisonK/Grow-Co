@@ -10,7 +10,7 @@
 
   // ── Shop controls: open/closed, lights, radio, curtains, staff door ──
   function shop() { if (!S.shop) S.shop = { open: true, lights: true, radio: 'off', volume: 0.5, curtains: {}, staffDoor: false }; if (!S.shop.curtains) S.shop.curtains = {}; if (!S.shop.rooms) S.shop.rooms = {}; if (typeof S.shop.markup !== 'number') S.shop.markup = 1; if (typeof S.shop.volume !== 'number') S.shop.volume = 0.5; return S.shop; }
-  var curtains = {}; var staffDoor = { g: null, t: 0, obstacle: null }; var neonSign = { open: null, closed: null, light: null };
+  var curtains = {}; var staffDoor = { g: null, t: 0, obstacle: null, leds: [] }; var neonSign = { open: null, closed: null, light: null };
   var CURTAIN_TEX = makeTex(256, 256, function (ctx, w, h) {
     for (var x = 0; x < w; x++) { var t = Math.sin(x / w * Math.PI * 14); var v = 60 + t * 22; ctx.fillStyle = 'rgb(' + Math.round(v * 0.35) + ',' + Math.round(v) + ',' + Math.round(v * 0.5) + ')'; ctx.fillRect(x, 0, 1, h); }
   }, [1, 1]);
@@ -92,6 +92,7 @@
     var plate2 = plate.clone(); plate2.position.z = -0.035; plate2.rotation.y = Math.PI; g.add(plate2);
     [0.04, -0.04].forEach(function (dz) { var knob = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), MAT.metal); knob.position.set(1.05, 1.0, dz * 1.5); g.add(knob); });
     var hit = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.3, 0.3), MAT.none); hit.position.set(0.6, 1.15, 0); g.add(hit); interactable(hit, { kind: 'staffdoor' });
+    staffDoor.leds = []; [0.036, -0.036].forEach(function (dz) { var led = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.05, 0.01), glowMat(0x39d353, 1.2)); led.position.set(1.02, 1.3, dz); g.add(led); staffDoor.leds.push(led); }); staffDoorLeds();   /* red locked, green not, like the sliding doors */
     staffDoor.obstacle = { x1: 9.4, x2: 10.6, z1: 3.85, z2: 4.15, tag: 'staffdoor' }; staffDoor.t = shop().staffDoor ? 1 : 0; syncStaffDoorObstacle();
     // the shop control cabinet on the security room's right wall (F2 carries it): open the doors, and inside hangs a tablet with a bank of switches, levers, a radio knob and small displays under it
     var bx = SEC.x2 - 0.365, by = 1.15, bz = -10.75; var cg = new THREE.Group();   /* the group's origin is the cabinet FRONT: its depth runs back to the wall at SEC.x2 */ cg.position.set(bx, by, bz); cg.rotation.y = -Math.PI / 2; world.group.add(cg); world.ctl = { g: cg, doorT: 0, doorOpen: false, doors: [], levers: {}, leds: {}, roomLeds: {}, lastTick: 0 };
@@ -155,7 +156,7 @@
     drawCtlScreen();
     // Two satellite panels: one behind the register, one in the office. Smaller box, fewer switches.
     [
-      { id: 'miniFront',  fx: 'ctlFront',  label: 'front panel', x: 2.55, y: 1.5, z: 3.62, rot: Math.PI, sign: 'FRONT OF HOUSE', col: 0x2f6b4a },
+      { id: 'miniFront',  fx: 'ctlFront',  label: 'front panel', x: 3.855, y: 1.5, z: 3.3, rot: -Math.PI / 2, sign: 'FRONT OF HOUSE', col: 0x2f6b4a },   /* on the side wall by the extinguisher: its old spot was inside the cigarette cabinet */
       { id: 'miniOffice', fx: 'ctlOffice', label: 'office panel',         x: -6.3, y: 1.5, z: 1.86, rot: 0,       sign: 'OFFICE', col: 0x2f5b8a }
     ].forEach(function (p) {
       var g = new THREE.Group(); g.position.set(p.x, p.y, p.z); g.rotation.y = p.rot; world.group.add(g);
@@ -171,7 +172,8 @@
       }
       var sg = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.05), new THREE.MeshBasicMaterial({ map: textTex([p.sign], 280, 50, { size: 26, bg: 'rgba(0,0,0,0)', color: '#12161a', titleColor: '#12161a', line: 'rgba(0,0,0,0)' }), transparent: true }));
       sg.position.set(0, -0.155, 0.054); g.add(sg);
-      var hit = box(0.42, 0.55, 0.26, MAT.none, p.x, p.y, p.z + (p.rot ? -0.1 : 0.1), { cast: false, receive: false });
+      var fdx = Math.sin(p.rot), fdz = Math.cos(p.rot), side = Math.abs(fdx) > 0.5;   /* the hit box sits in front of the face, whichever wall it hangs on */
+      var hit = box(side ? 0.26 : 0.42, 0.55, side ? 0.42 : 0.26, MAT.none, p.x + fdx * 0.1, p.y, p.z + fdz * 0.1, { cast: false, receive: false });
       interactable(hit, { kind: p.id });
       fixtureAdd(p.fx, p.label, [g, hit], p.rot);   /* F2 moves them like any other fitting */
     });
@@ -182,8 +184,21 @@
     applyShopState();
   }
   function syncStaffDoorObstacle() { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'staffdoor'; }); if (!shop().staffDoor) world.obstacles.push(staffDoor.obstacle); }
-  function toggleStaffDoor() { shop().staffDoor = !shop().staffDoor; staffDoorAuto = false; syncStaffDoorObstacle(); sfx('door'); toast(shop().staffDoor ? 'Staff door open' : 'Staff door closed', ''); applyShopState(); save(); }
-  function updateStaffDoor(dt) { if (!staffDoor.g) return; var staffNear = crew.some(function (r) { return r.g && Math.hypot(r.g.position.x - 10, r.g.position.z - 4) < 1.1; }) || (guard.h && guard.walking && Math.hypot(guard.h.position.x - 10, guard.h.position.z - 4) < 1.1); var target = (shop().staffDoor || staffNear) ? 1 : 0; staffDoor.t = lerp(staffDoor.t, target, 1 - Math.pow(0.01, dt)); staffDoor.g.rotation.y = -staffDoor.t * 1.75;
+  // The staff door locks like every other door: Shift+E with the keyring, or the control box. Locked, it opens only for a
+  // keyholder (the crew and the guard, unless you took their key back), and nobody else can path through it.
+  function staffDoorLocked() { return !!(S.doorLocks && S.doorLocks.staff); }
+  function staffDoorLeds() { var c = staffDoorLocked() ? 0xff3030 : 0x39d353; staffDoor.leds.forEach(function (l) { l.material.color.setHex(c); l.material.emissive.setHex(c); }); }
+  function setStaffDoorLock(lk) { if (!S.doorLocks) S.doorLocks = {}; S.doorLocks.staff = !!lk; if (lk) { shop().staffDoor = false; staffDoorAuto = false; syncStaffDoorObstacle(); } staffDoorLeds(); drawCtlScreen(); applyShopState(); save(); }   /* locking shuts it, as it does a sliding door */
+  function keyStaffDoor() {
+    if (!hasKeys()) { sfx('bad'); toast('🔑 You need the keyring: it hangs on the hook in the office', 'bad'); return; }
+    var lk = !staffDoorLocked();
+    if (lk && shop().staffDoor && player.floor === 0 && Math.abs(player.pos.x - 10) < 0.7 && Math.abs(player.pos.z - 4) < 0.4) { toast('Step out of the doorway first', ''); return; }
+    setStaffDoorLock(lk); sfx(lk ? 'click' : 'curtain'); toast(lk ? '🔒 Locked the staff door' : '🔓 Unlocked the staff door', lk ? '' : 'good');
+  }
+  function toggleStaffDoor(fromBoard) {
+    if (!shop().staffDoor && staffDoorLocked()) { if (!fromBoard) { sfx('bad'); toast('🔒 Locked. Unlock it at the control box, or Shift+E with the keyring.', 'bad'); return; } setStaffDoorLock(false); }   /* the board opens it the way it opens a sliding door: unlocked */
+    shop().staffDoor = !shop().staffDoor; staffDoorAuto = false; syncStaffDoorObstacle(); sfx('door'); toast(shop().staffDoor ? 'Staff door open' : 'Staff door closed', ''); applyShopState(); save(); }
+  function updateStaffDoor(dt) { if (!staffDoor.g) return; var staffNear = (!staffDoorLocked() || staffKey('staff')) && crew.some(function (r) { return r.g && Math.hypot(r.g.position.x - 10, r.g.position.z - 4) < 1.1; }) || ((!staffDoorLocked() || staffKey('staff')) && guard.h && guard.walking && Math.hypot(guard.h.position.x - 10, guard.h.position.z - 4) < 1.1); var target = (shop().staffDoor || staffNear) ? 1 : 0; staffDoor.t = lerp(staffDoor.t, target, 1 - Math.pow(0.01, dt)); staffDoor.g.rotation.y = -staffDoor.t * 1.75;
     if (world.frontDoor) { var fd = world.frontDoor; var ft = shop().open || doorTraffic() ? 1 : 0; fd.t = lerp(fd.t, ft, 1 - Math.pow(0.01, dt)); fd.g.rotation.y = fd.t * 1.6; } }
 
   // ── the control cabinet: doors, the hanging tablet and the switch bank talk to the same shop state the old panel did ──
@@ -236,8 +251,8 @@
     else if (page === 'rooms') { grid(Object.keys(ROOM_NAMES).map(function (r) { return [ROOM_NAMES[r], 'roomLight', r, 'Lights: ' + ROOM_NAMES[r], sh.lights && powerOn() && roomLit(r), 20]; }), 3, 88, 12); ctx.fillStyle = DESK_DIM; ctx.font = '17px ' + DESK_FONT; ctx.fillText(sh.lights ? 'Tap a room to switch its lights.' : 'The lights are off. Tap a room and only that one comes on.', 30, y + 10); }
     else if (page === 'curtains') { grid(Object.keys(curtains).map(function (k) { return [curtains[k].label + ': ' + (curtainOpen(k) ? 'open' : 'closed'), 'curtainToggle', k, (curtainOpen(k) ? 'Close the ' : 'Open the ') + curtains[k].label, curtainOpen(k), 19]; }), 3, 88, 12); y += 6; grid([['Open all', 'curtainsOpen', 0, 'Open every curtain', false, 20], ['Close all', 'curtainsClose', 0, 'Close every curtain', false, 20]], 2, 64, 14); }
     else if (page === 'doors') {
-      var list = DOORS.slice(0, 10), dw = (W - 60 - 12) / 2, dh = 66;
-      list.forEach(function (d, i) { var x = 30 + (i % 2) * (dw + 12), yy = y + Math.floor(i / 2) * (dh + 8); ctx.fillStyle = 'rgba(255,255,255,.05)'; roundRect(ctx, x, yy, dw, dh, 10); ctx.fill(); deskDot(ctx, x + 22, yy + 33, d.locked ? DESK_BAD : d.open ? DESK_OK : DESK_DIM, 8); ctx.fillStyle = DESK_INK; ctx.font = '700 19px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, d.name || d.label, dw - 330), x + 42, yy + 10); ctx.fillStyle = DESK_DIM; ctx.font = '15px ' + DESK_FONT; ctx.fillText((d.locked ? 'locked' : d.open ? 'open' : 'shut') + (staffKey(d.id) ? ' · staff key' : ' · no staff key'), x + 42, yy + 37); tBtn(sc, ctx, x + dw - 300, yy + 12, 90, 42, d.open ? 'Shut' : 'Open', 'doorToggle', d.id, (d.open ? 'Shut the ' : 'Open the ') + d.label, false, { size: 16 }); tBtn(sc, ctx, x + dw - 202, yy + 12, 90, 42, d.locked ? 'Unlock' : 'Lock', 'doorLock', d.id, (d.locked ? 'Unlock the ' : 'Lock the ') + d.label, d.locked, { size: 16, col: DESK_BAD, fill: 'rgba(255,107,107,.25)' }); tBtn(sc, ctx, x + dw - 104, yy + 12, 90, 42, 'Key', 'doorKey', d.id, (staffKey(d.id) ? 'Take the staff key back for the ' : 'Give the staff a key to the ') + d.label, staffKey(d.id), { size: 16 }); });
+      var list = [{ staff: true, id: 'staff', name: 'Staff door', label: 'staff door', open: shop().staffDoor, locked: staffDoorLocked() }].concat(DOORS).slice(0, 10), dw = (W - 60 - 12) / 2, dh = 66;
+      list.forEach(function (d, i) { var x = 30 + (i % 2) * (dw + 12), yy = y + Math.floor(i / 2) * (dh + 8); ctx.fillStyle = 'rgba(255,255,255,.05)'; roundRect(ctx, x, yy, dw, dh, 10); ctx.fill(); deskDot(ctx, x + 22, yy + 33, d.locked ? DESK_BAD : d.open ? DESK_OK : DESK_DIM, 8); ctx.fillStyle = DESK_INK; ctx.font = '700 19px ' + DESK_FONT; ctx.fillText(deskTrim(ctx, d.name || d.label, dw - 330), x + 42, yy + 10); ctx.fillStyle = DESK_DIM; ctx.font = '15px ' + DESK_FONT; ctx.fillText((d.locked ? 'locked' : d.open ? 'open' : 'shut') + (staffKey(d.id) ? ' · staff key' : ' · no staff key'), x + 42, yy + 37); tBtn(sc, ctx, x + dw - 300, yy + 12, 90, 42, d.open ? 'Shut' : 'Open', d.staff ? 'staffDoorToggle' : 'doorToggle', d.id, (d.open ? 'Shut the ' : 'Open the ') + d.label, false, { size: 16 }); tBtn(sc, ctx, x + dw - 202, yy + 12, 90, 42, d.locked ? 'Unlock' : 'Lock', d.staff ? 'staffDoorLock' : 'doorLock', d.id, (d.locked ? 'Unlock the ' : 'Lock the ') + d.label, d.locked, { size: 16, col: DESK_BAD, fill: 'rgba(255,107,107,.25)' }); tBtn(sc, ctx, x + dw - 104, yy + 12, 90, 42, 'Key', d.staff ? 'staffDoorKey' : 'doorKey', d.id, (staffKey(d.id) ? 'Take the staff key back for the ' : 'Give the staff a key to the ') + d.label, staffKey(d.id), { size: 16 }); });
       y += Math.ceil(list.length / 2) * (dh + 8) + 6; grid([['Open all', 'doorsAll', 'open', 'Open every door', false, 18], ['Shut all', 'doorsAll', 'close', 'Shut every door', false, 18], ['🔒 Lock all', 'doorsAll', 'lock', 'Lock every door', false, 18], ['Unlock all', 'doorsAll', 'unlock', 'Unlock every door', false, 18]], 4, 52, 12);
     }
     else if (page === 'climate') {

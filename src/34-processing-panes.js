@@ -75,8 +75,9 @@
   function paneLicences() {
     var h = '<div class="g3-grid"><div class="g3-box"><h3>🪪 Licences & permits</h3><div class="desc">Paid from the bank (' + money(S.bank) + '). Some need a level or some rep first. Level ' + S.level + ' · rep ' + Math.floor(S.rep) + '.</div>';
     LICENCES.forEach(function (L) {
+      if (L.dlc && !dlcOn(L.dlc)) return;   /* a DLC that is switched off: its licence isn't for sale */
       var own = hasLic(L.id); var why = !own && (L.req && !hasLic(L.req) ? 'needs ' + licById(L.req).name : L.lvl && S.level < L.lvl ? 'level ' + L.lvl : L.rep && S.rep < L.rep ? 'rep ' + L.rep : '');
-      h += '<div class="g3-row"><span class="ico">' + L.ico + '</span><span class="meta"><span class="n">' + L.name + '</span><span class="own">' + L.d + '</span></span>' + (own ? '<span class="g3-tier">✓ held</span>' : why ? '<span class="g3-tier">🔒 ' + why + '</span>' : '<button class="g3-btn primary" data-act="buyLic" data-id="' + L.id + '">' + money(L.price) + '</button>') + '</div>';
+      h += '<div class="g3-row"><span class="ico">' + L.ico + '</span><span class="meta"><span class="n">' + L.name + '</span><span class="own">' + (L.id === 'cult2' && !dlcOn('greenhouse') ? L.d.replace(' and the roof greenhouse beds', '') : L.d) + '</span></span>' + (own ? '<span class="g3-tier">✓ held</span>' : why ? '<span class="g3-tier">🔒 ' + why + '</span>' : '<button class="g3-btn primary" data-act="buyLic" data-id="' + L.id + '">' + money(L.price) + '</button>') + '</div>';
     });
     h += '</div><div class="g3-box"><h3>📋 What you can do</h3><div class="g3-chips">' + chip('card payments', hasLic('retail') ? 'yes' : 'cash only') + chip('connoisseurs', hasLic('premium') ? 'visit' : 'no') + chip('lounge', hasLic('lounge') ? 'open' : 'closed') + chip('machines', hasLic('catering') ? 'selling' : 'off') + chip('arcade', hasLic('amusement') ? 'on' : 'off') + chip('tent limit', TENTS.filter(function (t) { return !t.lic || hasLic(t.lic); }).reduce(function (m, t) { return Math.max(m, t.slots); }, 0) + ' slots') + chip('supply discount', Math.round((1 - supplyDisc()) * 100) + '%') + chip('export', hasLic('export') ? 'contracts open' : 'no') + '</div><div class="desc" style="margin-top:8px">Shops that were already trading when licensing arrived kept the retail, catering, amusement and lounge permits.</div></div></div>';
     return h;
@@ -247,12 +248,15 @@
     else if (act === 'deskPage') { deskSetPage(+id); ui.render(); return; }
     else if (act === 'shopToggle') toggleShopOpen();
     else if (act === 'lightsToggle') toggleLights();
-    else if (act === 'staffDoorToggle') toggleStaffDoor();
+    else if (act === 'staffDoorToggle') { toggleStaffDoor(true); ui.refreshOpen(); }
+    else if (act === 'staffDoorLock') { setStaffDoorLock(!staffDoorLocked()); sfx('click'); ui.refreshOpen(); }
+    else if (act === 'staffDoorKey') { if (!S.staffKeys) S.staffKeys = {}; S.staffKeys.staff = !staffKey('staff'); sfx('click'); save(); ui.refreshOpen(); }
     else if (act === 'roomLight') { if (!shop().lights) { shop().lights = true; shop().rooms = {}; Object.keys(ROOM_NAMES).forEach(function (r) { if (r !== id) shop().rooms[r] = false; }); applyShopState(); save(); ui.refreshOpen(); } else toggleRoomLight(id); }
     else if (act === 'rollerToggle') { rollerSet(!world.rollerOpen); ui.refreshOpen(); }
     else if (act === 'gateToggle') { gateSet(!world.gateOpen); ui.refreshOpen(); }
     else if (act === 'tvNext') { tvCycle(); }
     else if (act === 'curtainToggle') { toggleCurtain(id); ui.refreshOpen(); }
+    else if (act === 'frontCurtains') { var fo = id === 'open'; FRONT_CURTAINS.forEach(function (k) { shop().curtains[k] = fo; }); sfx('curtain'); toast(fo ? 'Opened the three front curtains' : 'Drew the three front curtains', ''); drawCtlScreen(); save(); ui.refreshOpen(); }
     else if (act === 'doorToggle') { var dd = doorById[id]; if (dd) { setDoor(id, !dd.open, dd.open ? undefined : false); sfx('curtain'); save(); } ui.refreshOpen(); }
     else if (act === 'doorKey') { if (doorById[id]) { if (!S.staffKeys) S.staffKeys = {}; S.staffKeys[id] = !staffKey(id); sfx('click'); save(); } ui.refreshOpen(); }
     else if (act === 'doorLock') { var dl = doorById[id]; if (dl) { setDoor(id, dl.open, !dl.locked); sfx('click'); save(); } ui.refreshOpen(); }
@@ -293,13 +297,21 @@
       body.innerHTML = '<h4>Load this save?</h4><p>Day ' + (s.day || 1) + ', level ' + (s.level || 1) + ', ' + money(s.bank) + ' in the bank' + (typeof s.v === 'number' && s.v > SAVE_V ? '. It comes from a newer version of the game, so parts of it may not load' : '') + '. It replaces the shop in this slot.</p><div class="g3-menu-btns"><button class="g3-btn danger" data-menu="save-import-yes">Yes, load it</button><button class="g3-btn" data-menu="saves">← Keep mine</button></div>';
     }; rd.readAsText(file);
   }
+  // A reset writes a brand new save and reloads. The shop is built from the save at boot: swapping S in place left
+  // every bought machine, moved piece of furniture, extra rope and creative build standing in the old shop.
+  var pageReload = function () { location.reload(); };
+  function resetShop() {
+    saveBlocked = true;   /* the running shop must not autosave the old one back over it on the way out */
+    try { localStorage.setItem(SAVE, JSON.stringify(fresh())); sessionStorage.setItem('rfgc-skip-splash', '1'); sessionStorage.setItem('rfgc-autoplay', '1'); } catch (e) { saveBlocked = false; toast('⚠ Could not reset the save', 'bad'); return; }
+    closeMenu(); toast('⟲ Starting a fresh shop…', ''); setTimeout(function () { pageReload(); }, 250);
+  }
   function saveImportApply() {
     if (!pendingImport) return; saveBlocked = true;   /* the running shop must not autosave over the file between here and the reload */
     try { localStorage.setItem(SAVE, pendingImport); sessionStorage.setItem('rfgc-skip-splash', '1'); sessionStorage.setItem('rfgc-autoplay', '1'); } catch (e) { saveBlocked = false; toast('⚠ Could not store the save', 'bad'); return; }
     toast('📂 Loading the save…', ''); setTimeout(function () { location.reload(); }, 250);
   }
   // pause menu
-  function openMenu() { if (!ui.menuOpen) sfx('panel'); ui.menuOpen = true; $('g3-menu').hidden = false; $('g3-menu-body').hidden = true; document.exitPointerLock(); }
+  function openMenu() { if (!ui.menuOpen) sfx('panel'); ui.menuOpen = true; $('g3-menu').hidden = false; $('g3-menu-body').hidden = true; var devB = document.querySelector('#g3-menu [data-menu="dev"]'); if (devB) devB.hidden = !dlcOn('dev'); document.exitPointerLock(); }   /* Dev tools are a DLC: no button unless it's switched on */
   function closeMenu() { if (ui.menuOpen) sfx('close'); ui.menuOpen = false; $('g3-menu').hidden = true; if (!ui.panelOpen) lockPointer(); }
   $('g3-menu').addEventListener('click', function (e) {
     var b = e.target.closest('[data-menu]'); if (!b) return; var m = b.getAttribute('data-menu'); var body = $('g3-menu-body'); sfx('click');
@@ -313,13 +325,13 @@
     else if (m === 'save-import') { var fi2 = $('g3-save-file'); if (fi2) fi2.click(); }
     else if (m === 'save-import-yes') saveImportApply();
 //#if desk
-    else if (m === 'reset') { if (confirm('Reset Grow Co.? All progress is lost (both the 3D and desk versions share this save).')) { S = fresh(); bindHotbar(); save(); world.dirty = true; rebuildDynamic(); hud(); closeMenu(); toast('Fresh start', ''); } }
+    else if (m === 'reset') { if (confirm('Reset Grow Co.? All progress is lost: money, stock, licences, bought machines, furniture and everything you built (both the 3D and desk versions share this save).')) resetShop(); }
 //#else
-    else if (m === 'reset') { if (confirm('Reset Grow Co.? All progress is lost.')) { S = fresh(); bindHotbar(); save(); world.dirty = true; rebuildDynamic(); hud(); closeMenu(); toast('Fresh start', ''); } }
+    else if (m === 'reset') { if (confirm('Reset Grow Co.? All progress is lost: money, stock, licences, bought machines, furniture and everything you built.')) resetShop(); }
 //#endif
     else if (m === 'edit') { closeMenu(); if (!edit.on) editToggle(); }
-    else if (m === 'dev') { body.hidden = false; body.innerHTML = devHtml(); }
-    else if (m === 'creative') { closeMenu(); if (window.RFGROW && window.RFGROW.creative) window.RFGROW.creative.toggle(true); }
+    else if (m === 'dev') { body.hidden = false; body.innerHTML = dlcOn('dev') ? devHtml() : dlcNote('dev'); }
+    else if (m === 'creative') { closeMenu(); if (!edit.on) editToggle(); }   /* one build mode now; the old button name still opens it */
 //#if desk
     else if (m === 'quit') { saveNow(); window.close(); setTimeout(function () { toast('Close this tab to return to the desk', ''); }, 200); }
 //#else
@@ -327,25 +339,28 @@
 //#endif
   });
   var DEV = [
-    ['money', '💵 +$1,000 bank'], ['pocket', '👛 +$500 pocket'], ['till', '🧾 Till +$120 · tips +$20 · machines +$30'], ['stash', '🌿 +20 g cured of every strain'], ['goods', '🛍️ +5 bags, joints, cookies of every strain'],
-    ['supplies', '🧰 +10 of every supply · seeds ×5'], ['storage', '📦 A crate of everything in the back room'], ['machines', '🥤 Fill vending, coffee and the counter display'], ['plants', '🌱 Fill the tent with ready-to-harvest plants'], ['batches', '🌬️ Hang three batches, jar two'],
+    ['money', '💵 +$1,000 bank'], ['pocket', '👛 +$500 pocket'], ['till', '🧾 Till +$120 · tips +$20 · machines +$30'], ['stash', '🌿 +20 g cured of every strain you can grow'], ['goods', '🛍️ +5 bags, joints, cookies of every strain you can grow'],
+    ['supplies', '🧰 +10 of every supply · seeds ×5 of your strains'], ['storage', '📦 A crate of everything in the back room'], ['machines', '🥤 Fill vending, coffee and the counter display'], ['plants', '🌱 Fill the tent with ready-to-harvest plants'], ['batches', '🌬️ Hang three batches, jar two'],
     ['customer', '🚪 Spawn a customer'], ['premium', '🎩 Spawn a connoisseur'], ['robbery', '🚨 Start a robbery (by shop level)'], ['robSnatch', '🧤 Snatch thief'], ['robKnife', '🔪 Knife robbery'], ['robGun', '🔫 Gunman and the vault'], ['robCrew', '👥 Two-man gang'], ['arm', '🧰 Every weapon, ammo, licence, alarm'], ['basement', '🏭 Go to the basement works'], ['toCar', '🚗 Teleport next to your car'], ['vip', '🥂 Send a lounge guest up'], ['roof', '🌿 Go to the roof greenhouse'], ['heat', '🚔 Heat +40'], ['blackout', '⚡ Power cut now'], ['delivery', '📱 Burner job now'], ['round', '📋 Two tablet round jobs'], ['tobFill', '🚬 Fill the tobacco line + cabinet'], ['fight', '👊 Start a lobby fight (needs two visitors)'], ['van', '🚚 Van arrives now with the open order'], ['courier', '🏦 Courier arrives now for $100'],
     ['dust', '🪣 Spawn 6 dirt patches'], ['clean', '🧹 Clear every dirt patch'], ['morning', '🌅 Clock to 06:00'], ['noon', '☀️ Clock to 12:00'], ['evening', '🌆 Clock to 19:00'], ['night', '🌙 Clock to 23:00'], ['day', '⏭ Skip to the next day'],
     ['level', '⭐ Level +1'], ['rep', '🏆 Rep +25'], ['upgrades', '⚙️ Every upgrade'], ['licences', '🪪 Every licence'], ['clear', '🧯 Clear cooldowns, robber, fight, courier'], ['empty', '🫙 Empty every hotbar slot'], ['humid', '💧 Humidity to 80% in both rooms'],
     ['tp_lobby', '📍 Teleport: lobby'], ['tp_office', '📍 Teleport: office'], ['tp_grow', '📍 Teleport: grow room'], ['tp_annex', '📍 Teleport: back room'], ['tp_security', '📍 Teleport: security room'], ['tp_yard', '📍 Teleport: yard']
   ];
-  function devHtml() { return '<h4>Dev tools</h4><p class="desc">Cheats for testing. Everything applies to the current save at once.</p><div class="g3-chips">' + DEV.map(function (d) { return '<button class="g3-btn" data-dev="' + d[0] + '">' + d[1] + '</button>'; }).join('') + '</div>'; }
+  function devStrains() { var lv = S.level || 1, l = STRAINS.filter(function (st) { return (st.lvl || 1) <= lv; }); return l.length ? l : [STRAINS[0]]; }   /* the fills stick to what the seed bank would sell you at this level */
+  var DEV_DLC = { tobFill: 'tobacco', round: 'tobacco', roof: 'greenhouse' };   /* a button for a DLC that is switched off is left out */
+  function devHtml() { return '<h4>Dev tools</h4><p class="desc">Cheats for testing. Everything applies to the current save at once.</p><div class="g3-chips">' + DEV.filter(function (d) { return d[0] === 'basement' ? dlcOn('tobacco') || dlcOn('lab') : !DEV_DLC[d[0]] || dlcOn(DEV_DLC[d[0]]); }).map(function (d) { return '<button class="g3-btn" data-dev="' + d[0] + '">' + d[1] + '</button>'; }).join('') + '</div>'; }
   function devAction(id) {
+    if (!dlcOn('dev')) { dlcOff('dev'); return; }
     var tp = function (x, z) { closeMenu(); standUp(); player.pos.set(x, 1.65, z); player.floor = 0; toast('📍 Teleported', ''); };
     switch (id) {
       case 'money': S.bank += 1000; break; case 'pocket': S.pocket += 500; break; case 'till': S.till += 120; S.tips += 20; ['vending', 'lobbyCoffee', 'fridge', 'arcade'].forEach(function (b) { unitIds(b).forEach(function (u) { coinPay(u, 10); }); }); break;
-      case 'stash': STRAINS.forEach(function (st) { stashAdd(st.id, 20, 70 + st.lvl * 2, st.thc); }); break;
-      case 'goods': STRAINS.forEach(function (st) { ['bags', 'joints', 'cookies'].forEach(function (k) { lotAdd(k, st.id, 5, 72, st.thc); }); }); break;
-      case 'supplies': SUPPLIES.forEach(function (it) { if (it.tool) S.supplies[it.id] = 1; else S.supplies[it.id] = (S.supplies[it.id] || 0) + 10; }); STRAINS.forEach(function (st) { S.supplies['seed_' + st.id] = (S.supplies['seed_' + st.id] || 0) + 5; }); break;
-      case 'storage': SUPPLIES.forEach(function (it) { if (!it.tool) S.storage[it.id] = (S.storage[it.id] || 0) + (it.qty || 10); }); STRAINS.forEach(function (st) { S.storage['seed_' + st.id] = (S.storage['seed_' + st.id] || 0) + 5; }); break;
+      case 'stash': devStrains().forEach(function (st) { stashAdd(st.id, 20, 70 + st.lvl * 2, st.thc); }); break;
+      case 'goods': devStrains().forEach(function (st) { ['bags', 'joints', 'cookies'].forEach(function (k) { lotAdd(k, st.id, 5, 72, st.thc); }); }); break;
+      case 'supplies': SUPPLIES.forEach(function (it) { if (it.tool) S.supplies[it.id] = 1; else S.supplies[it.id] = (S.supplies[it.id] || 0) + 10; }); devStrains().forEach(function (st) { S.supplies['seed_' + st.id] = (S.supplies['seed_' + st.id] || 0) + 5; }); break;
+      case 'storage': SUPPLIES.forEach(function (it) { if (!it.tool) S.storage[it.id] = (S.storage[it.id] || 0) + (it.qty || 10); }); devStrains().forEach(function (st) { S.storage['seed_' + st.id] = (S.storage['seed_' + st.id] || 0) + 5; }); break;
       case 'machines': unitIds('vending').forEach(function (u) { var v = machStock(u); v.drink = 24; v.snack = 24; }); unitIds('lobbyCoffee').forEach(function (u) { var c = machStock(u); c.cup = 80; c.beans = 80; }); S.display.lighter = 20; S.display.rpaper = 10; S.display.rgrinder = 5; unitIds('fridge').forEach(function (u) { machState(u).fridge = 16; }); break;   /* the fridge holds its own cans rather than drawing on the shop's, so it needs filling by name */
-      case 'plants': S.plants = []; S.potSoil = {}; for (var i = 0; i < slots(); i++) { var st2 = STRAINS[i % STRAINS.length]; S.potSoil[i] = true; S.plants.push({ id: 'p' + now() + i, strain: st2.id, progress: 1, quality: 75, thirst: 0.1, fed: true, hazard: null, slot: i }); } S.supplies.pot = Math.max(S.supplies.pot || 0, slots()); break;
-      case 'batches': STRAINS.slice(0, 5).forEach(function (st, i) { S.batches.push({ id: 'b' + now() + i, grams: 18, quality: 70, baseQ: 70, thc: st.thc, startedAt: now(), cured: i >= 3, dry: i >= 3 ? 1 : 0.2, strain: st.id }); }); break;
+      case 'plants': S.plants = []; S.potSoil = {}; var DS = devStrains(); for (var i = 0; i < slots(); i++) { var st2 = DS[i % DS.length]; S.potSoil[i] = true; S.plants.push({ id: 'p' + now() + i, strain: st2.id, progress: 1, quality: 75, thirst: 0.1, fed: true, hazard: null, slot: i }); } S.supplies.pot = Math.max(S.supplies.pot || 0, slots()); break;
+      case 'batches': devStrains().slice(0, 5).forEach(function (st, i) { S.batches.push({ id: 'b' + now() + i, grams: 18, quality: 70, baseQ: 70, thc: st.thc, startedAt: now(), cured: i >= 3, dry: i >= 3 ? 1 : 0.2, strain: st.id }); }); break;
       case 'customer': case 'premium': closeMenu(); if (!customerArrives(id === 'premium')) toast('The line is full (' + LINE_MAX + ' waiting)', ''); break;
       case 'robbery': case 'robSnatch': case 'robKnife': case 'robGun': case 'robCrew': closeMenu(); S.till = Math.max(S.till, 40); startRobbery({ robSnatch: 'snatch', robKnife: 'knife', robGun: 'gun', robCrew: 'crew' }[id]); break; case 'basement': closeMenu(); goBasement(); break; case 'vip': closeMenu(); S.lic.premium = true; shop().open = true; if (!startVip()) toast('A lounge guest is already here', ''); break; case 'roof': closeMenu(); expInteract({ kind: 'roofUp' }, null); break; case 'heat': addHeat(40); break; case 'blackout': xs().blackoutUntil = now() + 60000; break; case 'delivery': closeMenu(); S.pkg.joints.n = Math.max(S.pkg.joints.n, 2); jobSpawn('phone'); break;
       case 'round': closeMenu(); S.lic.tobacco = true; jobSpawn('tablet'); jobSpawn('tablet'); break; case 'toCar': closeMenu(); standUp(); player.floor = 0; player.pos.set(drive.g.position.x - 2.4, 1.65, drive.g.position.z); break; case 'tobFill': S.lic.tobacco = true; var TF = tob(); TF.leaf = 8; TF.cured = 2; TF.cut = 1; TF.sticks.normal = 400; TF.sticks.light = 400; TF.mat = 200; CIG_KEYS.forEach(function (k) { TF.packs[k] = 30; S.cigStock[k] = cigStock(k) + 10; }); syncTobRack(); syncCigCab(); break; case 'arm': S.lic.firearm = true; S.upgrades.panic = true; S.armory = { pepper: true, taser: true, pistol: true, shotgun: true, rifle: true, ak: true, spray: 6, rounds: 64, shells: 32, cartridges: 30, bullets: 270 }; break; case 'fight': closeMenu(); startFight(); if (!fight) toast('Need two visitors in the lobby first', 'bad'); break;
@@ -402,7 +417,7 @@
       '<h4>The loop</h4><p>The <b>office PC</b> in the office: order soil and baggies under Supplies, a seed in the Seed bank, and a grinder. Orders land on the <b>supply rack</b> next to it, or as crates in the back room. Take a bag of soil to the <b>tent</b>, fill a pot, fetch a seed and plant it. Grab the <b>watering can</b> by the tent when a plant says it\'s thirsty, feed it <b>nutrients</b> once for quality, and <b>spray</b> pests or mould fast.</p>' +
       '<h4>Harvest</h4><p>A plant that\'s ready glows. Harvest it with empty hands, carry the bunch to the <b>drying line</b> in the dry room and hang it. Dry batches go to the <b>curing shelf</b> in jars and keep gaining quality. Take a jar to the <b>workbench</b>, empty it into your stash, then bag, roll or bake there. Finished goods go on the <b>goods shelf</b>.</p>' +
       '<h4>Money</h4><p>Customers come to <b>the window</b>. Take what they want off the goods shelf and hand it over. They pay when the order is complete, and you take the money at the <b>till</b>. Connoisseurs (🎩) pay 2.2× for quality 70+. Goods rung up at the till as a walk-up sale fetch 85% of the board price, 12 a day.</p>' +
-      '<h4>Edit mode</h4><p>Press <b>F2</b> (or Edit layout in this menu) to rearrange the place: look at any piece of furniture, <b>E</b> grabs it, carry it to a spot, <b>R</b> turns it, <b>E</b> drops it, <b>Backspace</b> puts it back where it came from. Your layout is saved.</p>' +
+      '<h4>Build mode</h4><p>Press <b>F2</b> (or Build mode in this menu) to rearrange the place: look at any piece of furniture, a sign or a screen, <b>E</b> grabs it, carry it to a spot, <b>R</b> turns it, <b>E</b> drops it, <b>Backspace</b> puts it back where it came from and <b>Del</b> removes it. <b>C</b> opens the catalogue: furniture to buy and shapes to build your own, which take <b>[ ]</b> to scale, <b>P</b> to paint and <b>X</b> to copy. Your layout is saved.</p>' +
       '<h4>Upstairs</h4><p>The stairs in the office lead to your <b>flat</b>: a kitchen (fridge snacks, eat at the table), a couch and a <b>big TV</b> (E cycles: shop dashboard, grow cam, house news), and a bed. Eating gives you a speed boost for 10 min.</p>' +
       '<h4>The shop</h4><p>The <b>control box</b> in the security room opens or closes the shop, runs the lights and picks a radio station. The <b>front panel</b> behind the till and the <b>office panel</b> do part of the same job where you stand. <b>Curtains</b> on every window and the door open with E. The <b>staff door</b> opens with E and shuts itself 4 s after people are through. Dust settles on the floors, and the <b>broom</b> hangs in the processing room.</p>' +
       '<h4>Keys</h4><p><b>WASD</b> move · <b>Shift</b> run · <b>Space</b> jump · <b>Ctrl</b> crouch · <b>E</b> or click: pick up, use, talk · <b>Shift+E</b> the second action · <b>Ctrl+E</b> sends a crew member home · <b>G</b> put back · <b>I</b> inventory · <b>Tab</b> quick wheel · <b>F</b> phone · <b>Esc</b> pause</p>';

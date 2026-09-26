@@ -32,15 +32,16 @@ It's one HTML page and plain JavaScript on top of [three.js](https://threejs.org
 | **Your hands** | V uses whatever you hold, wherever you are: drink a coffee, eat a snack or one of your own cookies, light a joint and keep working. Empties go straight into a bin that's close. |
 | **Touch screens** | The till is a tablet, the security room has a wall tablet, the control cabinet has switches, levers and a screen, the office PC has a desktop of apps, your phone is on F and a quick wheel is on Tab. |
 | **Staff** | A crew of up to three (Jo, Mika and Sam) who serve, sweep, tend plants and restock: one crate at a time off the labelled storage racking, carried to the machine, loaded and shut, the guard on the door, and a driver, a basement operator and a night guard off the staff roster. The crew and the guard can be sent home for the day. |
-| **RF Smoking** | A pre-installed basement line: hydroponic tobacco bays, curing kiln, shredder, cigarette maker (normal or light), packer (10s or 20s). Packs sell from a shuttered cabinet, handed over by you. |
-| **Extraction lab** | Turns bud of any quality into vape carts, pressed hash, gummies and chocolate. |
+| **RF Smoking** (DLC) | A pre-installed basement line: hydroponic tobacco bays, curing kiln, shredder, cigarette maker (normal or light), packer (10s or 20s). Packs sell from a shuttered cabinet, handed over by you. |
+| **Extraction lab** (DLC) | Turns bud of any quality into vape carts, pressed hash, gummies and chocolate. |
 | **Robberies** | Four kinds of robber, and they look like anyone else. Most queue like a customer and pull the mask at the window, some browse the lobby, and a partner may walk in separately. The guard can catch a fake ID; you can have a word with anyone in the line. It ends in a getaway car you can ram. Bat, pepper spray, taser, pistol, shotgun, a hunting rifle with a scope and a full-auto AK-47, a firearms licence, a silent alarm, police in uniform, lockable doors, and consequences for bad shots. |
 | **The town** | A street grid with traffic, a bank and a gun store you walk into, a supplier, a wholesaler, a rival you can buy out, a park for street deals, a police precinct and a heat system. Press M for the map. |
 | **Two vehicles** | The car lives in the garage and the van in the bay under the canopy, behind a yard gate that opens for you and a lane barrier that lifts as you drive up. Haul supplies and cartons, run deliveries, fit upgrades. |
 | **Deliveries** | A burner phone for street orders and a delivery tablet for cigarette cartons. Multi-drop rounds on J, with beacons on the map and addresses named after the nearest street. |
 | **The shop van** | Shift+E on the hatch opens it up. Stock its rack with three joints, three bags and three cookies, take the window, and sell to passers-by at half again the shop price. Now and then one is plain-clothes police. |
-| **Upstairs** | Your own flat, a connoisseur lounge with its own staircase from the lobby, and a roof greenhouse. |
-| **Make it yours** | F2 moves every piece of furniture, every sign and every wall screen. F3 is a full creative build mode. Rope lines are yours to place, restyle, add to and take down. |
+| **Upstairs** | Your own flat, a connoisseur lounge with its own staircase from the lobby, and a roof greenhouse (DLC). |
+| **Make it yours** | F2 is build mode. It moves every piece of furniture, every sign, every wall screen and the things on the counter, and Del removes what you don't want. C opens the catalogue: furniture to buy and shapes to build your own. Rope lines are yours to place, restyle, add to and take down. |
+| **DLC** | Four free switches under Workshop and DLC in the main menu: RF Smoking (the Tobacco Works), the Extraction Lab, the Roof Greenhouse and Dev Tools. A new shop starts without them. A shop that already used one keeps it switched on. |
 | **The Workshop** | Content packs from the main menu: more strains, lamps and tents, more for the counter and the vending machines, new places in town, a different car, snow at Christmas and fireworks at New Year. Make your own as one `.json` file, and bring in your own 3D models as Blender `.glb` files. |
 | **Guided intro** | A new shop is walked from its first order to its first sale in nine steps. Finish them for a $1,200 bonus, or switch it off in the pause menu. |
 | **Keys and locks** | A keyring in the office. Shift+E locks any door, the goods shelf, the cigarette cabinet or the weapon locker. Locked stock survives a robbery. Your crew and the guard carry keys and lock up behind them. |
@@ -73,7 +74,7 @@ The game needs no server logic. Anything that can serve the `game/` folder as st
 
 ## Controls
 
-`WASD` move · `Shift` run · `Space` jump · `Ctrl` crouch · `E` use, pick up, hand over · `Shift+E` second action · `Ctrl+E` send a crew member home · `V` use what you hold · `G` or `Q` put back · `1 to 6` hotbar · `I` inventory · `Tab` quick wheel · `F` phone · `M` map · `J` deliveries · `P` silent alarm · `F2` edit mode · `F3` creative mode · right-click closes menus · `F7` report a bug · `F12` or `F9` screenshot · `Esc` pause · `F11` fullscreen
+`WASD` move · `Shift` run · `Space` jump · `Ctrl` crouch · `E` use, pick up, hand over · `Shift+E` second action · `Ctrl+E` send a crew member home · `V` use what you hold · `G` or `Q` put back · `1 to 6` hotbar · `I` inventory · `Tab` quick wheel · `F` phone · `M` map · `J` deliveries · `P` silent alarm · `F2` build mode (`C` catalogue, `Del` remove) · right-click closes menus · `F7` report a bug · `F12` or `F9` screenshot · `Esc` pause · `F11` fullscreen
 
 With a weapon: left-click swings or fires, hold it for the AK's full auto, and hold right-click to look through the rifle's scope.
 
@@ -85,9 +86,9 @@ The main menu has a guide of 21 chapters, including an "I am stuck" chapter. The
 game/                 the whole game: static files, playable from any web server
   index.html          page, HUD and overlays
   grow3d.js           the simulation and the world (one file, one closure), built from src/
-  grow3d-creative.js  creative build mode, plugged in through RFGROW.hooks
+  grow3d-creative.js  the build catalogue and your own builds, part of build mode (F2), through RFGROW.hooks
   guide.js            the player guide (main menu, pause menu and wiki share it)
-  workshop.js         the Workshop: content packs and imported models
+  workshop.js         the Workshop: DLC switches, content packs and imported models
   report.js           the bug report form (F7)
   version.js          generated from package.json by npm run check
   menu.js, menu.css   splash screen and main menu

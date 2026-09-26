@@ -13,7 +13,7 @@
   function tob() { if (!S.tob || !S.tob.bays) S.tob = tobFresh(); return S.tob; }
   function skuOf(type, size) { return 'cig' + (type === 'light' ? 'L' : 'N') + (size === 20 ? 'B' : 'S'); }
   function kg(n) { return (Math.round(n * 100) / 100) + ' kg'; }
-  function tobLicensed() { if (hasLic('tobacco')) return true; toast('🪪 You need the tobacco manufacturing licence to run the line. It\'s under Licences on the office PC.', 'bad'); return false; }
+  function tobLicensed() { if (!dlcOn('tobacco')) { dlcOff('tobacco'); return false; } if (hasLic('tobacco')) return true; toast('🪪 You need the tobacco manufacturing licence to run the line. It\'s under Licences on the office PC.', 'bad'); return false; }
   function tobFade(fn) { if (!tobUI.fade) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:50'; document.body.appendChild(d); tobUI.fade = d; } tobUI.fade.style.opacity = '1'; setTimeout(function () { fn(); setTimeout(function () { tobUI.fade.style.opacity = '0'; }, 120); }, 230); }
   function goBasement() { if (sit.on) standUp(); tobFade(function () { player.floor = -1; player.pos.set(6.4, BASE.y + 1.65, -1.4); player.vel.set(0, 0, 0); player.yaw = Math.PI / 2; player.pitch = 0; sfx('step', 'concrete'); toast('🏭 RF Smoking: the basement works', ''); }); }
   function leaveBasement() { tobFade(function () { var v = propInst.cellarHatch ? propWorld('cellarHatch', 0, 1.0) : { x: 2.9, z: 1.6 }; player.floor = 0; player.pos.set(v.x, 1.65, v.z); player.vel.set(0, 0, 0); sfx('step', 'planks'); }); }
@@ -122,7 +122,7 @@
   }
   function tobPrompt(d, h) {
     var T = tob();
-    if (d.kind === 'cellarDown') return 'Go down to the basement <small>RF Smoking · the cigarette works</small>';
+    if (d.kind === 'cellarDown') return dlcOn('tobacco') ? 'Go down to the basement <small>RF Smoking · the cigarette works</small>' : dlcOn('lab') ? 'Go down to the basement <small>the lab door is down there</small>' : 'Basement <small>' + DLC_NAME.tobacco + ' · a DLC, switched off</small>';
     if (d.kind === 'cellarUp') return 'Back up to the shop floor';
     if (d.kind === 'tobBay') { var b = T.bays[d.idx]; return 'Tobacco bay ' + (d.idx + 1) + ' <small>' + (b.stage === 'empty' ? 'sow seedlings · ' + money(TOB.sowCost) : b.stage === 'ready' ? 'cut the leaf · about ' + kg(TOB.bayKg) : 'growing · ' + Math.round(b.t / TOB.growT * 100) + '%') + '</small>'; }
     if (d.kind === 'tobKiln') return 'Curing kiln <small>' + (T.kiln.on ? 'on' : 'off') + ' · ' + kg(T.leaf) + ' leaf waiting</small>';
@@ -135,7 +135,7 @@
   }
   function tobInteract(d, h) {
     var T = tob();
-    if (d.kind === 'cellarDown') { goBasement(); return true; }
+    if (d.kind === 'cellarDown') { if (!dlcOn('tobacco') && !dlcOn('lab')) { dlcOff('tobacco'); return true; } goBasement(); return true; }
     if (d.kind === 'cellarUp') { leaveBasement(); return true; }
     if (d.kind === 'cigCab') { cigCabInteract(h); return true; }
     if (d.kind === 'tobBay') { var b = T.bays[d.idx]; if (b.stage === 'empty') { if (!tobLicensed()) return true; if (S.bank < TOB.sowCost) { toast('Seedlings cost ' + money(TOB.sowCost) + ', and the bank\'s short', 'bad'); return true; } S.bank -= TOB.sowCost; b.stage = 'grow'; b.t = 0; sfx('plant'); toast('🌱 Bay ' + (d.idx + 1) + ' sown. It\'s ready in a few minutes.', 'good'); } else if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; T.leaf += TOB.bayKg; sfx('harvest'); toast('🌿 Cut ' + kg(TOB.bayKg) + ' of green leaf. It rides the conveyor to the kiln.', 'good'); } else toast('Still growing · ' + Math.round(b.t / TOB.growT * 100) + '%', ''); hud(); save(); return true; }
@@ -149,7 +149,7 @@
   }
   // the cigarette cabinet behind the counter: stock sits behind a roller shutter, you take packs out and hand them over yourself
   function cigStock(k) { if (!S.cigStock) S.cigStock = {}; return S.cigStock[k] || 0; }
-  function anyCigStock() { return Object.keys(CIG_SKUS).filter(function (k) { return cigStock(k) > 0; }); }
+  function anyCigStock() { return Object.keys(CIG_SKUS).filter(function (k) { return cigStock(k) > 0 && dlcOn(CIG_SKUS[k].type === 'side' ? 'lab' : 'tobacco'); }); }   /* nobody asks for what a switched-off DLC makes */
   function toggleCigShutter() { S.cigShutter = !S.cigShutter; sfx('curtain'); toast(S.cigShutter ? '🚬 Shutter up. The cigarette cabinet is open.' : '🚬 Shutter down. The cigarette cabinet is closed.', ''); save(); }
   function cigCabInteract(h) {
     if (player.keys.ShiftLeft || player.keys.ShiftRight) { toggleLock('cigCabinet'); return; }

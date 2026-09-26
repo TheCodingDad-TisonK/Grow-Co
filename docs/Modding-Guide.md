@@ -2,7 +2,7 @@
 
 The game is meant to be reshaped. Every recipe below copies a pattern the game already uses, so the quickest way to add something is to find its nearest neighbour in `src/` and copy it. Then `npm run build` and `npm test`.
 
-**Before you start:** read the warning about one-line statements in [Architecture](Architecture.md). Test in the running game after every edit. The pause menu's **Dev tools** and the `window.RFGROW` console handle save a lot of walking.
+**Before you start:** read the warning about one-line statements in [Architecture](Architecture.md). Test in the running game after every edit. The pause menu's **Dev tools** (a DLC: switch it on under Workshop and DLC in the main menu) and the `window.RFGROW` console handle save a lot of walking.
 
 ## Quick wins: change a number
 
@@ -23,7 +23,7 @@ All tuning lives in plain tables near the top of their sections.
 
 ## Add a piece of furniture (a prop)
 
-Props are movable in F2 edit mode, remember their place in the save, and rotate in quarter turns. The front of a prop is its local `+z`.
+Props are movable in F2 build mode, can be removed with Del (restored from the catalogue), remember their place in the save, and rotate in quarter turns. The front of a prop is its local `+z`.
 
 ```js
 defProp('waterTank', { label: 'water tank', x: -8, z: -3, rot: 1, build: function (c) {

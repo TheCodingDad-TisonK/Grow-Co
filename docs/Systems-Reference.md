@@ -90,9 +90,11 @@ Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `d
 | Props (furniture) | `S.layout[id]` | `defProp`, `buildProp`, `propPlacement`, `propWorld`, `propCtx` |
 | Rope lines | `S.layout[id]` (the `queueRope` multi prop), `S.ropes[id]` | `ropeBuild`, `ropeStyle`, `ropeMenu`, `ropeAdd`, `ropeUp` |
 | Rope as a gate | `ropeGates[id]` (runtime: `open` 0..1, passable from 0.8), `guard.rope` | `ropeSegs`, `ropeHeld` (called from `walkAlong` for groups with `userData.gated`), `updateRopeGates`, `updateGuardRope`, `ropePose`; leavers take `exitPath` round the rope's far end. Unhooked while pinned open, during a robbery, or with the guard sent home |
-| Fixtures (signs, screens, boards) | `S.fixtures[id]` | `fixtureAdd`, `fixtureFromBuild`, `fixtureSign`, `fxCarry`, `applyFixtures` |
-| Edit mode | `edit` | `editToggle`, `editUpdate`, `editGrab`, `editDrop`, `editRotate`, `editReset` |
-| Creative mode | `S.custom`, `S.designs` | `grow3d-creative.js`, through `RFGROW.hooks` and `RFGROW.internal` |
+| Fixtures (signs, screens, boards, counter pieces) | `S.fixtures[id]` | `fixtureAdd`, `fixtureFromBuild`, `fixtureSign`, `fxCarry`, `applyFixtures` |
+| Build mode (F2) | `edit`, `S.layout` | `editToggle`, `editUpdate`, `editGrab`, `editDrop`, `editRotate`, `editReset`; `hooks.editMode` switches the catalogue with it |
+| Build catalogue | `S.custom`, `S.designs` | `grow3d-creative.js`, through `RFGROW.hooks` and `RFGROW.internal`; it takes the keys only for your own builds and the piece you are placing |
+| Removed furniture | `S.layout[id].hidden` | `propGone`, `inGoneProp`: not built, not drawn, not refilled, no E, no collision |
+| DLC | `rfgrowco-workshop` (`on`, `dlcSeeded`) | `RF_WORKSHOP.dlc(id)`, `dlcOn`, `dlcOff`; ids `tobacco`, `lab`, `greenhouse`, `dev` |
 | Shop controls | `shop()` | `applyShopState`, the `controls` panel, `MINI_CTL` and `paneMiniCtl` for the front panel and the office panel |
 | Drinks and bins | `S.buff`, each bin's count in `machState(propId).trash` | `drinkHeld`, `isDrink`, `isTrash`, the `cooler`, `trash` and `dumpster` kinds |
 

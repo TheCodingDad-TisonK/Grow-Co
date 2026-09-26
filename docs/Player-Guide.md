@@ -17,7 +17,7 @@ This page is generated from `game/guide.js`, the same text the game shows in its
 - [The town, the car and the map](#the-town-the-car-and-the-map)
 - [Deliveries: the burner and the tablet](#deliveries-the-burner-and-the-tablet)
 - [The shop van](#the-shop-van)
-- [The Workshop: content packs](#the-workshop-content-packs)
+- [The Workshop: content packs and DLC](#the-workshop-content-packs-and-dlc)
 - [Upstairs and the roof](#upstairs-and-the-roof)
 - [The keyring, doors and locking up](#the-keyring-doors-and-locking-up)
 - [Machines, drinks and the bin](#machines-drinks-and-the-bin)
@@ -37,7 +37,7 @@ A new shop gets the **guided intro**, a card on the left of the screen that tick
 5. A plant that's ready glows. Harvest it with empty hands, carry the bunch to the **drying line** in the dry room and hang it up.
 6. Dry batches go to the **curing shelf** in jars and keep gaining quality. Carry a jar to the **workbench** in the processing room and empty it into your stash.
 7. At the workbench, **bag** eighths or **roll** joints (papers and tips). Later you can **bake** cookies. Finished goods go on the **goods shelf**.
-8. Open the shop at the **control box** in the security room, or the **front panel** behind the till. Customers come to **the window**. Take what they asked for off the goods shelf, press E on them to hand it over, then take the money at the **till**.
+8. Open the shop at the **control box** in the security room, or the **front panel** on the wall by the till. Customers come to **the window**. Take what they asked for off the goods shelf, press E on them to hand it over, then take the money at the **till**.
 
 That's the whole game in miniature. Everything else makes the loop bigger, faster or more dangerous.
 
@@ -62,8 +62,7 @@ That's the whole game in miniature. Everything else makes the loop bigger, faste
 | **M** | town map |
 | **J** | the Deliveries screen: the burner and the tablet |
 | **P** | silent alarm (needs the upgrade) |
-| **F2** | edit mode: move furniture, signs, screens |
-| **F3** | creative build mode |
+| **F2** | build mode: move furniture, signs and screens, and build your own from the catalogue (C) |
 | **Right-click** | close the open menu or panel |
 | **F7** | report a bug |
 | **F12** or **F9** | screenshot, without the HUD (the desktop app files it under Pictures, Grow Co) |
@@ -152,6 +151,7 @@ Every customer carries a real ID, and roughly one in seven won't stand up: under
 Doors are real to everybody in the building, not just to you.
 
 - A shut door that's **not locked** is no barrier. Crew, the guard and customers push it open as they reach it, and you'll see it swing. A door somebody walks through slides shut again 4 s after they're clear of it, and so does the staff door.
+- The **staff door** locks like the rest: Shift+E with the keyring, or the control box. The light on it is red while it's locked.
 - A **locked** door stops customers. Your **crew and the guard carry keys**: they unlock it, walk through, and it locks again behind them.
 - The control box marks each door **staff key** or **no staff key**. Take a key back and that door stops your crew too. Send one of them somewhere behind it and they give up the errand and tell you it's locked.
 - A **robber** doesn't care what's locked, but he can't walk through it either. He stops at the door and works on it for a few seconds. You hear it, it goes in the log, and the lock stays broken afterwards. That's time you can use.
@@ -177,6 +177,8 @@ Robberies run in stages: a robber walks in looking like any other customer, the 
 
 The steel hatch in the hall leads down to a pre-installed cigarette line. You need the **tobacco manufacturing licence** (from level 8) to switch anything on.
 
+RF Smoking is a free **DLC**: switch on **RF Smoking: the Tobacco Works** under **Workshop and DLC** in the main menu. It brings the line, the licence, the delivery tablet and the Corner Tobacconist.
+
 1. **Bays**: sow ($20), wait a few minutes, cut the leaf.
 2. **Kiln**: cures up to 8 kg a load, and the leaf dries to a fifth of its weight. Left on, it reloads itself.
 3. **Shredder**: cuts the cured leaf.
@@ -188,7 +190,7 @@ The line makes far more than the window sells. Load cartons into the car or the 
 
 ## The extraction lab
 
-Its door is on the basement's left wall. It takes cured bud of **any quality** from your stash.
+Its door is on the basement's left wall. It takes cured bud of **any quality** from your stash. The lab is a free **DLC**: switch on **The Extraction Lab** under **Workshop and DLC** in the main menu.
 
 - 10 g makes 3 vape carts, or 4 g of pressed hash.
 - 5 g plus one baking mix makes 12 gummies or 8 chocolate bars.
@@ -236,7 +238,9 @@ The van in the bay under the canopy is also a shop on wheels. It sells what you 
 - Now and then a buyer is a plain-clothes officer. You're fined up to $200 and everything of that kind on the van rack is confiscated (heat +20, rep -2). The chance is small, but it grows with your heat.
 - Buyers wait about 45 s, then walk off. Move to get up from the window. The **van till** on the counter shows what the van's taken.
 
-## The Workshop: content packs
+## The Workshop: content packs and DLC
+
+**DLC** comes first in the Workshop, all four free: **RF Smoking: the Tobacco Works**, **The Extraction Lab**, **The Roof Greenhouse** and **Dev Tools**. A new shop starts without them. Switch one on and it's in every save. Switch it off and it's hidden, but nothing in your saves is lost: switch it back on and it's all still there, a lab batch or a roof bed carrying on where it stopped.
 
 The **Workshop** is on the main menu. Content packs change what the game has in it: more strains to grow, more lamps and tents, more for the counter display, more town, a different car, snow at Christmas or fireworks at New Year. Turn packs on or off, then press **Apply and rebuild the shop** once and the shop reloads. Your save isn't touched, because a pack only adds things you can then go and buy.
 
@@ -260,7 +264,7 @@ Packs that ship with the game can't be overwritten, so give yours its own id.
 
 - The **office stairs** lead to your flat: kitchen, table, couch and TV, bed. Eating gives you a speed boost (**V** eats a snack anywhere), and the bed sleeps through the night.
 - The **lobby stairs** lead to the **connoisseur lounge**. With the connoisseur permit, guests book it, walk up on their own and wait to be served quality 70 or better. They pay triple and tip.
-- A ladder in the flat climbs to the **roof greenhouse**: six beds that grow in daylight only. They need the **Cultivation permit II**. Seedlings are $10 a bed, and each harvest pays its trimming and compliance like any other.
+- A ladder in the flat climbs to the **roof greenhouse** (a free DLC, under Workshop and DLC in the main menu): six beds that grow in daylight only. They need the **Cultivation permit II**. Seedlings are $10 a bed, and each harvest pays its trimming and compliance like any other.
 
 ## The keyring, doors and locking up
 
@@ -288,8 +292,8 @@ Four kinds of machine earn on their own, and you can own more than one of each: 
 
 ## Making the place yours
 
-- **F2 edit mode**: look at furniture, E grabs, R turns, E drops, Backspace resets. It also carries **signs, the dashboard screen, the staff roster, the key hook, the control box, the front panel and the office panel**. Those stick flat to whatever surface you look at, at any height.
-- **F3 creative mode**: a catalogue of furniture and building pieces with finishes and colours. C opens the catalogue, R rotates, the wheel raises, P paints, X copies, Del removes.
+- **F2 build mode**: look at furniture, E grabs, R turns, E drops, Backspace puts it back where it started and Del removes it (the catalogue brings it back). It also carries **signs, the dashboard screen, the staff roster, the key hook, the control box, the front panel, the office panel and the things on the counter** (the till, the tip jar, the bell and the business cards). Those stick flat to whatever surface you look at, at any height.
+- In build mode, **C** opens the catalogue: furniture and building pieces with finishes and colours. Aim at something you built and R rotates it, [ ] scale it, P paints, X copies and Del removes. The wheel raises the piece you are placing.
 - Every door slides with E and can be locked from the control box.
 
 ## I am stuck
@@ -305,4 +309,4 @@ Four kinds of machine earn on their own, and you can own more than one of each: 
 - **A door won't open.** It's locked. Unlock it at the control box, or with Shift+E and the keyring.
 - **I'm broke.** Street deals in the park pay cash at once. Walk-up sales at the till pay straight away too. Sell the cheapest thing you can make and rebuild.
 - **Found a bug?** Press **F7**, or use Report a bug in the pause menu. Fill in the form and it collects your version, your system and your savegame for you. The more you fill in, the faster it gets fixed.
-- **Something's badly broken.** Dev tools in the pause menu has teleports and a button that clears cooldowns. Your save lives in the app's local storage, and Reset save in the pause menu starts over.
+- **Something's badly broken.** Dev tools in the pause menu has teleports and a button that clears cooldowns (switch on the **Dev Tools** DLC under Workshop and DLC in the main menu first). Your save lives in the app's local storage, and Reset save in the pause menu starts a brand new shop.
