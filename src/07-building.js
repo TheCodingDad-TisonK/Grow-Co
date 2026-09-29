@@ -44,18 +44,18 @@
   // flat wall sign (a plane fixed to a surface, never billboarded, so it cannot clip through walls)
   function signPlane(lines, w, h, x, y, z, rotY, opts) {
     opts = opts || {}; var tex = textTex(lines, Math.round(w * 320), Math.round(h * 320), Object.assign({ size: Math.round(h * 48) }, opts));
-    var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true })); m.position.set(x, y, z); m.rotation.y = rotY || 0; world.group.add(m); fixtureSign(m, lines); return m;
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true })); m.position.set(x, y, z); m.rotation.y = rotY || 0; world.group.add(m); if (opts.bg === undefined) signBack(m, w, h); fixtureSign(m, lines); return m;
   }
   // framed picture hung on a wall: frame, mat and a textured print. rotY faces the print into the room
   function framedPoster(tex, w, h, x, y, z, rotY, frameMat) {
     var g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rotY || 0; world.group.add(g);
-    var fr = new THREE.Mesh(new THREE.BoxGeometry(w + 0.08, h + 0.08, 0.035), frameMat || MAT.darkwood); fr.position.z = -0.0175; fr.castShadow = true; g.add(fr);
+    var fr = new THREE.Mesh(bevelGeo(w + 0.08, h + 0.08, 0.035), frameMat || MAT.darkwood); fr.position.z = -0.0175; fr.castShadow = true; g.add(fr);
     var pr = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.75 })); pr.position.z = 0.002; g.add(pr);
     var gl = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0.05, metalness: 0.2 })); gl.position.z = 0.006; g.add(gl);
     return g;
   }
-  function wallOutlet(x, y, z, rotY) { var g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rotY || 0; world.group.add(g); var pl = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.008), MAT.white); g.add(pl); [0.03, -0.03].forEach(function (dy) { var s = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.006, 10), MAT.trim); s.rotation.x = Math.PI / 2; s.position.set(0, dy, 0.006); g.add(s); var h1 = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.008, 0.004), MAT.black); h1.position.set(-0.005, dy, 0.009); g.add(h1); var h2 = h1.clone(); h2.position.x = 0.005; g.add(h2); }); }
-  function ceilingVent(x, z) { var g = new THREE.Group(); g.position.set(x, ROOM.h - 0.012, z); world.group.add(g); g.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.02, 0.5), MAT.white)); for (var i = 0; i < 6; i++) { var l = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.012, 0.03), MAT.plastic); l.position.set(0, -0.012, -0.18 + i * 0.072); l.rotation.x = 0.5; g.add(l); } }
+  function wallOutlet(x, y, z, rotY) { var g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rotY || 0; world.group.add(g); var pl = new THREE.Mesh(bevelGeo(0.08, 0.12, 0.008), MAT.white); g.add(pl); [0.03, -0.03].forEach(function (dy) { var s = new THREE.Mesh(roundCylGeo(0.014, 0.014, 0.006, 10), MAT.trim); s.rotation.x = Math.PI / 2; s.position.set(0, dy, 0.006); g.add(s); var h1 = new THREE.Mesh(bevelGeo(0.004, 0.008, 0.004), MAT.black); h1.position.set(-0.005, dy, 0.009); g.add(h1); var h2 = h1.clone(); h2.position.x = 0.005; g.add(h2); }); }
+  function ceilingVent(x, z) { var g = new THREE.Group(); g.position.set(x, ROOM.h - 0.012, z); world.group.add(g); g.add(new THREE.Mesh(bevelGeo(0.5, 0.02, 0.5), MAT.white)); for (var i = 0; i < 6; i++) { var l = new THREE.Mesh(bevelGeo(0.42, 0.012, 0.03), MAT.plastic); l.position.set(0, -0.012, -0.18 + i * 0.072); l.rotation.x = 0.5; g.add(l); } }
   function roomLamp(x, z, intensity) {
     // recessed 1.2 x 0.6 troffer: white frame, prismatic lens that dims when the shop lights are off
     var fr = box(1.2, 0.05, 0.6, MAT.trim, x, ROOM.h - 0.025, z, { cast: false });
@@ -66,8 +66,8 @@
   // a pendant lamp on a cord (lobby / hall): warm bulb in a metal shade
   function pendant(x, z, drop, color, intensity) {
     var g = new THREE.Group(); g.position.set(x, ROOM.h, z); world.group.add(g);
-    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16), MAT.black));
-    var cord = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, drop, 6), MAT.black); cord.position.y = -drop / 2; g.add(cord);
+    g.add(new THREE.Mesh(roundCylGeo(0.06, 0.06, 0.02, 16), MAT.black));
+    var cord = new THREE.Mesh(roundCylGeo(0.006, 0.006, drop, 6), MAT.black); cord.position.y = -drop / 2; g.add(cord);
     var shade = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.22, 0.24, 20, 1, true), new THREE.MeshStandardMaterial({ color: color || 0x2a2d33, roughness: 0.35, metalness: 0.6, side: THREE.DoubleSide })); shade.position.y = -drop - 0.1; g.add(shade);
     var bulb = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 10), glowMat(0xffe9b0, 1.6)); bulb.position.y = -drop - 0.2; g.add(bulb);
     (world.lampFixtures = world.lampFixtures || []).push(bulb);
@@ -130,10 +130,10 @@
     box(ROOM.x * 2, 0.1, WALL_T + 0.04, MAT.plastic, 0, 2.92, fz);
     box(0.12, ROOM.h, WALL_T + 0.06, MAT.plastic, -0.8, ROOM.h / 2, fz); box(0.12, ROOM.h, WALL_T + 0.06, MAT.plastic, 0.8, ROOM.h / 2, fz); box(1.72, 0.12, WALL_T + 0.06, MAT.plastic, 0, 2.34, fz);
     var doorG = new THREE.Group(); doorG.position.set(-0.7, 0, ROOM.z); world.group.add(doorG); world.frontDoor = { g: doorG, t: 0 };
-    var doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(1.36, 2.22, 0.04), MAT.glass); doorLeaf.position.set(0.68, 1.12, 0); doorG.add(doorLeaf);
-    var dRail = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.1, 0.07), MAT.plastic); dRail.position.set(0.68, 2.2, 0); doorG.add(dRail); var dRail2 = dRail.clone(); dRail2.position.y = 0.32; dRail2.scale.y = 3; doorG.add(dRail2);
-    var dRailL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 2.22, 0.07), MAT.plastic); dRailL.position.set(0.035, 1.12, 0); doorG.add(dRailL); var dRailR = dRailL.clone(); dRailR.position.x = 1.325; doorG.add(dRailR);
-    [0.05, -0.05].forEach(function (dz) { var doorBar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.7, 10), MAT.chrome); doorBar.position.set(1.15, 1.05, dz * 1.4); doorG.add(doorBar); [0.3, -0.3].forEach(function (dy) { var st = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.07, 8), MAT.chrome); st.rotation.x = Math.PI / 2; st.position.set(1.15, 1.05 + dy, dz * 0.7); doorG.add(st); }); });
+    var doorLeaf = new THREE.Mesh(bevelGeo(1.36, 2.22, 0.04), MAT.glass); doorLeaf.position.set(0.68, 1.12, 0); doorG.add(doorLeaf);
+    var dRail = new THREE.Mesh(bevelGeo(1.4, 0.1, 0.07), MAT.plastic); dRail.position.set(0.68, 2.2, 0); doorG.add(dRail); var dRail2 = dRail.clone(); dRail2.position.y = 0.32; dRail2.scale.y = 3; doorG.add(dRail2);
+    var dRailL = new THREE.Mesh(bevelGeo(0.07, 2.22, 0.07), MAT.plastic); dRailL.position.set(0.035, 1.12, 0); doorG.add(dRailL); var dRailR = dRailL.clone(); dRailR.position.x = 1.325; doorG.add(dRailR);
+    [0.05, -0.05].forEach(function (dz) { var doorBar = new THREE.Mesh(roundCylGeo(0.018, 0.018, 0.7, 10), MAT.chrome); doorBar.position.set(1.15, 1.05, dz * 1.4); doorG.add(doorBar); [0.3, -0.3].forEach(function (dy) { var st = new THREE.Mesh(roundCylGeo(0.012, 0.012, 0.07, 8), MAT.chrome); st.rotation.x = Math.PI / 2; st.position.set(1.15, 1.05 + dy, dz * 0.7); doorG.add(st); }); });
     var pushSign = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.12), new THREE.MeshBasicMaterial({ map: textTex(['PULL'], 170, 60, { size: 40, bold: true, bg: 'rgba(0,0,0,0)', color: '#e8f1ea', line: 'rgba(0,0,0,0)' }), transparent: true })); pushSign.position.set(0.68, 1.6, 0.022); doorG.add(pushSign);
     var hours = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.3), new THREE.MeshBasicMaterial({ map: textTex(['HOURS', 'open late', 'ID required'], 250, 150, { size: 30, bg: 'rgba(0,0,0,.35)', color: '#e8f1ea', titleColor: '#6fdc8c', line: 'rgba(255,255,255,.4)' }), transparent: true })); hours.position.set(0.68, 0.75, 0.022); doorG.add(hours);
     var doorHit = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.3, 0.3), MAT.none); doorHit.position.set(0.68, 1.15, 0); doorG.add(doorHit); interactable(doorHit, { kind: 'frontdoor' });
@@ -155,8 +155,8 @@
     box(2.6, 0.03, 0.04, MAT.chrome, 0, 1.075, 4.44, { cast: false }); box(2.6, 0.03, 0.04, MAT.chrome, 0, 1.075, 3.56, { cast: false });
     // speaker grille + slot label
     // talk-through disc set into the glass, bottom centre just above the tray, holes on both faces
-    var grille = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.024, 24), colorMat(0xc8ccd0, 0.35, 0.5)); grille.rotation.x = Math.PI / 2; grille.position.set(0, 1.5, 4); world.group.add(grille);
-    [-1, 1].forEach(function (side) { for (var gh = 0; gh < 12; gh++) { var hole = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.01, 6), MAT.black); hole.rotation.x = Math.PI / 2; var ga = gh / 12 * Math.PI * 2; hole.position.set(Math.cos(ga) * 0.06, 1.5 + Math.sin(ga) * 0.06, 4 + side * 0.014); world.group.add(hole); } var dot = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.01, 8), MAT.black); dot.rotation.x = Math.PI / 2; dot.position.set(0, 1.5, 4 + side * 0.014); world.group.add(dot); });
+    var grille = new THREE.Mesh(roundCylGeo(0.11, 0.11, 0.024, 24), colorMat(0xc8ccd0, 0.35, 0.5)); grille.rotation.x = Math.PI / 2; grille.position.set(0, 1.5, 4); world.group.add(grille);
+    [-1, 1].forEach(function (side) { for (var gh = 0; gh < 12; gh++) { var hole = new THREE.Mesh(roundCylGeo(0.008, 0.008, 0.01, 6), MAT.black); hole.rotation.x = Math.PI / 2; var ga = gh / 12 * Math.PI * 2; hole.position.set(Math.cos(ga) * 0.06, 1.5 + Math.sin(ga) * 0.06, 4 + side * 0.014); world.group.add(hole); } var dot = new THREE.Mesh(roundCylGeo(0.012, 0.012, 0.01, 8), MAT.black); dot.rotation.x = Math.PI / 2; dot.position.set(0, 1.5, 4 + side * 0.014); world.group.add(dot); });
     signPlane(['SERVICE WINDOW', 'orders handed through the slot'], 1.6, 0.5, 0, 2.7, 3.88, Math.PI, { titleColor: '#6fdc8c' });
     signPlane(['ORDER HERE', 'pick-up through the slot'], 1.6, 0.5, 0, 2.7, 4.12, 0, { titleColor: '#6fdc8c' });
     // room name plates above doorways
@@ -197,19 +197,19 @@
       var awn = new THREE.Group(); awn.position.set(ax, 2.55, sz); world.group.add(awn);
       var cloth = new THREE.Mesh(new THREE.PlaneGeometry(aw, 1.4), canvasM); cloth.rotation.x = -Math.PI / 2 + 0.35; cloth.position.set(0, 0, 0.66); cloth.castShadow = true; awn.add(cloth);
       var valance = new THREE.Mesh(new THREE.PlaneGeometry(aw, 0.22), canvasM); valance.position.set(0, -0.53, 1.31); awn.add(valance);
-      [-aw / 2 + 0.1, aw / 2 - 0.1].forEach(function (x) { var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.45, 8), MAT.plastic); rod.rotation.x = -Math.PI / 2 + 0.35; rod.position.set(x, 0, 0.66); awn.add(rod); var brace = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.1, 8), MAT.plastic); brace.rotation.x = 0.55; brace.position.set(x, -0.4, 0.55); awn.add(brace); });
+      [-aw / 2 + 0.1, aw / 2 - 0.1].forEach(function (x) { var rod = new THREE.Mesh(roundCylGeo(0.02, 0.02, 1.45, 8), MAT.plastic); rod.rotation.x = -Math.PI / 2 + 0.35; rod.position.set(x, 0, 0.66); awn.add(rod); var brace = new THREE.Mesh(roundCylGeo(0.015, 0.015, 1.1, 8), MAT.plastic); brace.rotation.x = 0.55; brace.position.set(x, -0.4, 0.55); awn.add(brace); });
     }
     awning(0, 3.4); awning(-7.6, 3.2); awning(7.6, 3.2);   /* the door and both window bays */
     // planters flanking the door, a bike rack, a chalkboard sign
     [-2.6, 2.6].forEach(function (x) { var pl = box(0.7, 0.55, 0.5, MAT.brickDark, x, 0.275, sz + 0.45, { solid: true, tag: 'planter' }); box(0.62, 0.04, 0.42, MAT.soil, x, 0.53, sz + 0.45, { cast: false }); for (var k = 0; k < 5; k++) { var lf = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.6), MAT.leaf); lf.position.set(x + randf(-0.2, 0.2), 0.8, sz + 0.45 + randf(-0.12, 0.12)); lf.rotation.set(-0.4 - Math.random() * 0.4, Math.random() * 6.28, 0); world.group.add(lf); } });
     var cb = new THREE.Group(); cb.position.set(4.2, 0, sz + 0.8); cb.rotation.y = -0.4; world.group.add(cb);
     var board = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.8), new THREE.MeshBasicMaterial({ map: textTex(['TODAY', 'fresh cure in', 'ask about', 'the top shelf'], 240, 320, { size: 34, bg: '#1d1f1c', color: '#f0ead8', titleColor: '#ffc857', line: 'rgba(0,0,0,0)' }) })); board.position.set(0, 0.55, 0.02); board.rotation.x = -0.2; cb.add(board);
-    var bf = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.86, 0.03), MAT.wood); bf.position.set(0, 0.55, 0); bf.rotation.x = -0.2; cb.add(bf); var bb = bf.clone(); bb.rotation.x = 0.2; bb.position.z = -0.14; cb.add(bb);
+    var bf = new THREE.Mesh(bevelGeo(0.66, 0.86, 0.03), MAT.wood); bf.position.set(0, 0.55, 0); bf.rotation.x = -0.2; cb.add(bf); var bb = bf.clone(); bb.rotation.x = 0.2; bb.position.z = -0.14; cb.add(bb);
     world.obstacles.push({ x1: 3.8, x2: 4.6, z1: sz + 0.4, z2: sz + 1.2, tag: 'chalk' });
     // ── the front, dressed: brick pilasters between the bays, a brick fascia with four downlights, window boxes, a doormat ──
     [-9.4, -5.8, -2.2, 2.2, 5.8, 9.4].forEach(function (x) { box(0.36, ROOM.h + 0.2, 0.3, MAT.brick, x, (ROOM.h + 0.2) / 2, sz + 0.1, { cast: true }); box(0.44, 0.06, 0.38, MAT.trim, x, ROOM.h + 0.23, sz + 0.1, { cast: false }); });
     box(sx * 2 + 0.7, 0.08, 0.42, MAT.trim, 0, ROOM.h + 0.59, sz + 0.05, { cast: true });   /* a stone string course on top of the fascia band */
-    [-6.2, -2.4, 2.4, 6.2].forEach(function (x) { var arm = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.5, 8), MAT.black); arm.rotation.x = -1.1; arm.position.set(x, ROOM.h + 0.7, sz + 0.38); world.group.add(arm); var hood = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.16, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0x1b1e22, roughness: 0.5, metalness: 0.5, side: THREE.DoubleSide })); hood.rotation.x = 0.5; hood.position.set(x, ROOM.h + 0.6, sz + 0.62); world.group.add(hood); var lens = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), glowMat(0xfff0d0, 1.4)); lens.position.set(x, ROOM.h + 0.55, sz + 0.62); world.group.add(lens); (world.lampFixtures = world.lampFixtures || []).push(lens); });
+    [-6.2, -2.4, 2.4, 6.2].forEach(function (x) { var arm = new THREE.Mesh(roundCylGeo(0.018, 0.018, 0.5, 8), MAT.black); arm.rotation.x = -1.1; arm.position.set(x, ROOM.h + 0.7, sz + 0.38); world.group.add(arm); var hood = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.16, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0x1b1e22, roughness: 0.5, metalness: 0.5, side: THREE.DoubleSide })); hood.rotation.x = 0.5; hood.position.set(x, ROOM.h + 0.6, sz + 0.62); world.group.add(hood); var lens = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), glowMat(0xfff0d0, 1.4)); lens.position.set(x, ROOM.h + 0.55, sz + 0.62); world.group.add(lens); (world.lampFixtures = world.lampFixtures || []).push(lens); });
     [-3.2, 3.2].forEach(function (x) { var dl = new THREE.PointLight(0xfff0d0, 0.5, 5, 1.6); dl.position.set(x, ROOM.h + 0.4, sz + 0.8); scene.add(dl); (world.streetLights = world.streetLights || []).push(dl); });
     [-10.3, -7.6, -4.9].forEach(function (x) { box(2.2, 0.24, 0.3, MAT.darkwood, x, 0.98, sz + 0.2, { cast: true }); box(2.1, 0.04, 0.24, MAT.soil, x, 1.11, sz + 0.2, { cast: false }); for (var f = 0; f < 7; f++) plantFlower(x + randf(-0.95, 0.95), 1.1, sz + 0.2 + randf(-0.08, 0.08)); });   /* window boxes under the shop window */
     box(1.5, 0.02, 0.7, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x3a3028, roughness: 1 }), 0, 0.011, sz + 0.55, { cast: false });   /* doormat */
@@ -241,7 +241,7 @@
     var wtBase = box(0.09, 0.03, 0.07, MAT.black, cx - 0.85, 0.79, dz - 0.05, { cast: false }); var wt = box(0.06, 0.16, 0.035, colorMat(0x1b1f24, 0.5, 0.3), cx - 0.85, 0.885, dz - 0.05); cyl(0.004, 0.004, 0.12, MAT.black, cx - 0.87, 1.02, dz - 0.05, null, 6); box(0.04, 0.02, 0.01, glowMat(0x6fdc8c, 1), cx - 0.85, 0.95, dz - 0.03, { cast: false }); box(0.01, 0.006, 0.006, glowMat(0xff3030, 2), cx - 0.81, 0.785, dz - 0.015, { cast: false });   // walkie-talkie on its charger
     var rack = box(0.3, 0.12, 0.02, MAT.darkwood, cx + 3.0, 1.45, wallZ0 + 0.06); [0, 1, 2, 3].forEach(function (k) { var hook = cyl(0.004, 0.004, 0.03, MAT.chrome, cx + 2.89 + k * 0.075, 1.42, wallZ0 + 0.085, null, 6); hook.rotation.x = Math.PI / 2; if (k !== 2) { var ring = new THREE.Mesh(new THREE.TorusGeometry(0.014, 0.003, 6, 12), MAT.chrome); ring.position.set(cx + 2.89 + k * 0.075, 1.395, wallZ0 + 0.095); world.group.add(ring); box(0.012, 0.03, 0.003, colorMat([0xc94a3a, 0x2f6b9a, 0xffc857][k % 3], 0.5), cx + 2.89 + k * 0.075, 1.365, wallZ0 + 0.096, { cast: false }); } });   // key rack: a hook per set, one set out
     signPlane(['KEYS', 'sign them out'], 0.28, 0.08, cx + 3.0, 1.55, wallZ0 + 0.07, 0, { size: 16, titleColor: '#ffc857', bg: '#141a16' });
-    var mug = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.09, 14), colorMat(0x2f6b9a, 0.5)); mug.position.set(cx + 1.55, 0.82, dz + 0.18); world.group.add(mug);
+    var mug = new THREE.Mesh(roundCylGeo(0.04, 0.035, 0.09, 14), colorMat(0x2f6b9a, 0.5)); mug.position.set(cx + 1.55, 0.82, dz + 0.18); world.group.add(mug);
     var clip = box(0.23, 0.01, 0.32, colorMat(0x5a4632, 0.7), cx - 1.3, 0.78, dz + 0.05, { cast: false }); clip.rotation.y = 0.08; box(0.06, 0.02, 0.03, MAT.chrome, cx - 1.3, 0.795, dz - 0.09, { cast: false }); var clipTex = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.27), new THREE.MeshBasicMaterial({ map: textTex(['SHIFT SHEET', 'door  · 08-20', 'yard  · 20-02', 'cams  · 02-08', 'sign here ____'], 200, 270, { size: 20, bg: '#f3efe4', color: '#333', titleColor: '#1a1a1a', line: 'rgba(0,0,0,0)' }) })); clipTex.rotation.x = -Math.PI / 2; clipTex.rotation.z = 0.08; clipTex.position.set(cx - 1.3, 0.787, dz + 0.06); world.group.add(clipTex);   // clipboard
     var chair = new THREE.Group(); chair.position.set(cx, 0, dz + 0.85); world.group.add(chair); var cc = propCtx(chair, 'secchair', 0); officeChairBuild(cc);   // backrest sits at +z, so the chair faces the monitors on the back wall
     world.obstacles.push({ x1: cx - 0.3, x2: cx + 0.3, z1: dz + 0.55, z2: dz + 1.15, tag: 'secchair' });
@@ -259,6 +259,22 @@
     buildSecScreen(x1 + 1.5, 1.75, wallZ0 + 0.035, 0);   /* on the camera wall, left of the feeds; the right wall is the control cabinet's */
     signPlane(['SECURITY', 'E at the monitors: watch the cameras'], 1.5, 0.4, cx, 2.85, wallZ0 + 0.01, 0, { titleColor: '#ffc857', bg: '#101410' });
     signPlane(['CCTV IN OPERATION', 'you are being recorded'], 0.9, 0.36, x1 - WALL_T - 0.012, 2.05, -10.7 + 1.0, -Math.PI / 2, { titleColor: '#c94a3a', bg: '#f3e9cf', color: '#222' });
+    (function secDetail() {   /* the guard's post: feeds in a frame, a console under them, the kit a control room runs on */
+      var gm = MAT.gunmetal;
+      var rows = Math.ceil(SEC_CAMS.length / mcols), top = y0 + 2 * (mh + gapy) + mh / 2 + 0.06, bot = y0 + (3 - rows) * (mh + gapy) - mh / 2 - 0.1, fh = top - bot;
+      box(3.5, fh, 0.02, gm, cx, bot + fh / 2, wallZ0 + 0.008, { cast: false, sharp: true }); [bot, top].forEach(function (y) { box(3.56, 0.03, 0.06, MAT.alu, cx, y, wallZ0 + 0.03, { cast: false }); });
+      [-1.765, 1.765].forEach(function (sx) { box(0.03, fh, 0.06, MAT.alu, cx + sx, bot + fh / 2, wallZ0 + 0.03, { cast: false }); });
+      box(3.7, 0.55, 0.03, gm, cx, 0.45, dz - 0.37, { cast: false }); box(3.8, 0.02, 0.012, MAT.alu, cx, 0.75, dz + 0.405, { cast: false }); box(3.4, 0.04, 0.1, gm, cx, 0.66, dz - 0.3, { cast: false });
+      var con = box(1.5, 0.05, 0.28, gm, cx, 0.815, dz - 0.22, { r: 0.012 }); con.rotation.x = 0.2;
+      var kb = box(0.42, 0.014, 0.13, MAT.black, cx - 0.32, 0.848, dz - 0.2, { cast: false }); kb.rotation.x = 0.2; for (var kr = 0; kr < 4; kr++) { var krow = box(0.39, 0.004, 0.022, colorMat(0x3a3f46, 0.6), cx - 0.32, 0.862 - kr * 0.0062, dz - 0.245 + kr * 0.03, { cast: false, sharp: true }); krow.rotation.x = 0.2; }
+      cyl(0.04, 0.046, 0.02, MAT.black, cx + 0.12, 0.85, dz - 0.2, null, 16); cyl(0.01, 0.01, 0.09, MAT.chrome, cx + 0.12, 0.9, dz - 0.2, null, 8); var knob = new THREE.Mesh(new THREE.SphereGeometry(0.022, 14, 10), MAT.black); knob.position.set(cx + 0.12, 0.95, dz - 0.2); world.group.add(knob);
+      for (var br = 0; br < 2; br++) for (var bc = 0; bc < 6; bc++) { var bt = box(0.032, 0.012, 0.032, glowMat([0x6fdc8c, 0x6fdc8c, 0xf0b94d, 0x7cc4ff, 0x7cc4ff, 0xff5a4e][bc], br ? 0.5 : 1.1), cx + 0.36 + bc * 0.05, 0.856 - br * 0.0105, dz - 0.255 + br * 0.052, { cast: false, r: 0.004 }); bt.rotation.x = 0.2; }
+      box(0.18, 0.05, 0.2, MAT.black, cx + 1.05, 0.8, dz - 0.1, { r: 0.012 }); var hs = box(0.05, 0.035, 0.2, colorMat(0x22252a, 0.5), cx + 0.99, 0.84, dz - 0.1, { r: 0.012 }); box(0.07, 0.003, 0.09, colorMat(0x9aa0a6, 0.5), cx + 1.09, 0.827, dz - 0.08, { cast: false, sharp: true });
+      cyl(0.045, 0.05, 0.03, colorMat(0xf2c21a, 0.5), cx + 1.3, 0.79, dz + 0.22, null, 18); cyl(0.032, 0.03, 0.03, colorMat(0xd0201a, 0.35), cx + 1.3, 0.82, dz + 0.22, null, 18);
+      box(0.2, 0.45, 0.45, MAT.black, cx + 1.45, 0.225, dz - 0.05, { r: 0.012 }); box(0.006, 0.006, 0.002, glowMat(0x6fdc8c, 1.6), cx + 1.4, 0.4, dz + 0.177, { cast: false, sharp: true }); box(0.3, 0.16, 0.4, gm, cx - 1.4, 0.08, dz - 0.05, { r: 0.012 }); box(0.04, 0.012, 0.002, glowMat(0x6fdc8c, 1.2), cx - 1.45, 0.11, dz + 0.152, { cast: false, sharp: true });
+      var fr = box(0.45, 0.02, 0.3, MAT.black, cx, 0.1, dz + 0.15, { cast: false }); fr.rotation.x = 0.25;
+      cyl(0.05, 0.06, 0.015, MAT.black, cx - 1.7, 0.785, dz - 0.2, null, 16); var arm = cyl(0.008, 0.008, 0.4, MAT.chrome, cx - 1.66, 0.97, dz - 0.2, null, 8); arm.rotation.z = -0.2; var hd = box(0.2, 0.02, 0.05, MAT.black, cx - 1.54, 1.16, dz - 0.2, { r: 0.008 }); var lt = box(0.18, 0.004, 0.035, glowMat(0xfff0cf, 1.3), cx - 1.54, 1.148, dz - 0.2, { cast: false, sharp: true });
+    })();
     buildSecCams();
   }
   // wall cameras: each one is a small housing on the wall and a render camera the monitors and the cam view draw from
@@ -284,10 +300,10 @@
       var rt = new THREE.WebGLRenderTarget(320, 180); rt.texture.encoding = THREE.sRGBEncoding; sec.rts.push(rt);
       // housing: a dome bracket with a lens and a blinking red LED, mounted where the camera looks from
       var hg = new THREE.Group(); hg.position.copy(cam.position); hg.quaternion.copy(cam.quaternion); world.group.add(hg);
-      var body = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.22), colorMat(0xe8e8e4, 0.5)); body.position.z = 0.02; hg.add(body);
-      var lens = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.03, 0.06, 12), MAT.black); lens.rotation.x = Math.PI / 2; lens.position.z = -0.11; hg.add(lens);
+      var body = new THREE.Mesh(bevelGeo(0.1, 0.1, 0.22), colorMat(0xe8e8e4, 0.5)); body.position.z = 0.02; hg.add(body);
+      var lens = new THREE.Mesh(roundCylGeo(0.035, 0.03, 0.06, 12), MAT.black); lens.rotation.x = Math.PI / 2; lens.position.z = -0.11; hg.add(lens);
       var led = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), glowMat(0xff3a3a, 2)); led.position.set(0.035, 0.035, -0.08); hg.add(led); (world.secLeds = world.secLeds || []).push(led);
-      var arm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.04), colorMat(0xe8e8e4, 0.5)); arm.position.set(0, 0.12, 0.08); hg.add(arm);
+      var arm = new THREE.Mesh(bevelGeo(0.04, 0.16, 0.04), colorMat(0xe8e8e4, 0.5)); arm.position.set(0, 0.12, 0.08); hg.add(arm);
       var hit = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), MAT.none); hg.add(hit); interactable(hit, { kind: 'seccam', idx: i });
     });
   }
@@ -331,7 +347,7 @@
     box(1.2, 0.05, 0.6, MAT.trim, 4, AH - 0.025, -10.7, { cast: false }); box(1.1, 0.02, 0.5, new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff3e0, emissiveIntensity: 0.9, roughness: 0.3 }), 4, AH - 0.045, -10.7, { cast: false });
     // roller door: slatted panel that slides up; obstacle while closed
     var rd = new THREE.Group(); rd.position.set(4.5, 1.2, AZ1); world.group.add(rd); world.rollerDoor = rd;
-    var rdM = colorMat(0x8a8f96, 0.4, 0.7); for (var s = 0; s < 12; s++) { var slat = new THREE.Mesh(new THREE.BoxGeometry(2.96, 0.19, 0.06), rdM); slat.position.y = -1.1 + s * 0.2; slat.castShadow = true; rd.add(slat); }
+    var rdM = colorMat(0x8a8f96, 0.4, 0.7); for (var s = 0; s < 12; s++) { var slat = new THREE.Mesh(bevelGeo(2.96, 0.19, 0.06), rdM); slat.position.y = -1.1 + s * 0.2; slat.castShadow = true; rd.add(slat); }
     var rdHit = new THREE.Mesh(new THREE.BoxGeometry(3.0, 2.4, 0.3), MAT.none); rdHit.position.y = 0; rd.add(rdHit); interactable(rdHit, { kind: 'roller' });
     [3.0, 6.0].forEach(function (x) { box(0.08, 2.5, 0.12, colorMat(0x2a2d33, 0.5, 0.6), x, 1.25, AZ1); }); box(3.2, 0.12, 0.2, colorMat(0x2a2d33, 0.5, 0.6), 4.5, 2.46, AZ1);
     rollerSet(false);
@@ -340,7 +356,7 @@
     var YX1 = -5.0, YX2 = 10.0, YZ1 = -22.5, YZ2 = AZ1; world.yardGateZ = YZ1;   /* 15 by 10 m; the garage takes the east side, the lane leaves at x 3 to 6 on the south side */
     floorPlane(MAT.asphalt, YX1, YX2, YZ1, YZ2, 3.0, 0.005);
     var fenceM = colorMat(0x6a6f76, 0.5, 0.7);
-    function fenceRun(x1, z1, x2, z2) { var len = Math.hypot(x2 - x1, z2 - z1), cx = (x1 + x2) / 2, cz = (z1 + z2) / 2, ang = Math.atan2(x2 - x1, z2 - z1); var gr = new THREE.Group(); gr.position.set(cx, 0, cz); gr.rotation.y = ang; world.group.add(gr); [0.5, 1.75].forEach(function (y) { var r = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, len), fenceM); r.position.y = y; gr.add(r); }); var mesh = new THREE.Mesh(new THREE.PlaneGeometry(len, 1.8), new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x9aa0a8, transparent: true, opacity: 0.35, side: THREE.DoubleSide, roughness: 1 })); mesh.rotation.y = Math.PI / 2; mesh.position.y = 1.0; gr.add(mesh); for (var p = 0; p <= len; p += 2.5) { var post = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.0, 8), fenceM); post.position.set(0, 1.0, -len / 2 + Math.min(p, len)); gr.add(post); } world.obstacles.push({ x1: Math.min(x1, x2) - 0.1, x2: Math.max(x1, x2) + 0.1, z1: Math.min(z1, z2) - 0.1, z2: Math.max(z1, z2) + 0.1, tag: 'fence', floorLevel: 0 }); }
+    function fenceRun(x1, z1, x2, z2) { var len = Math.hypot(x2 - x1, z2 - z1), cx = (x1 + x2) / 2, cz = (z1 + z2) / 2, ang = Math.atan2(x2 - x1, z2 - z1); var gr = new THREE.Group(); gr.position.set(cx, 0, cz); gr.rotation.y = ang; world.group.add(gr); [0.5, 1.75].forEach(function (y) { var r = new THREE.Mesh(bevelGeo(0.04, 0.04, len), fenceM); r.position.y = y; gr.add(r); }); var mesh = new THREE.Mesh(new THREE.PlaneGeometry(len, 1.8), new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x9aa0a8, transparent: true, opacity: 0.35, side: THREE.DoubleSide, roughness: 1 })); mesh.rotation.y = Math.PI / 2; mesh.position.y = 1.0; gr.add(mesh); for (var p = 0; p <= len; p += 2.5) { var post = new THREE.Mesh(roundCylGeo(0.03, 0.03, 2.0, 8), fenceM); post.position.set(0, 1.0, -len / 2 + Math.min(p, len)); gr.add(post); } world.obstacles.push({ x1: Math.min(x1, x2) - 0.1, x2: Math.max(x1, x2) + 0.1, z1: Math.min(z1, z2) - 0.1, z2: Math.max(z1, z2) + 0.1, tag: 'fence', floorLevel: 0 }); }
     fenceRun(YX1, YZ2, YX1, YZ1); fenceRun(YX2, YZ2, YX2, -14.0); fenceRun(YX1, YZ1, 3.0, YZ1); fenceRun(6.0, YZ1, YX2, YZ1);   /* the east run stops where the garage wall takes over */
     // ── the garage: its own brick building on the east side of the yard, roller door onto the yard, the car lives here ──
     (function () {
@@ -356,7 +372,7 @@
       box(GX2 - GX1 + T + 0.3, 0.08, GZ2 - GZ1 + T + 0.3, MAT.trim, (GX1 + GX2) / 2, GH + 0.29, (GZ1 + GZ2) / 2, { cast: false });
       var gceil = new THREE.Mesh(new THREE.PlaneGeometry(GX2 - GX1, GZ2 - GZ1), MAT.ceiling); gceil.rotation.x = Math.PI / 2; gceil.position.set((GX1 + GX2) / 2, GH - 0.012, (GZ1 + GZ2) / 2); world.group.add(gceil);
       var gd = new THREE.Group(); gd.position.set(GX1, 1.2, DZ); gd.rotation.y = Math.PI / 2; world.group.add(gd); world.garageDoor = gd;   /* roller door hung in the west wall */
-      var gdM = colorMat(0x8a8f96, 0.4, 0.7); for (var s = 0; s < 12; s++) { var slat = new THREE.Mesh(new THREE.BoxGeometry(2.96, 0.19, 0.06), gdM); slat.position.y = -1.1 + s * 0.2; slat.castShadow = true; gd.add(slat); }
+      var gdM = colorMat(0x8a8f96, 0.4, 0.7); for (var s = 0; s < 12; s++) { var slat = new THREE.Mesh(bevelGeo(2.96, 0.19, 0.06), gdM); slat.position.y = -1.1 + s * 0.2; slat.castShadow = true; gd.add(slat); }
       var gdHit = new THREE.Mesh(new THREE.BoxGeometry(3.0, 2.4, 0.5), MAT.none); gd.add(gdHit); interactable(gdHit, { kind: 'garage' });
       [DZ - 1.5, DZ + 1.5].forEach(function (z) { box(0.12, 2.5, 0.08, colorMat(0x2a2d33, 0.5, 0.6), GX1, 1.25, z); }); box(0.2, 0.12, 3.2, colorMat(0x2a2d33, 0.5, 0.6), GX1, 2.46, DZ);
       garageSet(false);
@@ -401,12 +417,12 @@
       [[2.0, LZ0 - 0.4], [7.0, LZ0 - 0.4]].forEach(function (p) { cyl(0.08, 0.09, 0.95, colorMat(0x24282d, 0.7), p[0], 0.47, p[1], null, 8); });   /* bollards at the mouth */
       signPlane(['PRIVATE ROAD', 'Grow Co. deliveries only · barrier ahead'], 1.4, 0.5, 1.0, 2.0, LZ0 - 0.2, 0, { titleColor: '#ff6b6b', bg: '#101410' }); box(0.06, 2.2, 0.06, colorMat(0x3a4046, 0.5), 1.0, 1.1, LZ0 - 0.25);
       signPlane(['STOP', 'wait for the barrier'], 0.8, 0.5, 7.75, 1.6, BZ - 0.6, 0, { titleColor: '#ffffff', bg: '#b3121b' }); box(0.05, 1.6, 0.05, colorMat(0x3a4046, 0.5), 7.75, 0.8, BZ - 0.65);
-      var cam = new THREE.Group(); cam.position.set(7.2, 3.3, YZ1 - 0.5); cam.rotation.y = 0.6; world.group.add(cam); var cb = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.22), colorMat(0xe8e8e4, 0.5)); cam.add(cb); var cl = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.03, 0.06, 12), MAT.black); cl.rotation.x = Math.PI / 2; cl.position.z = -0.13; cam.add(cl); cyl(0.05, 0.06, 3.3, colorMat(0x3a4046, 0.5), 7.2, 1.65, YZ1 - 0.5, null, 8);   /* a camera on a post watches the gate */
+      var cam = new THREE.Group(); cam.position.set(7.2, 3.3, YZ1 - 0.5); cam.rotation.y = 0.6; world.group.add(cam); var cb = new THREE.Mesh(bevelGeo(0.1, 0.1, 0.22), colorMat(0xe8e8e4, 0.5)); cam.add(cb); var cl = new THREE.Mesh(roundCylGeo(0.035, 0.03, 0.06, 12), MAT.black); cl.rotation.x = Math.PI / 2; cl.position.z = -0.13; cam.add(cl); cyl(0.05, 0.06, 3.3, colorMat(0x3a4046, 0.5), 7.2, 1.65, YZ1 - 0.5, null, 8);   /* a camera on a post watches the gate */
       for (var tf = 0; tf < 50; tf++) { var side = tf % 2 ? 1 : -1; plantTuft(4.5 + side * randf(2.5, 2.85), 0, randf(LZ0 + 0.3, YZ1 - 0.3)); }
       var bar = new THREE.Group(); bar.position.set(7.15, 0.95, BZ); world.group.add(bar); world.barrier = bar;   /* the barrier: cabinet on the right, striped boom across the lane, swings up */
       box(0.4, 1.0, 0.36, colorMat(0xd8d8d2, 0.5), 7.15, 0.5, BZ, { cast: true, solid: true, tag: 'barrier-post' }); box(0.42, 0.06, 0.38, colorMat(0xc9302c, 0.5), 7.15, 1.03, BZ, { cast: false });
       var boomTex = makeTex(128, 32, function (ctx, w, h) { for (var i = 0; i < 8; i++) { ctx.fillStyle = i % 2 ? '#d62828' : '#f4f4f0'; ctx.fillRect(i * 16, 0, 16, h); } }, [6, 1]);
-      var boom = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 4.9, 10), new THREE.MeshStandardMaterial({ map: boomTex, roughness: 0.5 })); boom.rotation.z = Math.PI / 2; boom.position.x = -2.45; boom.castShadow = true; bar.add(boom);
+      var boom = new THREE.Mesh(roundCylGeo(0.045, 0.045, 4.9, 10), new THREE.MeshStandardMaterial({ map: boomTex, roughness: 0.5 })); boom.rotation.z = Math.PI / 2; boom.position.x = -2.45; boom.castShadow = true; bar.add(boom);
       var tip = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), glowMat(0xff3a3a, 1.5)); tip.position.x = -4.9; bar.add(tip);
       var bHit = new THREE.Mesh(new THREE.BoxGeometry(5.0, 1.2, 0.8), MAT.none); bHit.position.x = -2.45; bar.add(bHit); interactable(bHit, { kind: 'barrier' });
       barrierSet(false);
@@ -414,9 +430,9 @@
     // ── the backyard, dressed: a dumpster you can use, pallets, crates, a wall lamp, the condenser, downpipes and a drain ──
     (function () {
       var dg = new THREE.Group(); dg.position.set(YX1 + 1.3, 0, YZ2 - 1.1); world.group.add(dg); var dM = colorMat(0x2f6b3a, 0.6, 0.2), dD = colorMat(0x24522c, 0.6, 0.2);
-      var body = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.15, 1.0), dM); body.position.y = 0.72; body.castShadow = true; body.receiveShadow = true; dg.add(body);
-      var lid = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.08, 1.06), dD); lid.position.set(0, 1.34, 0); lid.rotation.x = -0.08; lid.castShadow = true; dg.add(lid);
-      [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]].forEach(function (w) { var wh = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10), MAT.black); wh.rotation.z = Math.PI / 2; wh.position.set(w[0], 0.08, w[1]); dg.add(wh); });
+      var body = new THREE.Mesh(bevelGeo(1.7, 1.15, 1.0), dM); body.position.y = 0.72; body.castShadow = true; body.receiveShadow = true; dg.add(body);
+      var lid = new THREE.Mesh(bevelGeo(1.74, 0.08, 1.06), dD); lid.position.set(0, 1.34, 0); lid.rotation.x = -0.08; lid.castShadow = true; dg.add(lid);
+      [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]].forEach(function (w) { var wh = new THREE.Mesh(roundCylGeo(0.07, 0.07, 0.06, 10), MAT.black); wh.rotation.z = Math.PI / 2; wh.position.set(w[0], 0.08, w[1]); dg.add(wh); });
       var dsign = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.28), new THREE.MeshBasicMaterial({ map: textTex(['GROW CO.', 'waste only'], 280, 110, { size: 34, bold: true, bg: 'rgba(0,0,0,0)', color: '#dfe8dc', titleColor: '#dfe8dc', line: 'rgba(0,0,0,0)' }), transparent: true })); dsign.position.set(0, 0.8, 0.505); dg.add(dsign);
       var dh = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.5, 1.3), MAT.none); dh.position.y = 0.75; dg.add(dh); interactable(dh, { kind: 'dumpster' });
       world.obstacles.push({ x1: YX1 + 0.4, x2: YX1 + 2.2, z1: YZ2 - 1.65, z2: YZ2 - 0.55, tag: 'yard', floorLevel: 0 });
@@ -429,8 +445,8 @@
       for (var tf = 0; tf < 36; tf++) { var tx = randf(YX1 + 0.2, YX2 - 0.2), tz = randf(YZ1 + 0.15, YZ2 - 0.15); if (Math.abs(tx - 4.5) < 2.4 || (tx > YX1 + 0.3 && tx < YX1 + 2.3 && tz > YZ2 - 1.8)) continue; plantTuft(tx, 0, tz); }   /* weeds along the fence, not in the bay or the doorway */
     })();
     var gate = new THREE.Group(); gate.position.set(3.0, 0, YZ1); world.group.add(gate); world.yardGate = gate;
-    var gf = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.8, 0.05), new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x9aa0a8, transparent: true, opacity: 0.45, roughness: 1 })); gf.position.set(1.5, 1.0, 0); gate.add(gf);
-    [[1.5, 0.15], [1.5, 1.85]].forEach(function (r) { var rr = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.05, 0.05), fenceM); rr.position.set(r[0], r[1], 0); gate.add(rr); }); [0.05, 2.95].forEach(function (x) { var pp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.9, 0.06), fenceM); pp.position.set(x, 1.0, 0); gate.add(pp); });
+    var gf = new THREE.Mesh(bevelGeo(3.0, 1.8, 0.05), new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x9aa0a8, transparent: true, opacity: 0.45, roughness: 1 })); gf.position.set(1.5, 1.0, 0); gate.add(gf);
+    [[1.5, 0.15], [1.5, 1.85]].forEach(function (r) { var rr = new THREE.Mesh(bevelGeo(3.0, 0.05, 0.05), fenceM); rr.position.set(r[0], r[1], 0); gate.add(rr); }); [0.05, 2.95].forEach(function (x) { var pp = new THREE.Mesh(bevelGeo(0.06, 1.9, 0.06), fenceM); pp.position.set(x, 1.0, 0); gate.add(pp); });
     var gHit = new THREE.Mesh(new THREE.BoxGeometry(3.0, 2.0, 0.4), MAT.none); gHit.position.set(1.5, 1.0, 0); gate.add(gHit); interactable(gHit, { kind: 'gate' });
     gateSet(false);
     signPlane(['GROW CO.', 'deliveries & collections · back gate'], 1.6, 0.4, 4.5, 2.2, YZ1 - 0.1, Math.PI, { titleColor: '#6fdc8c', bg: '#101410' });
@@ -449,16 +465,64 @@
     // register: body, drawer, keypad, arm-mounted screen, receipt printer, card reader. The whole till is one table
     // fixture (build mode carries it along the counter or anywhere flat), and so are the tip jar, the bell and the cards.
     fixtureFromBuild('counterTill', 'till', 0, function () {
-    var reg = box(0.52, 0.1, 0.44, MAT.register, -1.0, 1.11, 3.55);
-    box(0.5, 0.03, 0.42, MAT.plastic, -1.0, 1.05, 3.55, { cast: false }); box(0.36, 0.02, 0.01, MAT.chrome, -1.0, 1.08, 3.335, { cast: false });
+    // the cash drawer cabinet: brushed steel on rubber feet, the terminal bolted to its lid
+    var reg = box(0.5, 0.118, 0.46, MAT.gunmetal, -1.0, 1.127, 3.55, { r: 0.01 });
+    [[-0.2, -0.18], [0.2, -0.18], [-0.2, 0.18], [0.2, 0.18]].forEach(function (f) { cyl(0.022, 0.026, 0.012, MAT.soft, -1.0 + f[0], 1.066, 3.55 + f[1], null, 12); });
+    box(0.46, 0.004, 0.42, MAT.steel, -1.0, 1.1875, 3.55, { cast: false });
     // the till is a tablet on a stand: its screen is a touch screen (look at it, press E), and the cash drawer sits under it
     world.reg = { drawerT: 0, lastSale: null };
     buildPos(-1.0, 3.62);
     var scrGlow = new THREE.PointLight(0x6fdc8c, 0.12, 1.0); scrGlow.position.set(-1.0, 1.3, 3.5); world.group.add(scrGlow);   /* in the group, so the glow goes where the till goes */
-    var drawer = new THREE.Group(); drawer.position.set(-1.0, 1.07, 3.55); world.group.add(drawer); world.reg.drawer = drawer; var dbody = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.06, 0.38), colorMat(0x2a3138, 0.5, 0.3)); drawer.add(dbody); var dface = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.075, 0.02), MAT.register); dface.position.z = -0.2; drawer.add(dface); var dhandle = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.015, 0.015), MAT.chrome); dhandle.position.set(0, 0, -0.215); drawer.add(dhandle); [[-0.16, 0x9ff0b5], [-0.06, 0xe8e8ee], [0.04, 0xffd766], [0.14, 0x9ad0ff]].forEach(function (sl) { var s2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.28), colorMat(0x3a4148, 0.5)); s2.position.set(sl[0], 0.03, 0.02); drawer.add(s2); var notes = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.012, 0.15), colorMat(sl[1], 0.7)); notes.position.set(sl[0], 0.045, -0.02); drawer.add(notes); }); for (var cn = 0; cn < 4; cn++) { var cs = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.03, 12), MAT.chrome); cs.position.set(-0.16 + cn * 0.1, 0.05, 0.13); drawer.add(cs); }
+    var drawer = new THREE.Group(); drawer.position.set(-1.0, 1.118, 3.55); world.group.add(drawer); world.reg.drawer = drawer;
+    (function () {
+      function dm(geo, mat, x, y, z) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); drawer.add(m); return m; }
+      var trayM = colorMat(0x1a1d21, 0.7, 0.1), cupM = colorMat(0x2b3036, 0.6, 0.2);
+      dm(bevelGeo(0.45, 0.07, 0.4), trayM, 0, 0, 0);
+      var face = dm(bevelGeo(0.485, 0.102, 0.022, 0.007), MAT.steel, 0, 0, -0.233); face.castShadow = true;
+      dm(new THREE.BoxGeometry(0.17, 0.016, 0.006), MAT.black, 0, -0.026, -0.2445); dm(new THREE.BoxGeometry(0.17, 0.005, 0.012), MAT.chrome, 0, -0.016, -0.248);   /* the finger pull and its lip */
+      dm(new THREE.BoxGeometry(0.3, 0.004, 0.004), MAT.black, 0, 0.03, -0.2445);                                                                                   /* the slot cheques and big notes go through */
+      var lock = dm(roundCylGeo(0.012, 0.012, 0.008, 16), MAT.brass, 0.19, 0.0, -0.246); lock.rotation.x = Math.PI / 2; dm(new THREE.BoxGeometry(0.003, 0.012, 0.003), MAT.black, 0.19, 0.0, -0.2505);
+      /* inside, seen when it slides out: coin cups along the front, notes under sprung clips behind them */
+      [[0x9ff0b5, 0], [0xe8e8ee, 1], [0xffd766, 2], [0x9ad0ff, 3], [0xf3b6c8, 4]].forEach(function (sl) {
+        var x = -0.172 + sl[1] * 0.086;
+        dm(new THREE.BoxGeometry(0.078, 0.004, 0.17), cupM, x, 0.037, 0.0); dm(new THREE.BoxGeometry(0.07, 0.014, 0.15), colorMat(sl[0], 0.85), x, 0.046, 0.0);
+        dm(new THREE.BoxGeometry(0.06, 0.006, 0.012), MAT.chrome, x, 0.056, 0.035);
+        if (sl[1] < 4) dm(new THREE.BoxGeometry(0.004, 0.026, 0.3), trayM, x + 0.043, 0.048, -0.04);
+        dm(new THREE.BoxGeometry(0.078, 0.004, 0.085), cupM, x, 0.037, -0.145);
+        var coinM = sl[1] % 3 === 0 ? MAT.chrome : sl[1] % 3 === 1 ? MAT.brass : colorMat(0xb87333, 0.35, 1);
+        for (var cn = 0; cn < 2; cn++) dm(roundCylGeo(0.014, 0.014, 0.012 + ((sl[1] * 7 + cn * 3) % 4) * 0.005, 14), coinM, x - 0.017 + cn * 0.034, 0.048, -0.145 + (cn ? 0.012 : -0.012));
+      });
+      dm(new THREE.BoxGeometry(0.43, 0.026, 0.004), trayM, 0, 0.048, -0.095);
+    })();
     drawRegister();
-    box(0.2, 0.08, 0.14, MAT.plastic, -0.68, 1.12, 3.68); box(0.12, 0.002, 0.06, MAT.white, -0.68, 1.161, 3.66, { cast: false });
-    var reader = box(0.09, 0.14, 0.05, MAT.black, -0.5, 1.13, 3.75); reader.rotation.x = 0.4; var rscr = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.05), MAT.screen); rscr.position.set(-0.5, 1.16, 3.777); rscr.rotation.x = 0.4; world.group.add(rscr);
+    // the receipt printer, with a length of paper curling out of it
+    box(0.16, 0.12, 0.2, MAT.gloss, -0.66, 1.121, 3.68, { r: 0.012 }); box(0.15, 0.008, 0.11, MAT.plastic, -0.66, 1.183, 3.705, { cast: false }); box(0.1, 0.004, 0.006, MAT.black, -0.66, 1.1825, 3.638, { cast: false });
+    (function () {
+      var pg = new THREE.PlaneGeometry(0.08, 0.13, 1, 10), pp = pg.attributes.position;
+      for (var i = 0; i < pp.count; i++) { var t = (pp.getY(i) + 0.065) / 0.13, a = t * 1.9; pp.setXYZ(i, pp.getX(i), Math.sin(a) * 0.055, -(1 - Math.cos(a)) * 0.055 - t * 0.012); }
+      pg.computeVertexNormals(); var paper = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ color: 0xfbfaf4, roughness: 0.9, side: THREE.DoubleSide })); paper.position.set(-0.66, 1.184, 3.638); paper.castShadow = true; world.group.add(paper);
+      var pl = new THREE.Mesh(new THREE.CircleGeometry(0.004, 8), new THREE.MeshBasicMaterial({ color: 0x6fdc8c, toneMapped: false })); pl.position.set(-0.6, 1.188, 3.75); pl.rotation.x = -Math.PI / 2; world.group.add(pl);
+      cyl(0.008, 0.008, 0.004, MAT.soft, -0.62, 1.189, 3.75, null, 10);
+    })();
+    // the card reader on its stalk, facing the window
+    (function () {
+      cyl(0.04, 0.046, 0.012, MAT.soft, -0.44, 1.067, 3.79, null, 18); cyl(0.011, 0.011, 0.075, MAT.alu, -0.44, 1.108, 3.79, null, 10);
+      var rg = new THREE.Group(); rg.position.set(-0.44, 1.165, 3.795); rg.rotation.x = -0.62; world.group.add(rg);
+      var body = new THREE.Mesh(bevelGeo(0.084, 0.165, 0.028, 0.011), MAT.gloss); body.castShadow = true; rg.add(body);
+      var rc = document.createElement('canvas'); rc.width = 264; rc.height = 176; var rx = rc.getContext('2d'); scrLcd(rx, 264, 176, DESK_OK); rx.textAlign = 'center'; rx.fillStyle = DESK_INK; rx.font = '700 34px ' + DESK_FONT; rx.fillText('Tap or insert', 132, 34); rx.strokeStyle = DESK_OK; rx.lineWidth = 6; rx.lineCap = 'round'; for (var w = 0; w < 4; w++) { rx.beginPath(); rx.arc(96, 122, 14 + w * 14, -0.75, 0.75); rx.stroke(); }
+      var rs = litPlane(rc, 0.066, 0.044); rs.position.set(0, 0.05, 0.0145); rg.add(rs);
+      for (var kr = 0; kr < 4; kr++) for (var kc = 0; kc < 3; kc++) { var km = new THREE.Mesh(new THREE.BoxGeometry(0.017, 0.012, 0.004), kr === 3 ? colorMat([0xd0352b, 0xe3b52c, 0x39a85a][kc], 0.5) : colorMat(0xb9c0c6, 0.5)); km.position.set(-0.022 + kc * 0.022, 0.008 - kr * 0.018, 0.0155); rg.add(km); }
+      var slot = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.004, 0.006), MAT.black); slot.position.set(0, -0.078, 0.008); rg.add(slot);
+    })();
+    // the scanner in its cradle, on the cashier's side
+    (function () {
+      box(0.09, 0.02, 0.12, MAT.soft, -1.37, 1.071, 3.5, { r: 0.008 }); cyl(0.016, 0.02, 0.06, MAT.soft, -1.37, 1.11, 3.52, null, 12);
+      var sg = new THREE.Group(); sg.position.set(-1.37, 1.15, 3.5); sg.rotation.set(0.5, 0.25, 0); world.group.add(sg);
+      var grip = new THREE.Mesh(bevelGeo(0.036, 0.13, 0.044, 0.014), MAT.soft); grip.position.set(0, -0.02, 0.02); grip.castShadow = true; sg.add(grip);
+      var head = new THREE.Mesh(bevelGeo(0.066, 0.05, 0.11, 0.016), MAT.gloss); head.position.set(0, 0.06, -0.015); head.castShadow = true; sg.add(head);
+      var eye = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.026), new THREE.MeshBasicMaterial({ color: 0xff3b30, toneMapped: false })); eye.position.set(0, 0.06, -0.0705); eye.rotation.y = Math.PI; sg.add(eye);
+      var trig = new THREE.Mesh(bevelGeo(0.014, 0.03, 0.012, 0.004), colorMat(0xe3b52c, 0.5)); trig.position.set(0, 0.022, -0.006); sg.add(trig);
+    })();
     interactable(reg, { kind: 'register', label: 'Till', prompt: 'Sell & serve' });
     }, { table: true, baseY: 1.06 });
     world.reg.drawerZ = world.reg.drawer.position.z;   /* the drawer now slides in the till's own frame, wherever the till stands */
@@ -494,10 +558,10 @@
     dehumUnit('dry', ROOM.x - 0.32, -3.0, -Math.PI / 2);     // dry & cure room, right wall, facing into the room
     dehumUnit('grow', -ROOM.x + 0.32, -7.2, Math.PI / 2);    // grow room, left wall, facing into the room
     var ductM = new THREE.MeshStandardMaterial({ map: TEX.brushed, color: 0xc5c8cd, roughness: 0.4, metalness: 0.6 });
-    var duct = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 8, 14), ductM); duct.rotation.z = Math.PI / 2; duct.position.set(4, ROOM.h - 0.28, -ROOM.z + 1.1); duct.castShadow = true; world.group.add(duct);
-    for (var dc = 0; dc < 5; dc++) { var ring = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.02, 8, 18), ductM); ring.rotation.y = Math.PI / 2; ring.position.set(1 + dc * 1.6, ROOM.h - 0.28, -ROOM.z + 1.1); world.group.add(ring); var hang = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.14, 0.03), MAT.plastic), _h = hang; _h.position.set(1 + dc * 1.6, ROOM.h - 0.07, -ROOM.z + 1.1); world.group.add(_h); }
-    var filter = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.7, 16), colorMat(0xe0e0e0, 0.9)); filter.rotation.z = Math.PI / 2; filter.position.set(-0.1, ROOM.h - 0.28, -ROOM.z + 1.1); filter.castShadow = true; world.group.add(filter);
-    var flange = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 16), MAT.black); flange.rotation.z = Math.PI / 2; flange.position.set(0.27, ROOM.h - 0.28, -ROOM.z + 1.1); world.group.add(flange);
+    var duct = new THREE.Mesh(roundCylGeo(0.14, 0.14, 8, 14), ductM); duct.rotation.z = Math.PI / 2; duct.position.set(4, ROOM.h - 0.28, -ROOM.z + 1.1); duct.castShadow = true; world.group.add(duct);
+    for (var dc = 0; dc < 5; dc++) { var ring = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.02, 8, 18), ductM); ring.rotation.y = Math.PI / 2; ring.position.set(1 + dc * 1.6, ROOM.h - 0.28, -ROOM.z + 1.1); world.group.add(ring); var hang = new THREE.Mesh(bevelGeo(0.03, 0.14, 0.03), MAT.plastic), _h = hang; _h.position.set(1 + dc * 1.6, ROOM.h - 0.07, -ROOM.z + 1.1); world.group.add(_h); }
+    var filter = new THREE.Mesh(roundCylGeo(0.22, 0.22, 0.7, 16), colorMat(0xe0e0e0, 0.9)); filter.rotation.z = Math.PI / 2; filter.position.set(-0.1, ROOM.h - 0.28, -ROOM.z + 1.1); filter.castShadow = true; world.group.add(filter);
+    var flange = new THREE.Mesh(roundCylGeo(0.2, 0.2, 0.06, 16), MAT.black); flange.rotation.z = Math.PI / 2; flange.position.set(0.27, ROOM.h - 0.28, -ROOM.z + 1.1); world.group.add(flange);
     var fanBox = box(0.36, 0.36, 0.36, MAT.plastic, 8.2, ROOM.h - 0.28, -ROOM.z + 1.1); box(0.1, 0.06, 0.2, MAT.black, 8.2, ROOM.h - 0.28, -ROOM.z + 1.3, { cast: false });
     // wall shelf in the processing room with a few jars and a scale
     box(0.25, 0.03, 1.0, MAT.wood, ROOM.x - 0.15, 1.7, 1.0); [0.55, 1.45].forEach(function (z) { var br = box(0.2, 0.03, 0.03, MAT.chrome, ROOM.x - 0.12, 1.68, z); var br2 = box(0.03, 0.2, 0.03, MAT.chrome, ROOM.x - 0.03, 1.6, z); }); for (var j = 0; j < 3; j++) { cyl(0.05, 0.05, 0.12, MAT.jar, ROOM.x - 0.15, 1.78, 0.7 + j * 0.3, null, 12); cyl(0.052, 0.052, 0.015, MAT.jarLid, ROOM.x - 0.15, 1.845, 0.7 + j * 0.3, null, 12); }
@@ -507,19 +571,19 @@
     framedPoster(textTex(['SEPTEMBER', '', 'water · feed', 'treat · harvest'], 200, 240, { size: 30, bg: '#f0ead8', color: '#333', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }), 0.5, 0.6, -ROOM.x + 0.02, 1.9, -8.3, Math.PI / 2, MAT.white);
     // pegboard with tools instead of an emoji sign
     var pb = new THREE.Group(); pb.position.set(ROOM.x - 0.03, 1.9, -0.95); pb.rotation.y = -Math.PI / 2; world.group.add(pb);
-    var board = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.8, 0.02), colorMat(0x8a6a4a, 0.9)); pb.add(board);
-    for (var py = -0.32; py <= 0.32; py += 0.08) for (var px = -0.48; px <= 0.48; px += 0.08) { var hole = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.03, 6), MAT.black); hole.rotation.x = Math.PI / 2; hole.position.set(px, py, 0); pb.add(hole); }
+    var board = new THREE.Mesh(bevelGeo(1.1, 0.8, 0.02), colorMat(0x8a6a4a, 0.9)); pb.add(board);
+    for (var py = -0.32; py <= 0.32; py += 0.08) for (var px = -0.48; px <= 0.48; px += 0.08) { var hole = new THREE.Mesh(roundCylGeo(0.006, 0.006, 0.03, 6), MAT.black); hole.rotation.x = Math.PI / 2; hole.position.set(px, py, 0); pb.add(hole); }
     function tool(fn) { var g = new THREE.Group(); pb.add(g); fn(g); return g; }
-    tool(function (g) { g.position.set(-0.4, 0.05, 0.03); var h = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.32, 8), MAT.wood); g.add(h); var head = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 0.04), MAT.metal); head.position.y = 0.17; g.add(head); });          // hammer
-    tool(function (g) { g.position.set(-0.2, 0.0, 0.03); g.rotation.z = 0.3; var s = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.34, 0.01), MAT.metal); g.add(s); var j = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.012, 6, 12, Math.PI * 1.4), MAT.metal); j.position.y = 0.19; j.rotation.z = -0.9; g.add(j); });  // wrench
-    tool(function (g) { g.position.set(0.05, 0.02, 0.03); [-0.4, 0.4].forEach(function (a) { var bl = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.006), MAT.chrome); bl.rotation.z = a; bl.position.y = 0.08; g.add(bl); var r = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 12), colorMat(0xc94a3a, 0.5)); r.rotation.z = a; r.position.set(Math.sin(a) * 0.13, -0.1, 0); g.add(r); }); }); // scissors
-    tool(function (g) { g.position.set(0.28, 0.0, 0.03); var h = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.14, 8), colorMat(0xe0c25a, 0.6)); h.position.y = 0.12; g.add(h); var sh = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.2, 6), MAT.chrome); sh.position.y = -0.05; g.add(sh); });   // screwdriver
-    tool(function (g) { g.position.set(0.45, 0.02, 0.03); var t = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.05), colorMat(0xe0c25a, 0.6)); g.add(t); var lbl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.052), MAT.black); g.add(lbl); });   // tape measure
+    tool(function (g) { g.position.set(-0.4, 0.05, 0.03); var h = new THREE.Mesh(roundCylGeo(0.012, 0.014, 0.32, 8), MAT.wood); g.add(h); var head = new THREE.Mesh(bevelGeo(0.08, 0.05, 0.04), MAT.metal); head.position.y = 0.17; g.add(head); });          // hammer
+    tool(function (g) { g.position.set(-0.2, 0.0, 0.03); g.rotation.z = 0.3; var s = new THREE.Mesh(bevelGeo(0.025, 0.34, 0.01), MAT.metal); g.add(s); var j = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.012, 6, 12, Math.PI * 1.4), MAT.metal); j.position.y = 0.19; j.rotation.z = -0.9; g.add(j); });  // wrench
+    tool(function (g) { g.position.set(0.05, 0.02, 0.03); [-0.4, 0.4].forEach(function (a) { var bl = new THREE.Mesh(bevelGeo(0.02, 0.22, 0.006), MAT.chrome); bl.rotation.z = a; bl.position.y = 0.08; g.add(bl); var r = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 12), colorMat(0xc94a3a, 0.5)); r.rotation.z = a; r.position.set(Math.sin(a) * 0.13, -0.1, 0); g.add(r); }); }); // scissors
+    tool(function (g) { g.position.set(0.28, 0.0, 0.03); var h = new THREE.Mesh(roundCylGeo(0.014, 0.014, 0.14, 8), colorMat(0xe0c25a, 0.6)); h.position.y = 0.12; g.add(h); var sh = new THREE.Mesh(roundCylGeo(0.005, 0.005, 0.2, 6), MAT.chrome); sh.position.y = -0.05; g.add(sh); });   // screwdriver
+    tool(function (g) { g.position.set(0.45, 0.02, 0.03); var t = new THREE.Mesh(bevelGeo(0.1, 0.1, 0.05), colorMat(0xe0c25a, 0.6)); g.add(t); var lbl = new THREE.Mesh(bevelGeo(0.06, 0.04, 0.052), MAT.black); g.add(lbl); });   // tape measure
     signPlane(['TOOLS', 'keep it clean'], 0.6, 0.2, ROOM.x - 0.02, 2.42, -0.95, -Math.PI / 2, { titleColor: '#ffc857' });
     // fire extinguisher by the hall door, thermostat, more outlets
     var ext = new THREE.Group(); ext.position.set(3.85, 1.0, 2.6); world.group.add(ext);
-    var eb = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.42, 14), colorMat(0xc9302c, 0.35, 0.3)); ext.add(eb); var et = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), colorMat(0xc9302c, 0.35, 0.3)); et.position.y = 0.21; ext.add(et);
-    var ev = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.08, 8), MAT.chrome); ev.position.y = 0.3; ext.add(ev); var eh = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.12), MAT.black); eh.position.set(0, 0.34, 0.03); ext.add(eh); var hose = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.01, 6, 14, Math.PI), MAT.black); hose.position.set(0, 0.1, 0.06); hose.rotation.y = Math.PI / 2; ext.add(hose);
+    var eb = new THREE.Mesh(roundCylGeo(0.07, 0.07, 0.42, 14), colorMat(0xc9302c, 0.35, 0.3)); ext.add(eb); var et = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), colorMat(0xc9302c, 0.35, 0.3)); et.position.y = 0.21; ext.add(et);
+    var ev = new THREE.Mesh(roundCylGeo(0.02, 0.02, 0.08, 8), MAT.chrome); ev.position.y = 0.3; ext.add(ev); var eh = new THREE.Mesh(bevelGeo(0.03, 0.02, 0.12), MAT.black); eh.position.set(0, 0.34, 0.03); ext.add(eh); var hose = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.01, 6, 14, Math.PI), MAT.black); hose.position.set(0, 0.1, 0.06); hose.rotation.y = Math.PI / 2; ext.add(hose);
     var elab = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.14), new THREE.MeshBasicMaterial({ map: textTex(['FIRE'], 100, 140, { size: 34, bold: true, bg: '#fff', color: '#c9302c', titleColor: '#c9302c', line: 'rgba(0,0,0,0)' }) })); elab.position.set(0.072, 0.02, 0); elab.rotation.y = Math.PI / 2; ext.add(elab);
     box(0.06, 0.1, 0.16, MAT.black, 3.93, 1.05, 2.6, { cast: false });
     signPlane(['🧯'], 0.24, 0.24, 3.895, 1.55, 2.6, -Math.PI / 2, { bg: '#c9302c', color: '#fff', line: 'rgba(0,0,0,0)', size: 60 });

@@ -94,7 +94,7 @@ Robber states: `case`, `in`, `grab` or `demand`, `raid`, `loot`, `flee`, plus `d
 | Build mode (F2) | `edit`, `S.layout` | `editToggle`, `editUpdate`, `editGrab`, `editDrop`, `editRotate`, `editReset`; `hooks.editMode` switches the catalogue with it |
 | Build catalogue | `S.custom`, `S.designs` | `grow3d-creative.js`, through `RFGROW.hooks` and `RFGROW.internal`; it takes the keys only for your own builds and the piece you are placing |
 | Removed furniture | `S.layout[id].hidden` | `propGone`, `inGoneProp`: not built, not drawn, not refilled, no E, no collision |
-| DLC | `rfgrowco-workshop` (`on`, `dlcSeeded`) | `RF_WORKSHOP.dlc(id)`, `dlcOn`, `dlcOff`; ids `tobacco`, `lab`, `greenhouse`, `dev` |
+| DLC | `rfgrowco-workshop` (`on`, `dlcSeeded`) | `RF_WORKSHOP.dlc(id)`, `dlcOn`, `dlcOff`; ids `tobacco`, `lab`, `greenhouse`, `dev`, `breeding`, `hydrobay`, `cup`, `merch`, `farm`, `finance`. The six newer ones keep their state in the save under `S.dlc[id]` and plug in through `dlcDefine` in `src/35-dlc-kit.js` |
 | Shop controls | `shop()` | `applyShopState`, the `controls` panel, `MINI_CTL` and `paneMiniCtl` for the front panel and the office panel |
 | Drinks and bins | `S.buff`, each bin's count in `machState(propId).trash` | `drinkHeld`, `isDrink`, `isTrash`, the `cooler`, `trash` and `dumpster` kinds |
 

@@ -18,6 +18,7 @@ This page is generated from `game/guide.js`, the same text the game shows in its
 - [Deliveries: the burner and the tablet](#deliveries-the-burner-and-the-tablet)
 - [The shop van](#the-shop-van)
 - [The Workshop: content packs and DLC](#the-workshop-content-packs-and-dlc)
+- [Breeding, hydroponics, the Cup, merch, the farm and the bank](#breeding-hydroponics-the-cup-merch-the-farm-and-the-bank)
 - [Upstairs and the roof](#upstairs-and-the-roof)
 - [The keyring, doors and locking up](#the-keyring-doors-and-locking-up)
 - [Machines, drinks and the bin](#machines-drinks-and-the-bin)
@@ -30,7 +31,7 @@ You start with **$220**, a small tent, one pot and an empty shop. There's no see
 
 A new shop gets the **guided intro**, a card on the left of the screen that ticks off nine steps as you do them. Finish all nine and **$1,200** goes into the bank. You can switch it off under **Guided intro** in the pause menu, but skipping it costs you the bonus.
 
-1. Walk to the **office PC** in the office (the room left of the hall). Order **soil** and **baggies** under **Supplies** and a **seed** in the **Seed bank**. Get a **grinder** too. The workbench won't bag or roll without one.
+1. Walk to the **office PC** in the office (the room left of the hall) and press **E** to sit down at it. The view moves into the monitor and the desktop fills your screen. **Get up** in its corner, Esc or a right-click stands you up again. Order **soil** and **baggies** under **Supplies** and a **seed** in the **Seed bank**. Get a **grinder** too. The workbench won't bag or roll without one.
 2. Orders come round the back in the supplier's van. What arrives lands on the **supply rack** beside the office PC, or as crates on the **storage racking** in the back room. Every item gets its own bay with a label on the beam (A1 at the bottom left to D6 at the top right) and keeps it while any is left. **E** takes a crate, **Shift+E** takes the whole bay, and **E** with a crate in your hands puts it back. Carry crates where they go yourself, or hire crew later to do it.
 3. Take a bag of soil to the **grow tent** and fill the pot. Fetch the seed from the supply rack and plant it.
 4. When the plant says it's thirsty, grab the **watering can** next to the tent. Feed it **nutrients** once for quality. Spray pests or mould straight away.
@@ -65,6 +66,7 @@ That's the whole game in miniature. Everything else makes the loop bigger, faste
 | **F2** | build mode: move furniture, signs and screens, and build your own from the catalogue (C) |
 | **Right-click** | close the open menu or panel |
 | **F7** | report a bug |
+| **F8** | the dev console (with the Dev Tools DLC switched on) |
 | **F12** or **F9** | screenshot, without the HUD (the desktop app files it under Pictures, Grow Co) |
 | **Esc** | pause menu, with the save file export and import |
 | **F11** | fullscreen (desktop app) |
@@ -161,7 +163,8 @@ Doors are real to everybody in the building, not just to you.
 
 Robberies run in stages: a robber walks in looking like any other customer, the **mask** comes down, the **demand** at the window, an **escalation**, sometimes a **second target** in the back, then the **getaway**.
 
-- Nobody announces themselves, and robbers dress like anyone off the street. Some join the line and wait their turn, then pull the mask at the window. Others browse the lobby and glance at the till now and then. A partner may come in on his own a little later. The guard's ID check at the door catches some of them on a fake card.
+- Nobody announces themselves, and robbers dress like anyone off the street. Some join the line and wait their turn, then pull the mask at the window. Others browse the lobby and glance at the till now and then. A partner may come in on his own a little later. The guard's ID check at the door catches a few of them on a fake card, about one in six.
+- **Don't count on the guard.** He's one unarmed man: he stops a knife robber about one time in five and almost never a gunman or a gang. Cameras and alarms help him a little. The **Armed guard** upgrade, with the firearms licence, is what lets him face a gun.
 - E on anyone in the line or the lobby has a word. A customer just chats. A robber often leaves, and sometimes makes his move there and then.
 - During the demand, E on the till hands it over and nobody gets hurt.
 - Four kinds, growing with your shop: the **snatch thief**, the **knife robber**, the **gunman** (goes for the vault) and the two-man **gang** (the bagman strips your goods shelf, and the cigarette cabinet if its shutter is up).
@@ -240,7 +243,7 @@ The van in the bay under the canopy is also a shop on wheels. It sells what you 
 
 ## The Workshop: content packs and DLC
 
-**DLC** comes first in the Workshop, all four free: **RF Smoking: the Tobacco Works**, **The Extraction Lab**, **The Roof Greenhouse** and **Dev Tools**. A new shop starts without them. Switch one on and it's in every save. Switch it off and it's hidden, but nothing in your saves is lost: switch it back on and it's all still there, a lab batch or a roof bed carrying on where it stopped.
+**DLC** comes first in the Workshop, all ten free: **RF Smoking: the Tobacco Works**, **The Extraction Lab**, **The Roof Greenhouse**, **The Breeding Lab**, **The Hydroponics Bay**, **The Cannabis Cup**, **Merch & Brand**, **The Out-of-town Farm**, **Bank & Insurance** and **Dev Tools**. Each card says what it adds, and **See what's inside** opens the full list. A new shop starts without them. Switch one on and it's in every save. Switch it off and it's hidden, but nothing in your saves is lost: switch it back on and it's all still there, a lab batch or a roof bed carrying on where it stopped.
 
 The **Workshop** is on the main menu. Content packs change what the game has in it: more strains to grow, more lamps and tents, more for the counter display, more town, a different car, snow at Christmas or fireworks at New Year. Turn packs on or off, then press **Apply and rebuild the shop** once and the shop reloads. Your save isn't touched, because a pack only adds things you can then go and buy.
 
@@ -259,6 +262,48 @@ The **Workshop** is on the main menu. Content packs change what the game has in 
 **Models from Blender.** Make the object in Blender, then **File, Export, glTF 2.0** and choose **glTF Binary (.glb)**. One metre in Blender is one metre in the game, +Y is up, and the object should sit on the origin. Name the slot it replaces in the pack's **models** section, for example **item:joints** or **item:can**, and select the .json and the .glb files together when you import. The model then stands in for whatever the game would have built by hand.
 
 Packs that ship with the game can't be overwritten, so give yours its own id.
+
+## Breeding, hydroponics, the Cup, merch, the farm and the bank
+
+Six more DLC, all free, switched on under **Workshop and DLC** in the main menu. Each one puts something new in the shop or the town. Three of them have to be fitted first: walk up to the outline where it will stand and **E** pays for it.
+
+**The Breeding Lab.** A bench on the back wall of the grow room ($900 to fit). Pick two different strains as parents and start the cross: it costs $150 and one seed of each from the supply rack, and takes about 8 minutes. What comes out takes after both parents in strength, yield and grow time, and about one cross in seven throws a plant that stands out in one of them. Give it a name and it's yours: you get 6 seeds at once and the seed bank stocks it from then on. The library holds 12 cultivars of your own (rep +2 for each).
+
+**The Hydroponics Bay.** A rack of eight sites on the right wall, fed from one tank ($1,800 to fit). E on a site with a seed in your hand plants it: no pot and no soil. Plants grow nearly twice as fast while the tank is right, and at less than half speed while it isn't. E on the tank shows the two things to watch:
+
+- **pH** creeps up as the plants drink. Keep it between 5.5 and 6.5. Bringing it back to 6.0 costs $5.
+- **Feed** runs down faster the more plants are on the rack. Top it up for $14, or pour in nutrients you're holding.
+
+A ripe plant is cut with E and goes on the drying line like any other harvest.
+
+**The Cannabis Cup.** Every seventh day the town judges one jar from every grower. Enter 10 g of one strain at the **trophy cabinet** in the lobby or in the **Cup** app on the office PC. Quality counts most and strength counts too. You're up against five other growers, and they get better as your shop grows. You can take the jar back until the morning it's judged.
+
+- **First**: $1,200 plus $100 for each of your levels, a gold cup, rep +12.
+- **Second**: $500, a silver cup, rep +6.
+- **Third**: $200, a bronze cup, rep +3.
+- Every **gold cup** in the cabinet brings 3% more people through the door, up to 15%.
+
+**Merch & Brand.** A stand in the lobby ($600 to fit) with T-shirts, caps, mugs and tote bags. Order them by the box of 10 at the stand or in the **Merch** app on the office PC, and the printer sends them round in a minute or two. The stand holds 40 of each. People buy while they wait, and the money goes in the till. Three price levels: keen (80%) sells faster, fair (100%), and dear (125%) earns more on each and sells slowly. Every sale counts towards your **brand level**, and each level brings 2% more customers, up to 20%.
+
+**The Out-of-town Farm.** A fenced field past the west avenue, marked on the map. E at the gate takes the lease for $2,500, and the rent is $40 a day with the morning bills.
+
+- **Five rows.** E on an empty row sows it with 6 seeds of one strain from your supply rack.
+- Crops grow in **daylight**, from spring to autumn, slower than under lamps. A field plant never reaches the quality of one grown indoors, but a row is eight plants.
+- **Rain waters** the rows. In a dry spell, E on a row waters it from the tank by the gate. A bone dry row nearly stops growing and loses quality.
+- **Frost.** Nothing can be sown in winter, and any row still growing when winter comes is lost.
+- E on a ripe row cuts it and hangs it in the **barn**, where it dries in about 5 minutes.
+- Drive the car or the van up to the barn and E on the barn door loads what's dry. It goes into your stash when you park in the yard at home.
+
+**Bank & Insurance.** A **Finance** app on the office PC.
+
+- **Savings** earn 0.5% a day, up to $500 a day. Robbers can't reach them and the morning bills don't draw on them.
+- **Loans**: $2,000 from level 1, $6,000 from level 4 and $15,000 from level 8. One at a time. A loan costs 12% and goes back in 10 daily payments. A morning you can't pay adds 5% to the debt (rep -3). Paying it off early takes 5% off what's left (rep +1).
+- **Robbery cover**, $35 a day: pays back 75% of what robbers got away with.
+- **Power cover**, $12 a day: pays $150 for every power cut.
+- **Break-in cover**, $18 a day: pays $400 after a night break-in.
+- Premiums go out with the morning bills, and a claim is paid into the bank the morning after.
+
+Switch any of them off and its things leave the shop, but nothing in your save is lost: a cross on the bench, plants on the rack, stock on the stand, rows in the field, your savings and your loan are all there when you switch it back on.
 
 ## Upstairs and the roof
 
@@ -309,4 +354,4 @@ Four kinds of machine earn on their own, and you can own more than one of each: 
 - **A door won't open.** It's locked. Unlock it at the control box, or with Shift+E and the keyring.
 - **I'm broke.** Street deals in the park pay cash at once. Walk-up sales at the till pay straight away too. Sell the cheapest thing you can make and rebuild.
 - **Found a bug?** Press **F7**, or use Report a bug in the pause menu. Fill in the form and it collects your version, your system and your savegame for you. The more you fill in, the faster it gets fixed.
-- **Something's badly broken.** Dev tools in the pause menu has teleports and a button that clears cooldowns (switch on the **Dev Tools** DLC under Workshop and DLC in the main menu first). Your save lives in the app's local storage, and Reset save in the pause menu starts a brand new shop.
+- **Something's badly broken.** The dev console on **F8** has teleports and a button that clears cooldowns (switch on the **Dev Tools** DLC under Workshop and DLC in the main menu first). Your save lives in the app's local storage, and Reset save in the pause menu starts a brand new shop.

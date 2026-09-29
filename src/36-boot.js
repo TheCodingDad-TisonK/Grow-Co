@@ -11,7 +11,7 @@
     bootIssue = 'The shop could not open properly. Your save is untouched and nothing will be written over it. Please send a bug report with F7.';
   }
   try {
-  loadSettings(); load();
+  loadSettings(); load(); dlcLoaded();
   var elapsed = clamp((now() - (S.lastTick || now())) / 1000, 0, 6 * 3600);
   if (elapsed > 2) step(elapsed, true);
   S.lastTick = now();
@@ -122,7 +122,7 @@
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
     if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updateScope(dt); updateTrigger(); updatePlantVisuals(dt); updateNpc(dt); updateLineup(dt); updateRopeGates(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); deskTouchUpdate(); touchUpdate(); }
-    updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt);
+    updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt); updatePcZoom(dt);
     if (_df.t && now() - _df.t > 250) { _df.t = 0; defightScene(); }
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); var vcTown = (vc.layers.mask & (1 << TOWN_LAYER)) !== 0; vc.layers.enable(TOWN_LAYER); renderer.render(scene, vc); if (!vcTown) vc.layers.disable(TOWN_LAYER); } else renderer.render(scene, camera);
     if (SET.fps) { fpsAcc += dt; fpsN++; fpsT += dt; if (fpsT > 0.5) { $('h-fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; fpsT = 0; } }
@@ -140,7 +140,8 @@
     resetShop: resetShop, setPageReload: function (fn) { pageReload = fn; }, devStrains: devStrains, dlcOn: dlcOn, propGone: propGone, inGoneProp: inGoneProp, fixtures: function () { return fxById; }, applyFixtures: applyFixtures,
     sun: sun, traffic: function () { return traffic; }, truck: function () { return truck; }, shutterOpen: shutterOpen, anyCigStock: anyCigStock, syncGoods: syncGoods, applyDlcWorld: applyDlcWorld, staffDoorLocked: staffDoorLocked, keyStaffDoor: keyStaffDoor, toggleStaffDoor: toggleStaffDoor, navKey: navKey, ghParts: function () { return exp.ghParts; }, openMenu: openMenu, closeMenu: closeMenu, npcState: function () { return npc.state; },
     lineCount: lineCount, lineShown: lineShown, exitPath: exitPath, ropeGates: function () { return ropeGates; }, ropeSegs: function () { return ropeSegList; },
-    robbers: function () { return robbers; }, heist: function () { return heist; }, maskUp: maskUp, npc: npc, guard: guard, useHeld: useHeld, trigger: trigger, scope: scope,
+    robbers: function () { return robbers; }, heist: function () { return heist; }, maskUp: maskUp, guardOdds: guardOdds, devOpen: devOpen, devClose: devClose,
+    dlc: { state: dlcState, step: dlcStep, newDay: dlcNewDay, footfall: dlcFootfall, breed: breedState, breedStart: breedStart, breedFinish: breedFinish, BREED: BREED, hydro: hydroState, hydroOk: hydroOk, HYDRO: HYDRO, cup: cupState, cupEnter: cupEnter, cupJudge: cupJudge, cupNext: cupNext, merch: merchState, merchSell: merchSell, merchOrder: merchOrder, merchLevel: merchLevel, farm: farmState, farmSow: farmSow, farmHarvest: farmHarvest, FARM: FARM, fin: finState, finBorrow: finBorrow, finMove: finMove, FIN: FIN, interact: dlcInteract, prompt: dlcPrompt }, npc: npc, guard: guard, useHeld: useHeld, trigger: trigger, scope: scope,
     price: { bag: bagPrice, joint: jointPrice, cookie: cookiePrice, unit: unitPrice, repMult: repMult, footfall: footfall, bagGrams: bagGrams },
     bills: billLines, dailyFixed: dailyFixed, headcount: headcount, taxDue: taxDue, bizTax: bizTax, tillWatch: tillWatch, tillHeavy: tillHeavy, toggleShopOpen: toggleShopOpen, breakWait: breakWait, lineup: function () { return lineup; },
     press: function (data, shift) { player.keys.ShiftLeft = !!shift; setFocus({ mesh: null, data: data, dist: 1 }); interact(); player.keys.ShiftLeft = false; setFocus(null); },   /* E (or Shift+E) on a thing, as if the crosshair were on it */

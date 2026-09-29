@@ -34,7 +34,7 @@
   function pickRobKind() { var w = [[70, 30, 0, 0], [35, 45, 20, 0], [15, 35, 35, 15], [5, 20, 45, 30]][robTier()]; var roll = Math.random() * 100, acc = 0, ks = ['snatch', 'knife', 'gun', 'crew']; for (var i = 0; i < 4; i++) { acc += w[i]; if (roll < acc) return ks[i]; } return 'knife'; }
   function robWeaponMesh(kind) {   // built along the forearm (local -y) so a raised arm points it at you
     var g = new THREE.Group(); var steel = colorMat(0xb8bcc2, 0.3, 0.9), blk = colorMat(0x16171a, 0.5, 0.4), wood = colorMat(0x5a3a1e, 0.7);
-    function add(w, h, d, m, x, y, z) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; g.add(b); return b; }
+    function add(w, h, d, m, x, y, z) { var b = new THREE.Mesh(bevelGeo(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; g.add(b); return b; }
     if (kind === 'knife') { add(0.03, 0.1, 0.035, blk, 0, 0, 0); add(0.008, 0.2, 0.03, steel, 0, -0.15, 0); }
     else if (kind === 'pistol') { add(0.035, 0.11, 0.05, blk, 0, 0.02, 0.03); add(0.035, 0.2, 0.045, blk, 0, -0.09, -0.02); }
     else if (kind === 'shotgun') { add(0.04, 0.62, 0.05, blk, 0, -0.2, -0.02); add(0.05, 0.16, 0.06, wood, 0, -0.22, 0.02); add(0.045, 0.24, 0.09, wood, 0, 0.2, 0.02); }
@@ -44,7 +44,7 @@
     if (!r.g) { r.g = new THREE.Group(); world.group.add(r.g); r.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, r.g); }
     if (r.h) { r.g.remove(r.h); disposeTree(r.h); } world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; });
     r.h = makeHuman(strangerLook(role === 'bagman', true)); r.g.add(r.h); r.g.userData.gated = true;   /* dressed like anyone off the street: the balaclava stays in a pocket until he makes his move */
-    var P = r.h.userData.parts; r.mask = new THREE.Group(); var hood = new THREE.Mesh(new THREE.SphereGeometry(0.195, 14, 12), colorMat(0x0c0c0e, 0.95)); hood.position.set(0, 0.24, 0); r.mask.add(hood); var slit = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.03), colorMat(0xd9a57e, 0.8)); slit.position.set(0, 0.27, 0.185); r.mask.add(slit); r.mask.visible = false; P.head.add(r.mask);
+    var P = r.h.userData.parts; r.mask = new THREE.Group(); var hood = new THREE.Mesh(new THREE.SphereGeometry(0.195, 14, 12), colorMat(0x0c0c0e, 0.95)); hood.position.set(0, 0.24, 0); r.mask.add(hood); var slit = new THREE.Mesh(bevelGeo(0.2, 0.04, 0.03), colorMat(0xd9a57e, 0.8)); slit.position.set(0, 0.27, 0.185); r.mask.add(slit); r.mask.visible = false; P.head.add(r.mask);
     r.gun = weapon ? robWeaponMesh(weapon) : null; if (r.gun) { r.gun.visible = false; P.rArm.userData.elbow.add(r.gun); }
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; hb.userData.robberId = r.id; r.h.add(hb); interactable(hb, { kind: 'robber', rid: r.id });
     r.kind = kind; r.weapon = weapon; r.role = role; r.t = 0; r.grabbed = 0; r.goods = []; r.disp = {}; r.guardRolled = false; r.alertT = 0; r.losT = 0; r.losOk = false; r.escal = false; r.masked = false; r.arrived = false; r.raid = ''; r.bubble.visible = false; standBack(r.h); r.g.visible = true; r.g.rotation.y = 0;

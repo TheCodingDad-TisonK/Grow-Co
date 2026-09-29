@@ -155,14 +155,14 @@
     box(0.06, 0.06, 0.1, MAT.chrome, ROOM.x - 0.05, 1.78, bz); var hook = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 6, 12, Math.PI), MAT.chrome); hook.position.set(ROOM.x - 0.1, 1.78, bz); hook.rotation.z = -Math.PI / 2; world.group.add(hook);
     var g = new THREE.Group(); g.position.set(bx, 0, bz); g.rotation.z = 0.06; world.group.add(g); world.broomMeshes.push(g);
     function add(geo, mat, x, y, z) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; }
-    add(new THREE.CylinderGeometry(0.014, 0.016, 1.25, 10), MAT.wood, 0, 1.05, 0);
-    add(new THREE.CylinderGeometry(0.018, 0.018, 0.16, 10), colorMat(0xc94a3a, 0.8), 0, 1.6, 0); add(new THREE.SphereGeometry(0.02, 10, 8), colorMat(0xc94a3a, 0.8), 0, 1.68, 0); add(new THREE.TorusGeometry(0.016, 0.004, 6, 12), MAT.chrome, 0, 1.7, 0).rotation.x = Math.PI / 2;
-    add(new THREE.CylinderGeometry(0.022, 0.018, 0.05, 10), MAT.chrome, 0, 0.44, 0);
-    var head = add(new THREE.BoxGeometry(0.07, 0.05, 0.32), MAT.darkwood, 0, 0.4, 0); add(new THREE.BoxGeometry(0.075, 0.015, 0.33), colorMat(0x1c1c22, 0.6), 0, 0.375, 0);
-    for (var r = 0; r < 3; r++) for (var k = 0; k < 14; k++) { var br = add(new THREE.BoxGeometry(0.012, 0.22, 0.012), colorMat(k % 2 ? 0xb8925a : 0xa8843f, 1), -0.02 + r * 0.02, 0.26, -0.145 + k * 0.0225); br.rotation.x = (k - 7) * 0.012; br.rotation.z = (r - 1) * 0.08; }
-    add(new THREE.CylinderGeometry(0.01, 0.01, 0.06, 6), MAT.black, 0, 0.47, 0);
+    add(roundCylGeo(0.014, 0.016, 1.25, 10), MAT.wood, 0, 1.05, 0);
+    add(roundCylGeo(0.018, 0.018, 0.16, 10), colorMat(0xc94a3a, 0.8), 0, 1.6, 0); add(new THREE.SphereGeometry(0.02, 10, 8), colorMat(0xc94a3a, 0.8), 0, 1.68, 0); add(new THREE.TorusGeometry(0.016, 0.004, 6, 12), MAT.chrome, 0, 1.7, 0).rotation.x = Math.PI / 2;
+    add(roundCylGeo(0.022, 0.018, 0.05, 10), MAT.chrome, 0, 0.44, 0);
+    var head = add(bevelGeo(0.07, 0.05, 0.32), MAT.darkwood, 0, 0.4, 0); add(bevelGeo(0.075, 0.015, 0.33), colorMat(0x1c1c22, 0.6), 0, 0.375, 0);
+    for (var r = 0; r < 3; r++) for (var k = 0; k < 14; k++) { var br = add(bevelGeo(0.012, 0.22, 0.012), colorMat(k % 2 ? 0xb8925a : 0xa8843f, 1), -0.02 + r * 0.02, 0.26, -0.145 + k * 0.0225); br.rotation.x = (k - 7) * 0.012; br.rotation.z = (r - 1) * 0.08; }
+    add(roundCylGeo(0.01, 0.01, 0.06, 6), MAT.black, 0, 0.47, 0);
     var hit = box(0.3, 1.6, 0.4, MAT.none, bx, 0.9, bz, { cast: false, receive: false }); interactable(hit, { kind: 'broom' });
-    var dustpan = new THREE.Group(); dustpan.position.set(ROOM.x - 0.12, 0.02, bz + 0.4); world.group.add(dustpan); var pan = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.03, 0.2), colorMat(0xc94a3a, 0.7)); pan.position.y = 0.015; dustpan.add(pan); var lip = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.02), colorMat(0xc94a3a, 0.7)); lip.position.set(0, 0.03, -0.09); dustpan.add(lip); var ph = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.28, 8), colorMat(0xc94a3a, 0.7)); ph.position.set(0, 0.12, 0.05); ph.rotation.x = -0.5; dustpan.add(ph);
+    var dustpan = new THREE.Group(); dustpan.position.set(ROOM.x - 0.12, 0.02, bz + 0.4); world.group.add(dustpan); var pan = new THREE.Mesh(bevelGeo(0.22, 0.03, 0.2), colorMat(0xc94a3a, 0.7)); pan.position.y = 0.015; dustpan.add(pan); var lip = new THREE.Mesh(bevelGeo(0.22, 0.06, 0.02), colorMat(0xc94a3a, 0.7)); lip.position.set(0, 0.03, -0.09); dustpan.add(lip); var ph = new THREE.Mesh(roundCylGeo(0.012, 0.012, 0.28, 8), colorMat(0xc94a3a, 0.7)); ph.position.set(0, 0.12, 0.05); ph.rotation.x = -0.5; dustpan.add(ph);
     signPlane(['BROOM', 'sweep the dust · E on a patch'], 1.0, 0.36, ROOM.x - 0.02, 2.05, bz, -Math.PI / 2, { titleColor: '#ffc857' });
     syncBroom();
   }
@@ -198,7 +198,7 @@
     var n = 16, rise = UP.y / n, run = (STAIR.x2 - STAIR.x1) / n, sw = STAIR.z2 - STAIR.z1, sz = (STAIR.z1 + STAIR.z2) / 2;
     for (var i = 0; i < n; i++) { box(run, rise, sw, MAT.wood, STAIR.x2 - run * (i + 0.5), rise * (i + 0.5), sz, { cast: true }); box(run, rise * (i + 1), 0.04, MAT.darkwood, STAIR.x2 - run * (i + 0.5), rise * (i + 1) / 2, STAIR.z1 + 0.02, { cast: true }); }
     var railLen = Math.hypot(UP.y, STAIR.x2 - STAIR.x1) + 0.3; var railA = Math.atan2(UP.y, STAIR.x2 - STAIR.x1);
-    var rail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, railLen, 10), MAT.metal); rail.rotation.z = Math.PI / 2 + railA; rail.position.set((STAIR.x1 + STAIR.x2) / 2, UP.y / 2 + 0.95, STAIR.z1 + 0.02); world.group.add(rail);
+    var rail = new THREE.Mesh(roundCylGeo(0.025, 0.025, railLen, 10), MAT.metal); rail.rotation.z = Math.PI / 2 + railA; rail.position.set((STAIR.x1 + STAIR.x2) / 2, UP.y / 2 + 0.95, STAIR.z1 + 0.02); world.group.add(rail);
     for (var p = 0; p <= 8; p++) { var px = STAIR.x2 - (STAIR.x2 - STAIR.x1) * p / 8; var py = UP.y * p / 8; box(0.03, 0.9, 0.03, MAT.metal, px, py + 0.45, STAIR.z1 + 0.02); }
     world.obstacles.push({ x1: STAIR.x1 - 0.2, x2: STAIR.x2 + 0.15, z1: STAIR.z1 - 0.06, z2: STAIR.z1 + 0.06, tag: 'stairrail', floorLevel: 'any' });   // open side of the stairs (both floors)
     world.obstacles.push({ x1: STAIR.x2 + 0.05, x2: STAIR.x2 + 0.15, z1: STAIR.z1 - 0.2, z2: STAIR.z2 + 0.4, tag: 'wellrail', floorLevel: 1 });        // upstairs: bottom end of the well
@@ -219,7 +219,7 @@
     var fh = upBox(1.0, 2.0, 1.0, MAT.none, 1.2, 1.0, -8.5, { cast: false, receive: false }); interactable(fh, { kind: 'kfridge' });
     signPlane(['KITCHEN', 'fridge: grab a snack · eat at the table or couch'], 1.6, 0.42, -1, 2.55, -ROOM.z + 0.02, 0, { titleColor: '#ffc857' }).position.y += UP.y;
     // small things on the counter: kettle, fruit bowl, plant
-    upBox(0.16, 0.18, 0.16, MAT.metal, -7.4, 1.04, -8.6); var bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.1, 0.08, 16), new THREE.MeshStandardMaterial({ color: 0x8a5a2a })); bowl.position.set(-4.5, UP.y + 0.99, -8.6); world.group.add(bowl); [[-4.55, -8.62, 0xd63a2a], [-4.45, -8.55, 0xf0c030], [-4.5, -8.68, 0x6fdc3a]].forEach(function (f) { var fr = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: f[2] })); fr.position.set(f[0], UP.y + 1.07, f[1]); world.group.add(fr); });
+    upBox(0.16, 0.18, 0.16, MAT.metal, -7.4, 1.04, -8.6); var bowl = new THREE.Mesh(roundCylGeo(0.16, 0.1, 0.08, 16), new THREE.MeshStandardMaterial({ color: 0x8a5a2a })); bowl.position.set(-4.5, UP.y + 0.99, -8.6); world.group.add(bowl); [[-4.55, -8.62, 0xd63a2a], [-4.45, -8.55, 0xf0c030], [-4.5, -8.68, 0x6fdc3a]].forEach(function (f) { var fr = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: f[2] })); fr.position.set(f[0], UP.y + 1.07, f[1]); world.group.add(fr); });
     // LIVING: big TV on the dividing wall (your side of it), couch, coffee table, rug, floor lamp, shelves
     var TVWX = DIVX - 0.1;
     var tvW = 3.2, tvH = 1.8; upBox(0.08, tvH + 0.12, tvW + 0.12, MAT.black, TVWX - 0.08, 1.55, 0.5);

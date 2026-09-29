@@ -49,37 +49,64 @@
       '<div class="rf-menu-btns row"><button data-rf="discord">💬 Discord</button><button data-rf="site">🌐 realisticfarming.com</button><button data-rf="quit">' + (CFG.quitLabel || '⏏ Quit') + '</button></div>');
   }
   // ── Workshop: turn content packs on and off, and bring in your own ──
-  var wsMsg = '';
-  function showWorkshop() {
-    var WS = window.RF_WORKSHOP; if (!WS) return showMain();
-    card.classList.add('wide');
-    var list = WS.packs(), groups = {};
-    list.forEach(function (p) { var k = p.dlc ? 'DLC' : p.bundle ? 'Bundles' : (p.user ? 'Yours' : p.kind || 'Packs'); (groups[k] = groups[k] || []).push(p); });
+  var wsMsg = '', wsView = { q: '', kind: 'All', open: '' };
+  function wsSwitch(p) { return '<button class="rf-switch' + (p.on ? ' on' : '') + '" data-rf="ws-on" data-id="' + esc(p.id) + '" role="switch" aria-checked="' + (p.on ? 'true' : 'false') + '" title="' + (p.on ? 'Switch it off' : 'Switch it on') + '"><i></i><span>' + (p.on ? 'On' : 'Off') + '</span></button>'; }
+  function wsGroupOf(p) { return p.dlc ? 'DLC' : p.bundle ? 'Bundles' : (p.user ? 'Yours' : p.kind || 'Packs'); }
+  function wsListHtml() {
+    var WS = window.RF_WORKSHOP, list = WS.packs(), q = wsView.q.trim().toLowerCase(), groups = {}, html = '';
+    list.forEach(function (p) {
+      var k = wsGroupOf(p); if (wsView.kind !== 'All' && wsView.kind !== k && !(wsView.kind === 'On' && p.on)) return;
+      if (q && (p.name + ' ' + p.blurb + ' ' + p.counts + ' ' + p.author + ' ' + k).toLowerCase().indexOf(q) < 0) return;
+      (groups[k] = groups[k] || []).push(p);
+    });
     function rank(k) { return k === 'DLC' ? -1 : k === 'Yours' ? 2 : k === 'Bundles' ? 1 : 0; }
     var order = Object.keys(groups).sort(function (a, b) { return rank(a) - rank(b); });
-    var html = '<div class="rf-ws"><p class="rf-ws-lead">Content packs change what the game has in it. Turn as many on or off as you like, then apply once and the shop rebuilds. Your saves aren\'t touched. A pack only adds things you can then buy.</p>';
-    if (wsMsg) html += '<div class="rf-ws-msg">' + wsMsg + '</div>';
-    if (wsDirty) html += '<div class="rf-ws-msg rf-ws-pending">Changes are waiting. <button class="primary" data-rf="ws-apply">↻ Apply and rebuild the shop</button></div>';
+    if (!order.length) return '<div class="rf-ws-none">Nothing matches that. Clear the search or pick another shelf.</div>';
     order.forEach(function (k) {
-      html += '<h3 class="rf-ws-head">' + k + '</h3>' + (k === 'DLC' ? '<p class="rf-ws-lead">Whole parts of the game, all free. Switch one on and it\'s in every save. Switch it off and it\'s hidden, but nothing in your saves is lost: switch it back on and it\'s all still there.</p>' : '') + '<div class="rf-ws-grid">';
+      html += '<h3 class="rf-ws-head">' + k + ' <small>' + groups[k].filter(function (p) { return p.on; }).length + ' of ' + groups[k].length + ' on</small></h3>';
+      if (k === 'DLC') {
+        html += '<p class="rf-ws-lead">Whole parts of the game, all free. Switch one on and it\'s in every save. Switch it off and it\'s hidden, but nothing in your saves is lost: switch it back on and it\'s all still there.</p><div class="rf-ws-dlcs">';
+        groups[k].forEach(function (p) { html += '<div class="rf-ws-dlc' + (p.on ? ' on' : '') + '" data-dlc="' + esc(p.dlc) + '"><div class="art"><span>' + esc(p.icon) + '</span></div><div class="rf-ws-body"><b>' + esc(p.name) + '</b><span class="what">' + esc(p.counts) + '</span><small>' + esc(p.blurb) + '</small></div>' + wsSwitch(p) + '</div>'; });
+        html += '</div>'; return;
+      }
+      html += '<div class="rf-ws-grid">';
       groups[k].forEach(function (p) {
-        html += '<div class="rf-ws-card' + (p.on ? ' on' : '') + '">' +
-          '<div class="rf-ws-ico">' + esc(p.icon) + '</div>' +
+        var open = wsView.open === p.id, inside = open ? WS.details(p.id) : [];
+        html += '<div class="rf-ws-card' + (p.on ? ' on' : '') + (open ? ' open' : '') + '"><div class="rf-ws-ico">' + esc(p.icon) + '</div>' +
           '<div class="rf-ws-body"><b>' + esc(p.name) + '</b><small>' + esc(p.blurb) + '</small>' +
-          '<span class="rf-ws-meta">' + esc(p.counts) + ' · by ' + esc(p.author) + (p.group ? ' · one at a time' : '') + '</span></div>' +
-          '<div class="rf-ws-act"><button class="' + (p.on ? 'primary' : '') + '" data-rf="ws-on" data-id="' + esc(p.id) + '">' + (p.on ? '✓ On' : 'Off') + '</button>' +
-          (p.user ? '<button class="small" data-rf="ws-exp" data-id="' + esc(p.id) + '" title="Save the manifest">⬇</button><button class="danger small" data-rf="ws-del" data-id="' + esc(p.id) + '" title="Remove this pack">🗑</button>' : '') +
-          '</div></div>';
+          '<span class="rf-ws-meta">' + esc(p.counts) + ' · by ' + esc(p.author) + (p.group ? ' · one at a time' : '') + '</span>' +
+          '<button class="rf-ws-more" data-rf="ws-open" data-id="' + esc(p.id) + '">' + (open ? 'Hide what\'s inside' : 'See what\'s inside') + '</button></div>' +
+          '<div class="rf-ws-act">' + wsSwitch(p) +
+          (p.user ? '<button class="small" data-rf="ws-exp" data-id="' + esc(p.id) + '" title="Save the manifest">⬇</button><button class="danger small" data-rf="ws-del" data-id="' + esc(p.id) + '" title="Remove this pack">🗑</button>' : '') + '</div>' +
+          (open ? '<ul class="rf-ws-in">' + (inside.length ? inside.map(function (r) { return '<li><i>' + esc(r[0]) + '</i><b>' + esc(r[1]) + '</b><span>' + esc(r[2]) + '</span></li>'; }).join('') : '<li><span>Nothing in it yet.</span></li>') + '</ul>' : '') + '</div>';
       });
       html += '</div>';
     });
-    html += '<h3 class="rf-ws-head">Bring in your own</h3><div class="rf-ws-import">' +
-      '<p>A pack is one <b>.json</b> file. It can add strains, lamps, tents and things to sell, retune the economy, and carry models you made in <b>Blender</b> and exported as <b>.glb</b>. Pick the .json and its .glb files together.</p>' +
+    return html;
+  }
+  function wsChipsHtml() {
+    var kinds = ['All', 'On'], seen = {}; window.RF_WORKSHOP.packs().forEach(function (p) { var k = wsGroupOf(p); if (!seen[k]) { seen[k] = 1; kinds.push(k); } });
+    return kinds.map(function (k) { return '<button class="rf-chip' + (wsView.kind === k ? ' on' : '') + '" data-rf="ws-kind" data-k="' + esc(k) + '">' + esc(k) + '</button>'; }).join('');
+  }
+  function wsRefresh() { var l = $('rf-ws-list'), c = $('rf-ws-chips'), n = $('rf-ws-count'); if (l) l.innerHTML = wsListHtml(); if (c) c.innerHTML = wsChipsHtml(); if (n) { var all = window.RF_WORKSHOP.packs(); n.innerHTML = '<b>' + all.filter(function (p) { return p.on; }).length + '</b> of ' + all.length + ' on'; } }
+  function showWorkshop() {
+    var WS = window.RF_WORKSHOP; if (!WS) return showMain();
+    card.classList.add('wide');
+    var all = WS.packs();
+    var html = '<div class="rf-ws"><div class="rf-ws-top"><div><h2>Workshop</h2><p class="rf-ws-lead">Content packs change what the game has in it. Turn as many on or off as you like, then apply once and the shop rebuilds. Your saves aren\'t touched. A pack only adds things you can then buy.</p></div><div class="rf-ws-count" id="rf-ws-count"><b>' + all.filter(function (p) { return p.on; }).length + '</b> of ' + all.length + ' on</div></div>';
+    html += '<div class="rf-ws-tools"><input type="search" id="rf-ws-q" placeholder="Search the packs" value="' + esc(wsView.q) + '" autocomplete="off" spellcheck="false"><div class="rf-ws-chips" id="rf-ws-chips">' + wsChipsHtml() + '</div></div>';
+    if (wsMsg) html += '<div class="rf-ws-msg">' + wsMsg + '</div>';
+    if (wsDirty) html += '<div class="rf-ws-msg rf-ws-pending">Changes are waiting. <button class="primary" data-rf="ws-apply">↻ Apply and rebuild the shop</button></div>';
+    html += '<div id="rf-ws-list">' + wsListHtml() + '</div>';
+    html += '<h3 class="rf-ws-head">Bring in your own</h3><div class="rf-ws-import" id="rf-ws-drop">' +
+      '<p>A pack is one <b>.json</b> file. It can add strains, lamps, tents and things to sell, retune the economy, and carry models you made in <b>Blender</b> and exported as <b>.glb</b>. Drop the .json and its .glb files here together, or pick them.</p>' +
       '<div class="rf-menu-btns row"><button class="primary" data-rf="ws-imp">📂 Import a pack</button><button data-rf="ws-tmpl">📄 Save a starter .json</button><button data-rf="ws-help">📖 How a pack works</button></div>' +
       '<input type="file" id="rf-ws-file" accept=".json,.glb,.gltf" multiple hidden></div>';
     html += '</div><div class="rf-menu-btns" style="margin-top:12px"><button data-rf="back">← Back to the menu</button></div>';
     body(html); wsMsg = '';
     var f = $('rf-ws-file'); if (f) f.addEventListener('change', function () { doImport(f.files); f.value = ''; });
+    var q = $('rf-ws-q'); if (q) q.addEventListener('input', function () { wsView.q = q.value; var l = $('rf-ws-list'); if (l) l.innerHTML = wsListHtml(); });
+    var d = $('rf-ws-drop'); if (d) { d.addEventListener('dragover', function (e) { e.preventDefault(); d.classList.add('over'); }); d.addEventListener('dragleave', function () { d.classList.remove('over'); }); d.addEventListener('drop', function (e) { e.preventDefault(); d.classList.remove('over'); if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) doImport(e.dataTransfer.files); }); }
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function doImport(files) {
@@ -122,8 +149,12 @@
     else if (a === 'ws-on') {
       var id = t.getAttribute('data-id'); var was = window.RF_WORKSHOP.packs().filter(function (p) { return p.id === id; })[0];
       window.RF_WORKSHOP.setOn(id, !(was && was.on));
+      var sc = card.scrollTop, inner = card.querySelector('.rf-ws'), si = inner ? inner.scrollTop : 0;
       wsDirty = true; wsMsg = ''; showWorkshop();   /* pick as many as you like: the shop is rebuilt once, when you apply */
+      card.scrollTop = sc; inner = card.querySelector('.rf-ws'); if (inner) inner.scrollTop = si;   /* and the list stays where you were reading it */
     }
+    else if (a === 'ws-kind') { wsView.kind = t.getAttribute('data-k') || 'All'; wsRefresh(); }
+    else if (a === 'ws-open') { var oid = t.getAttribute('data-id'); wsView.open = wsView.open === oid ? '' : oid; wsRefresh(); }
     else if (a === 'ws-apply') { wsDirty = false; wsMsg = 'Rebuilding the shop…'; showWorkshop(); setTimeout(function () { reloadInto(urlSave ? 1 : active(), false); }, 200); }
     else if (a === 'ws-imp') { var fi = $('rf-ws-file'); if (fi) fi.click(); }
     else if (a === 'ws-exp') window.RF_WORKSHOP.exportPack(t.getAttribute('data-id'));

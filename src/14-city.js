@@ -35,15 +35,15 @@
   function alongM(bx, by, bz, dir, len) { var m = new THREE.Matrix4(); FLORA._q.setFromUnitVectors(FLORA.UP, dir); FLORA._p.set(bx + dir.x * len / 2, by + dir.y * len / 2, bz + dir.z * len / 2); FLORA._s.set(1, 1, 1); return m.compose(FLORA._p, FLORA._q, FLORA._s); }
   function broadleafGeo() {   // trunk with three branches, six lumpy clumps and a cap: about 5.5 m at scale 1
     var trunk = [], crown = [], th = fr(2.3, 2.9), i;
-    trunk.push({ g: new THREE.CylinderGeometry(0.11, 0.2, th, 8), m: new THREE.Matrix4().makeTranslation(0, th / 2, 0) });
-    for (i = 0; i < 3; i++) { var a = i * 2.1 + fr(0, 0.6), tilt = fr(0.55, 0.85), bl = fr(1.1, 1.6); var dir = new THREE.Vector3(Math.cos(a) * Math.sin(tilt), Math.cos(tilt), Math.sin(a) * Math.sin(tilt)); trunk.push({ g: new THREE.CylinderGeometry(0.035, 0.085, bl, 6), m: alongM(0, th * 0.82, 0, dir, bl) }); }
+    trunk.push({ g: roundCylGeo(0.11, 0.2, th, 8), m: new THREE.Matrix4().makeTranslation(0, th / 2, 0) });
+    for (i = 0; i < 3; i++) { var a = i * 2.1 + fr(0, 0.6), tilt = fr(0.55, 0.85), bl = fr(1.1, 1.6); var dir = new THREE.Vector3(Math.cos(a) * Math.sin(tilt), Math.cos(tilt), Math.sin(a) * Math.sin(tilt)); trunk.push({ g: roundCylGeo(0.035, 0.085, bl, 6), m: alongM(0, th * 0.82, 0, dir, bl) }); }
     var cy = th + 0.85;
     for (i = 0; i < 6; i++) { var ca = i * 1.05 + fr(0, 0.5), cr = fr(0.35, 0.95), r = fr(0.95, 1.4); crown.push({ g: lumpy(new THREE.SphereGeometry(r, 10, 8), 0.16, fr(0, 6), 1, fr(0.75, 0.9), 1), m: new THREE.Matrix4().makeTranslation(Math.cos(ca) * cr, cy + fr(-0.45, 0.45), Math.sin(ca) * cr) }); }
     crown.push({ g: lumpy(new THREE.SphereGeometry(fr(0.9, 1.15), 10, 8), 0.16, fr(0, 6), 1, 0.85, 1), m: new THREE.Matrix4().makeTranslation(0, cy + 0.95, 0) });
     return [{ g: mergeGeo(trunk), mat: MAT.bark, tint: false }, { g: mergeGeo(crown), mat: MAT.foliage, tint: true }];
   }
   function pineGeo() {   // a bare trunk and five overlapping ragged tiers: about 4.3 m at scale 1
-    var trunk = [{ g: new THREE.CylinderGeometry(0.07, 0.16, 1.6, 7), m: new THREE.Matrix4().makeTranslation(0, 0.8, 0) }], tiers = [];
+    var trunk = [{ g: roundCylGeo(0.07, 0.16, 1.6, 7), m: new THREE.Matrix4().makeTranslation(0, 0.8, 0) }], tiers = [];
     for (var i = 0; i < 5; i++) { var r = 1.35 - i * 0.22, hh = 1.35 - i * 0.12; var g = new THREE.ConeGeometry(r, hh, 9); var p = g.attributes.position; for (var v = 0; v < p.count; v++) { var x = p.getX(v), z = p.getZ(v); var k = 1 + 0.14 * Math.sin(x * 4.1 + z * 3.3 + i); p.setXYZ(v, x * k, p.getY(v), z * k); } g.computeVertexNormals(); tiers.push({ g: g, m: new THREE.Matrix4().makeTranslation(fr(-0.06, 0.06), 1.1 + i * 0.66 + hh / 2, fr(-0.06, 0.06)) }); }
     return [{ g: mergeGeo(trunk), mat: MAT.bark, tint: false }, { g: mergeGeo(tiers), mat: MAT.pine, tint: true }];
   }
@@ -62,7 +62,7 @@
     floraSet('tuft', [cardGeo(0.62, 0.5)], 9000, false, MAT.tuft);
     floraSet('flower', [cardGeo(0.34, 0.34)], 2000, false, MAT.flower);
   }
-  function plant(kind, x, y, z, s, ry, tint) {   // one instance; the variant is picked at random, the tint (a Color) goes on the leafy part
+  function plant(kind, x, y, z, s, ry, tint) { if (farmAt(x, z)) return;   /* nothing of the town's grows in the farm's field: it has its own */   // one instance; the variant is picked at random, the tint (a Color) goes on the leafy part
     var set = FLORA.sets[kind]; if (!set) return; var v = set.variants[Math.floor(frnd() * set.variants.length)]; if (v.n >= v.cap) return;
     var m = placeM(x, y, z, ry === undefined ? frnd() * 6.283 : ry, s);
     v.parts.forEach(function (im) { im.setMatrixAt(v.n, m); im.instanceMatrix.needsUpdate = true; if (tint && im.instanceColor) { im.instanceColor.setXYZ(v.n, tint.r, tint.g, tint.b); im.instanceColor.needsUpdate = true; } im.count = v.n + 1; });
@@ -151,7 +151,7 @@
   }
   function styleOf(x, z) { return Math.abs(Math.round(x * 7.3 + z * 13.1)) % 5; }
   function facadeBox(w, h, d, mat, x, y, z, storey, bay) {   /* a box whose side faces repeat the tile once per storey and once per bay, so buildings share one texture */
-    var g = new THREE.BoxGeometry(w, h, d), uv = g.attributes.uv, ry = h / (storey || 3.2);
+    var g = bevelGeo(w, h, d), uv = g.attributes.uv, ry = h / (storey || 3.2);
     for (var i = 0; i < uv.count; i++) { var face = Math.floor(i / 4), rx = (face < 2 ? d : w) / (bay || 6); uv.setXY(i, uv.getX(i) * rx, uv.getY(i) * ry); }
     var m = new THREE.Mesh(g, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; m.layers.set(TOWN_LAYER); world.group.add(m); return m;
   }
@@ -222,7 +222,7 @@
   }
   function ownVanBody(g, hex, full) {   /* your own van: a cab, a tall cargo box with the livery, a tailgate that lifts, a stubby bonnet, and twice the trunk */
     var paint = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.35, metalness: 0.5 }), glassM = new THREE.MeshPhysicalMaterial({ color: 0x20303c, transparent: true, opacity: 0.75, roughness: 0.05, metalness: 0.4 }), dk = colorMat(0x15171a, 0.8), trimM = colorMat(0x2a2d33, 0.5, 0.4), wheels = [];
-    function add(w, h, d, m, x, y, z, parent) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; (parent || g).add(b); return b; }
+    function add(w, h, d, m, x, y, z, parent) { var b = new THREE.Mesh(bevelGeo(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; (parent || g).add(b); return b; }
     add(1.9, 0.5, 5.0, paint, 0, 0.55, 0); add(1.8, 0.16, 4.8, dk, 0, 0.28, 0);
     add(0.05, 1.35, 3.3, paint, -0.925, 1.475, 0.85); add(0.05, 0.55, 3.3, paint, 0.925, 1.075, 0.85);   /* the cargo box: left wall, and the sill under the serving window on the right */
     add(0.05, 0.8, 0.5, paint, 0.925, 1.75, -0.55); add(0.05, 0.8, 0.5, paint, 0.925, 1.75, 2.25);        /* window pillars */
@@ -242,7 +242,7 @@
     var headM = glowMat(0xfff3c8, 1.4), tailM = glowMat(0xd0201a, 0.9), revM = glowMat(0xf4f7ff, 0.06), lamps = { headM: headM, tailM: tailM, revM: revM, beams: [] };
     [-0.65, 0.65].forEach(function (x) { add(0.36, 0.16, 0.05, headM, x, 0.9, -2.53); add(0.22, 0.5, 0.05, tailM, x * 1.3, 1.3, 2.53); });
     [-0.3, 0.3].forEach(function (x) { add(0.16, 0.1, 0.035, revM, x * 2.6, 0.75, 2.535); }); add(0.5, 0.12, 0.03, MAT.white, 0, 0.5, 2.54);
-    [[-0.92, -1.7], [0.92, -1.7], [-0.92, 1.5], [0.92, 1.5]].forEach(function (p) { var wg = new THREE.Group(); wg.position.set(p[0], 0.36, p[1]); var tire = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.24, 16), dk); tire.rotation.z = Math.PI / 2; tire.castShadow = true; wg.add(tire); var rim = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.25, 8), colorMat(0xc9ccd1, 0.4, 0.6)); rim.rotation.z = Math.PI / 2; wg.add(rim); g.add(wg); wheels.push(wg); });
+    [[-0.92, -1.7], [0.92, -1.7], [-0.92, 1.5], [0.92, 1.5]].forEach(function (p) { var wg = new THREE.Group(); wg.position.set(p[0], 0.36, p[1]); var tire = new THREE.Mesh(roundCylGeo(0.36, 0.36, 0.24, 16), dk); tire.rotation.z = Math.PI / 2; tire.castShadow = true; wg.add(tire); var rim = new THREE.Mesh(roundCylGeo(0.19, 0.19, 0.25, 8), colorMat(0xc9ccd1, 0.4, 0.6)); rim.rotation.z = Math.PI / 2; wg.add(rim); g.add(wg); wheels.push(wg); });
     g.userData.lamps = lamps;
     if (!full) return wheels;
     var parts = {};
@@ -264,7 +264,7 @@
   }
   function carBody(g, hex, full) {
     var paint = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.3, metalness: 0.6 }), glassM = new THREE.MeshPhysicalMaterial({ color: 0x20303c, transparent: true, opacity: 0.75, roughness: 0.05, metalness: 0.4 }), dk = colorMat(0x15171a, 0.8), wheels = [];
-    function add(w, h, d, m, x, y, z, parent) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; (parent || g).add(b); return b; }
+    function add(w, h, d, m, x, y, z, parent) { var b = new THREE.Mesh(bevelGeo(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; (parent || g).add(b); return b; }
     /* traffic keeps the cheap one-box shell; the player's car is built in sections so the bonnet and the boot open onto real wells */
     if (full) { add(1.7, 0.5, 2.0, paint, 0, 0.55, 0.15); [-1.41, 1.55].forEach(function (nz, i) { var len = i ? 0.8 : 1.12; add(1.7, 0.14, len, paint, 0, 0.37, nz); [-1, 1].forEach(function (sx) { add(0.05, 0.3, len, paint, sx * 0.825, 0.59, nz); }); }); add(1.7, 0.3, 0.06, paint, 0, 0.59, -1.94); add(1.7, 0.3, 0.06, paint, 0, 0.59, 1.94); }
     else { add(1.7, 0.5, 3.9, paint, 0, 0.55, 0); add(1.62, 0.18, 0.9, paint, 0, 0.84, -1.35); }
@@ -273,7 +273,7 @@
     [-0.6, 0.6].forEach(function (x) { add(0.32, 0.12, 0.05, headM, x, 0.62, -1.96); add(0.32, 0.1, 0.05, tailM, x, 0.64, 1.96); });
     [-0.3, 0.3].forEach(function (x) { add(0.2, 0.08, 0.035, revM, x, 0.6, 1.962); });
     add(0.5, 0.12, 0.03, MAT.white, 0, 0.45, 1.965); add(1.5, 0.1, 0.06, dk, 0, 0.36, -1.97);
-    [[-0.85, -1.25], [0.85, -1.25], [-0.85, 1.25], [0.85, 1.25]].forEach(function (p) { var wg = new THREE.Group(); wg.position.set(p[0], 0.32, p[1]); var tire = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.22, 16), dk); tire.rotation.z = Math.PI / 2; tire.castShadow = true; wg.add(tire); var rim = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.23, 8), MAT.chrome); rim.rotation.z = Math.PI / 2; wg.add(rim); g.add(wg); wheels.push(wg); });
+    [[-0.85, -1.25], [0.85, -1.25], [-0.85, 1.25], [0.85, 1.25]].forEach(function (p) { var wg = new THREE.Group(); wg.position.set(p[0], 0.32, p[1]); var tire = new THREE.Mesh(roundCylGeo(0.32, 0.32, 0.22, 16), dk); tire.rotation.z = Math.PI / 2; tire.castShadow = true; wg.add(tire); var rim = new THREE.Mesh(roundCylGeo(0.18, 0.18, 0.23, 8), MAT.chrome); rim.rotation.z = Math.PI / 2; wg.add(rim); g.add(wg); wheels.push(wg); });
     g.userData.lamps = lamps;
     if (!full) return wheels;
     var parts = {};
@@ -310,9 +310,9 @@
     var leafM = MAT.tree, barkM = MAT.trunk, kerbM = colorMat(0xa8a49c, 0.9);
     function lamp(x, z, dir) {
       cyl(0.07, 0.09, 4.6, postM, x, 2.3, z, null, 7);
-      var arm = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(dir[0]) > 0.5 ? 1.0 : 0.09, 0.09, Math.abs(dir[1]) > 0.5 ? 1.0 : 0.09), postM);
+      var arm = new THREE.Mesh(bevelGeo(Math.abs(dir[0]) > 0.5 ? 1.0 : 0.09, 0.09, Math.abs(dir[1]) > 0.5 ? 1.0 : 0.09), postM);
       arm.position.set(x + dir[0] * 0.5, 4.55, z + dir[1] * 0.5); arm.castShadow = false; world.group.add(arm);
-      var hd = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.13, 0.26), headM);
+      var hd = new THREE.Mesh(bevelGeo(0.44, 0.13, 0.26), headM);
       hd.position.set(x + dir[0] * 1.0, 4.44, z + dir[1] * 1.0); hd.castShadow = false; world.group.add(hd); n += 3;
     }
     function tree(x, z, sc) {
@@ -321,7 +321,7 @@
     }
     function bench(x, z, ry) {
       var g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; world.group.add(g);
-      function bx(w, h, d, m, px, py, pz, rx) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(px, py, pz); if (rx) b.rotation.x = rx; b.castShadow = true; g.add(b); }
+      function bx(w, h, d, m, px, py, pz, rx) { var b = new THREE.Mesh(bevelGeo(w, h, d), m); b.position.set(px, py, pz); if (rx) b.rotation.x = rx; b.castShadow = true; g.add(b); }
       bx(1.7, 0.07, 0.46, benchM, 0, 0.45, 0); bx(1.7, 0.42, 0.06, benchM, 0, 0.68, -0.21, -0.18);
       [-0.72, 0.72].forEach(function (o) { bx(0.08, 0.45, 0.42, darkM, o, 0.22, 0); }); n += 4;
     }
@@ -333,10 +333,10 @@
     }
     function shelter(x, z, ry) {
       var g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; world.group.add(g);
-      var rf = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.1, 1.5), darkM); rf.position.y = 2.5; g.add(rf);
-      [-1.6, 1.6].forEach(function (o) { var p = new THREE.Mesh(new THREE.BoxGeometry(0.09, 2.5, 0.09), postM); p.position.set(o, 1.25, -0.65); g.add(p); });
+      var rf = new THREE.Mesh(bevelGeo(3.4, 0.1, 1.5), darkM); rf.position.y = 2.5; g.add(rf);
+      [-1.6, 1.6].forEach(function (o) { var p = new THREE.Mesh(bevelGeo(0.09, 2.5, 0.09), postM); p.position.set(o, 1.25, -0.65); g.add(p); });
       var bk = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 2.1), glassM); bk.position.set(0, 1.3, -0.72); g.add(bk);
-      var sb = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.07, 0.4), benchM); sb.position.set(0, 0.46, -0.45); g.add(sb);
+      var sb = new THREE.Mesh(bevelGeo(2.6, 0.07, 0.4), benchM); sb.position.set(0, 0.46, -0.45); g.add(sb);
       var sg = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.34), new THREE.MeshBasicMaterial({ map: textTex(['BUS'], 220, 80, { size: 52, bg: '#16324f', titleColor: '#ffd166', line: 'rgba(0,0,0,0)' }), transparent: true }));
       sg.position.set(0, 2.15, 0.76); sg.rotation.y = Math.PI; g.add(sg); n += 7;
     }
@@ -383,6 +383,7 @@
   }
   function buildCity() {
     var C = CITY, SW = world.sidewalkZ || ROOM.z + 2.6, treeM = MAT.tree, trunkM = MAT.trunk;
+    if (dlcOn('farm')) { farmReserve(); hooks.boot.push(buildFarm); }   /* the field is fenced off before the blocks fill in, and built once the town stands */
     // roads: Main Street gets its two far ends and its far pavement (the middle stretch already exists), then the back street, the north street, two avenues and the lane from the yard gate
     [[-C.x, -45], [45, C.x]].forEach(function (r) { var len = r[1] - r[0], cx = (r[0] + r[1]) / 2; var rd = new THREE.Mesh(new THREE.PlaneGeometry(len, 9), MAT.asphalt); rd.rotation.x = -Math.PI / 2; rd.position.set(cx, 0.006, C.mainZ); rd.receiveShadow = true; world.group.add(rd); var pv = new THREE.Mesh(new THREE.PlaneGeometry(len, 3.2), MAT.pavement); pv.rotation.x = -Math.PI / 2; pv.position.set(cx, 0.05, SW); world.group.add(pv); for (var t = r[0] + 2; t < r[1] - 2; t += 6) box(1.8, 0.01, 0.12, colorMat(0xe8e0a0, 0.9), t, 0.013, C.mainZ, { cast: false }); });
     var farPv = new THREE.Mesh(new THREE.PlaneGeometry(C.x * 2, 3.2), MAT.pavement); farPv.rotation.x = -Math.PI / 2; farPv.position.set(0, 0.05, C.mainZ + 6.1); farPv.receiveShadow = true; world.group.add(farPv); C.roads.push({ x1: -C.x, x2: C.x, z1: C.mainZ - 4.5, z2: C.mainZ + 4.5 });

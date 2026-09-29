@@ -18,8 +18,8 @@
   // a curtain hangs from a rod and slides toward its pivot end when opened
   function addCurtain(key, label, x, y, z, w, h, rotY) {
     var g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rotY || 0; world.group.add(g);
-    var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, w + 0.24, 10), MAT.chrome); rod.rotation.z = Math.PI / 2; rod.position.set(w / 2, h / 2 + 0.06, 0.05); g.add(rod);
-    [0, w].forEach(function (rx) { var cap = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), MAT.chrome); cap.position.set(rx + (rx ? 0.12 : -0.12), h / 2 + 0.06, 0.05); g.add(cap); var br = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.09), MAT.chrome); br.position.set(rx + (rx ? 0.06 : -0.06), h / 2 + 0.06, 0.005); g.add(br); var bp = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.01), MAT.chrome); bp.position.set(rx + (rx ? 0.06 : -0.06), h / 2 + 0.06, -0.035); g.add(bp); });
+    var rod = new THREE.Mesh(roundCylGeo(0.014, 0.014, w + 0.24, 10), MAT.chrome); rod.rotation.z = Math.PI / 2; rod.position.set(w / 2, h / 2 + 0.06, 0.05); g.add(rod);
+    [0, w].forEach(function (rx) { var cap = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), MAT.chrome); cap.position.set(rx + (rx ? 0.12 : -0.12), h / 2 + 0.06, 0.05); g.add(cap); var br = new THREE.Mesh(bevelGeo(0.03, 0.03, 0.09), MAT.chrome); br.position.set(rx + (rx ? 0.06 : -0.06), h / 2 + 0.06, 0.005); g.add(br); var bp = new THREE.Mesh(bevelGeo(0.05, 0.08, 0.01), MAT.chrome); bp.position.set(rx + (rx ? 0.06 : -0.06), h / 2 + 0.06, -0.035); g.add(bp); });
     for (var rg = 0; rg <= 8; rg++) { var ring = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.005, 6, 12), MAT.chrome); ring.rotation.y = Math.PI / 2; ring.position.set(w * rg / 8, h / 2 + 0.06, 0.05); ring.userData.ringT = rg / 8; g.add(ring); }
     var cloth = new THREE.Mesh(new THREE.PlaneGeometry(w, h, 24, 1), CURTAIN_MAT.clone()); cloth.material.map = CURTAIN_TEX.clone(); cloth.material.map.needsUpdate = true; cloth.material.map.repeat.set(Math.max(1, Math.round(w * 1.5)), 1); cloth.position.set(w / 2, 0, 0.05); cloth.userData.soft = true; g.add(cloth);
     var cp = cloth.geometry.attributes.position; for (var vi = 0; vi < cp.count; vi++) { cp.setZ(vi, Math.sin((cp.getX(vi) / w + 0.5) * Math.PI * 2 * Math.max(2, Math.round(w * 1.5))) * 0.02); } cloth.geometry.computeVertexNormals();
@@ -87,98 +87,102 @@
     breakNoteMesh = null; syncBreakNote();
     // staff door: hinged at x = 9.4 in the staff wall, swings into the lobby
     var g = new THREE.Group(); g.position.set(9.4, 0, 4); world.group.add(g); staffDoor.g = g;
-    var leaf = new THREE.Mesh(new THREE.BoxGeometry(1.16, 2.24, 0.06), MAT.darkwood); leaf.position.set(0.6, 1.12, 0); leaf.castShadow = true; g.add(leaf);
+    var leaf = new THREE.Mesh(bevelGeo(1.16, 2.24, 0.06), MAT.darkwood); leaf.position.set(0.6, 1.12, 0); leaf.castShadow = true; g.add(leaf);
     var plate = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.22), new THREE.MeshBasicMaterial({ map: textTex(['STAFF ONLY'], 350, 110, { size: 52, bold: true, bg: '#c94a3a', color: '#fff', titleColor: '#fff', line: 'rgba(0,0,0,0)' }) })); plate.position.set(0.6, 1.6, 0.035); g.add(plate);
     var plate2 = plate.clone(); plate2.position.z = -0.035; plate2.rotation.y = Math.PI; g.add(plate2);
     [0.04, -0.04].forEach(function (dz) { var knob = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), MAT.metal); knob.position.set(1.05, 1.0, dz * 1.5); g.add(knob); });
     var hit = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.3, 0.3), MAT.none); hit.position.set(0.6, 1.15, 0); g.add(hit); interactable(hit, { kind: 'staffdoor' });
-    staffDoor.leds = []; [0.036, -0.036].forEach(function (dz) { var led = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.05, 0.01), glowMat(0x39d353, 1.2)); led.position.set(1.02, 1.3, dz); g.add(led); staffDoor.leds.push(led); }); staffDoorLeds();   /* red locked, green not, like the sliding doors */
+    staffDoor.leds = []; [0.036, -0.036].forEach(function (dz) { var led = new THREE.Mesh(bevelGeo(0.075, 0.05, 0.01), glowMat(0x39d353, 1.2)); led.position.set(1.02, 1.3, dz); g.add(led); staffDoor.leds.push(led); }); staffDoorLeds();   /* red locked, green not, like the sliding doors */
     staffDoor.obstacle = { x1: 9.4, x2: 10.6, z1: 3.85, z2: 4.15, tag: 'staffdoor' }; staffDoor.t = shop().staffDoor ? 1 : 0; syncStaffDoorObstacle();
     // the shop control cabinet on the security room's right wall (F2 carries it): open the doors, and inside hangs a tablet with a bank of switches, levers, a radio knob and small displays under it
     var bx = SEC.x2 - 0.365, by = 1.15, bz = -10.75; var cg = new THREE.Group();   /* the group's origin is the cabinet FRONT: its depth runs back to the wall at SEC.x2 */ cg.position.set(bx, by, bz); cg.rotation.y = -Math.PI / 2; world.group.add(cg); world.ctl = { g: cg, doorT: 0, doorOpen: false, doors: [], levers: {}, leds: {}, roomLeds: {}, lastTick: 0 };
     var panelM = new THREE.MeshStandardMaterial({ color: 0xc9ccd2, roughness: 0.55, metalness: 0.2, emissive: 0x2a2d31, emissiveIntensity: 0.35 }); var darkM = new THREE.MeshStandardMaterial({ color: 0x22262b, roughness: 0.5, metalness: 0.3 }); var shellM = new THREE.MeshStandardMaterial({ color: 0x7d838c, roughness: 0.45, metalness: 0.4 });
     var inLight = new THREE.PointLight(0xfff3e0, 0.9, 2.4); inLight.position.set(0, 0.3, 0.2); cg.add(inLight);   /* a strip light inside: a recess in a wall-facing cabinet gets no room light */
     function cm(geo, mat, x, y, z, parent) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; (parent || cg).add(m); return m; }
-    cm(new THREE.BoxGeometry(1.44, 2.04, 0.02), shellM, 0, 0, -0.35);                                                                    // back plate against the wall
-    cm(new THREE.BoxGeometry(0.03, 2.04, 0.36), shellM, -0.705, 0, -0.17); cm(new THREE.BoxGeometry(0.03, 2.04, 0.36), shellM, 0.705, 0, -0.17);   // sides
-    cm(new THREE.BoxGeometry(1.44, 0.03, 0.36), shellM, 0, 1.005, -0.17); cm(new THREE.BoxGeometry(1.44, 0.03, 0.36), shellM, 0, -1.005, -0.17);   // top and bottom
-    cm(new THREE.BoxGeometry(1.44, 0.15, 0.36), darkM, 0, -1.09, -0.17); cm(new THREE.BoxGeometry(1.38, 1.98, 0.01), new THREE.MeshStandardMaterial({ color: 0x4a5058, roughness: 0.8 }), 0, 0, -0.34);   // plinth and the dark liner
-    cm(new THREE.BoxGeometry(0.06, 0.06, 0.4), darkM, -0.25, 1.0, -0.15); cm(new THREE.BoxGeometry(0.06, 0.06, 0.4), darkM, 0.25, 1.0, -0.15);   // top rail
+    cm(bevelGeo(1.44, 2.04, 0.02), shellM, 0, 0, -0.35);                                                                    // back plate against the wall
+    cm(bevelGeo(0.03, 2.04, 0.36), shellM, -0.705, 0, -0.17); cm(bevelGeo(0.03, 2.04, 0.36), shellM, 0.705, 0, -0.17);   // sides
+    cm(bevelGeo(1.44, 0.03, 0.36), shellM, 0, 1.005, -0.17); cm(bevelGeo(1.44, 0.03, 0.36), shellM, 0, -1.005, -0.17);   // top and bottom
+    cm(bevelGeo(1.44, 0.15, 0.36), darkM, 0, -1.09, -0.17); cm(bevelGeo(1.38, 1.98, 0.01), new THREE.MeshStandardMaterial({ color: 0x4a5058, roughness: 0.8 }), 0, 0, -0.34);   // plinth and the dark liner
+    cm(bevelGeo(0.06, 0.06, 0.4), darkM, -0.25, 1.0, -0.15); cm(bevelGeo(0.06, 0.06, 0.4), darkM, 0.25, 1.0, -0.15);   // top rail
     [[-0.7, 1], [0.7, -1]].forEach(function (d) {   // two doors hinged on the outer edges; the free edge swings out into the room
-      var hg = new THREE.Group(); hg.position.set(d[0], 0, 0); cg.add(hg); var leaf = cm(new THREE.BoxGeometry(0.69, 2.0, 0.04), panelM, 0.35 * d[1], 0, 0.02, hg); cm(new THREE.BoxGeometry(0.55, 1.7, 0.005), darkM, 0.35 * d[1], 0, 0.043, hg);
-      cm(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 8), MAT.chrome, 0.64 * d[1], 0, 0.06, hg); var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.08), new THREE.MeshBasicMaterial({ map: textTex([d[1] > 0 ? 'SHOP' : 'CONTROLS'], 300, 60, { size: 40, bold: true, bg: 'rgba(0,0,0,0)', color: '#e8e8ec', titleColor: '#ffc857', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(0.35 * d[1], 0.75, 0.046); hg.add(lbl);
+      var hg = new THREE.Group(); hg.position.set(d[0], 0, 0); cg.add(hg); var leaf = cm(bevelGeo(0.69, 2.0, 0.04), panelM, 0.35 * d[1], 0, 0.02, hg); cm(bevelGeo(0.55, 1.7, 0.005), darkM, 0.35 * d[1], 0, 0.043, hg);
+      cm(roundCylGeo(0.012, 0.012, 0.16, 8), MAT.chrome, 0.64 * d[1], 0, 0.06, hg); var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.08), new THREE.MeshBasicMaterial({ map: textTex([d[1] > 0 ? 'SHOP' : 'CONTROLS'], 300, 60, { size: 40, bold: true, bg: 'rgba(0,0,0,0)', color: '#e8e8ec', titleColor: '#ffc857', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(0.35 * d[1], 0.75, 0.046); hg.add(lbl);
       var dh = new THREE.Mesh(new THREE.BoxGeometry(0.69, 2.0, 0.08), MAT.none); dh.position.set(0.35 * d[1], 0, 0.03); hg.add(dh); interactable(dh, { kind: 'ctlDoor' });
       world.ctl.doors.push({ g: hg, dir: d[1] });
     });
     // the tablet hangs from the top rail on two straps
     var tsc = touchScreen({ id: 'ctl', kind: 'ctlTablet', w: 1120, h: 700, pw: 0.9, ph: 0.5625, draw: drawCtlTablet, tap: ctlTap, wheel: function (dir) { world.ctl.page = ((world.ctl.page + dir) % CTL_PAGES.length + CTL_PAGES.length) % CTL_PAGES.length; }, live: 1000 });
     var tg = new THREE.Group(); tg.position.set(0, 0.6, -0.27); cg.add(tg); world.ctl.tablet = tg;
-    cm(new THREE.BoxGeometry(0.98, 0.65, 0.02), MAT.black, 0, 0, -0.012, tg); tsc.mesh.position.z = 0.0005; tg.add(tsc.mesh);
-    [-0.3, 0.3].forEach(function (x) { cm(new THREE.BoxGeometry(0.04, 0.12, 0.01), darkM, x, 0.36, -0.01, tg); });
+    screenShell(tg, 0.9, 0.5625, { bezel: 0.03, depth: 0.022 }); tsc.mesh.position.z = 0.0005; tg.add(tsc.mesh);
+    [-0.3, 0.3].forEach(function (x) { cm(bevelGeo(0.04, 0.12, 0.01), darkM, x, 0.36, -0.01, tg); });
     var th = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.67, 0.08), MAT.none); th.position.set(0, 0, 0.02); tg.add(th); interactable(th, { kind: 'ctlTablet' });
     world.ctl.sc = tsc; tDraw(tsc);
     // the switch panel under it
-    cm(new THREE.BoxGeometry(1.3, 1.05, 0.03), panelM, 0, -0.42, -0.31);
+    cm(bevelGeo(1.3, 1.05, 0.03), panelM, 0, -0.42, -0.31);
     world.ctl.rockers = {};
     [['open', -0.5, 'OPEN'], ['lights', -0.25, 'LIGHTS'], ['staffDoor', 0, 'DOOR'], ['roller', 0.25, 'ROLLER'], ['gate', 0.5, 'GATE']].forEach(function (r) {
       var y = 0.0, z = -0.295;
-      cm(new THREE.BoxGeometry(0.09, 0.15, 0.01), MAT.black, r[1], y, z); var rocker = cm(new THREE.BoxGeometry(0.07, 0.12, 0.03), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 }), r[1], y, z + 0.015); world.ctl.rockers[r[0]] = rocker;
+      cm(bevelGeo(0.09, 0.15, 0.01), MAT.black, r[1], y, z); var rocker = cm(bevelGeo(0.07, 0.12, 0.03), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 }), r[1], y, z + 0.015); world.ctl.rockers[r[0]] = rocker;
       var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.03), new THREE.MeshBasicMaterial({ map: textTex([r[2]], 160, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(r[1], y - 0.11, z + 0.001); cg.add(lbl);
       var led = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 2 }), r[1] + 0.055, y + 0.09, z + 0.002); world.ctl.rockers[r[0] + 'Led'] = led;
       var sh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.08), MAT.none); sh.position.set(r[1], y, z + 0.02); cg.add(sh); interactable(sh, { kind: 'ctlSwitch', id: r[0] });
     });
     // two small displays and the radio knob
     var sc2 = document.createElement('canvas'); sc2.width = 256; sc2.height = 128; world.ctl.canvas = sc2; world.ctl.tex = new THREE.CanvasTexture(sc2); world.ctl.tex.encoding = THREE.sRGBEncoding;
-    var screen = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.2), new THREE.MeshBasicMaterial({ map: world.ctl.tex })); screen.position.set(-0.4, -0.3, -0.294); cg.add(screen); cm(new THREE.BoxGeometry(0.44, 0.24, 0.01), MAT.black, -0.4, -0.3, -0.3);
+    var screen = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.2), new THREE.MeshBasicMaterial({ map: world.ctl.tex, toneMapped: false })); screen.position.set(-0.4, -0.3, -0.294); cg.add(screen); cm(bevelGeo(0.44, 0.24, 0.01), MAT.gloss, -0.4, -0.3, -0.3);
     var sc3 = document.createElement('canvas'); sc3.width = 256; sc3.height = 128; world.ctl.canvas2 = sc3; world.ctl.tex2 = new THREE.CanvasTexture(sc3); world.ctl.tex2.encoding = THREE.sRGBEncoding;
-    var screen2 = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.2), new THREE.MeshBasicMaterial({ map: world.ctl.tex2 })); screen2.position.set(0.05, -0.3, -0.294); cg.add(screen2); cm(new THREE.BoxGeometry(0.44, 0.24, 0.01), MAT.black, 0.05, -0.3, -0.3);
+    var screen2 = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.2), new THREE.MeshBasicMaterial({ map: world.ctl.tex2, toneMapped: false })); screen2.position.set(0.05, -0.3, -0.294); cg.add(screen2); cm(bevelGeo(0.44, 0.24, 0.01), MAT.gloss, 0.05, -0.3, -0.3);
     var screenGlow = new THREE.PointLight(0x6fdc8c, 0.15, 1.2); screenGlow.position.set(0, -0.2, 0.2); cg.add(screenGlow);
     var dialArc = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['OFF · LOFI · DUB · NEON · JAZZ'], 300, 50, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); dialArc.position.set(0.5, -0.19, -0.294); cg.add(dialArc);
-    var knob = cm(new THREE.CylinderGeometry(0.04, 0.045, 0.03, 20), darkM, 0.5, -0.32, -0.28); knob.rotation.x = Math.PI / 2; world.ctl.knob = knob;
-    var pointer = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.035, 0.006), new THREE.MeshStandardMaterial({ color: 0xffc857, emissive: 0xffc857, emissiveIntensity: 0.6 })); pointer.position.set(0, 0.012, 0.025); knob.add(pointer); world.ctl.pointer = pointer;
+    var knob = cm(roundCylGeo(0.04, 0.045, 0.03, 20), darkM, 0.5, -0.32, -0.28); knob.rotation.x = Math.PI / 2; world.ctl.knob = knob;
+    var pointer = new THREE.Mesh(bevelGeo(0.006, 0.035, 0.006), new THREE.MeshStandardMaterial({ color: 0xffc857, emissive: 0xffc857, emissiveIntensity: 0.6 })); pointer.position.set(0, 0.012, 0.025); knob.add(pointer); world.ctl.pointer = pointer;
     var radioLed = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0x3ad0ff, emissive: 0x3ad0ff, emissiveIntensity: 2 }), 0.58, -0.25, -0.293); world.ctl.radioLed = radioLed;
     var kh = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.08), MAT.none); kh.position.set(0.5, -0.32, -0.27); cg.add(kh); interactable(kh, { kind: 'ctlKnob' });
     // levers: dehumidifier targets, markup and volume, plus the red alarm button
     [['grow', -0.5, 'DRY GROW', 'ctlLever'], ['dry', -0.27, 'DRY ROOM', 'ctlLever'], ['markup', -0.04, 'MARKUP', 'ctlMarkup'], ['volume', 0.19, 'VOLUME', 'ctlVol']].forEach(function (l) {
-      var y = -0.62, z = -0.295; cm(new THREE.BoxGeometry(0.03, 0.2, 0.01), MAT.black, l[1], y, z); var lg = new THREE.Group(); lg.position.set(l[1], y, z); cg.add(lg); cm(new THREE.CylinderGeometry(0.008, 0.008, 0.14, 8), MAT.chrome, 0, 0.07, 0.03, lg).rotation.x = 0; var knobL = cm(new THREE.SphereGeometry(0.02, 10, 8), new THREE.MeshStandardMaterial({ color: 0xc94a3a, roughness: 0.4 }), 0, 0.14, 0.03, lg); world.ctl.levers[l[0]] = lg;
+      var y = -0.62, z = -0.295; cm(bevelGeo(0.03, 0.2, 0.01), MAT.black, l[1], y, z); var lg = new THREE.Group(); lg.position.set(l[1], y, z); cg.add(lg); cm(roundCylGeo(0.008, 0.008, 0.14, 8), MAT.chrome, 0, 0.07, 0.03, lg).rotation.x = 0; var knobL = cm(new THREE.SphereGeometry(0.02, 10, 8), new THREE.MeshStandardMaterial({ color: 0xc94a3a, roughness: 0.4 }), 0, 0.14, 0.03, lg); world.ctl.levers[l[0]] = lg;
       var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.03), new THREE.MeshBasicMaterial({ map: textTex([l[2]], 200, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(l[1], y - 0.14, z + 0.001); cg.add(lbl);
       var lh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.3, 0.1), MAT.none); lh.position.set(l[1], y, z + 0.03); cg.add(lh); interactable(lh, { kind: l[3], id: l[0] });
     });
-    cm(new THREE.CylinderGeometry(0.05, 0.055, 0.02, 20), MAT.black, 0.5, -0.62, -0.29).rotation.x = Math.PI / 2; var pb = cm(new THREE.CylinderGeometry(0.038, 0.04, 0.035, 20), new THREE.MeshStandardMaterial({ color: 0xd0201a, roughness: 0.35 }), 0.5, -0.62, -0.27); pb.rotation.x = Math.PI / 2; world.ctl.panicBtn = pb;
+    cm(roundCylGeo(0.05, 0.055, 0.02, 20), MAT.black, 0.5, -0.62, -0.29).rotation.x = Math.PI / 2; var pb = cm(roundCylGeo(0.038, 0.04, 0.035, 20), new THREE.MeshStandardMaterial({ color: 0xd0201a, roughness: 0.35 }), 0.5, -0.62, -0.27); pb.rotation.x = Math.PI / 2; world.ctl.panicBtn = pb;
     var pl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.03), new THREE.MeshBasicMaterial({ map: textTex(['SILENT ALARM'], 200, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); pl.position.set(0.5, -0.76, -0.294); cg.add(pl);
     var ph = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.1), MAT.none); ph.position.set(0.5, -0.62, -0.26); cg.add(ph); interactable(ph, { kind: 'ctlPanic' });
     // a row of room lights: a LED and a button each
     var rooms = Object.keys(ROOM_NAMES), rw = 1.2 / rooms.length;
-    rooms.forEach(function (rm, i) { var x = -0.6 + rw * (i + 0.5), y = -0.86, z = -0.295; var led = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xffe08a, emissiveIntensity: 2 }), x, y + 0.05, z + 0.002); world.ctl.roomLeds[rm] = led; cm(new THREE.CylinderGeometry(0.018, 0.02, 0.015, 12), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 }), x, y, z + 0.005).rotation.x = Math.PI / 2; var lbl = new THREE.Mesh(new THREE.PlaneGeometry(rw - 0.01, 0.026), new THREE.MeshBasicMaterial({ map: textTex([ROOM_NAMES[rm].toUpperCase().replace(' & ', '/')], 200, 30, { size: 20, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(x, y - 0.05, z + 0.001); cg.add(lbl); var rh = new THREE.Mesh(new THREE.BoxGeometry(rw - 0.01, 0.13, 0.08), MAT.none); rh.position.set(x, y - 0.01, z + 0.02); cg.add(rh); interactable(rh, { kind: 'ctlRoom', id: rm }); });
-    var conduit = cm(new THREE.CylinderGeometry(0.02, 0.02, 0.9, 8), panelM, 0.6, 1.4, -0.3);
+    rooms.forEach(function (rm, i) { var x = -0.6 + rw * (i + 0.5), y = -0.86, z = -0.295; var led = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xffe08a, emissiveIntensity: 2 }), x, y + 0.05, z + 0.002); world.ctl.roomLeds[rm] = led; cm(roundCylGeo(0.018, 0.02, 0.015, 12), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 }), x, y, z + 0.005).rotation.x = Math.PI / 2; var lbl = new THREE.Mesh(new THREE.PlaneGeometry(rw - 0.01, 0.026), new THREE.MeshBasicMaterial({ map: textTex([ROOM_NAMES[rm].toUpperCase().replace(' & ', '/')], 200, 30, { size: 20, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(x, y - 0.05, z + 0.001); cg.add(lbl); var rh = new THREE.Mesh(new THREE.BoxGeometry(rw - 0.01, 0.13, 0.08), MAT.none); rh.position.set(x, y - 0.01, z + 0.02); cg.add(rh); interactable(rh, { kind: 'ctlRoom', id: rm }); });
+    var conduit = cm(roundCylGeo(0.02, 0.02, 0.9, 8), panelM, 0.6, 1.4, -0.3);
     world.obstacles.push({ x1: bx - 0.08, x2: SEC.x2, z1: bz - 0.74, z2: bz + 0.74, tag: 'ctlBox' });
     var ctlSign = signPlane(['SHOP CONTROLS', 'E on the doors opens the cabinet'], 0.9, 0.3, SEC.x2 - 0.02, 2.45, bz, -Math.PI / 2, { titleColor: '#ffc857' }); fixtureAdd('ctlBox', 'control cabinet', [cg, ctlSign], -Math.PI / 2);
     drawCtlScreen();
     // Two satellite panels: one behind the register, one in the office. Smaller box, fewer switches.
     [
-      { id: 'miniFront',  fx: 'ctlFront',  label: 'front panel', x: 3.855, y: 1.5, z: 3.3, rot: -Math.PI / 2, sign: 'FRONT OF HOUSE', col: 0x2f6b4a },   /* on the side wall by the extinguisher: its old spot was inside the cigarette cabinet */
-      { id: 'miniOffice', fx: 'ctlOffice', label: 'office panel',         x: -6.3, y: 1.5, z: 1.86, rot: 0,       sign: 'OFFICE', col: 0x2f5b8a }
+      { id: 'miniFront',  fx: 'ctlFront',  label: 'front panel', x: 3.855, y: 1.5, z: 3.3, rot: -Math.PI / 2, sign: 'FRONT OF HOUSE', col: 0x6fdc8c },   /* on the side wall by the extinguisher: its old spot was inside the cigarette cabinet */
+      { id: 'miniOffice', fx: 'ctlOffice', label: 'office panel',         x: -6.3, y: 1.5, z: 1.86, rot: 0,       sign: 'OFFICE', col: 0x5aa9ff }
     ].forEach(function (p) {
       var g = new THREE.Group(); g.position.set(p.x, p.y, p.z); g.rotation.y = p.rot; world.group.add(g);
-      var caseM = colorMat(0xd8dce0, 0.6), faceM = colorMat(0xeceff2, 0.5);
-      var bodyM = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.44, 0.09), caseM); bodyM.castShadow = false; g.add(bodyM);
-      var face = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.012), faceM); face.position.z = 0.051; face.castShadow = false; g.add(face);
-      var strip = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.06, 0.014), colorMat(p.col, 0.5)); strip.position.set(0, 0.16, 0.053); strip.castShadow = false; g.add(strip);
-      for (var r2 = 0; r2 < 3; r2++) {
-        var rk = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 0.02), colorMat(0x3a3d42, 0.5));
-        rk.position.set(-0.08 + (r2 % 2) * 0.16, 0.03 - Math.floor(r2 / 2) * 0.1, 0.057); rk.castShadow = false; g.add(rk);
-        var ld = new THREE.Mesh(new THREE.SphereGeometry(0.007, 6, 6), new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 1.6 }));
-        ld.position.set(-0.03 + (r2 % 2) * 0.16, 0.03 - Math.floor(r2 / 2) * 0.1, 0.058); ld.castShadow = false; g.add(ld);
-      }
-      var sg = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.05), new THREE.MeshBasicMaterial({ map: textTex([p.sign], 280, 50, { size: 26, bg: 'rgba(0,0,0,0)', color: '#12161a', titleColor: '#12161a', line: 'rgba(0,0,0,0)' }), transparent: true }));
-      sg.position.set(0, -0.155, 0.054); g.add(sg);
+      // a wall controller: an aluminium back box, a black glass face with a lit read-out, four backlit keys and a light bar in the panel's own colour
+      var bodyM = new THREE.Mesh(bevelGeo(0.36, 0.5, 0.05, 0.012), MAT.alu); bodyM.castShadow = false; g.add(bodyM);
+      var face = new THREE.Mesh(bevelGeo(0.336, 0.476, 0.012, 0.004), MAT.gloss); face.position.z = 0.029; face.castShadow = false; g.add(face);
+      var pcv = document.createElement('canvas'); pcv.width = 432; pcv.height = 256; var plp = litPlane(pcv, 0.27, 0.16); plp.position.set(0, 0.128, 0.0356); g.add(plp);
+      var pgl = new THREE.Mesh(new THREE.PlaneGeometry(0.27, 0.16), MAT.screenGlass); pgl.position.set(0, 0.128, 0.0366); g.add(pgl);
+      var keys = [];
+      [['OPEN', -0.072, -0.03], ['LIGHTS', 0.072, -0.03], ['DOOR', -0.072, -0.125], ['ALARM', 0.072, -0.125]].forEach(function (k, ki) {
+        var key = new THREE.Mesh(bevelGeo(0.128, 0.078, 0.014, 0.005), MAT.soft); key.position.set(k[1], k[2], 0.038); key.castShadow = false; g.add(key);
+        var bar = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.007), new THREE.MeshBasicMaterial({ color: ki === 3 ? 0xff5050 : 0x6fdc8c, toneMapped: false })); bar.position.set(k[1], k[2] + 0.024, 0.0455); g.add(bar); keys.push(bar);
+        var kl = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.026), new THREE.MeshBasicMaterial({ map: textTex([k[0]], 200, 52, { size: 30, bold: true, bg: 'rgba(0,0,0,0)', color: '#cfd6da', titleColor: '#cfd6da', line: 'rgba(0,0,0,0)' }), transparent: true })); kl.position.set(k[1], k[2] - 0.01, 0.0455); g.add(kl);
+      });
+      var strip = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.008), new THREE.MeshBasicMaterial({ color: p.col, toneMapped: false })); strip.position.set(0, -0.205, 0.0356); g.add(strip);
+      [[-0.158, 0.228], [0.158, 0.228], [-0.158, -0.228], [0.158, -0.228]].forEach(function (s) { var sw = new THREE.Mesh(roundCylGeo(0.006, 0.006, 0.004, 10), MAT.chrome); sw.rotation.x = Math.PI / 2; sw.position.set(s[0], s[1], 0.0265); g.add(sw); });
+      var cond = new THREE.Mesh(roundCylGeo(0.011, 0.011, 1.0, 10), MAT.alu); cond.position.set(0.1, 0.75, -0.012); g.add(cond);
+      var pgw = new THREE.PointLight(p.col, 0.18, 1.2); pgw.position.set(0, 0.05, 0.3); g.add(pgw);
+      (world.miniPanels = world.miniPanels || []).push({ canvas: pcv, mesh: plp, name: p.sign.charAt(0) + p.sign.slice(1).toLowerCase(), col: '#' + ('000000' + p.col.toString(16)).slice(-6), keys: keys });
       var fdx = Math.sin(p.rot), fdz = Math.cos(p.rot), side = Math.abs(fdx) > 0.5;   /* the hit box sits in front of the face, whichever wall it hangs on */
       var hit = box(side ? 0.26 : 0.42, 0.55, side ? 0.42 : 0.26, MAT.none, p.x + fdx * 0.1, p.y, p.z + fdz * 0.1, { cast: false, receive: false });
       interactable(hit, { kind: p.id });
       fixtureAdd(p.fx, p.label, [g, hit], p.rot);   /* F2 moves them like any other fitting */
     });
     world.speakers = [[0, 2.9, -1.7], [0, 2.9, 4.4], [-6.5, 2.9, -8.6]];
-    world.speakers.forEach(function (sp) { box(0.3, 0.42, 0.24, MAT.black, sp[0], sp[1], sp[2]); var cone = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.06, 0.03, 16), new THREE.MeshStandardMaterial({ color: 0x555a60 })); cone.rotation.x = Math.PI / 2; cone.position.set(sp[0], sp[1] - 0.05, sp[2] + (sp[2] > 4 ? 0.13 : 0.13)); world.group.add(cone); });
+    world.speakers.forEach(function (sp) { box(0.3, 0.42, 0.24, MAT.black, sp[0], sp[1], sp[2]); var cone = new THREE.Mesh(roundCylGeo(0.1, 0.06, 0.03, 16), new THREE.MeshStandardMaterial({ color: 0x555a60 })); cone.rotation.x = Math.PI / 2; cone.position.set(sp[0], sp[1] - 0.05, sp[2] + (sp[2] > 4 ? 0.13 : 0.13)); world.group.add(cone); });
     // CLOSED sign twin for the neon
     neonSign.closed = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.5), new THREE.MeshBasicMaterial({ map: textTex(['CLOSED'], 384, 160, { size: 84, bold: true, titleColor: '#ff4d6d', bg: 'rgba(0,0,0,0)', line: 'rgba(0,0,0,0)' }), transparent: true })); neonSign.closed.position.set(-3.5, 2.5, ROOM.z - 0.03); neonSign.closed.rotation.y = Math.PI; world.group.add(neonSign.closed);
     applyShopState();
@@ -210,7 +214,7 @@
   function ctlKnobStep() { var i = STATION_ORDER.indexOf(shop().radio); ctlAct('radioSet', STATION_ORDER[(i + 1) % STATION_ORDER.length]); }
   function drawCtlClimate() {
     if (!world.ctl || !world.ctl.canvas2) return; var c = world.ctl.canvas2, ctx = c.getContext('2d'), X = xs();
-    ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, 256, 128); ctx.strokeStyle = 'rgba(111,220,140,.35)'; ctx.lineWidth = 2; ctx.strokeRect(3, 3, 250, 122); ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    scrLcd(ctx, 256, 128, DESK_OK);
     ctx.font = '600 18px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#9fb8a6'; ctx.fillText('GROW RH', 14, 12); ctx.fillText('DRY RH', 134, 12);
     ctx.font = '700 30px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = S.rh.grow > 60 ? '#ff6b6b' : '#c9dccd'; ctx.fillText(Math.round(S.rh.grow) + '%', 14, 32); ctx.fillStyle = S.rh.dry > 60 ? '#ff6b6b' : S.rh.dry < 55 ? '#6fdc8c' : '#c9dccd'; ctx.fillText(Math.round(S.rh.dry) + '%', 134, 32);
     ctx.font = '16px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#9fb8a6'; ctx.fillText(dehumLabel('grow'), 14, 66); ctx.fillText(dehumLabel('dry'), 134, 66);
@@ -227,7 +231,20 @@
     Object.keys(C.roomLeds).forEach(function (rm) { C.roomLeds[rm].material.emissiveIntensity = sh.lights && powerOn() && roomLit(rm) ? 2 : 0.1; });
     if (C.panicBtn) C.panicBtn.material.emissive = new THREE.Color(heist.on && heist.masked ? 0xd0201a : 0x000000);
     if (C.sc && !C.sc.cur) tDraw(C.sc);   /* the tablet inside redraws once a second when nobody is pointing at it, so its clock and states keep up */
-    drawCtlClimate();
+    drawCtlClimate(); drawMiniPanels();
+  }
+  function drawMiniPanels() {   // the read-out on each wall panel: what the shop is doing, at a glance, in the panel's own colour
+    if (!world.miniPanels) return; var sh = shop(), drawn = Object.keys(curtains).filter(function (k) { return !curtainOpen(k); }).length, all = Object.keys(curtains).length;
+    world.miniPanels.forEach(function (mp) {
+      var ctx = mp.canvas.getContext('2d'), W = 432, H = 256; scrLcd(ctx, W, H, mp.col);
+      ctx.fillStyle = mp.col; ctx.font = '700 26px ' + DESK_FONT; ctx.fillText(mp.name, 22, 18); ctx.textAlign = 'right'; ctx.fillStyle = DESK_INK; ctx.font = '700 26px ' + SCR_MONO; ctx.fillText(clockText(), W - 22, 18); ctx.textAlign = 'left';
+      ctx.fillStyle = scrRgba(mp.col, 0.4); ctx.fillRect(22, 58, W - 44, 2);
+      ctx.fillStyle = sh.open ? DESK_OK : DESK_BAD; ctx.font = '800 58px ' + DESK_FONT; ctx.fillText(sh.open ? 'Open' : 'Closed', 22, 72);
+      ctx.fillStyle = DESK_INK; ctx.font = '22px ' + DESK_FONT; ctx.fillText('Lights ' + (sh.lights ? 'on' : 'off') + ' · staff door ' + (staffDoorLocked() ? 'locked' : sh.staffDoor ? 'open' : 'shut'), 22, 150);
+      ctx.fillStyle = DESK_DIM; ctx.fillText(drawn + ' of ' + all + ' curtains drawn', 22, 182); ctx.font = '18px ' + DESK_FONT; ctx.fillStyle = DESK_MUTE; ctx.fillText('Press E for the panel', 22, 218);
+      mp.mesh.userData.tex.needsUpdate = true;
+      var on = [sh.open, sh.lights, sh.staffDoor, !!S.upgrades.panic]; mp.keys.forEach(function (k, i) { k.material.color.setHex(i === 3 ? (on[3] ? 0xff5050 : 0x3a2222) : on[i] ? 0x6fdc8c : 0x24352b); });
+    });
   }
   function cabinetTick(dt) {
     var C = world.ctl; if (!C || !C.doors) return;
@@ -236,12 +253,9 @@
   }
   function drawCtlTablet(sc, ctx) {
     var W = sc.w, H = sc.h, page = CTL_PAGES[world.ctl.page || 0], sh = shop(), o = { size: 18 };
-    ctx.fillStyle = '#0a110d'; ctx.fillRect(0, 0, W, H); var grd = ctx.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, 'rgba(111,220,140,.12)'); grd.addColorStop(0.4, 'rgba(0,0,0,0)'); ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = DESK_OK; ctx.font = '800 30px ' + DESK_FONT; ctx.fillText('SHOP CONTROLS', 30, 20);
-    ctx.textAlign = 'right'; ctx.fillStyle = sh.open ? DESK_OK : DESK_BAD; ctx.font = '700 26px "Cascadia Mono",Consolas,monospace'; ctx.fillText(sh.open ? 'OPEN' : 'CLOSED', W - 30, 22); ctx.textAlign = 'left';
-    var tw = (W - 60 - 300 - 5 * 8) / 6; CTL_PAGES.forEach(function (p, i) { tBtn(sc, ctx, 300 + i * (tw + 8), 16, tw, 42, CTL_LABEL[p], 'page', i, CTL_LABEL[p], i === (world.ctl.page || 0), { size: 17 }); });
-    ctx.fillStyle = 'rgba(111,220,140,.25)'; ctx.fillRect(30, 72, W - 60, 2);
-    var y = 92, bw = (W - 60 - 2 * 14) / 3;
+    scrBg(ctx, W, H, DESK_OK); scrHead(ctx, W, 76, 'Shop controls', sh.open ? 'The shop is open' : 'The shop is closed', '🎛', sh.open ? DESK_OK : DESK_BAD);
+    var tw = (W - 190 - 318 - 5 * 8) / 6; CTL_PAGES.forEach(function (p, i) { tBtn(sc, ctx, 318 + i * (tw + 8), 17, tw, 42, CTL_LABEL[p], 'page', i, CTL_LABEL[p], i === (world.ctl.page || 0), { size: 15 }); });
+    var y = 96, bw = (W - 60 - 2 * 14) / 3;
     function grid(items, cols, h, gap) { var w = (W - 60 - (cols - 1) * gap) / cols; items.forEach(function (it, i) { tBtn(sc, ctx, 30 + (i % cols) * (w + gap), y + Math.floor(i / cols) * (h + gap), w, h, it[0], it[1], it[2], it[3] || it[0], !!it[4], { size: it[5] || 19, sub: it[6] }); }); y += Math.ceil(items.length / cols) * (h + gap); }
     if (page === 'shop') {
       grid([[sh.open ? '🔴 Close the shop' : '🟢 Open the shop', 'shopToggle', 0, sh.open ? 'Close the shop' : 'Open the shop', sh.open, 22], [sh.lights ? '🌑 Lights off' : '💡 Lights on', 'lightsToggle', 0, sh.lights ? 'All lights off' : 'All lights on', sh.lights, 22], [sh.staffDoor ? '🚪 Close staff door' : '🚪 Open staff door', 'staffDoorToggle', 0, sh.staffDoor ? 'Close the staff door' : 'Open the staff door', sh.staffDoor, 22],
@@ -275,12 +289,12 @@
   }
   function drawCtlScreen() {
     if (!world.ctl || !world.ctl.canvas) return; var c = world.ctl.canvas, ctx = c.getContext('2d'), sh = shop();
-    ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, 256, 128); ctx.strokeStyle = 'rgba(111,220,140,.35)'; ctx.lineWidth = 2; ctx.strokeRect(3, 3, 250, 122);
+    scrLcd(ctx, 256, 128, sh.open ? DESK_OK : DESK_BAD);
     ctx.font = '600 30px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = sh.open ? '#6fdc8c' : '#ff6b6b'; ctx.textBaseline = 'top'; ctx.fillText(sh.open ? 'OPEN' : 'CLOSED', 14, 12);
-    ctx.font = '18px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#9fb8a6'; ctx.textAlign = 'right'; ctx.fillText(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), 242, 18); ctx.textAlign = 'left';
+    ctx.font = '18px "Cascadia Mono",Consolas,monospace'; ctx.fillStyle = '#9fb8a6'; ctx.textAlign = 'right'; ctx.fillText(clockText(), 242, 18); ctx.textAlign = 'left';
     ctx.fillStyle = '#c9dccd'; ctx.fillText('lights  ' + (sh.lights ? 'ON' : 'OFF'), 14, 52); ctx.fillText('door    ' + (sh.staffDoor ? 'OPEN' : 'SHUT'), 14, 74); ctx.fillText('radio   ' + STATIONS[sh.radio].name.toUpperCase().slice(0, 14), 14, 96);
     var closed = Object.keys(curtains).filter(function (k) { return !curtainOpen(k); }).length; ctx.textAlign = 'right'; ctx.fillStyle = '#9fb8a6'; ctx.fillText(closed + '/' + Object.keys(curtains).length + ' drawn', 242, 96); ctx.textAlign = 'left';
-    world.ctl.tex.needsUpdate = true; cabinetSync();
+    world.ctl.tex.needsUpdate = true; cabinetSync(); drawMiniPanels();
   }
   function applyShopState() {
     world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'frontdoor'; }); if (!shop().open) world.obstacles.push({ x1: -0.8, x2: 0.8, z1: ROOM.z - 0.2, z2: ROOM.z + 0.2, tag: 'frontdoor', floorLevel: 0 });   // a locked front door is a wall
@@ -301,7 +315,7 @@
   function roomOf(x, z, y) { if (y !== undefined && y < -1) return 'basement'; if (y !== undefined && y > UP.y - 0.5) return 'up'; if (z < -ROOM.z) return x >= 8 ? 'security' : 'annex'; if (z > 4) return 'lobby'; if (z < -2) return x < -1 ? 'grow' : 'dry'; return x < -4 ? 'office' : x < 4 ? 'hall' : 'proc'; }
   function roomLit(room) { return shop().rooms[room] !== false; }
   function toggleRoomLight(room) { var r = shop().rooms; r[room] = r[room] === false; applyShopState(); sfx('click'); toast('💡 ' + ROOM_NAMES[room] + ' lights ' + (r[room] === false ? 'off' : 'on'), ''); save(); ui.refreshOpen(); }
-  function lightSwitch(x, y, z, rotY, room) { var g2 = new THREE.Group(); g2.position.set(x, y, z); g2.rotation.y = rotY; world.group.add(g2); var plate = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.012), colorMat(0xf2f2ee, 0.5)); g2.add(plate); var rocker = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.1, 0.014), colorMat(0xe8e8e4, 0.5)); rocker.position.z = 0.012; g2.add(rocker); var led = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.01, 0.005), glowMat(0x6fdc8c, 1.5)); led.position.set(0, -0.065, 0.014); g2.add(led); var hit = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.35, 0.2), MAT.none); g2.add(hit); interactable(hit, { kind: 'switch', room: room }); (world.switches = world.switches || []).push({ room: room, rocker: rocker, led: led }); }
+  function lightSwitch(x, y, z, rotY, room) { var g2 = new THREE.Group(); g2.position.set(x, y, z); g2.rotation.y = rotY; world.group.add(g2); var plate = new THREE.Mesh(bevelGeo(0.12, 0.16, 0.012), colorMat(0xf2f2ee, 0.5)); g2.add(plate); var rocker = new THREE.Mesh(bevelGeo(0.07, 0.1, 0.014), colorMat(0xe8e8e4, 0.5)); rocker.position.z = 0.012; g2.add(rocker); var led = new THREE.Mesh(bevelGeo(0.02, 0.01, 0.005), glowMat(0x6fdc8c, 1.5)); led.position.set(0, -0.065, 0.014); g2.add(led); var hit = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.35, 0.2), MAT.none); g2.add(hit); interactable(hit, { kind: 'switch', room: room }); (world.switches = world.switches || []).push({ room: room, rocker: rocker, led: led }); }
   function buildSwitches() {
     lightSwitch(-2.2, 1.35, 3.89, Math.PI, 'hall'); lightSwitch(7.89, 1.35, -9.7, -Math.PI / 2, 'annex'); lightSwitch(-ROOM.x + 0.11, UP.y + 1.35, -2.0, Math.PI / 2, 'up');
   }

@@ -41,3 +41,19 @@ test('the line runs for the door when the mask comes down', async (h) => {
   h.eq(h.T.lineCount(), 0, 'nobody is still waiting');
   h.ok(h.R.lineup().every((m) => m.state === 'leave'), 'everyone in the line is leaving');
 });
+
+test('an unarmed guard rarely stops a robber, and an armed one needs the licence', async (h) => {
+  const G = h.T.guardOdds, S = h.S;
+  S.upgrades.security = false; S.upgrades.security2 = false; S.upgrades.guardgun = false; S.lic = S.lic || {}; S.lic.firearm = false;
+  h.ok(G('id') <= 0.2, 'a fake card gets past him four times in five (' + G('id') + ')');
+  h.ok(G('stop', 'knife') <= 0.2, 'a knife: about one in five (' + G('stop', 'knife') + ')');
+  h.ok(G('stop', 'gun') <= 0.05, 'a gun: almost never (' + G('stop', 'gun') + ')');
+  h.ok(G('stop', 'crew') <= 0.05, 'a gang: almost never (' + G('stop', 'crew') + ')');
+  S.upgrades.guardgun = true;
+  h.ok(G('stop', 'gun') <= 0.05, 'the sidearm without the licence changes nothing (' + G('stop', 'gun') + ')');
+  S.lic.firearm = true;
+  h.ok(G('stop', 'gun') >= 0.35, 'armed and licensed, he faces a gun (' + G('stop', 'gun') + ')');
+  h.ok(G('stop', 'gun') < G('stop', 'knife'), 'a gun is still harder than a knife');
+  S.upgrades.security = true; S.upgrades.security2 = true;
+  h.ok(G('stop', 'crew') > 0.4 && G('stop', 'crew') < 0.9, 'fully kitted, a gang is a coin toss at best (' + G('stop', 'crew') + ')');
+});

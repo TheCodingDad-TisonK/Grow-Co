@@ -311,7 +311,7 @@
     toast('📂 Loading the save…', ''); setTimeout(function () { location.reload(); }, 250);
   }
   // pause menu
-  function openMenu() { if (!ui.menuOpen) sfx('panel'); ui.menuOpen = true; $('g3-menu').hidden = false; $('g3-menu-body').hidden = true; var devB = document.querySelector('#g3-menu [data-menu="dev"]'); if (devB) devB.hidden = !dlcOn('dev'); document.exitPointerLock(); }   /* Dev tools are a DLC: no button unless it's switched on */
+  function openMenu() { if (!ui.menuOpen) sfx('panel'); ui.menuOpen = true; $('g3-menu').hidden = false; $('g3-menu-body').hidden = true; var devB = document.querySelector('#g3-menu [data-menu="dev"]'); if (devB) devB.hidden = true;   /* the cheats have their own console on F8 now */ document.exitPointerLock(); }   /* Dev tools are a DLC: no button unless it's switched on */
   function closeMenu() { if (ui.menuOpen) sfx('close'); ui.menuOpen = false; $('g3-menu').hidden = true; if (!ui.panelOpen) lockPointer(); }
   $('g3-menu').addEventListener('click', function (e) {
     var b = e.target.closest('[data-menu]'); if (!b) return; var m = b.getAttribute('data-menu'); var body = $('g3-menu-body'); sfx('click');
@@ -344,14 +344,50 @@
     ['customer', '🚪 Spawn a customer'], ['premium', '🎩 Spawn a connoisseur'], ['robbery', '🚨 Start a robbery (by shop level)'], ['robSnatch', '🧤 Snatch thief'], ['robKnife', '🔪 Knife robbery'], ['robGun', '🔫 Gunman and the vault'], ['robCrew', '👥 Two-man gang'], ['arm', '🧰 Every weapon, ammo, licence, alarm'], ['basement', '🏭 Go to the basement works'], ['toCar', '🚗 Teleport next to your car'], ['vip', '🥂 Send a lounge guest up'], ['roof', '🌿 Go to the roof greenhouse'], ['heat', '🚔 Heat +40'], ['blackout', '⚡ Power cut now'], ['delivery', '📱 Burner job now'], ['round', '📋 Two tablet round jobs'], ['tobFill', '🚬 Fill the tobacco line + cabinet'], ['fight', '👊 Start a lobby fight (needs two visitors)'], ['van', '🚚 Van arrives now with the open order'], ['courier', '🏦 Courier arrives now for $100'],
     ['dust', '🪣 Spawn 6 dirt patches'], ['clean', '🧹 Clear every dirt patch'], ['morning', '🌅 Clock to 06:00'], ['noon', '☀️ Clock to 12:00'], ['evening', '🌆 Clock to 19:00'], ['night', '🌙 Clock to 23:00'], ['day', '⏭ Skip to the next day'],
     ['level', '⭐ Level +1'], ['rep', '🏆 Rep +25'], ['upgrades', '⚙️ Every upgrade'], ['licences', '🪪 Every licence'], ['clear', '🧯 Clear cooldowns, robber, fight, courier'], ['empty', '🫙 Empty every hotbar slot'], ['humid', '💧 Humidity to 80% in both rooms'],
+    ['dlcFit', '🧩 Fit every DLC bench, bay and stand, and take the field'], ['dlcRipe', '⏩ Ripen the cross, the hydro bay and the field'], ['cupNow', '🏆 Judge the Cup now'], ['merchFill', '👕 Fill the merch stand'], ['tp_farm', '📍 Teleport: the farm gate'],
     ['tp_lobby', '📍 Teleport: lobby'], ['tp_office', '📍 Teleport: office'], ['tp_grow', '📍 Teleport: grow room'], ['tp_annex', '📍 Teleport: back room'], ['tp_security', '📍 Teleport: security room'], ['tp_yard', '📍 Teleport: yard']
   ];
   function devStrains() { var lv = S.level || 1, l = STRAINS.filter(function (st) { return (st.lvl || 1) <= lv; }); return l.length ? l : [STRAINS[0]]; }   /* the fills stick to what the seed bank would sell you at this level */
-  var DEV_DLC = { tobFill: 'tobacco', round: 'tobacco', roof: 'greenhouse' };   /* a button for a DLC that is switched off is left out */
+  var DEV_DLC = { tobFill: 'tobacco', round: 'tobacco', roof: 'greenhouse', cupNow: 'cup', merchFill: 'merch', tp_farm: 'farm' };   /* a button for a DLC that is switched off is left out */
   function devHtml() { return '<h4>Dev tools</h4><p class="desc">Cheats for testing. Everything applies to the current save at once.</p><div class="g3-chips">' + DEV.filter(function (d) { return d[0] === 'basement' ? dlcOn('tobacco') || dlcOn('lab') : !DEV_DLC[d[0]] || dlcOn(DEV_DLC[d[0]]); }).map(function (d) { return '<button class="g3-btn" data-dev="' + d[0] + '">' + d[1] + '</button>'; }).join('') + '</div>'; }
+  // The dev console: F8 while the Dev Tools DLC is on. A drawer down the right of the screen, the cheats sorted by what they
+  // touch, a box to find one by name. It stays open while you press things, so a test can be set up in one visit.
+  var DEV_GROUPS = [
+    ['Money and stock', ['money', 'pocket', 'till', 'stash', 'goods', 'supplies', 'storage', 'machines', 'plants', 'batches', 'tobFill']],
+    ['People', ['customer', 'premium', 'vip', 'delivery', 'round', 'van', 'courier', 'fight']],
+    ['Trouble', ['robbery', 'robSnatch', 'robKnife', 'robGun', 'robCrew', 'arm', 'heat', 'blackout', 'clear']],
+    ['The clock', ['morning', 'noon', 'evening', 'night', 'day']],
+    ['Progress', ['level', 'rep', 'upgrades', 'licences', 'empty']],
+    ['The shop floor', ['dust', 'clean', 'humid']],
+    ['DLC', ['dlcFit', 'dlcRipe', 'cupNow', 'merchFill']],
+    ['Go to', ['tp_lobby', 'tp_office', 'tp_grow', 'tp_annex', 'tp_security', 'tp_yard', 'basement', 'roof', 'toCar', 'tp_farm']]
+  ];
+  var devCon = { el: null, q: '' };
+  function devShown(id) { return id === 'basement' ? dlcOn('tobacco') || dlcOn('lab') : !DEV_DLC[id] || dlcOn(DEV_DLC[id]); }
+  function devConHtml() {
+    var names = {}; DEV.forEach(function (d) { names[d[0]] = d[1]; }); var q = devCon.q.trim().toLowerCase(), seen = {}, h = '';
+    DEV_GROUPS.concat([['More', DEV.map(function (d) { return d[0]; })]]).forEach(function (g) {
+      var ids = g[1].filter(function (id) { if (seen[id] || !names[id] || !devShown(id)) return false; if (q && names[id].toLowerCase().indexOf(q) < 0) return false; seen[id] = 1; return true; });
+      if (ids.length) h += '<h4>' + g[0] + '</h4><div class="g3-devcon-grid">' + ids.map(function (id) { return '<button class="g3-btn" data-cheat="' + id + '">' + names[id] + '</button>'; }).join('') + '</div>';
+    });
+    return h || '<div class="g3-empty">No cheat by that name.</div>';
+  }
+  function devOpen() {
+    if (!dlcOn('dev')) return false; if (ui.devOpen) { devClose(); return true; } if (!ui.started || ui.menuOpen || ui.taskOpen) return false;
+    if (!devCon.el) {
+      var d = document.createElement('div'); d.id = 'g3-devcon'; d.hidden = true;
+      d.innerHTML = '<div class="g3-devcon"><div class="g3-devcon-head"><h2>Dev console</h2><span>F8 or Esc closes</span><button class="g3-x" data-cheat="close" title="Close (F8)">✕</button></div><input type="search" id="g3-devcon-q" placeholder="Find a cheat" autocomplete="off" spellcheck="false"><div class="g3-devcon-body" id="g3-devcon-body"></div><p class="g3-sub2">Everything applies to the save you are playing, at once. Switch the Dev Tools DLC off in the Workshop to put this away.</p></div>';
+      document.body.appendChild(d); devCon.el = d;
+      d.addEventListener('click', function (e) { var b = e.target.closest('[data-cheat]'); if (!b) { if (e.target === d) devClose(); return; } var id = b.getAttribute('data-cheat'); sfx('click'); if (id === 'close') { devClose(); return; } devAction(id); if (/^(tp_|basement$|roof$|toCar$)/.test(id)) devClose(); else $('g3-devcon-body').innerHTML = devConHtml(); });
+      d.querySelector('#g3-devcon-q').addEventListener('input', function (e) { devCon.q = e.target.value; $('g3-devcon-body').innerHTML = devConHtml(); });
+      d.querySelector('#g3-devcon-q').addEventListener('keydown', function (e) { if (e.code !== 'Escape' && e.code !== 'F8') e.stopPropagation(); });
+    }
+    ui.devOpen = true; devCon.el.hidden = false; $('g3-devcon-body').innerHTML = devConHtml(); document.exitPointerLock(); sfx('panel'); return true;
+  }
+  function devClose() { if (!ui.devOpen) return; ui.devOpen = false; if (devCon.el) devCon.el.hidden = true; if (!ui.blocked()) lockPointer(); sfx('close'); }
   function devAction(id) {
     if (!dlcOn('dev')) { dlcOff('dev'); return; }
-    var tp = function (x, z) { closeMenu(); standUp(); player.pos.set(x, 1.65, z); player.floor = 0; toast('📍 Teleported', ''); };
+    var tp = function (x, z) { if (ui.menuOpen) closeMenu(); standUp(); player.pos.set(x, 1.65, z); player.floor = 0; toast('📍 Teleported', ''); };
     switch (id) {
       case 'money': S.bank += 1000; break; case 'pocket': S.pocket += 500; break; case 'till': S.till += 120; S.tips += 20; ['vending', 'lobbyCoffee', 'fridge', 'arcade'].forEach(function (b) { unitIds(b).forEach(function (u) { coinPay(u, 10); }); }); break;
       case 'stash': devStrains().forEach(function (st) { stashAdd(st.id, 20, 70 + st.lvl * 2, st.thc); }); break;
@@ -373,6 +409,11 @@
       case 'licences': if (!S.lic) S.lic = {}; LICENCES.forEach(function (L) { S.lic[L.id] = true; }); break;
       case 'clear': S.noCustomersUntil = 0; S.courierBanUntil = 0; clearHeist(); if (fight) endFight('guard'); if (S.courier) S.courier = null; break;
       case 'empty': S.hotbar = [null, null, null, null, null, null]; break; case 'humid': S.rh.grow = 80; S.rh.dry = 80; break;
+      case 'dlcFit': breedState().owned = true; hydroState().owned = true; merchState().owned = true; farmState().leased = true; ['breedBench', 'hydroBay', 'merchStand', 'trophyCase'].forEach(function (p) { if (propInst[p]) buildProp(p); }); farmSync(); break;
+      case 'dlcRipe': if (breedState().job) breedState().job.t = BREED.ms / 1000; hydroState().sites.forEach(function (p) { if (p) p.progress = 1; }); farmState().rows.forEach(function (r) { if (r) r.progress = 1; }); farmState().barn.forEach(function (l) { l.t = FARM.dryS; }); if (propInst.breedBench) buildProp('breedBench'); farmSync(); break;
+      case 'cupNow': cupJudge(); break;
+      case 'merchFill': MERCH.items.forEach(function (it) { merchState().stock[it.id] = 20; }); merchSync(); break;
+      case 'tp_farm': tp(FARM.gateX, FARM.z2 + 3); return;
       case 'tp_lobby': tp(0, 6.5); return; case 'tp_office': tp(-8, 1); return; case 'tp_grow': tp(-3, -4); return; case 'tp_annex': tp(4, -10.5); return; case 'tp_yard': tp(4.5, -15); return; case 'tp_security': tp(10, -10); return;
     }
     world.dirty = true; rebuildDynamic(); syncRack(); syncDust(); syncMachines(); hud(); save(); applyShopState(); updateDayNight(); sfx('rare'); toast('🛠 ' + (DEV.filter(function (d) { return d[0] === id; })[0] || [id, id])[1], 'good');

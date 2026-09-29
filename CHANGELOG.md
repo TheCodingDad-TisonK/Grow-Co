@@ -1,5 +1,44 @@
 # Changelog
 
+## v1.27: a new look, six new DLC and a dev console
+
+**Everything looks better.** Every object in the shop has been rebuilt, not only retouched.
+
+- **Light and materials.** Steel, glass, brass and lacquer reflect the room they stand in. Corners are eased instead of razor sharp, round things are round, and everything standing on a floor has a soft shadow under it.
+- **The till** is a till: a drawer with coin cups and notes, a receipt printer with paper curling out of it, a card reader and a scanner.
+- **Screens are screens.** The office wall screen, the till tablet, the security desk screen, the control tablet and the small wall panels have a bezel, glass and a lit picture that stays readable in a dark room. The wall panels show what they switch.
+- **The office desk** has a monitor that shows the desktop you left open, a keyboard, a tower, a lamp and a chair you would sit in.
+- **The rest of the shop**: the racks, cabinets, sofas, fridges, coffee bar, water cooler, workbench, bins, crates, vault, weapon locker, arcade cabinet, lamps, the curing shelf and the drying line, the scale table, the hose reel, the pot shelf, the lobby benches, the storage racking, the basement hatch and the cigarette cabinet.
+- **The security room** has a framed wall of feeds and a console with a joystick under it.
+- **The bank and the gun store** are furnished: a teller line with a vault door behind it, a cash machine and a writing desk in the one, rifles on the wall and a glass case of pistols in the other.
+- **The extraction lab and the roof greenhouse** got the same: gauges, valves and a fume hood in the lab, a framed glasshouse with real plants in its beds on the roof.
+- **Signs** are enamel plates with a frame, in one typeface.
+
+**Plants and buds.** Leaves have a midrib and a curve, buds are lumpy and sit in a spiral up the stem, and every strain keeps its own colours from seedling to jar.
+
+**People.** Faces have eyes that blink, brows and a mouth that follows their mood. Bodies have rounded shoulders, hands, collars, cuffs and shoes, and they breathe and shift their weight while they wait.
+
+**The office PC is a PC.** E at the desk sits you down, the view moves into the monitor and the desktop fills your screen. **Get up**, Esc or a right-click stands you up again. From the room, the monitor shows the desktop as you left it.
+
+**Menus.** The HUD is one bar along the top. Panels, the pause menu, the phone and the main menu share one look, and the main menu sits over the shop itself.
+
+**The Workshop** is rebuilt: a card for each DLC that says what it adds, **See what's inside** for the full list, a search box, filters by kind, and you can drop a pack file on the import box to bring it in.
+
+**Six new DLC**, all free, under **Workshop and DLC**:
+
+- **The Breeding Lab**: cross two strains at a bench in the grow room, name what comes out, and the seed bank stocks it from then on.
+- **The Hydroponics Bay**: eight sites fed from one tank. Plants grow nearly twice as fast while you keep the pH and the feed right.
+- **The Cannabis Cup**: every seventh day your best jar is judged against five other growers. Prize money, rep and a cup for the trophy cabinet in the lobby.
+- **Merch & Brand**: a stand of T-shirts, caps, mugs and tote bags. Every sale raises your brand level, and each level brings more customers.
+- **The Out-of-town Farm**: a leased field past the west avenue with five rows and a drying barn. Rain waters it, frost kills what is still growing in winter, and you drive the crop home.
+- **Bank & Insurance**: a Finance app on the office PC with savings that pay interest, loans with daily repayments, and cover against robberies, power cuts and break-ins.
+
+The guide has a chapter on all six.
+
+**Dev Tools open on F8.** The Dev Tools DLC is a console of its own now, with its cheats in groups, and it has left the pause menu. New in it: fit every DLC, ripen everything, run the Cup now, fill the merch stand, and a teleport to the farm.
+
+**The guard catches fewer robbers.** He caught nearly all of them, armed or not. Without the **Armed guard** upgrade he now spots a fake ID about one time in six and stops a knife about one time in five, and he has next to no chance against a gun or a gang. Cameras help a little. With the upgrade and the firearms licence his odds against a robber go up by 40 points.
+
 ## v1.26: build mode and DLC
 
 **One build mode.** F2 edit mode and F3 creative mode are one mode now, so they no longer fight over the same keys. F2 (or F3, it does the same) opens build mode:

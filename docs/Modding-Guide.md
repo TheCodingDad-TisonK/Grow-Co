@@ -2,7 +2,7 @@
 
 The game is meant to be reshaped. Every recipe below copies a pattern the game already uses, so the quickest way to add something is to find its nearest neighbour in `src/` and copy it. Then `npm run build` and `npm test`.
 
-**Before you start:** read the warning about one-line statements in [Architecture](Architecture.md). Test in the running game after every edit. The pause menu's **Dev tools** (a DLC: switch it on under Workshop and DLC in the main menu) and the `window.RFGROW` console handle save a lot of walking.
+**Before you start:** read the warning about one-line statements in [Architecture](Architecture.md). Test in the running game after every edit. The **dev console** on F8 (a DLC: switch it on under Workshop and DLC in the main menu) and the `window.RFGROW` console handle save a lot of walking.
 
 ## Quick wins: change a number
 

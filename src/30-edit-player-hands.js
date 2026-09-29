@@ -186,7 +186,7 @@
         cal.scale.set(1, 1.35, 1); cal.rotation.set(a * 0.6, a, 0.2);
         cal.castShadow = true; G.add(cal);
         if ((i + r) % 2 === 0) {   /* a pistil curling out of this calyx */
-          var hair = new THREE.Mesh(new THREE.CylinderGeometry(0.0009 * s, 0.0016 * s, 0.017 * s, 4), hairM);
+          var hair = new THREE.Mesh(roundCylGeo(0.0009 * s, 0.0016 * s, 0.017 * s, 4), hairM);
           hair.position.set(Math.cos(a) * (rad + 0.011 * s), y + 0.006 * s, Math.sin(a) * (rad + 0.011 * s));
           hair.rotation.set(0.9, -a, 0.5); G.add(hair);
         }
@@ -194,6 +194,6 @@
       }
     }
     var tip = new THREE.Mesh(new THREE.ConeGeometry(0.013 * s, 0.03 * s, 7), budM); tip.position.y = 0.09 * s; tip.castShadow = true; G.add(tip);
-    var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0035 * s, 0.005 * s, 0.03 * s, 6), new THREE.MeshStandardMaterial({ color: 0x6b7a42, roughness: 1 })); stem.position.y = -0.068 * s; G.add(stem);
+    var stem = new THREE.Mesh(roundCylGeo(0.0035 * s, 0.005 * s, 0.03 * s, 6), new THREE.MeshStandardMaterial({ color: 0x6b7a42, roughness: 1 })); stem.position.y = -0.068 * s; G.add(stem);
     return G;
   }

@@ -41,7 +41,7 @@
     var gr = new THREE.Group(); gr.visible = false; camera.add(gr); smoke.group = gr;
     var hand = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), new THREE.MeshStandardMaterial({ color: 0xe8b894, roughness: 0.9 })); hand.scale.set(1, 0.7, 1.2); gr.add(hand);
     var j = new THREE.Group(); j.position.set(0.0, 0.045, -0.03); j.rotation.x = -Math.PI / 2 + 0.5; gr.add(j);   // held between the fingers on top of the hand, pointing forward and up so it stays visible
-    j.add(new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.007, 0.13, 8), colorMat(0xf5f0e0, 0.9)));
+    j.add(new THREE.Mesh(roundCylGeo(0.009, 0.007, 0.13, 8), colorMat(0xf5f0e0, 0.9)));
     var ember = new THREE.Mesh(new THREE.SphereGeometry(0.01, 6, 6), glowMat(0xff6a1a, 2.0)); ember.position.y = 0.065; j.add(ember);
     smoke.light = new THREE.PointLight(0xff7a2a, 0, 0.6); smoke.light.position.y = 0.065; j.add(smoke.light);
     gr.position.set(0.26, -0.28, -0.55);

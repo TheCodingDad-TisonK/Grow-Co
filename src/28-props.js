@@ -74,14 +74,22 @@
   function propCtx(g, id, floorLevel) {
     var obs = [];
     var ctx = {
-      box: function (w, h, d, mat, x, y, z, opts) { opts = opts || {}; var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = opts.cast !== false; m.receiveShadow = opts.receive !== false; g.add(m); if (opts.solid) obs.push({ x1: x - w / 2, x2: x + w / 2, z1: z - d / 2, z2: z + d / 2 }); return m; },
-      cyl: function (rt, rb, h, mat, x, y, z, seg) { var m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 18), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; g.add(m); return m; },
+      box: function (w, h, d, mat, x, y, z, opts) { opts = opts || {}; var m = new THREE.Mesh(opts.sharp || bevelSkip(mat) ? new THREE.BoxGeometry(w, h, d) : bevelGeo(w, h, d, opts.r), mat); m.position.set(x, y, z); m.castShadow = opts.cast !== false; m.receiveShadow = opts.receive !== false; g.add(m); if (opts.solid) obs.push({ x1: x - w / 2, x2: x + w / 2, z1: z - d / 2, z2: z + d / 2 }); return m; },
+      cyl: function (rt, rb, h, mat, x, y, z, seg) { var m = new THREE.Mesh(roundCylGeo(rt, rb, h, seg || 18), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; g.add(m); return m; },
       add: function (m) { g.add(m); return m; },
       hit: function (w, h, d, x, y, z, data) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), MAT.none); m.position.set(x, y, z); g.add(m); if (data) data.propId = id;   /* the prompt has to know WHICH machine it is looking at, not just what kind */ interactable(m, data); m.userData.propId = id; return m; },
-      sign: function (lines, w, h, x, y, z, rotY, opts) { opts = opts || {}; var tex = textTex(lines, Math.round(w * 320), Math.round(h * 320), Object.assign({ size: Math.round(h * 48) }, opts)); var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true })); m.position.set(x, y, z); m.rotation.y = rotY || 0; g.add(m); return m; },
-      placard: function (lines, w, h, x, y, z, opts) { var stand = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.25, 6), MAT.metal); stand.position.set(x, y - h / 2 - 0.12, z); g.add(stand); return ctx.sign(lines, w, h, x, y, z, 0, opts); },
+      sign: function (lines, w, h, x, y, z, rotY, opts) { opts = opts || {}; var tex = textTex(lines, Math.round(w * 320), Math.round(h * 320), Object.assign({ size: Math.round(h * 48) }, opts)); var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true })); m.position.set(x, y, z); m.rotation.y = rotY || 0; g.add(m); if (opts.bg === undefined && h >= 0.15) signBack(m, w, h); return m; },
+      placard: function (lines, w, h, x, y, z, opts) {   /* a counter sign: a weighted foot, two slim posts, the plate between them */
+        var by = y - h / 2 - 0.245; ctx.box(Math.min(w * 0.7, 0.34), 0.014, 0.09, MAT.gunmetal, x, by + 0.007, z - 0.01, { cast: false });
+        [-1, 1].forEach(function (sd) { var st = new THREE.Mesh(roundCylGeo(0.006, 0.006, 0.25 + h * 0.5, 8), MAT.chrome); st.position.set(x + sd * Math.min(w * 0.3, 0.14), by + (0.25 + h * 0.5) / 2, z - 0.012); g.add(st); });
+        return ctx.sign(lines, w, h, x, y, z, 0, opts); },
       solid: function (x1, x2, z1, z2) { obs.push({ x1: x1, x2: x2, z1: z1, z2: z2 }); },
-      fern: function (x, z, s) { ctx.cyl(0.22 * s, 0.18 * s, 0.4 * s, MAT.pot, x, 0.2 * s, z); for (var i = 0; i < 7; i++) { var lf = new THREE.Mesh(new THREE.PlaneGeometry(0.22 * s, 0.6 * s), MAT.leaf); lf.position.set(x + Math.cos(i * 0.9) * 0.1, 0.55 * s, z + Math.sin(i * 0.9) * 0.1); lf.rotation.set(-0.5 - (i % 3) * 0.2, i * 0.9, 0); g.add(lf); } obs.push({ x1: x - 0.25, x2: x + 0.25, z1: z - 0.25, z2: z + 0.25 }); },
+      fern: function (x, z, s, y0) {   /* a fern in a glazed pot on a saucer: two rings of fronds, the outer ones lying lower */
+        y0 = y0 || 0; var at = function (yy) { return y0 + yy * s; };
+        ctx.cyl(0.2 * s, 0.205 * s, 0.025 * s, colorMat(0xd8d2c2, 0.4), x, at(0.0125), z, 28); ctx.cyl(0.2 * s, 0.15 * s, 0.36 * s, MAT.ceramic, x, at(0.2), z, 28); ctx.cyl(0.215 * s, 0.205 * s, 0.045 * s, MAT.ceramic, x, at(0.385), z, 28); ctx.cyl(0.185 * s, 0.185 * s, 0.012 * s, MAT.soil, x, at(0.402), z, 20);
+        for (var i = 0; i < 17; i++) { var a = i * 2.399, ring = i % 3; leafAt(FROND_GEO, MAT.frond, x + Math.cos(a) * 0.04 * s, at(0.4), z + Math.sin(a) * 0.04 * s, Math.PI / 2 - a, 0.25 + ring * 0.38 + ((i * 7) % 5) * 0.03, s * (1.05 - ring * 0.12 + ((i * 3) % 4) * 0.04), g); }
+        obs.push({ x1: x - 0.25, x2: x + 0.25, z1: z - 0.25, z2: z + 0.25 }); },
+      lit: function (col, w, h, x, y, z, ry, rx) { var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col, toneMapped: false })); m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, 0); g.add(m); return m; },   /* a lit strip or a pilot light: shown in its own colour whatever the room is doing */
       group: g, obstacles: obs, floor: floorLevel, dyn: null
     };
     ctx.dynGroup = function () { if (!ctx.dyn) { ctx.dyn = new THREE.Group(); g.add(ctx.dyn); } return ctx.dyn; };
@@ -99,6 +107,7 @@
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = id; });
     ctx.obstacles.forEach(function (o) { var r = rotAABB(o, P.rot); world.obstacles.push({ x1: P.x + Math.min(r.x1, r.x2), x2: P.x + Math.max(r.x1, r.x2), z1: P.z + Math.min(r.z1, r.z2), z2: P.z + Math.max(r.z1, r.z2), tag: 'prop', prop: id, floorLevel: P.floor }); });
     if (def.after && !P.hidden) def.after(ctx, P, inst, id);   /* a removed shelf is not refilled */
+    if (!P.hidden && !def.noBlob) groundBlob(g);
   }
   function buildAllProps() { PROP_ORDER.forEach(buildProp); defightSoon(); }
   function propWorld(id, lx, lz) { var inst = propInst[id]; inst.g.updateMatrixWorld(true); var v = new THREE.Vector3(lx, 0, lz); inst.g.localToWorld(v); return v; }   // fresh matrix: props are queried right after they are built, before any render

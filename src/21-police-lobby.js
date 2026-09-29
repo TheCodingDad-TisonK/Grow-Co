@@ -10,13 +10,13 @@
     world.group.add(g); police.g = g;
     // the blue stripe and the light bar, so it reads as a police car and not a white hatchback
     var stripe = colorMat(0x1b4f9c, 0.5);
-    [-1.02, 1.02].forEach(function (sx) { var b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.34, 2.9), stripe); b.position.set(sx, 0.72, 0.1); b.castShadow = false; g.add(b); });
+    [-1.02, 1.02].forEach(function (sx) { var b = new THREE.Mesh(bevelGeo(0.06, 0.34, 2.9), stripe); b.position.set(sx, 0.72, 0.1); b.castShadow = false; g.add(b); });
     var pword = textTex(['POLICE'], 512, 96, { size: 64, bold: true, bg: '#1b4f9c', color: '#ffffff', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' });
     [-1, 1].forEach(function (s) { var pl = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.3), new THREE.MeshBasicMaterial({ map: pword })); pl.position.set(s * 1.056, 0.72, 0.1); pl.rotation.y = s * Math.PI / 2; g.add(pl); });   /* lettered down both flanks */
     var barG = new THREE.Group(); barG.position.set(0, 1.44, -0.15); g.add(barG); police.bar = barG;
-    barG.add(new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.07, 0.22), colorMat(0x22262b, 0.6)));
+    barG.add(new THREE.Mesh(bevelGeo(1.1, 0.07, 0.22), colorMat(0x22262b, 0.6)));
     police.lamp = [-1, 1].map(function (sx, i) {
-      var m = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.13, 0.24), glowMat(i ? 0x2f6bff : 0xff2f3a, 1.6));
+      var m = new THREE.Mesh(bevelGeo(0.42, 0.13, 0.24), glowMat(i ? 0x2f6bff : 0xff2f3a, 1.6));
       m.position.set(sx * 0.3, 0.06, 0); m.castShadow = false; barG.add(m);
       var l = new THREE.PointLight(i ? 0x2f6bff : 0xff2f3a, 0, 14); l.position.set(sx * 0.3, 0.3, 0); barG.add(l);
       return { m: m, l: l };
@@ -31,17 +31,17 @@
   function dressCop(h) {   // reads as police across the lobby: peaked cap with a chequered band, a black vest lettered POLICE front and back, badge, radio, holster
     var P = h.userData.parts, T = P.torso, H = P.head, blk = colorMat(0x111214, 0.55), gold = colorMat(0xd9b44a, 0.35, 0.8);
     function part(geo, mat, x, y, z, parent, rx) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (rx) m.rotation.x = rx; m.castShadow = true; parent.add(m); return m; }
-    part(new THREE.BoxGeometry(0.47, 0.5, 0.29), colorMat(0x17191d, 0.85), 0, 0.37, 0, T);
+    part(bevelGeo(0.47, 0.5, 0.29), colorMat(0x17191d, 0.85), 0, 0.37, 0, T);
     var wm = new THREE.MeshBasicMaterial({ map: textTex(['POLICE'], 256, 72, { size: 50, bold: true, bg: 'rgba(0,0,0,0)', color: '#ffffff', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true });
     var back = part(new THREE.PlaneGeometry(0.4, 0.11), wm, 0, 0.47, -0.148, T); back.rotation.y = Math.PI; back.castShadow = false;
     part(new THREE.PlaneGeometry(0.25, 0.07), wm, 0.085, 0.53, 0.148, T).castShadow = false;
     part(new THREE.CircleGeometry(0.028, 14), gold, -0.11, 0.53, 0.149, T).castShadow = false;
-    part(new THREE.BoxGeometry(0.05, 0.1, 0.035), blk, -0.13, 0.6, 0.16, T); part(new THREE.CylinderGeometry(0.004, 0.004, 0.08, 6), blk, -0.14, 0.69, 0.16, T);
-    part(new THREE.BoxGeometry(0.05, 0.15, 0.08), blk, 0.235, 0.08, 0.03, T);
+    part(bevelGeo(0.05, 0.1, 0.035), blk, -0.13, 0.6, 0.16, T); part(roundCylGeo(0.004, 0.004, 0.08, 6), blk, -0.14, 0.69, 0.16, T);
+    part(bevelGeo(0.05, 0.15, 0.08), blk, 0.235, 0.08, 0.03, T);
     if (!copCheck) { var cv = document.createElement('canvas'); cv.width = 256; cv.height = 32; var cx = cv.getContext('2d'); for (var i = 0; i < 16; i++) for (var j = 0; j < 2; j++) { cx.fillStyle = (i + j) % 2 ? '#101010' : '#f2f2f2'; cx.fillRect(i * 16, j * 16, 16, 16); } copCheck = new THREE.CanvasTexture(cv); }
     part(new THREE.CylinderGeometry(0.155, 0.155, 0.06, 24, 1, true), new THREE.MeshStandardMaterial({ map: copCheck, roughness: 0.7, side: THREE.DoubleSide }), 0, 0.375, 0, H);
-    part(new THREE.CylinderGeometry(0.185, 0.155, 0.07, 24), colorMat(0x141b2e, 0.7), 0, 0.44, 0, H);
-    part(new THREE.BoxGeometry(0.17, 0.012, 0.09), blk, 0, 0.35, 0.175, H, 0.3);
+    part(roundCylGeo(0.185, 0.155, 0.07, 24), colorMat(0x141b2e, 0.7), 0, 0.44, 0, H);
+    part(bevelGeo(0.17, 0.012, 0.09), blk, 0, 0.35, 0.175, H, 0.3);
     part(new THREE.PlaneGeometry(0.04, 0.04), gold, 0, 0.44, 0.176, H).castShadow = false;
   }
   function policeLights(dt) {
@@ -149,7 +149,17 @@
     r.spot = pick(s.length ? s : BROWSE_SPOTS); return r.spot;
   }
   function caseHintOn() { var r = robber; return heist.on && !heist.masked && !heist.aborted && r.state === 'case' && r.pre === 'browse' && r.arrived && r.t > r.caseT * 0.5; }   /* only a browser who lingers gives himself away */
-  function fakeIdCaught() { var sharp = clamp(0.62 + (S.upgrades.security2 ? 0.22 : S.upgrades.security ? 0.12 : 0) + (S.staff && S.staff.guardTask === 'door' ? 0.1 : -0.1), 0.3, 0.96); return Math.random() < sharp * 0.45; }   // the fakes are good: the guard catches fewer than half
+  // How often the guard wins. He is one unarmed man on a day rate: he spots a fake card now and then, he will take a knife off
+  // somebody once in a while, and he does not walk up to a gun. Cameras and alarms help him see trouble coming. Only a sidearm,
+  // and the licence to carry it, lets him face an armed robber.
+  function guardArmed() { return !!(S.upgrades.guardgun && hasLic('firearm')); }
+  function guardOdds(what, kind) {
+    var eyes = S.upgrades.security2 ? 0.16 : S.upgrades.security ? 0.08 : 0;
+    if (what === 'id') return clamp(0.14 + eyes + (S.staff && S.staff.guardTask === 'door' ? 0.04 : -0.04), 0.05, 0.4);   /* the fakes are good */
+    if (what === 'patrol') return 0.2 + eyes * 0.5;
+    return clamp(0.18 + eyes + (ROB_KINDS[kind] || ROB_KINDS.knife).guard + (guardArmed() ? 0.4 : 0), 0.04, 0.9);
+  }
+  function fakeIdCaught() { return Math.random() < guardOdds('id'); }
   function robberInside(r) {   // past the door: into the line like a customer, or off to browse
     r.t = 0; r.arrived = false; r.path = [];
     if (r.plan === 'queue') { r.pre = 'queue'; r.arrived = true; r.slot = -1; r.seq = ++lineSeq; return; }
@@ -165,7 +175,7 @@
     if (r.pre === 'check') { r.t += dt; animateHuman(r.h, dt, 'idle', 0, guard.h ? guard.h.position : null); P.lArm.rotation.x = -1.1; P.lArm.rotation.z = 0.2; if (r.t > 2.6) { P.lArm.rotation.z = 0; if (fakeIdCaught()) heistAbort('id'); else robberInside(r); } return; }
     r.t += dt; var glance = r.t % 7 < 1.3 ? REG_POS : null;
     if (r.pre === 'browse') {
-      if (!r.arrived) { if (walkAlong(g2, r.path, 1.3, dt)) { r.arrived = true; r.t = 0; if (r === robber && S.staff && S.staff.guardTask === 'patrol' && Math.random() < 0.45) { heistAbort('guard'); return; } } animateHuman(r.h, dt, 'walk', 1.3, null); return; }
+      if (!r.arrived) { if (walkAlong(g2, r.path, 1.3, dt)) { r.arrived = true; r.t = 0; if (r === robber && S.staff && S.staff.guardTask === 'patrol' && Math.random() < guardOdds('patrol')) { heistAbort('guard'); return; } } animateHuman(r.h, dt, 'walk', 1.3, null); return; }
       turnTo(r, r.faceYaw, dt); animateHuman(r.h, dt, 'idle', 0, glance); if (r.t > r.caseT) maskUp(r); return;
     }
     if (r.pre === 'queue') {
@@ -193,7 +203,7 @@
     }
     if (r.state === 'demand') {
       r.t += dt; if (r.alertT <= 0) easeYaw(g2, Math.PI, 0.1); r.h.userData.impatient = true; animateHuman(r.h, dt, 'wait', 0, player.pos); aim(); armedReact(r, dt); if (r.state !== 'demand') return;
-      if (r.t > 4 && !r.guardRolled) { r.guardRolled = true; var chance = clamp((S.upgrades.security2 ? 0.9 : S.upgrades.security ? 0.7 : 0.45) + K.guard + (S.upgrades.guardgun && hasLic('firearm') ? 0.3 : 0), 0.05, 0.95); if (Math.random() < chance) { guard.say(S.upgrades.guardgun && hasLic('firearm') ? 'Drop it. On the floor.' : 'Got him. Out you go.', '#6fdc8c', 3000); robberSay(r, 'Okay, okay.', '#ffc857'); S.rep += 2; logEvent('🛡️ The guard stopped the robbery (rep +2)', 'good'); toast('🛡️ The guard threw the robber out', 'good'); robbers.forEach(function (x) { if (x.state !== 'away' && x.state !== 'out' && x.state !== 'down') { returnLoot(x); robberFlee(x); } }); return; } else guard.say(r.weapon === 'knife' ? 'He\'s got a knife.' : 'He\'s got a gun. I\'m not paid enough for this.', '#ffc857', 2500); }
+      if (r.t > 4 && !r.guardRolled) { r.guardRolled = true; var chance = guardOdds('stop', r.kind); if (Math.random() < chance) { guard.say(guardArmed() ? 'Drop it. On the floor.' : 'Got him. Out you go.', '#6fdc8c', 3000); robberSay(r, 'Okay, okay.', '#ffc857'); S.rep += 2; logEvent('🛡️ The guard stopped the robbery (rep +2)', 'good'); toast('🛡️ The guard threw the robber out', 'good'); robbers.forEach(function (x) { if (x.state !== 'away' && x.state !== 'out' && x.state !== 'down') { returnLoot(x); robberFlee(x); } }); return; } else guard.say(r.weapon === 'knife' ? 'He\'s got a knife.' : 'He\'s got a gun. I\'m not paid enough for this.', '#ffc857', 2500); }
       if (!r.escal && r.t > K.demandT * 0.55) { r.escal = true; S.rep = Math.max(0, S.rep - 2); if (r.weapon === 'knife') robberSay(r, 'The till, or I cut you.', '#ff6b6b'); else { sfx(r.weapon === 'shotgun' ? 'shotgun' : 'gunshot'); burst(g2.position.x, 2.6, g2.position.z, 0xdddddd, 14, 'out'); robberSay(r, 'Next one\'s for you.', '#ff6b6b'); } toast('🚨 ' + (r.weapon === 'knife' ? 'He\'s losing patience' : 'He fired into the ceiling, and the lobby is terrified') + ' (rep -2)', 'bad'); }
       if (r.t > K.demandT) { if (r.weapon && r.weapon !== 'knife' && player.downT <= 0 && Math.hypot(player.pos.x - g2.position.x, player.pos.z - g2.position.z) < 9 && sightLine(g2)) robberShoot(r, 0.15); if (r.state === 'demand') takeTill(r, false); }
       return;
@@ -314,7 +324,7 @@
     // a joint in the right hand, hidden until they sit down: paper, ember and a point light that flares on each drag
     var el = h.userData.parts.rArm.userData.elbow;
     var joint = new THREE.Group(); joint.position.set(0, -0.36, 0.06); joint.rotation.x = Math.PI / 2; joint.visible = false; el.add(joint);
-    joint.add(new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.13, 6), colorMat(0xf5f0e0, 0.9)));
+    joint.add(new THREE.Mesh(roundCylGeo(0.008, 0.006, 0.13, 6), colorMat(0xf5f0e0, 0.9)));
     var ember = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 6), glowMat(0xff6a1a, 2.0)); ember.position.y = 0.065; joint.add(ember);
     var glow = new THREE.PointLight(0xff7a2a, 0, 0.7); glow.position.y = 0.065; joint.add(glow);
     var benchStep = plan.filter(function (s) { return s.kind === 'bench'; })[0];
@@ -347,7 +357,7 @@
       var FM = machState(l.useUnit || 'fridge');
       if ((FM.fridge || 0) <= 0) { loungerSay(l, 'Fridge is empty?', '#ff6b6b'); logEvent('🧊 ' + l.who + ' found the drinks fridge empty', 'bad'); return; }
       FM.fridge--; coinPay(l.useUnit || 'fridge', 2); S.stats.fridge = (S.stats.fridge || 0) + 1; sfx('pickup'); syncFridge(l.useUnit || 'fridge');
-      var cold = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(0x3ad0ff, 0.4, 0.3)); cold.position.set(0, -0.37, 0.03); le.add(cold);
+      var cold = new THREE.Mesh(roundCylGeo(0.03, 0.03, 0.11, 10), colorMat(0x3ad0ff, 0.4, 0.3)); cold.position.set(0, -0.37, 0.03); le.add(cold);
       loungerSay(l, pick(['Ice cold.', 'Cheers.', 'Just what I needed.']), '#e8f1ea');
       toast('🧊 ' + l.who + ' took a cold drink from the fridge (+$2 in its coin box)', ''); logEvent('🧊 ' + l.who + ' bought a cold drink from the fridge (+$2)', '');
       return;
@@ -357,7 +367,7 @@
       var vroll = Math.random() * vks.reduce(function (a, k) { return a + vst[k]; }, 0), vk = vks[vks.length - 1]; for (var vi = 0; vi < vks.length; vi++) { vroll -= vst[vks[vi]]; if (vroll < 0) { vk = vks[vi]; break; } }   /* whatever is on the racks, in proportion to how much of it there is */
       var pickDrink = vk === 'drink'; vst[vk]--; syncVending(vu);
       coinPay(vu, 2); S.stats.vend = (S.stats.vend || 0) + 1; sfx('vend');
-      var can = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.11, 10), colorMat(pick([0xffd166, 0x3ad0ff, 0x6fdc8c, 0xff8c42]), 0.4, 0.3)); can.position.set(0, -0.37, 0.03); le.add(can);
+      var can = new THREE.Mesh(roundCylGeo(0.03, 0.03, 0.11, 10), colorMat(pick([0xffd166, 0x3ad0ff, 0x6fdc8c, 0xff8c42]), 0.4, 0.3)); can.position.set(0, -0.37, 0.03); le.add(can);
       var vwhat = pickDrink ? 'a drink' : vk === 'snack' ? 'a snack' : 'something from the ' + itemName(vk).toLowerCase();
       toast('🥤 ' + l.who + ' got ' + vwhat + ' from the machine (+$2 in the box)', ''); logEvent('🥤 ' + l.who + ' bought ' + vwhat + ' from the vending machine (+$2)', '');
       if (propInst.vending) burst(ROOM.x - 1.0, 0.5, 6.8, 0xffffff, 6, 'up');
@@ -366,8 +376,8 @@
       if (!coffReady(cu)) { loungerSay(l, 'No coffee?', '#ff6b6b'); logEvent('☕ ' + l.who + ' found the coffee machine empty', 'bad'); return; }
       cst.cup--; cst.beans--; syncCoffee(cu);
       coinPay(cu, 3); S.stats.coffee = (S.stats.coffee || 0) + 1; sfx('coffee');
-      var cup = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.028, 0.09, 10), colorMat(0xf5f5f0, 0.5)); cup.position.set(0, -0.37, 0.03); le.add(cup);
-      var lid = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.037, 0.012, 10), colorMat(0x3a2a1a, 0.6)); lid.position.y = 0.05; cup.add(lid);
+      var cup = new THREE.Mesh(roundCylGeo(0.035, 0.028, 0.09, 10), colorMat(0xf5f5f0, 0.5)); cup.position.set(0, -0.37, 0.03); le.add(cup);
+      var lid = new THREE.Mesh(roundCylGeo(0.037, 0.037, 0.012, 10), colorMat(0x3a2a1a, 0.6)); lid.position.y = 0.05; cup.add(lid);
       loungerSay(l, pick(['Ahh, coffee.', 'Cheers.', 'Needed that.']), '#e8f1ea');
       toast('☕ ' + l.who + ' bought a coffee (+$3 in the box)', ''); logEvent('☕ ' + l.who + ' bought a coffee in the lobby (+$3)', '');
       if (propInst.lobbyCoffee) burst(ROOM.x - 0.9, 1.1, 8.1, 0xcfd8dc, 8, 'smoke');

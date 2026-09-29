@@ -7,10 +7,10 @@
     var paperM = prodMat('paper', function () { return new THREE.MeshStandardMaterial({ color: 0xf7f3e6, roughness: 0.95 }); });
     var roachM = prodMat('roach', function () { return new THREE.MeshStandardMaterial({ color: 0xc19a63, roughness: 0.9 }); });
     var ashM = prodMat('ash', function () { return new THREE.MeshStandardMaterial({ color: 0x3a3330, roughness: 1 }); });
-    var b = new THREE.Mesh(new THREE.CylinderGeometry(0.0074 * s, 0.005 * s, 0.084 * s, 8), paperM); b.position.y = 0.012 * s; G.add(b);
-    var r = new THREE.Mesh(new THREE.CylinderGeometry(0.0051 * s, 0.0051 * s, 0.02 * s, 8), roachM); r.position.y = -0.04 * s; G.add(r);
+    var b = new THREE.Mesh(roundCylGeo(0.0074 * s, 0.005 * s, 0.084 * s, 8), paperM); b.position.y = 0.012 * s; G.add(b);
+    var r = new THREE.Mesh(roundCylGeo(0.0051 * s, 0.0051 * s, 0.02 * s, 8), roachM); r.position.y = -0.04 * s; G.add(r);
     var t = new THREE.Mesh(new THREE.ConeGeometry(0.0074 * s, 0.017 * s, 8), paperM); t.position.y = 0.0625 * s; G.add(t);
-    var a = new THREE.Mesh(new THREE.CylinderGeometry(0.0076 * s, 0.0076 * s, 0.004 * s, 8), ashM); a.position.y = 0.0535 * s; G.add(a);
+    var a = new THREE.Mesh(roundCylGeo(0.0076 * s, 0.0076 * s, 0.004 * s, 8), ashM); a.position.y = 0.0535 * s; G.add(a);
     return G;
   }
   function productBaggie(st, s) {   // a zip-lock you can see the bud through, with the strain on the label
@@ -18,10 +18,10 @@
     var filmM = prodMat('film', function () { return new THREE.MeshStandardMaterial({ color: 0xeef7f0, roughness: 0.12, transparent: true, opacity: 0.4 }); });
     var zipM = prodMat('zip', function () { return new THREE.MeshStandardMaterial({ color: 0xf7fbf8, roughness: 0.5 }); });
     var nugM = prodMat('nug' + st.id, function () { return new THREE.MeshStandardMaterial({ color: st.bud, roughness: 0.9 }); });
-    G.add(new THREE.Mesh(new THREE.BoxGeometry(0.076 * s, 0.062 * s, 0.017 * s), filmM));
+    G.add(new THREE.Mesh(bevelGeo(0.076 * s, 0.062 * s, 0.017 * s), filmM));
     for (var q = 0; q < 5; q++) { var n = new THREE.Mesh(new THREE.IcosahedronGeometry((0.0105 + (q % 3) * 0.0022) * s, 0), nugM); n.position.set((-0.021 + (q % 3) * 0.021) * s, (-0.014 + Math.floor(q / 3) * 0.015) * s, 0); n.scale.set(1, 0.85, 0.7); n.rotation.set(q, q * 1.4, 0.4); G.add(n); }
-    var zip = new THREE.Mesh(new THREE.BoxGeometry(0.078 * s, 0.006 * s, 0.019 * s), zipM); zip.position.y = 0.027 * s; G.add(zip);
-    var lip = new THREE.Mesh(new THREE.BoxGeometry(0.078 * s, 0.008 * s, 0.013 * s), filmM); lip.position.y = 0.035 * s; G.add(lip);
+    var zip = new THREE.Mesh(bevelGeo(0.078 * s, 0.006 * s, 0.019 * s), zipM); zip.position.y = 0.027 * s; G.add(zip);
+    var lip = new THREE.Mesh(bevelGeo(0.078 * s, 0.008 * s, 0.013 * s), filmM); lip.position.y = 0.035 * s; G.add(lip);
     var lab = new THREE.Mesh(new THREE.PlaneGeometry(0.056 * s, 0.019 * s), prodMat('lab' + st.id, function () { return new THREE.MeshBasicMaterial({ map: textTex([st.name], 260, 88, { size: 34, bg: '#f4efdf', color: '#2a2a2a', titleColor: '#2a2a2a', line: 'rgba(0,0,0,0)' }), transparent: true }); }));
     lab.position.set(0, 0.0125 * s, 0.0091 * s); G.add(lab);
     return G;
@@ -32,12 +32,12 @@
     var bodyM = prodMat('cig' + K.name, function () { return new THREE.MeshStandardMaterial({ color: K.col, roughness: 0.55 }); });
     var lidM = prodMat('cigl' + K.name, function () { return new THREE.MeshStandardMaterial({ color: mixHex(K.col, 0x000000, 0.25), roughness: 0.55 }); });
     var foilM = prodMat('foil', function () { return new THREE.MeshStandardMaterial({ color: 0xd8dde2, roughness: 0.25, metalness: 0.8 }); });
-    G.add(new THREE.Mesh(new THREE.BoxGeometry(w, ht * 0.72, d), bodyM));
-    var lid = new THREE.Mesh(new THREE.BoxGeometry(w * 1.008, ht * 0.28, d * 1.008), lidM); lid.position.y = ht * 0.5; G.add(lid);
-    var seam = new THREE.Mesh(new THREE.BoxGeometry(w * 1.012, 0.0015 * s, d * 1.012), foilM); seam.position.y = ht * 0.36; G.add(seam);
+    G.add(new THREE.Mesh(bevelGeo(w, ht * 0.72, d), bodyM));
+    var lid = new THREE.Mesh(bevelGeo(w * 1.008, ht * 0.28, d * 1.008), lidM); lid.position.y = ht * 0.5; G.add(lid);
+    var seam = new THREE.Mesh(bevelGeo(w * 1.012, 0.0015 * s, d * 1.012), foilM); seam.position.y = ht * 0.36; G.add(seam);
     var face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.9, ht * 0.5), prodMat('cigf' + K.name, function () { return new THREE.MeshBasicMaterial({ map: textTex(['RF', K.type === 'light' ? 'LIGHT' : 'SMOKING', K.size + 's'], 200, 260, { size: 44, bg: '#' + ('000000' + K.col.toString(16)).slice(-6), color: '#' + ('000000' + K.top.toString(16)).slice(-6), titleColor: '#' + ('000000' + K.top.toString(16)).slice(-6), line: 'rgba(0,0,0,0)' }), transparent: true }); }));
     face.position.set(0, -ht * 0.03, d / 2 + 0.0004 * s); G.add(face);
-    var band = new THREE.Mesh(new THREE.BoxGeometry(w * 0.94, ht * 0.16, 0.0008 * s), prodMat('cigb', function () { return new THREE.MeshStandardMaterial({ color: 0x14181b, roughness: 0.9 }); }));
+    var band = new THREE.Mesh(bevelGeo(w * 0.94, ht * 0.16, 0.0008 * s), prodMat('cigb', function () { return new THREE.MeshStandardMaterial({ color: 0x14181b, roughness: 0.9 }); }));
     band.position.set(0, -ht * 0.27, d / 2 + 0.0006 * s); G.add(band);
     return G;
   }
@@ -45,8 +45,8 @@
     var G = new THREE.Group();
     var sackM = prodMat('sack', function () { return new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 1 }); });
     var foldM = prodMat('sackfold', function () { return new THREE.MeshStandardMaterial({ color: 0x3a291b, roughness: 1 }); });
-    G.add(new THREE.Mesh(new THREE.BoxGeometry(0.15 * s, 0.17 * s, 0.095 * s), sackM));
-    [1, -1].forEach(function (e) { var fo = new THREE.Mesh(new THREE.BoxGeometry(0.155 * s, 0.022 * s, 0.03 * s), foldM); fo.position.y = e * 0.093 * s; G.add(fo); });
+    G.add(new THREE.Mesh(bevelGeo(0.15 * s, 0.17 * s, 0.095 * s), sackM));
+    [1, -1].forEach(function (e) { var fo = new THREE.Mesh(bevelGeo(0.155 * s, 0.022 * s, 0.03 * s), foldM); fo.position.y = e * 0.093 * s; G.add(fo); });
     var fc = new THREE.Mesh(new THREE.PlaneGeometry(0.125 * s, 0.105 * s), prodMat('sacklab', function () { return new THREE.MeshBasicMaterial({ map: textTex(['GROW CO.', 'potting soil', '20 L'], 250, 210, { size: 40, bg: '#6d4f30', color: '#e9dcc2', titleColor: '#9ff0b5', line: 'rgba(0,0,0,0)' }), transparent: true }); }));
     fc.position.set(0, 0.006 * s, 0.0481 * s); G.add(fc); return G;
   }
@@ -54,10 +54,10 @@
     var G = new THREE.Group();
     var botM = prodMat('nutbot', function () { return new THREE.MeshStandardMaterial({ color: 0xcdea55, roughness: 0.35, transparent: true, opacity: 0.94 }); });
     var capM = prodMat('nutcap', function () { return new THREE.MeshStandardMaterial({ color: 0x2a2f26, roughness: 0.6 }); });
-    var b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.029 * s, 0.031 * s, 0.105 * s, 14), botM); b1.position.y = -0.005 * s; G.add(b1);
-    var sh = new THREE.Mesh(new THREE.CylinderGeometry(0.014 * s, 0.029 * s, 0.026 * s, 14), botM); sh.position.y = 0.061 * s; G.add(sh);
-    var nk = new THREE.Mesh(new THREE.CylinderGeometry(0.013 * s, 0.013 * s, 0.016 * s, 12), capM); nk.position.y = 0.082 * s; G.add(nk);
-    var cp = new THREE.Mesh(new THREE.CylinderGeometry(0.0155 * s, 0.0155 * s, 0.011 * s, 16), capM); cp.position.y = 0.094 * s; G.add(cp);
+    var b1 = new THREE.Mesh(roundCylGeo(0.029 * s, 0.031 * s, 0.105 * s, 14), botM); b1.position.y = -0.005 * s; G.add(b1);
+    var sh = new THREE.Mesh(roundCylGeo(0.014 * s, 0.029 * s, 0.026 * s, 14), botM); sh.position.y = 0.061 * s; G.add(sh);
+    var nk = new THREE.Mesh(roundCylGeo(0.013 * s, 0.013 * s, 0.016 * s, 12), capM); nk.position.y = 0.082 * s; G.add(nk);
+    var cp = new THREE.Mesh(roundCylGeo(0.0155 * s, 0.0155 * s, 0.011 * s, 16), capM); cp.position.y = 0.094 * s; G.add(cp);
     var lb = new THREE.Mesh(new THREE.CylinderGeometry(0.0305 * s, 0.0305 * s, 0.05 * s, 16, 1, true), prodMat('nutlab', function () { return new THREE.MeshBasicMaterial({ map: textTex(['BLOOM', 'nutrients'], 300, 120, { size: 44, bg: '#1f3a14', color: '#cdea55', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }); }));
     lb.position.y = -0.006 * s; G.add(lb); return G;
   }
@@ -66,12 +66,12 @@
     var tankM = prodMat('spraytank', function () { return new THREE.MeshStandardMaterial({ color: 0xe8f2ee, roughness: 0.18, transparent: true, opacity: 0.55 }); });
     var fluidM = prodMat('sprayfluid', function () { return new THREE.MeshStandardMaterial({ color: 0x8fd6b0, roughness: 0.3, transparent: true, opacity: 0.85 }); });
     var headM = prodMat('sprayhead', function () { return new THREE.MeshStandardMaterial({ color: 0x2f3a36, roughness: 0.7 }); });
-    var t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.029 * s, 0.032 * s, 0.115 * s, 14), tankM); t1.position.y = -0.012 * s; G.add(t1);
-    var fl = new THREE.Mesh(new THREE.CylinderGeometry(0.026 * s, 0.029 * s, 0.055 * s, 12), fluidM); fl.position.y = -0.04 * s; G.add(fl);
-    var nk2 = new THREE.Mesh(new THREE.CylinderGeometry(0.016 * s, 0.016 * s, 0.02 * s, 12), headM); nk2.position.y = 0.055 * s; G.add(nk2);
-    var hd = new THREE.Mesh(new THREE.BoxGeometry(0.03 * s, 0.036 * s, 0.048 * s), headM); hd.position.set(0, 0.082 * s, -0.012 * s); G.add(hd);
-    var nz = new THREE.Mesh(new THREE.BoxGeometry(0.012 * s, 0.01 * s, 0.03 * s), headM); nz.position.set(0, 0.095 * s, -0.04 * s); G.add(nz);
-    var tg = new THREE.Mesh(new THREE.BoxGeometry(0.016 * s, 0.026 * s, 0.008 * s), prodMat('spraytrig', function () { return new THREE.MeshStandardMaterial({ color: 0x59d08a, roughness: 0.6 }); })); tg.position.set(0, 0.068 * s, 0.016 * s); G.add(tg);
+    var t1 = new THREE.Mesh(roundCylGeo(0.029 * s, 0.032 * s, 0.115 * s, 14), tankM); t1.position.y = -0.012 * s; G.add(t1);
+    var fl = new THREE.Mesh(roundCylGeo(0.026 * s, 0.029 * s, 0.055 * s, 12), fluidM); fl.position.y = -0.04 * s; G.add(fl);
+    var nk2 = new THREE.Mesh(roundCylGeo(0.016 * s, 0.016 * s, 0.02 * s, 12), headM); nk2.position.y = 0.055 * s; G.add(nk2);
+    var hd = new THREE.Mesh(bevelGeo(0.03 * s, 0.036 * s, 0.048 * s), headM); hd.position.set(0, 0.082 * s, -0.012 * s); G.add(hd);
+    var nz = new THREE.Mesh(bevelGeo(0.012 * s, 0.01 * s, 0.03 * s), headM); nz.position.set(0, 0.095 * s, -0.04 * s); G.add(nz);
+    var tg = new THREE.Mesh(bevelGeo(0.016 * s, 0.026 * s, 0.008 * s), prodMat('spraytrig', function () { return new THREE.MeshStandardMaterial({ color: 0x59d08a, roughness: 0.6 }); })); tg.position.set(0, 0.068 * s, 0.016 * s); G.add(tg);
     var lb2 = new THREE.Mesh(new THREE.CylinderGeometry(0.0325 * s, 0.0325 * s, 0.05 * s, 16, 1, true), prodMat('spraylab', function () { return new THREE.MeshBasicMaterial({ map: textTex(['PEST OFF', 'ready to use'], 300, 120, { size: 40, bg: '#123a2a', color: '#bfeed6', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }); }));
     lb2.position.y = 0.006 * s; G.add(lb2); return G;
   }
@@ -79,15 +79,15 @@
     var G = new THREE.Group();
     var foilM = prodMat('seedfoil', function () { return new THREE.MeshStandardMaterial({ color: 0xc9cdd2, roughness: 0.3, metalness: 0.55 }); });
     var sealM = prodMat('seedseal', function () { return new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.5, metalness: 0.4 }); });
-    G.add(new THREE.Mesh(new THREE.BoxGeometry(0.072 * s, 0.098 * s, 0.009 * s), foilM));
-    var sl = new THREE.Mesh(new THREE.BoxGeometry(0.074 * s, 0.014 * s, 0.004 * s), sealM); sl.position.y = 0.054 * s; G.add(sl);
-    var nt = new THREE.Mesh(new THREE.BoxGeometry(0.006 * s, 0.008 * s, 0.005 * s), sealM); nt.position.set(0.033 * s, 0.05 * s, 0); G.add(nt);
+    G.add(new THREE.Mesh(bevelGeo(0.072 * s, 0.098 * s, 0.009 * s), foilM));
+    var sl = new THREE.Mesh(bevelGeo(0.074 * s, 0.014 * s, 0.004 * s), sealM); sl.position.y = 0.054 * s; G.add(sl);
+    var nt = new THREE.Mesh(bevelGeo(0.006 * s, 0.008 * s, 0.005 * s), sealM); nt.position.set(0.033 * s, 0.05 * s, 0); G.add(nt);
     var fa = new THREE.Mesh(new THREE.PlaneGeometry(0.064 * s, 0.086 * s), prodMat('seedlab' + st.id, function () { return new THREE.MeshBasicMaterial({ map: textTex([st.emoji, st.name, 'feminised'], 210, 285, { size: 30, bg: '#f4efdf', color: '#3a4a36', titleColor: '#1a6a2a', line: 'rgba(0,0,0,.18)' }), transparent: true }); }));
     fa.position.z = 0.0047 * s; G.add(fa); return G;
   }
   function cartonBox(w, h2, d, lines, hex, ink) {   /* a plain box with its front printed, for the small consumables */
     var G = new THREE.Group();
-    G.add(new THREE.Mesh(new THREE.BoxGeometry(w, h2, d), new THREE.MeshStandardMaterial({ color: hex, roughness: 0.85 })));
+    G.add(new THREE.Mesh(bevelGeo(w, h2, d), new THREE.MeshStandardMaterial({ color: hex, roughness: 0.85 })));
     var key = 'carton' + lines.join('|');
     var face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.86, h2 * 0.74), prodMat(key, function () { return new THREE.MeshBasicMaterial({ map: textTex(lines, 260, 150, { size: 46, bg: 'rgba(0,0,0,0)', color: ink, titleColor: ink, line: 'rgba(0,0,0,0)' }), transparent: true }); }));
     face.position.z = d / 2 + 0.001; G.add(face); return G;
@@ -141,11 +141,11 @@
   function cupMesh(s2, full) {   // a paper cup, with a lid and a sleeve once it is poured
     var G = new THREE.Group();
     var paper = prodMat('cuppaper', function () { return new THREE.MeshStandardMaterial({ color: 0xf7f7f2, roughness: 0.85 }); });
-    G.add(new THREE.Mesh(new THREE.CylinderGeometry(0.035 * s2, 0.027 * s2, 0.095 * s2, 14), paper));
+    G.add(new THREE.Mesh(roundCylGeo(0.035 * s2, 0.027 * s2, 0.095 * s2, 14), paper));
     if (full) {
       var lidM = prodMat('cuplid', function () { return new THREE.MeshStandardMaterial({ color: 0x3a3f46, roughness: 0.6 }); });
-      var l = new THREE.Mesh(new THREE.CylinderGeometry(0.037 * s2, 0.037 * s2, 0.012 * s2, 14), lidM); l.position.y = 0.052 * s2; G.add(l);
-      var sip = new THREE.Mesh(new THREE.CylinderGeometry(0.008 * s2, 0.008 * s2, 0.012 * s2, 8), lidM); sip.position.set(0.022 * s2, 0.06 * s2, 0); G.add(sip);
+      var l = new THREE.Mesh(roundCylGeo(0.037 * s2, 0.037 * s2, 0.012 * s2, 14), lidM); l.position.y = 0.052 * s2; G.add(l);
+      var sip = new THREE.Mesh(roundCylGeo(0.008 * s2, 0.008 * s2, 0.012 * s2, 8), lidM); sip.position.set(0.022 * s2, 0.06 * s2, 0); G.add(sip);
       var slv = new THREE.Mesh(new THREE.CylinderGeometry(0.0365 * s2, 0.031 * s2, 0.04 * s2, 14, 1, true), prodMat('cupslv', function () { return new THREE.MeshBasicMaterial({ map: textTex(['GROW CO.'], 300, 110, { size: 44, bg: '#6d4f30', color: '#f4e8d2', titleColor: '#f4e8d2', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }); }));
       slv.position.y = -0.006 * s2; G.add(slv);
     }
@@ -217,9 +217,9 @@
   function drinkMesh(s2) {   // a can: tapered body, a printed wrap, a chamfered top and a ring pull
     var G = new THREE.Group();
     var canM = prodMat('canbody', function () { return new THREE.MeshStandardMaterial({ color: 0xd8dde2, roughness: 0.3, metalness: 0.75 }); });
-    var b = new THREE.Mesh(new THREE.CylinderGeometry(0.031 * s2, 0.031 * s2, 0.1 * s2, 14), canM); G.add(b);
-    var top = new THREE.Mesh(new THREE.CylinderGeometry(0.026 * s2, 0.031 * s2, 0.012 * s2, 14), canM); top.position.y = 0.056 * s2; G.add(top);
-    var bot = new THREE.Mesh(new THREE.CylinderGeometry(0.031 * s2, 0.026 * s2, 0.012 * s2, 14), canM); bot.position.y = -0.056 * s2; G.add(bot);
+    var b = new THREE.Mesh(roundCylGeo(0.031 * s2, 0.031 * s2, 0.1 * s2, 14), canM); G.add(b);
+    var top = new THREE.Mesh(roundCylGeo(0.026 * s2, 0.031 * s2, 0.012 * s2, 14), canM); top.position.y = 0.056 * s2; G.add(top);
+    var bot = new THREE.Mesh(roundCylGeo(0.031 * s2, 0.026 * s2, 0.012 * s2, 14), canM); bot.position.y = -0.056 * s2; G.add(bot);
     var wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.0315 * s2, 0.0315 * s2, 0.072 * s2, 16, 1, true), prodMat('canwrap', function () { return new THREE.MeshBasicMaterial({ map: textTex(['GROW', 'COLA'], 300, 170, { size: 60, bg: '#1d6fd6', color: '#ffffff', titleColor: '#ffd166', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide }); }));
     G.add(wrap);
     var tab = new THREE.Mesh(new THREE.TorusGeometry(0.008 * s2, 0.0018 * s2, 4, 8), canM); tab.position.y = 0.063 * s2; tab.rotation.x = Math.PI / 2; G.add(tab);
@@ -228,8 +228,8 @@
   function snackMesh(s2) {   // a flow-wrapped bar, crimped at both ends
     var G = new THREE.Group();
     var wrapM = prodMat('snackwrap', function () { return new THREE.MeshStandardMaterial({ color: 0x6b2f8a, roughness: 0.45, metalness: 0.25 }); });
-    G.add(new THREE.Mesh(new THREE.BoxGeometry(0.105 * s2, 0.018 * s2, 0.05 * s2), wrapM));
-    [-1, 1].forEach(function (e) { var cr = new THREE.Mesh(new THREE.BoxGeometry(0.018 * s2, 0.011 * s2, 0.052 * s2), wrapM); cr.position.x = e * 0.06 * s2; G.add(cr); });
+    G.add(new THREE.Mesh(bevelGeo(0.105 * s2, 0.018 * s2, 0.05 * s2), wrapM));
+    [-1, 1].forEach(function (e) { var cr = new THREE.Mesh(bevelGeo(0.018 * s2, 0.011 * s2, 0.052 * s2), wrapM); cr.position.x = e * 0.06 * s2; G.add(cr); });
     var fa = new THREE.Mesh(new THREE.PlaneGeometry(0.086 * s2, 0.04 * s2), prodMat('snackface', function () { return new THREE.MeshBasicMaterial({ map: textTex(['GROW BAR'], 280, 120, { size: 52, bg: '#6b2f8a', color: '#ffd166', titleColor: '#ffd166', line: 'rgba(0,0,0,0)' }), transparent: true }); }));
     fa.position.z = 0.0255 * s2; G.add(fa);
     return G;
@@ -335,29 +335,29 @@
     var g = new THREE.Group();
     if (WS) { var wm = WS.model('item:' + h.kind); if (wm) { g.add(wm); g.userData.wsModel = true; return g; } }   /* a pack's Blender model stands in for the whole hand-built item */
     function add(geo, mat, x, y, z, rx, ry, rz) { var m = new THREE.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); m.rotation.set(rx || 0, ry || 0, rz || 0); g.add(m); return m; }
-    if (h.kind === 'bat') { var bw = new THREE.MeshStandardMaterial({ color: 0xb98a4a, roughness: 0.6 }); add(new THREE.CylinderGeometry(0.034, 0.022, 0.72, 10), bw, 0, 0.44, 0); add(new THREE.CylinderGeometry(0.024, 0.024, 0.16, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }), 0, 0.08, 0); add(new THREE.CylinderGeometry(0.032, 0.032, 0.02, 10), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), 0, 0.0, 0); add(new THREE.SphereGeometry(0.036, 10, 8), bw, 0, 0.81, 0); }
+    if (h.kind === 'bat') { var bw = new THREE.MeshStandardMaterial({ color: 0xb98a4a, roughness: 0.6 }); add(roundCylGeo(0.034, 0.022, 0.72, 10), bw, 0, 0.44, 0); add(roundCylGeo(0.024, 0.024, 0.16, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }), 0, 0.08, 0); add(roundCylGeo(0.032, 0.032, 0.02, 10), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), 0, 0.0, 0); add(new THREE.SphereGeometry(0.036, 10, 8), bw, 0, 0.81, 0); }
     if (h.kind === 'cigs') {
       var CK = CIG_SKUS[h.sku];
       if (h.n > 2) {   /* a carton: a printed sleeve with the packs stacked inside the open end */
-        add(new THREE.BoxGeometry(0.3, 0.1, 0.16), new THREE.MeshStandardMaterial({ color: CK.col, roughness: 0.6 }), 0, 0.05, 0);
-        add(new THREE.BoxGeometry(0.302, 0.026, 0.162), new THREE.MeshStandardMaterial({ color: mixHex(CK.col, 0x000000, 0.3), roughness: 0.6 }), 0, 0.088, 0);
+        add(bevelGeo(0.3, 0.1, 0.16), new THREE.MeshStandardMaterial({ color: CK.col, roughness: 0.6 }), 0, 0.05, 0);
+        add(bevelGeo(0.302, 0.026, 0.162), new THREE.MeshStandardMaterial({ color: mixHex(CK.col, 0x000000, 0.3), roughness: 0.6 }), 0, 0.088, 0);
         add(new THREE.PlaneGeometry(0.24, 0.07), new THREE.MeshBasicMaterial({ map: textTex(['RF ' + (CK.type === 'light' ? 'LIGHT' : 'SMOKING'), '10 x ' + CK.size], 340, 100, { size: 34, bg: '#' + ('000000' + CK.col.toString(16)).slice(-6), color: '#' + ('000000' + CK.top.toString(16)).slice(-6), titleColor: '#' + ('000000' + CK.top.toString(16)).slice(-6), line: 'rgba(0,0,0,0)' }), transparent: true }), 0, 0.05, 0.0805);
       } else { var pk = productCigPack(CK, 1); pk.position.y = 0.045; g.add(pk); if (h.n > 1) { var pk2 = productCigPack(CK, 1); pk2.position.set(0.012, 0.04, -0.02); pk2.rotation.y = 0.24; g.add(pk2); } }
     }
-    if (h.kind === 'keys') { var brassM = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.35, metalness: 0.8 }); var ring = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.005, 8, 18), brassM); ring.rotation.x = Math.PI / 2; ring.position.set(0, 0.04, 0); g.add(ring); for (var ky = 0; ky < 3; ky++) { var ang = -0.5 + ky * 0.5; var blade = add(new THREE.BoxGeometry(0.012, 0.055, 0.004), ky === 1 ? new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.4, metalness: 0.7 }) : brassM, Math.sin(ang) * 0.03, -0.012, Math.cos(ang) * 0.03); blade.rotation.y = ang; add(new THREE.BoxGeometry(0.02, 0.018, 0.004), brassM, Math.sin(ang) * 0.03, -0.042, Math.cos(ang) * 0.03).rotation.y = ang; } }
+    if (h.kind === 'keys') { var brassM = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.35, metalness: 0.8 }); var ring = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.005, 8, 18), brassM); ring.rotation.x = Math.PI / 2; ring.position.set(0, 0.04, 0); g.add(ring); for (var ky = 0; ky < 3; ky++) { var ang = -0.5 + ky * 0.5; var blade = add(bevelGeo(0.012, 0.055, 0.004), ky === 1 ? new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.4, metalness: 0.7 }) : brassM, Math.sin(ang) * 0.03, -0.012, Math.cos(ang) * 0.03); blade.rotation.y = ang; add(bevelGeo(0.02, 0.018, 0.004), brassM, Math.sin(ang) * 0.03, -0.042, Math.cos(ang) * 0.03).rotation.y = ang; } }
     if (WEAPONS[h.kind]) {   // built with the muzzle along -z, straight out from the camera
       var gBlk = new THREE.MeshStandardMaterial({ color: 0x17181b, roughness: 0.45, metalness: 0.5 }), gWood = new THREE.MeshStandardMaterial({ color: 0x5a3a1e, roughness: 0.7 });
-      if (h.kind === 'pistol') { add(new THREE.BoxGeometry(0.035, 0.045, 0.2), gBlk, 0, 0.05, -0.06); add(new THREE.BoxGeometry(0.032, 0.11, 0.045), gBlk, 0, -0.02, 0.02, 0.25); add(new THREE.BoxGeometry(0.01, 0.012, 0.01), gBlk, 0, 0.078, -0.15); }
-      else if (h.kind === 'shotgun') { add(new THREE.CylinderGeometry(0.014, 0.014, 0.6, 10), gBlk, 0, 0.055, -0.32, Math.PI / 2); add(new THREE.CylinderGeometry(0.012, 0.012, 0.42, 8), gBlk, 0, 0.025, -0.24, Math.PI / 2); add(new THREE.BoxGeometry(0.04, 0.065, 0.26), gBlk, 0, 0.04, 0.02); add(new THREE.BoxGeometry(0.046, 0.042, 0.15), gWood, 0, 0.02, -0.26); add(new THREE.BoxGeometry(0.036, 0.09, 0.26), gWood, 0, 0.01, 0.27, -0.12); }
-      else if (h.kind === 'ak') { add(new THREE.BoxGeometry(0.042, 0.062, 0.26), gBlk, 0, 0.045, -0.05); add(new THREE.CylinderGeometry(0.009, 0.009, 0.32, 10), gBlk, 0, 0.055, -0.34, Math.PI / 2); add(new THREE.BoxGeometry(0.036, 0.028, 0.17), gWood, 0, 0.085, -0.25); add(new THREE.BoxGeometry(0.046, 0.046, 0.19), gWood, 0, 0.03, -0.26); add(new THREE.BoxGeometry(0.008, 0.035, 0.012), gBlk, 0, 0.09, -0.47); add(new THREE.BoxGeometry(0.03, 0.12, 0.062), gBlk, 0, -0.035, -0.1, 0.22); add(new THREE.BoxGeometry(0.03, 0.09, 0.056), gBlk, 0, -0.125, -0.135, 0.5); add(new THREE.BoxGeometry(0.032, 0.1, 0.042), gWood, 0, -0.03, 0.06, 0.3); add(new THREE.BoxGeometry(0.036, 0.08, 0.25), gWood, 0, 0.012, 0.24, -0.1); }
-      else if (h.kind === 'rifle') { add(new THREE.CylinderGeometry(0.01, 0.012, 0.74, 10), gBlk, 0, 0.055, -0.42, Math.PI / 2); add(new THREE.BoxGeometry(0.038, 0.06, 0.22), gBlk, 0, 0.045, -0.02); add(new THREE.BoxGeometry(0.044, 0.05, 0.36), gWood, 0, 0.02, -0.2); add(new THREE.BoxGeometry(0.038, 0.1, 0.26), gWood, 0, 0.0, 0.25, -0.15); add(new THREE.CylinderGeometry(0.019, 0.019, 0.24, 12), gBlk, 0, 0.11, -0.05, Math.PI / 2); add(new THREE.CylinderGeometry(0.025, 0.02, 0.04, 12), gBlk, 0, 0.11, -0.18, Math.PI / 2); add(new THREE.BoxGeometry(0.012, 0.04, 0.012), gBlk, 0, 0.08, -0.1); add(new THREE.BoxGeometry(0.012, 0.04, 0.012), gBlk, 0, 0.08, 0.02); add(new THREE.BoxGeometry(0.008, 0.03, 0.03), gBlk, 0.024, 0.06, 0.04); }
-      else if (h.kind === 'taser') { add(new THREE.BoxGeometry(0.042, 0.06, 0.15), new THREE.MeshStandardMaterial({ color: 0xf2c21a, roughness: 0.6 }), 0, 0.04, -0.04); add(new THREE.BoxGeometry(0.036, 0.1, 0.042), gBlk, 0, -0.03, 0.02, 0.2); add(new THREE.BoxGeometry(0.044, 0.035, 0.02), gBlk, 0, 0.04, -0.125); }
-      else if (h.kind === 'pepper') { add(new THREE.CylinderGeometry(0.022, 0.022, 0.11, 12), new THREE.MeshStandardMaterial({ color: 0xc0281e, roughness: 0.5 }), 0, 0.04, 0); add(new THREE.CylinderGeometry(0.018, 0.02, 0.03, 10), gBlk, 0, 0.11, 0); add(new THREE.BoxGeometry(0.012, 0.012, 0.02), gBlk, 0, 0.115, -0.02); }
+      if (h.kind === 'pistol') { add(bevelGeo(0.035, 0.045, 0.2), gBlk, 0, 0.05, -0.06); add(bevelGeo(0.032, 0.11, 0.045), gBlk, 0, -0.02, 0.02, 0.25); add(bevelGeo(0.01, 0.012, 0.01), gBlk, 0, 0.078, -0.15); }
+      else if (h.kind === 'shotgun') { add(roundCylGeo(0.014, 0.014, 0.6, 10), gBlk, 0, 0.055, -0.32, Math.PI / 2); add(roundCylGeo(0.012, 0.012, 0.42, 8), gBlk, 0, 0.025, -0.24, Math.PI / 2); add(bevelGeo(0.04, 0.065, 0.26), gBlk, 0, 0.04, 0.02); add(bevelGeo(0.046, 0.042, 0.15), gWood, 0, 0.02, -0.26); add(bevelGeo(0.036, 0.09, 0.26), gWood, 0, 0.01, 0.27, -0.12); }
+      else if (h.kind === 'ak') { add(bevelGeo(0.042, 0.062, 0.26), gBlk, 0, 0.045, -0.05); add(roundCylGeo(0.009, 0.009, 0.32, 10), gBlk, 0, 0.055, -0.34, Math.PI / 2); add(bevelGeo(0.036, 0.028, 0.17), gWood, 0, 0.085, -0.25); add(bevelGeo(0.046, 0.046, 0.19), gWood, 0, 0.03, -0.26); add(bevelGeo(0.008, 0.035, 0.012), gBlk, 0, 0.09, -0.47); add(bevelGeo(0.03, 0.12, 0.062), gBlk, 0, -0.035, -0.1, 0.22); add(bevelGeo(0.03, 0.09, 0.056), gBlk, 0, -0.125, -0.135, 0.5); add(bevelGeo(0.032, 0.1, 0.042), gWood, 0, -0.03, 0.06, 0.3); add(bevelGeo(0.036, 0.08, 0.25), gWood, 0, 0.012, 0.24, -0.1); }
+      else if (h.kind === 'rifle') { add(roundCylGeo(0.01, 0.012, 0.74, 10), gBlk, 0, 0.055, -0.42, Math.PI / 2); add(bevelGeo(0.038, 0.06, 0.22), gBlk, 0, 0.045, -0.02); add(bevelGeo(0.044, 0.05, 0.36), gWood, 0, 0.02, -0.2); add(bevelGeo(0.038, 0.1, 0.26), gWood, 0, 0.0, 0.25, -0.15); add(roundCylGeo(0.019, 0.019, 0.24, 12), gBlk, 0, 0.11, -0.05, Math.PI / 2); add(roundCylGeo(0.025, 0.02, 0.04, 12), gBlk, 0, 0.11, -0.18, Math.PI / 2); add(bevelGeo(0.012, 0.04, 0.012), gBlk, 0, 0.08, -0.1); add(bevelGeo(0.012, 0.04, 0.012), gBlk, 0, 0.08, 0.02); add(bevelGeo(0.008, 0.03, 0.03), gBlk, 0.024, 0.06, 0.04); }
+      else if (h.kind === 'taser') { add(bevelGeo(0.042, 0.06, 0.15), new THREE.MeshStandardMaterial({ color: 0xf2c21a, roughness: 0.6 }), 0, 0.04, -0.04); add(bevelGeo(0.036, 0.1, 0.042), gBlk, 0, -0.03, 0.02, 0.2); add(bevelGeo(0.044, 0.035, 0.02), gBlk, 0, 0.04, -0.125); }
+      else if (h.kind === 'pepper') { add(roundCylGeo(0.022, 0.022, 0.11, 12), new THREE.MeshStandardMaterial({ color: 0xc0281e, roughness: 0.5 }), 0, 0.04, 0); add(roundCylGeo(0.018, 0.02, 0.03, 10), gBlk, 0, 0.11, 0); add(bevelGeo(0.012, 0.012, 0.02), gBlk, 0, 0.115, -0.02); }
     }
-    else if (h.kind === 'crate') { add(new THREE.BoxGeometry(0.34, 0.24, 0.3), new THREE.MeshStandardMaterial({ color: 0xc9a96a, roughness: 0.9 })); add(new THREE.BoxGeometry(0.35, 0.03, 0.31), new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.9 })); var cl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.08), new THREE.MeshBasicMaterial({ map: textTex([itemIcon(h.item) + ' ' + itemName(h.item)], 200, 80, { size: 30, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); cl.position.set(0, 0, 0.151); g.add(cl); }
-    else if (h.kind === 'can') { var cm = new THREE.MeshStandardMaterial({ color: 0x3a8fd6, roughness: 0.45, metalness: 0.35 }); add(new THREE.CylinderGeometry(0.075, 0.085, 0.17, 16), cm); add(new THREE.CylinderGeometry(0.01, 0.016, 0.2, 8), cm, 0.11, 0.08, 0, 0, 0, -0.95); add(new THREE.CylinderGeometry(0.03, 0.02, 0.03, 10), cm, 0.19, 0.145, 0, 0, 0, -0.95); add(new THREE.TorusGeometry(0.065, 0.009, 8, 16, Math.PI), cm, 0, 0.085, 0); }
+    else if (h.kind === 'crate') { add(bevelGeo(0.34, 0.24, 0.3), new THREE.MeshStandardMaterial({ color: 0xc9a96a, roughness: 0.9 })); add(bevelGeo(0.35, 0.03, 0.31), new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.9 })); var cl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.08), new THREE.MeshBasicMaterial({ map: textTex([itemIcon(h.item) + ' ' + itemName(h.item)], 200, 80, { size: 30, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); cl.position.set(0, 0, 0.151); g.add(cl); }
+    else if (h.kind === 'can') { var cm = new THREE.MeshStandardMaterial({ color: 0x3a8fd6, roughness: 0.45, metalness: 0.35 }); add(roundCylGeo(0.075, 0.085, 0.17, 16), cm); add(roundCylGeo(0.01, 0.016, 0.2, 8), cm, 0.11, 0.08, 0, 0, 0, -0.95); add(roundCylGeo(0.03, 0.02, 0.03, 10), cm, 0.19, 0.145, 0, 0, 0, -0.95); add(new THREE.TorusGeometry(0.065, 0.009, 8, 16, Math.PI), cm, 0, 0.085, 0); }
     else if (h.kind === 'cup2') { var cc = cupMesh(1.4, true); cc.position.y = 0.02; g.add(cc); }
-    else if (h.kind === 'cupWater') { var cw = cupMesh(1.2, false); cw.position.y = 0.02; g.add(cw); var wd = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.006, 14), new THREE.MeshPhysicalMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.7, roughness: 0.1 })); wd.position.y = 0.075; g.add(wd); }
+    else if (h.kind === 'cupWater') { var cw = cupMesh(1.2, false); cw.position.y = 0.02; g.add(cw); var wd = new THREE.Mesh(roundCylGeo(0.038, 0.038, 0.006, 14), new THREE.MeshPhysicalMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.7, roughness: 0.1 })); wd.position.y = 0.075; g.add(wd); }
     else if (h.kind === 'cupEmpty') { var ce = cupMesh(1.2, false); ce.position.y = 0.02; ce.rotation.z = 0.25; g.add(ce); }
     else if (h.kind === 'canEmpty') { var cn = drinkMesh(1.5); cn.position.y = 0.02; cn.rotation.z = 0.5; cn.scale.y = 0.85; g.add(cn); }
     else if (h.kind === 'trashbag') { var bag = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), colorMat(0x15171a, 0.7)); bag.scale.set(1, 0.8, 0.9); bag.position.y = 0.05; g.add(bag); var knot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), colorMat(0x15171a, 0.7)); knot.position.y = 0.2; g.add(knot); }
@@ -365,11 +365,11 @@
     else if (h.kind === 'snack') {
       // a wrapped bar: flow-wrap film, crimped ends, a printed face
       var wrapM = new THREE.MeshStandardMaterial({ color: 0x6b2f8a, roughness: 0.45, metalness: 0.25 });
-      add(new THREE.BoxGeometry(0.135, 0.022, 0.058), wrapM);
-      [-1, 1].forEach(function (e) { var cr = add(new THREE.BoxGeometry(0.022, 0.026, 0.062), wrapM, e * 0.077, 0, 0); cr.scale.y = 0.5; for (var f = 0; f < 3; f++) add(new THREE.BoxGeometry(0.02, 0.002, 0.062), new THREE.MeshStandardMaterial({ color: 0x4e2166, roughness: 0.6 }), e * 0.077, -0.004 + f * 0.005, 0); });
+      add(bevelGeo(0.135, 0.022, 0.058), wrapM);
+      [-1, 1].forEach(function (e) { var cr = add(bevelGeo(0.022, 0.026, 0.062), wrapM, e * 0.077, 0, 0); cr.scale.y = 0.5; for (var f = 0; f < 3; f++) add(bevelGeo(0.02, 0.002, 0.062), new THREE.MeshStandardMaterial({ color: 0x4e2166, roughness: 0.6 }), e * 0.077, -0.004 + f * 0.005, 0); });
       add(new THREE.PlaneGeometry(0.115, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['GROW BAR', 'milk chocolate'], 280, 120, { size: 40, bg: '#6b2f8a', color: '#e8d6f2', titleColor: '#ffd166', line: 'rgba(0,0,0,0)' }), transparent: true }), 0, 0.0121, 0, -Math.PI / 2, 0, 0);
     }
-    else if (h.kind === 'broom') { var bg2 = new THREE.Group(); bg2.rotation.z = 0.35; bg2.position.set(0.05, -0.05, 0); g.add(bg2); function badd(geo, mat, x, y, z) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); bg2.add(m); return m; } badd(new THREE.CylinderGeometry(0.014, 0.016, 1.1, 10), MAT.wood, 0, 0.1, 0); badd(new THREE.CylinderGeometry(0.018, 0.018, 0.14, 10), colorMat(0xc94a3a, 0.8), 0, 0.6, 0); badd(new THREE.CylinderGeometry(0.022, 0.018, 0.05, 10), MAT.chrome, 0, -0.44, 0); badd(new THREE.BoxGeometry(0.07, 0.05, 0.32), MAT.darkwood, 0, -0.48, 0); for (var bk = 0; bk < 14; bk++) badd(new THREE.BoxGeometry(0.012, 0.2, 0.012), colorMat(bk % 2 ? 0xb8925a : 0xa8843f, 1), 0, -0.6, -0.145 + bk * 0.0225); }
+    else if (h.kind === 'broom') { var bg2 = new THREE.Group(); bg2.rotation.z = 0.35; bg2.position.set(0.05, -0.05, 0); g.add(bg2); function badd(geo, mat, x, y, z) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); bg2.add(m); return m; } badd(roundCylGeo(0.014, 0.016, 1.1, 10), MAT.wood, 0, 0.1, 0); badd(roundCylGeo(0.018, 0.018, 0.14, 10), colorMat(0xc94a3a, 0.8), 0, 0.6, 0); badd(roundCylGeo(0.022, 0.018, 0.05, 10), MAT.chrome, 0, -0.44, 0); badd(bevelGeo(0.07, 0.05, 0.32), MAT.darkwood, 0, -0.48, 0); for (var bk = 0; bk < 14; bk++) badd(bevelGeo(0.012, 0.2, 0.012), colorMat(bk % 2 ? 0xb8925a : 0xa8843f, 1), 0, -0.6, -0.145 + bk * 0.0225); }
     else if (h.kind === 'soil') { g.add(productSoilSack(1)); }
     else if (h.kind === 'nutrients') { g.add(productNutrientBottle(1)); }
     else if (h.kind === 'remedy') { g.add(productSprayBottle(1)); }
@@ -377,19 +377,19 @@
     else if (h.kind === 'harvest') { var st = strainById(h.strain); var cola = budCola(st, 1); cola.position.y = -0.01; g.add(cola); [[0.045, -0.055, 0.02, -0.5, 0.4], [-0.052, -0.04, -0.02, -0.4, -0.6], [0.01, -0.07, -0.04, -0.7, 1.4]].forEach(function (L) { add(new THREE.PlaneGeometry(0.11, 0.2), MAT.leaf, L[0], L[1], L[2], L[3], L[4], 0); }); }
     else if (h.kind === 'jar') {
       var jst = strainById(h.strain || 'sunflower'), fill = clamp(h.grams / 24, 0.25, 1);
-      add(new THREE.CylinderGeometry(0.06, 0.06, 0.14, 16), MAT.jar);
-      add(new THREE.CylinderGeometry(0.062, 0.062, 0.012, 16), MAT.jarLid, 0, 0.066, 0);   /* screw collar under the lid */
-      add(new THREE.CylinderGeometry(0.065, 0.065, 0.022, 16), MAT.jarLid, 0, 0.081, 0);
+      add(roundCylGeo(0.06, 0.06, 0.14, 16), MAT.jar);
+      add(roundCylGeo(0.062, 0.062, 0.012, 16), MAT.jarLid, 0, 0.066, 0);   /* screw collar under the lid */
+      add(roundCylGeo(0.065, 0.065, 0.022, 16), MAT.jarLid, 0, 0.081, 0);
       for (var jb = 0; jb < Math.round(3 + fill * 6); jb++) { var ja = jb * 2.399, jr = 0.026 * Math.sqrt((jb % 5) / 5 + 0.2); var nug = add(new THREE.IcosahedronGeometry(0.016 + (jb % 3) * 0.004, 0), new THREE.MeshStandardMaterial({ color: jb % 4 === 0 ? mixHex(jst.bud, 0x30401f, 0.35) : jst.bud, roughness: 0.9 }), Math.cos(ja) * jr, -0.062 + (jb % 4) * 0.016 * fill + 0.01, Math.sin(ja) * jr); nug.scale.set(1, 0.82, 1); nug.rotation.set(ja, ja * 1.7, 0.3); }
       add(new THREE.PlaneGeometry(0.075, 0.032), new THREE.MeshBasicMaterial({ map: textTex([jst.name], 220, 94, { size: 30, bg: '#f4efdf', color: '#2a2a2a', titleColor: '#2a2a2a', line: 'rgba(0,0,0,0)' }), transparent: true }), 0, -0.012, 0.0605);
     }
     else if (h.kind === 'cookies') {
       // a greaseproof sheet with cookies on it, chocolate chips and all
       var doughM = new THREE.MeshStandardMaterial({ color: 0xc08a4a, roughness: 0.95 }), chipM = new THREE.MeshStandardMaterial({ color: 0x4a2c1a, roughness: 0.8 });
-      add(new THREE.BoxGeometry(0.21, 0.006, 0.115), new THREE.MeshStandardMaterial({ color: 0xf2ece0, roughness: 1 }), 0, -0.014, 0);
+      add(bevelGeo(0.21, 0.006, 0.115), new THREE.MeshStandardMaterial({ color: 0xf2ece0, roughness: 1 }), 0, -0.014, 0);
       for (var ck = 0; ck < Math.min(h.n, 6); ck++) {
         var cx2 = (ck % 3) * 0.062 - 0.062, cz2 = Math.floor(ck / 3) * 0.05 - 0.025;
-        var ckm = add(new THREE.CylinderGeometry(0.027, 0.024, 0.011, 14), doughM, cx2, -0.004, cz2, 0, ck * 0.5, 0); ckm.scale.y = 1;
+        var ckm = add(roundCylGeo(0.027, 0.024, 0.011, 14), doughM, cx2, -0.004, cz2, 0, ck * 0.5, 0); ckm.scale.y = 1;
         for (var ch = 0; ch < 4; ch++) { var cang = ch * 1.9 + ck; add(new THREE.SphereGeometry(0.004, 6, 5), chipM, cx2 + Math.cos(cang) * 0.014, 0.002, cz2 + Math.sin(cang) * 0.014); }
       }
     }
@@ -398,7 +398,7 @@
       var paperM = new THREE.MeshStandardMaterial({ color: 0xf7f3e6, roughness: 0.95 }), roachM = new THREE.MeshStandardMaterial({ color: 0xc19a63, roughness: 0.9 }), ashM = new THREE.MeshStandardMaterial({ color: 0x3a3330, roughness: 1 });
       var jn = Math.min(h.n, 5);
       for (var j = 0; j < jn; j++) { var jg = productJoint(1); jg.position.set((j - (jn - 1) / 2) * 0.017, (j % 2) * 0.005, (j % 3) * 0.005); jg.rotation.set(0.16, (j - 2) * 0.06, 0.09 + (j % 2) * 0.04); g.add(jg); }
-      if (h.n > 5) { add(new THREE.BoxGeometry(0.098, 0.032, 0.056), new THREE.MeshStandardMaterial({ color: 0x1f2a22, roughness: 0.8 }), 0, -0.052, 0); add(new THREE.BoxGeometry(0.1, 0.009, 0.058), new THREE.MeshStandardMaterial({ color: 0x6fdc8c, roughness: 0.55 }), 0, -0.037, 0); }
+      if (h.n > 5) { add(bevelGeo(0.098, 0.032, 0.056), new THREE.MeshStandardMaterial({ color: 0x1f2a22, roughness: 0.8 }), 0, -0.052, 0); add(bevelGeo(0.1, 0.009, 0.058), new THREE.MeshStandardMaterial({ color: 0x6fdc8c, roughness: 0.55 }), 0, -0.037, 0); }
     }
     else if (h.kind === 'bags') {
       // a zip-lock with bud actually inside it, a white zip strip and a printed strain label

@@ -13,16 +13,20 @@ test('a new shop starts with every DLC off, and a shop that already uses one kee
   h.eq(pick([{ cigStock: { gummy: 3 } }]), '["rf.dlc.lab"]', 'gummies in the cabinet');
   h.eq(pick([{ x: { roof: [{ stage: 'empty' }, { stage: 'grow' }] } }]), '["rf.dlc.greenhouse"]', 'a sown roof bed');
   h.ok(W().dlcFromSaves([{ lic: { tobacco: true }, x: { roof: [{ stage: 'ready' }], lab: { job: {} } } }]).indexOf('rf.dlc.dev') < 0, 'Dev Tools are never switched on for you');
-  h.eq(W().packs().filter((p) => p.dlc).length, 4, 'four DLC in the Workshop');
+  h.eq(W().packs().filter((p) => p.dlc).length, 10, 'ten DLC in the Workshop');
 });
 
-test('Dev Tools switched off: no button, and the cheats do nothing', async (h) => {
-  off('dev'); const S = h.S, bank = S.bank, btn = () => document.querySelector('#g3-menu [data-menu="dev"]');
+test('Dev Tools switched off: F8 opens nothing, and the cheats do nothing', async (h) => {
+  off('dev'); const S = h.S, bank = S.bank, con = () => document.getElementById('g3-devcon');
   h.R.devAction('money'); h.eq(S.bank, bank, 'no money appeared');
-  h.T.openMenu(); h.ok(btn().hidden, 'the Dev tools button is gone from the pause menu'); h.T.closeMenu();
+  h.key('F8'); h.ok(!h.R.ui.devOpen && (!con() || con().hidden), 'F8 opens nothing while the DLC is off');
   on('dev');
-  h.T.openMenu(); h.ok(!btn().hidden, 'and back once it is on'); h.T.closeMenu();
-  h.R.devAction('money'); h.eq(S.bank, bank + 1000, 'the cheats work again');
+  h.key('F8'); h.ok(h.R.ui.devOpen && !con().hidden, 'F8 opens the dev console once it is on');
+  h.ok(h.R.ui.blocked(), 'and the game takes no other input while it is up');
+  con().querySelector('[data-cheat="money"]').click(); h.eq(S.bank, bank + 1000, 'a cheat pressed in the console works');
+  h.ok(h.R.ui.devOpen, 'the console stays open after a cheat');
+  h.key('F8'); h.ok(!h.R.ui.devOpen && con().hidden, 'F8 closes it again');
+  h.T.openMenu(); const old = document.querySelector('#g3-menu [data-menu="dev"]'); h.ok(!old || old.hidden, 'the pause menu has no Dev tools page any more'); h.T.closeMenu();
 });
 
 test('the Tobacco Works switched off: the licence sleeps, is not for sale, and nobody asks for cigarettes', async (h) => {

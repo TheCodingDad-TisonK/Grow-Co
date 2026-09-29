@@ -27,7 +27,7 @@
     if (html !== focusUi.html || pr.firstChild !== focusUi.node) { pr.innerHTML = html; focusUi.html = html; focusUi.node = pr.firstChild; }   /* only a changed prompt is rewritten; edit and creative mode write here too, which the node check catches */
   }
   function promptFor(d) {
-    var h = held();
+    var h = held(), dp = dlcPrompt(d, h); if (dp !== null) return dp;
     if (d.kind === 'plant') {
       var p = plantById(d.pid); if (!p) return 'Plant'; var st = strainById(p.strain); var sg = stageFor(p.progress);
       var info = '<small>' + sg.label + ' ' + Math.round(p.progress * 100) + '% · q' + Math.round(p.quality) + (p.hazard ? ' · ⚠ ' + (p.hazard === 'pest' ? 'pests' : 'mould') : '') + (!S.upgrades.autowater && p.thirst > 0.6 ? ' · 💧 thirsty' : '') + (p.fed ? ' · fed' : '') + '</small>';
@@ -165,6 +165,7 @@
     if (sleep.on || player.downT > 0) return;
     var ht = held(); if (ht && ht.kind === 'tablet' && (!focus || focus.data.kind === 'tabletDock')) { if (focus) tabletTake(); else jobsPanel(); return; }   /* the thing in your hands is a screen: E reads it, unless you are putting it back on its dock */
     if (!focus) return; var d = focus.data; var h = held(); sfx('click');
+    if (dlcInteract(d, h, shiftDown())) { afterAction(); return; }
     if (d.kind === 'plant') {
       var p = plantById(d.pid); if (!p) return;
       if (p.progress >= 1) { if (hotbarFull()) toast('Your hands are full (G puts things down)', 'bad'); else actions.harvest(d.pid); }

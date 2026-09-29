@@ -8,8 +8,8 @@
   function buildDeskBoard() {
     var c = document.createElement('canvas'); c.width = 1600; c.height = 900; deskBoard.canvas = c;
     deskBoard.tex = new THREE.CanvasTexture(c); deskBoard.tex.encoding = THREE.sRGBEncoding; deskBoard.tex.anisotropy = 4;
-    box(2.7, 1.55, 0.06, MAT.black, -9.0, 1.95, -1.9, { cast: false });
-    var scr = new THREE.Mesh(new THREE.PlaneGeometry(2.56, 1.44), new THREE.MeshBasicMaterial({ map: deskBoard.tex })); scr.position.set(-9.0, 1.95, -1.86); world.group.add(scr); deskBoard.mesh = scr;
+    box(2.76, 1.61, 0.05, MAT.alu, -9.0, 1.95, -1.915, { cast: false }); box(2.7, 1.55, 0.06, MAT.gloss, -9.0, 1.95, -1.9, { cast: false });   /* a rim of metal round a gloss bezel, like every other screen in the shop */
+    var scr = new THREE.Mesh(new THREE.PlaneGeometry(2.56, 1.44), new THREE.MeshBasicMaterial({ map: deskBoard.tex, toneMapped: false })); scr.position.set(-9.0, 1.95, -1.86); world.group.add(scr); deskBoard.mesh = scr;
     var hit = box(2.7, 1.55, 0.2, MAT.none, -9.0, 1.95, -1.85, { cast: false, receive: false }); interactable(hit, { kind: 'deskboard' });
     var glow = new THREE.PointLight(0x6fdc8c, 0.25, 4); glow.position.set(-9.0, 1.9, -1.4); scene.add(glow); deskBoard.glow = glow;
     signPlane(['SHOP DASHBOARD', 'touch screen · look at it and press E'], 1.8, 0.4, -9.0, 2.95, -1.88, 0, { titleColor: '#6fdc8c' });
@@ -28,11 +28,10 @@
   function deskTrim(ctx, text, maxW) { text = String(text || ''); if (ctx.measureText(text).width <= maxW) return text; while (text.length > 4 && ctx.measureText(text + '…').width > maxW) text = text.slice(0, -2); return text + '…'; }
   function deskDot(ctx, x, y, col, r) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r || 7, 0, Math.PI * 2); ctx.fill(); }
   function deskTile(ctx, x, y, w, h, label, value, sub, col) {
-    ctx.fillStyle = 'rgba(255,255,255,.045)'; roundRect(ctx, x, y, w, h, 14); ctx.fill();
-    ctx.fillStyle = col || DESK_OK; ctx.fillRect(x, y + 14, 4, h - 28);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = DESK_DIM; ctx.font = '600 18px "Segoe UI",system-ui,sans-serif'; ctx.fillText(label.toUpperCase(), x + 20, y + 14);
-    ctx.fillStyle = col || DESK_INK; ctx.font = '700 52px "Segoe UI",system-ui,sans-serif'; ctx.fillText(String(value), x + 20, y + 38);
-    if (sub) { ctx.fillStyle = DESK_DIM; ctx.font = '17px "Segoe UI",system-ui,sans-serif'; ctx.fillText(deskTrim(ctx, sub, w - 40), x + 20, y + 98); }
+    scrCard(ctx, x, y, w, h, { r: 16, bar: col || DESK_OK });
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = DESK_DIM; ctx.font = '600 18px "Segoe UI",system-ui,sans-serif'; ctx.fillText(label, x + 26, y + 14);
+    ctx.fillStyle = col || DESK_INK; ctx.font = '700 52px "Segoe UI",system-ui,sans-serif'; ctx.fillText(deskTrim(ctx, String(value), w - 44), x + 26, y + 38);
+    if (sub) { ctx.fillStyle = DESK_DIM; ctx.font = '17px "Segoe UI",system-ui,sans-serif'; ctx.fillText(deskTrim(ctx, sub, w - 44), x + 26, y + 98); }
   }
   function seatColor(s) { return s.state === 'working' || s.state === 'busy' ? DESK_WARN : s.state === 'needs-input' ? DESK_BAD : s.running ? DESK_OK : DESK_MUTE; }
   function prColor(p) { return p.draft ? DESK_DIM : p.review === 'APPROVED' ? DESK_OK : p.review === 'CHANGES_REQUESTED' ? DESK_BAD : DESK_WARN; }
@@ -60,9 +59,8 @@
   }
   function deskBtn(ctx, x, y, w, h, text, act, id, label, on) {
     var z = deskZone(x, y, w, h, act, id, label, true), hot = deskBoard.hot === z.key;
-    ctx.fillStyle = on ? 'rgba(111,220,140,.28)' : hot ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.07)'; roundRect(ctx, x, y, w, h, 10); ctx.fill();
-    ctx.strokeStyle = on || hot ? DESK_OK : 'rgba(255,255,255,.14)'; ctx.lineWidth = hot ? 3 : 2; ctx.stroke();
-    ctx.fillStyle = on || hot ? DESK_OK : DESK_INK; ctx.font = '600 20px ' + DESK_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + w / 2, y + h / 2 + 1); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    scrBtnBody(ctx, x, y, w, h, Math.min(14, h / 3), DESK_OK, on, hot, false);
+    ctx.fillStyle = on ? '#ffffff' : hot ? DESK_OK : DESK_INK; ctx.font = '600 20px ' + DESK_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + w / 2, y + h / 2 + 1); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   }
   function deskTabs(ctx) { DESK_PAGES.forEach(function (p, i) { deskBtn(ctx, DESK_TAB_X + i * (DESK_TAB_W + 6), DESK_TAB_Y, DESK_TAB_W, DESK_TAB_H, DESK_TAB_LABEL[p], 'page', i, DESK_PAGE_LABEL[p], i === deskBoard.page); }); }
   function deskBar(ctx, W, H, overflow) {   /* the control strip along the bottom, right to left; returns where the feed text has to stop */
@@ -137,7 +135,7 @@
   function drawDeskBoard() {
     var c = deskBoard.canvas; if (!c) return; var ctx = c.getContext('2d'), W = c.width, H = c.height, page = DESK_PAGES[deskBoard.page], rows = dashRows()[page] || [];
     deskBoard.zones = []; deskBoard.drawAt = now();
-    ctx.fillStyle = '#07110b'; ctx.fillRect(0, 0, W, H); ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    scrBg(ctx, W, H, DESK_OK); ctx.textBaseline = 'top'; ctx.textAlign = 'left';
     ctx.fillStyle = DESK_OK; ctx.font = '800 40px "Segoe UI",system-ui,sans-serif'; ctx.fillText('GROW CO.', 40, 26);
     deskTabs(ctx);
     rows.forEach(function (r, i) { deskZone(40 + (i % 2) * 770, 120 + Math.floor(i / 2) * 330, 740, 300, 'tile', i, r[0]); deskTile(ctx, 40 + (i % 2) * 770, 120 + Math.floor(i / 2) * 330, 740, 300, r[0], r[1], r[2], DESK_OK); });
@@ -146,45 +144,4 @@
     deskDrawCard(ctx, W, H); deskDrawCursor(ctx);
     deskBoard.tex.needsUpdate = true;
   }
-
-  // ══ Interactive screens (2026-09-24): one touch layer for every in-world screen, the till tablet, the security desk screen, the office PC, the phone, the delivery tablet and the quick wheel ══
-  var TOUCH = { list: [] };
-  function touchScreen(o) {
-    var sc = { id: o.id, kind: o.kind, w: o.w, h: o.h, zones: [], cur: null, hot: null, hotZone: null, tapAt: 0, tapX: 0, tapY: 0, drawAt: 0, live: o.live || 0, draw: o.draw, tap: o.tap, wheel: o.wheel || null, canvas: document.createElement('canvas') };
-    sc.scale = o.scale || 1; sc.canvas.width = Math.round(o.w * sc.scale); sc.canvas.height = Math.round(o.h * sc.scale); sc.tex = new THREE.CanvasTexture(sc.canvas);   /* scale > 1 draws the same layout onto more pixels, so the text reads bigger on the same plane */ sc.tex.encoding = THREE.sRGBEncoding; sc.tex.anisotropy = 4;
-    sc.mesh = new THREE.Mesh(new THREE.PlaneGeometry(o.pw, o.ph), new THREE.MeshBasicMaterial({ map: sc.tex })); TOUCH.list.push(sc); return sc;
-  }
-  function tZone(sc, x, y, w, h, act, id, label, quiet) { var z = { x: x, y: y, w: w, h: h, act: act, id: id, label: label || '', key: act + ':' + (id === undefined ? '' : id) }; sc.zones.push(z); if (sc.hot === z.key && !quiet) { var ctx = sc.canvas.getContext('2d'); ctx.fillStyle = 'rgba(111,220,140,.16)'; roundRect(ctx, x, y, w, h, 10); ctx.fill(); ctx.strokeStyle = 'rgba(111,220,140,.85)'; ctx.lineWidth = 3; ctx.stroke(); } return z; }
-  function tBtn(sc, ctx, x, y, w, h, text, act, id, label, on, o) {
-    o = o || {}; var z = tZone(sc, x, y, w, h, act, id, label, true), hot = sc.hot === z.key && !o.off, col = o.col || DESK_OK;
-    ctx.fillStyle = o.off ? 'rgba(255,255,255,.03)' : on ? (o.fill || 'rgba(111,220,140,.28)') : hot ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.07)'; roundRect(ctx, x, y, w, h, o.r || 10); ctx.fill();
-    ctx.strokeStyle = o.off ? 'rgba(255,255,255,.08)' : on || hot ? col : 'rgba(255,255,255,.14)'; ctx.lineWidth = hot ? 3 : 2; ctx.stroke();
-    ctx.fillStyle = o.off ? DESK_MUTE : on || hot ? col : DESK_INK; ctx.font = (o.weight || '600') + ' ' + (o.size || 20) + 'px ' + DESK_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(deskTrim(ctx, text, w - 16), x + w / 2, y + h / 2 + 1 - (o.sub ? 9 : 0));
-    if (o.sub) { ctx.fillStyle = DESK_DIM; ctx.font = '14px ' + DESK_FONT; ctx.fillText(o.sub, x + w / 2, y + h - 14); }
-    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  }
-  function tCursor(sc, ctx) {
-    var c = sc.cur, t = now();
-    if (sc.tapAt && t - sc.tapAt < 350) { var k = (t - sc.tapAt) / 350; ctx.strokeStyle = 'rgba(111,220,140,' + (1 - k).toFixed(2) + ')'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(sc.tapX, sc.tapY, 10 + k * 40, 0, Math.PI * 2); ctx.stroke(); }
-    if (!c) return; var r = Math.max(8, Math.round(sc.w / 110));
-    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = sc.hotZone ? DESK_OK : 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(c.x, c.y, r * 0.36, 0, Math.PI * 2); ctx.fill();
-  }
-  function tDraw(sc) { var ctx = sc.canvas.getContext('2d'); ctx.setTransform(sc.scale, 0, 0, sc.scale, 0, 0); sc.zones = []; sc.drawAt = now(); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; sc.draw(sc, ctx); tCursor(sc, ctx); sc.tex.needsUpdate = true; }
-  function touchUpdate() {   /* every frame: for the screen under the crosshair, where on it the crosshair is and which control that is */
-    var k = focus && focus.data.kind;
-    for (var s = 0; s < TOUCH.list.length; s++) {
-      var sc = TOUCH.list[s], on = k === sc.kind, cur = null, hot = null;
-      if (on) { deskRay.setFromCamera(center, camera); deskRay.far = 4.5; var hs = deskRay.intersectObject(sc.mesh, false); if (hs.length && hs[0].uv) { cur = { x: hs[0].uv.x * sc.w, y: (1 - hs[0].uv.y) * sc.h }; for (var i = sc.zones.length - 1; i >= 0; i--) { var z = sc.zones[i]; if (cur.x >= z.x && cur.x <= z.x + z.w && cur.y >= z.y && cur.y <= z.y + z.h) { hot = z; break; } } } }
-      var hk = hot ? hot.key : null, moved = !!cur !== !!sc.cur || (cur && (Math.abs(cur.x - sc.cur.x) > 2 || Math.abs(cur.y - sc.cur.y) > 2));
-      sc.cur = cur; sc.hotZone = hot;
-      if (on && cur && !xs().touchHint) touchHint();
-      if (hk !== sc.hot) { sc.hot = hk; tDraw(sc); }
-      else if ((moved || (sc.tapAt && now() - sc.tapAt < 400) || (on && sc.live && now() - sc.drawAt > sc.live)) && now() - sc.drawAt > 66) tDraw(sc);
-    }
-  }
-  function touchHint() { xs().touchHint = 1; toast('👆 Screens are touch screens: look at a control and press E or click. The mouse wheel flips pages.', ''); save(); }
-  function touchTap(sc) { var z = sc.hotZone, c = sc.cur; if (c) { sc.tapAt = now(); sc.tapX = c.x; sc.tapY = c.y; } sc.tap(z); tDraw(sc); }
-  function touchFor(kind) { for (var i = 0; i < TOUCH.list.length; i++) if (TOUCH.list[i].kind === kind) return TOUCH.list[i]; return null; }
-  function touchPrompt(sc, title, idle) { var hz = sc.hotZone; return title + ' <small>' + (hz ? 'tap: ' + esc(hz.label) : idle) + '</small>'; }
 

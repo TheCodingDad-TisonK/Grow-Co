@@ -82,7 +82,7 @@
     { id: 'hydro',     ico: '💦', name: 'Hydroponic loop',   price: 4000, req: 'autowater', d: 'Plants grow 12% faster.' },
     { id: 'security2', ico: '📹', name: 'CCTV & alarms',     price: 2600, req: 'security', d: 'Outbreaks cut to a quarter.' },
     { id: 'panic',     ico: '🚨', name: 'Silent alarm',      price: 450, d: 'Press P during a robbery: police arrive in about 20 s and arrest whoever is still inside.' },
-    { id: 'guardgun',  ico: '🦺', name: 'Armed guard',    price: 2400, d: 'Your guard carries a sidearm and stands up to armed robbers far more often. Only counts while you hold the firearms licence.' },
+    { id: 'guardgun',  ico: '🦺', name: 'Armed guard',    price: 2400, d: 'Your guard carries a sidearm and stands up to armed robbers. Without it he almost never stops a gun. Only counts while you hold the firearms licence.' },
     { id: 'roller2',   ico: '🏭', name: 'Industrial roller', price: 1800, req: 'roller', d: 'Rolls 10 joints at a time.' },
     { id: 'hvac',      ico: '❄️', name: 'Climate control HVAC', price: 7000, req: 'dehumid', d: 'Humidity locks to target almost instantly and rooms run drier.' },
     { id: 'trimmer2',  ico: '🔪', name: 'Precision trimmer', price: 4200, req: 'trimmer', d: '+30% yield in total.' },

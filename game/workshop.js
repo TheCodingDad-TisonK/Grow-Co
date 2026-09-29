@@ -43,8 +43,26 @@
       what: 'six roof beds',
       blurb: 'Six beds on the roof, up the ladder in the flat. They grow on daylight, with the Cultivation permit II.' },
     { id: 'rf.dlc.dev', dlc: 'dev', name: 'Dev Tools', icon: '🛠', author: 'TheCodingDad', kind: 'DLC',
-      what: 'cheats in the pause menu',
-      blurb: 'The cheat menu: money, stock, customers and robberies on demand, the clock, levels and teleports.' },
+      what: 'a dev console on F8',
+      blurb: 'A dev console on F8: money, stock, customers and robberies on demand, the clock, levels and teleports.' },
+    { id: 'rf.dlc.breeding', dlc: 'breeding', name: 'The Breeding Lab', icon: '🧬', author: 'TheCodingDad', kind: 'DLC',
+      what: 'cross two strains · name your own',
+      blurb: 'A breeding bench for the grow room. Cross two strains into a cultivar of your own: it takes after both parents, you name it, and the seed bank stocks it from then on.' },
+    { id: 'rf.dlc.hydrobay', dlc: 'hydrobay', name: 'The Hydroponics Bay', icon: '💧', author: 'TheCodingDad', kind: 'DLC',
+      what: 'eight sites · one tank',
+      blurb: 'A rack of channels in the dry room, fed from one tank. No soil and no pots, and plants grow nearly twice as fast while you keep the pH and the feed in range.' },
+    { id: 'rf.dlc.cup', dlc: 'cup', name: 'The Cannabis Cup', icon: '🏆', author: 'TheCodingDad', kind: 'DLC',
+      what: 'judged every seventh day',
+      blurb: 'Enter your best jar against five other growers. Prize money, rep and a cup for the trophy cabinet in the lobby. Gold cups bring more people through the door.' },
+    { id: 'rf.dlc.merch', dlc: 'merch', name: 'Merch & Brand', icon: '👕', author: 'TheCodingDad', kind: 'DLC',
+      what: 'a merch stand · brand levels',
+      blurb: 'T-shirts, caps, mugs and tote bags with the shop\'s mark. People buy while they wait, and every sale spreads the name: each brand level brings more customers.' },
+    { id: 'rf.dlc.farm', dlc: 'farm', name: 'The Out-of-town Farm', icon: '🚜', author: 'TheCodingDad', kind: 'DLC',
+      what: 'five rows · a drying barn',
+      blurb: 'A fenced field past the west avenue. Sow whole rows under the open sky, mind the weather and the frost, dry the crop in the barn and drive it home.' },
+    { id: 'rf.dlc.finance', dlc: 'finance', name: 'Bank & Insurance', icon: '💰', author: 'TheCodingDad', kind: 'DLC',
+      what: 'savings · loans · cover',
+      blurb: 'A Finance app on the office PC: a savings account that pays interest, business loans with daily repayments, and insurance against robberies, power cuts and break-ins.' },
     { id: 'rf.seeds.heritage', name: 'Heritage Genetics', icon: '🌱', author: 'TheCodingDad', kind: 'Seeds',
       blurb: 'Four old-school cultivars for the early and middle game.',
       strains: [
@@ -352,6 +370,7 @@
     onModelsReady: function (fn) { if (modelsDone) fn(); else readyCbs.push(fn); },
     loadModels: loadModels,
     importFiles: importFiles, removePack: removePack, exportPack: exportPack, validate: validate,
+    details: details,
     example: function () {
       return { id: 'you.firstpack', name: 'My First Pack', author: 'you', icon: '🌱', kind: 'Seeds',
         blurb: 'A strain of my own.',
@@ -359,6 +378,25 @@
         models: { 'item:joints': 'joints.glb' } };
     }
   };
+  // what is inside a pack, line by line, in words a player reads: [icon, name, the figures that matter]
+  function details(id) {
+    var p = byId(id), out = []; if (!p) return out;
+    function cash(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+    function mins(ms) { return Math.round(ms / 60000) + ' min'; }
+    if (p.dlc) out.push([p.icon, p.name, p.what || '']);
+    if (p.bundle) p.bundle.forEach(function (b) { var q = byId(b); if (q) out.push([q.icon, q.name, counts(q)]); });
+    (p.strains || []).forEach(function (s) { out.push([s.emoji, s.name, 'seed ' + cash(s.seed) + ' · level ' + s.lvl + ' · strength ' + s.thc.toFixed(2) + '× · ' + s.yield + ' g a plant · ' + mins(s.growMs)]); });
+    (p.lights || []).forEach(function (l) { out.push(['💡', l.name, cash(l.price) + ' · grows ' + l.spd + '× as fast · quality +' + l.qual]); });
+    (p.tents || []).forEach(function (t) { out.push(['⛺', t.slots + '-slot tent', cash(t.price) + ' · ' + t.cols + ' by ' + t.rows + (t.lic ? ' · needs a permit' : '')]); });
+    (p.supplies || []).forEach(function (s) { out.push([s.ico, s.name, cash(s.price) + (s.sell ? ' · sells for ' + cash(s.sell) + ' each' : '') + (s.stock === 'display' ? ' · counter display' : s.stock === 'vend' ? ' · vending machine' : s.stock === 'coffee' ? ' · coffee machine' : '')]); });
+    (p.places || []).forEach(function (q) { out.push(['📍', q.name, q.sub || '']); });
+    if (p.vehicle) out.push(['🚗', p.vehicle.name, (p.vehicle.vmax ? 'top speed ' + Math.round(p.vehicle.vmax * 3.6) + ' km/h' : '') + (p.vehicle.trunk ? ' · boot holds ' + p.vehicle.trunk : '')]);
+    if (p.city) out.push(['🏙️', 'A bigger town', 'the map grows by ' + p.city.grow + ' m' + (p.city.rows ? ' and ' + p.city.rows + ' more rows of blocks' : '')]);
+    if (p.festive) out.push([p.festive.fireworks ? '🎆' : '❄️', p.festive.fireworks ? 'Fireworks after dark' : 'Snow', 'in every save while the pack is on']);
+    if (p.tune) out.push(['⚖️', 'Balance', ['footfall', 'seedCost', 'upgradeCost'].filter(function (k) { return p.tune[k] !== undefined; }).map(function (k) { return ({ footfall: 'customers', seedCost: 'seed prices', upgradeCost: 'gear prices' })[k] + ' ' + p.tune[k] + '×'; }).join(' · ')]);
+    if (p.models) Object.keys(p.models).forEach(function (k) { out.push(['🧊', k.replace(/^item:/, ''), 'model ' + p.models[k]]); });
+    return out;
+  }
   function counts(p) {
     if (p.bundle) return p.bundle.length + ' packs';
     if (p.dlc) return p.what || 'DLC';
