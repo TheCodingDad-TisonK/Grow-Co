@@ -68,7 +68,7 @@
       var H = hydroState(); if (!H.owned) return; var live = H.sites.filter(function (p) { return p && p.progress < 1; }), lit = powerOn(), ok = hydroOk(H);
       if (!live.length) return; var was = ok;
       H.ph = clamp(H.ph + HYDRO.phDrift * live.length * dt, 4.5, 8); H.feed = clamp(H.feed - HYDRO.feedUse * live.length * dt, 0, 100);
-      live.forEach(function (p) { if (!lit) return; var st = strainById(p.strain); p.progress = Math.min(1, p.progress + (1000 / st.growMs) * (ok ? HYDRO.spd : HYDRO.slow) * dt); p.quality = clamp(p.quality + (ok ? 0.03 : -0.05) * dt, 25, 90); });
+      live.forEach(function (p) { if (!lit) return; var st = strainById(p.strain); p.progress = Math.min(1, p.progress + (1000 / st.growMs) * (ok ? HYDRO.spd : HYDRO.slow) * dt); p.quality = clamp(p.quality + (ok ? 0.03 : -0.05) * dt, 25, dlcHas('hydrobay', 'chiller') ? 100 : 90); });
       if (was && !hydroOk(H)) { toast('💧 The hydroponics bay has slowed: ' + hydroWhy(H), 'bad'); logEvent('💧 Hydroponics bay: ' + hydroWhy(H), 'bad'); }
     },
     update: function () {

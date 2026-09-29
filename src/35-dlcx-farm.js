@@ -3,7 +3,7 @@
   var FARM = { x1: -116, x2: -72, z1: -62.5, z2: -46.5, lease: 2500, rent: 40, rows: 5, per: 8, seeds: 6, sun: 0.6, dryS: 300, gateX: -78, rowZ: [-49.6, -52.3, -55.0, -57.7, -60.4], rowX1: -112, rowX2: -84, barn: { x: -76.4, z: -56.2, w: 6.4, d: 8.6 }, home: { x: 9, z: -16 } };
   var farm = { g: null, rows: [], gate: null, gateObs: null, barnDyn: null, syncT: 0 };
   function farmState() { var F = dlcState('farm', { leased: false, rows: [], barn: [], boot: [] }); while (F.rows.length < FARM.rows) F.rows.push(null); return F; }
-  function farmSeason() { return season() !== 'Winter'; }
+  function farmSeason() { return season() !== 'Winter' || dlcHas('farm', 'tunnels'); }
   function farmReserve() { CITY.parks.push({ x1: FARM.x1 - 1, x2: FARM.x2 + 1, z1: FARM.z1 - 1, z2: FARM.z2 + 1, farm: true }); }   /* before the town fills its blocks, so nobody builds a terrace on the field */
   function farmAt(x, z) { for (var i = 0; i < CITY.parks.length; i++) { var p = CITY.parks[i]; if (p.farm && x > p.x1 - 1.5 && x < p.x2 + 1.5 && z > p.z1 - 1.5 && z < p.z2 + 4.5) return true; } return false; }   /* the field, its fence and the verge in front of its gate */
   function farmYield(st, q) { return Math.round(st.yield * 0.55 * (0.6 + q / 160) * FARM.per * 10) / 10; }
@@ -110,12 +110,12 @@
     },
     tick: function (dt, offline) {
       var F = farmState(); if (!F.leased && !F.boot.length && !F.barn.length) return; var wet = /rain|storm/.test(xs().weather.kind), h = gameHour(), sun = farmSeason() && h >= 6 && h <= 20;
-      F.rows.forEach(function (r) { if (!r) return; if (wet) r.water = 1; else r.water = Math.max(0, r.water - dt / 900); if (r.progress >= 1 || !sun) return; var ok = r.water > 0.15; r.progress = Math.min(1, r.progress + (1000 / strainById(r.strain).growMs) * FARM.sun * (ok ? 1 : 0.25) * dt); r.quality = clamp(r.quality + (ok ? 0.008 : -0.03) * dt, 25, 62); });
+      F.rows.forEach(function (r) { if (!r) return; if (wet || dlcHas('farm', 'drip')) r.water = 1; else r.water = Math.max(0, r.water - dt / 900); if (r.progress >= 1 || !sun) return; var ok = r.water > 0.15; r.progress = Math.min(1, r.progress + (1000 / strainById(r.strain).growMs) * FARM.sun * (ok ? 1 : 0.25) * dt); r.quality = clamp(r.quality + (ok ? 0.008 : -0.03) * dt, 25, 62); });
       F.barn.forEach(function (l) { l.t += dt; });
       if (F.boot.length && !offline && !drive.on && farmVehicleNear(FARM.home.x, FARM.home.z, 10)) { var g = 0; F.boot.forEach(function (l) { stashAdd(l.strain, l.grams, l.q, l.thc); g += l.grams; }); F.boot = []; world.dirtyShelf = true; sfx('cash'); toast('🚜 Unloaded ' + gram(g) + ' of field bud into the stash', 'good'); logEvent('🚜 Brought ' + gram(g) + ' home from the field', 'good'); }
     },
     update: function (dt) {
-      if (!farm.g) return; var p = drive.on && drive.g ? drive.g.position : player.pos, near = p.x < FARM.x2 + 60 && p.z < FARM.z2 + 60; farm.g.visible = near && (player.floor || 0) === 0; if (!farm.g.visible) return;
+      if (!farm.g) return; var p = menuDrive.on ? menuDrive.pos : drive.on && drive.g ? drive.g.position : player.pos, near = p.x < FARM.x2 + 60 && p.z < FARM.z2 + 60; farm.g.visible = near && (menuDrive.on || (player.floor || 0) === 0); if (!farm.g.visible) return;
       farm.syncT -= dt; if (farm.syncT > 0) return; farm.syncT = 1.5; var F = farmState(); farm.rows.forEach(function (R, i) { var r = F.rows[i]; if (r) R.figs.forEach(function (f) { f.userData.set(r.progress, 1.5); }); });
     },
     newDay: function () {

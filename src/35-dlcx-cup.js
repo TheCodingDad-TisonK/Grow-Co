@@ -15,9 +15,9 @@
     var C = cupState(), e = C.entry, lvl = S.level || 1, day = S.day || 1; C.entry = null;
     var field = CUP.rivals.map(function (n) { return { who: n, score: 46 + Math.min(40, lvl * 2.5) + randf(-8, 8) }; });
     if (!e) { field.sort(function (a, b) { return b.score - a.score; }); C.history.unshift({ day: day, place: 0, note: field[0].who + ' took the Cup. You had no jar in.' }); C.history.length = Math.min(C.history.length, 8); logEvent('🏆 Cup day: ' + field[0].who + ' took it. You had no jar in.', ''); return; }
-    var st = strainById(e.strain), mine = { who: 'you', score: cupScore(e.q, e.thc) + randf(-5, 5) }; field.push(mine); field.sort(function (a, b) { return b.score - a.score; });
+    var st = strainById(e.strain), mine = { who: 'you', score: cupScore(e.q, e.thc) + randf(-5, 5) + (dlcHas('cup', 'jar') ? 4 : 0) }; field.push(mine); field.sort(function (a, b) { return b.score - a.score; });
     var place = field.indexOf(mine) + 1, metal = ['', 'gold', 'silver', 'bronze'][place] || '', prize = place === 1 ? 1200 + lvl * 100 : place === 2 ? 500 : place === 3 ? 200 : 0, rep = [0, 12, 6, 3][place] || 1;
-    S.rep += rep; if (prize) S.bank += prize; gainXp(place <= 3 ? 60 - place * 12 : 8);
+    if (dlcHas('cup', 'sponsor')) prize = Math.round(prize * 1.5); if (dlcHas('cup', 'press')) rep *= 2; S.rep += rep; if (prize) S.bank += prize; gainXp(place <= 3 ? 60 - place * 12 : 8);
     if (metal) { C.trophies.push({ metal: metal, strain: st.name, day: day }); if (C.trophies.length > 40) C.trophies.shift(); }
     var said = place === 1 ? '🏆 You won the Cannabis Cup with ' + st.name + '. ' + money(prize) + ' prize money and a gold cup for the cabinet (rep +' + rep + ').' : place <= 3 ? '🏆 ' + st.name + ' came ' + (place === 2 ? 'second' : 'third') + ' at the Cup: ' + money(prize) + ' and a ' + metal + ' cup (rep +' + rep + ').' : '🏆 ' + st.name + ' came ' + place + 'th of ' + field.length + ' at the Cup. ' + field[0].who + ' took it (rep +1).';
     C.history.unshift({ day: day, place: place, note: st.name + ', quality ' + e.q + ': ' + (place === 1 ? 'first' : place === 2 ? 'second' : place === 3 ? 'third' : place + 'th') + ' of ' + field.length + (prize ? ', ' + money(prize) : '') }); C.history.length = Math.min(C.history.length, 8);

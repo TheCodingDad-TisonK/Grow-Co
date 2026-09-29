@@ -385,26 +385,34 @@
   defProp('lobbyCoffee', { label: 'lobby coffee machine', x: ROOM.x - 0.4, z: 8.1, rot: 3, multi: { max: 4, price: 600, gap: 0.95, ico: '☕', lic: 'catering', upg: 'lobby', name: 'Coffee machine' }, build: function (c) {
     if (!S.upgrades.lobby) return;   // stand + machine appear with the upgrade
     c.box(0.6, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(0.66, 0.04, 0.56, MAT.counterTop, 0, 0.92, 0, { cast: false });
-    var body = colorMat(0x1c1c22, 0.4, 0.3), chrome = MAT.chrome;
-    c.box(0.34, 0.46, 0.34, body, 0, 1.17, -0.04);
-    c.box(0.3, 0.05, 0.12, chrome, 0, 1.0, 0.13, { cast: false });                 /* the group head */
-    c.box(0.22, 0.015, 0.16, chrome, 0, 0.955, 0.1, { cast: false });              /* drip tray */
-    c.box(0.2, 0.012, 0.14, colorMat(0x3a3f46, 0.5), 0, 0.963, 0.1, { cast: false });
-    c.box(0.09, 0.05, 0.02, glowMat(0x6fdc8c, 1.3), -0.09, 1.34, 0.135, { cast: false });
-    c.box(0.14, 0.07, 0.02, MAT.screen, 0.06, 1.3, 0.135, { cast: false });
+    // a bean-to-cup machine: the upper half overhangs a brew bay, the cup stands on a grille under two nozzles, a lit screen and
+    // three buttons on the fascia. It stands against a back board that carries the sign, so nothing is propped up in front of it.
+    var body = colorMat(0x16171b, 0.25, 0.4), chrome = MAT.chrome, fascia = MAT.steel;
+    c.box(0.64, 1.0, 0.03, MAT.darkwood, 0, 1.44, -0.262, { cast: false }); c.box(0.68, 0.05, 0.08, MAT.darkwood, 0, 1.96, -0.24, { r: 0.012 });
+    c.box(0.36, 0.18, 0.24, body, 0, 1.03, -0.11, { r: 0.012 }); c.box(0.36, 0.28, 0.38, body, 0, 1.26, -0.04, { r: 0.03 });                                  /* the foot, and the head that overhangs it */
+    [-0.165, 0.165].forEach(function (x) { c.box(0.03, 0.18, 0.15, body, x, 1.03, 0.075, { r: 0.008 }); });                                                        /* cheeks either side of the bay */
+    c.box(0.3, 0.17, 0.006, fascia, 0, 1.03, 0.013, { cast: false, sharp: true });                                                                                 /* the back of the bay */
+    c.box(0.09, 0.035, 0.07, chrome, 0, 1.105, 0.095, { cast: false, r: 0.008 }); [-0.02, 0.02].forEach(function (x) { c.cyl(0.007, 0.005, 0.03, chrome, x, 1.075, 0.1, 8); });   /* the spout and its two nozzles */
+    c.box(0.34, 0.034, 0.17, body, 0, 0.957, 0.075, { r: 0.008 }); for (var gs = 0; gs < 7; gs++) c.box(0.27, 0.004, 0.012, chrome, 0, 0.976, 0.015 + gs * 0.02, { cast: false, sharp: true });   /* the drip tray and its grille */
+    c.box(0.33, 0.24, 0.008, fascia, 0, 1.265, 0.151, { cast: false, r: 0.006 }); c.box(0.36, 0.012, 0.006, chrome, 0, 1.135, 0.152, { cast: false });
+    c.box(0.215, 0.13, 0.008, MAT.gloss, -0.04, 1.29, 0.157, { cast: false, r: 0.006 });
+    var cscr = new THREE.Mesh(new THREE.PlaneGeometry(0.195, 0.11), new THREE.MeshBasicMaterial({ map: textTex(['COFFEE', 'espresso · latte · tea'], 312, 176, { size: 44, bg: '#0a1410', color: '#9fd8b4', titleColor: '#f0b94d', line: 'rgba(0,0,0,0)' }), toneMapped: false })); cscr.position.set(-0.04, 1.29, 0.1615); c.add(cscr);
+    [[1.335, 0x6fdc8c], [1.29, 0xf0b94d], [1.245, 0xe8eef4]].forEach(function (k) { var bt = c.cyl(0.015, 0.015, 0.012, colorMat(k[1], 0.3), 0.125, k[0], 0.157, 14); bt.rotation.x = Math.PI / 2; });
+    c.lit(0x6fdc8c, 0.012, 0.012, 0.125, 1.2, 0.1565); c.box(0.12, 0.014, 0.004, chrome, -0.04, 1.2, 0.156, { cast: false });
+    c.cyl(0.108, 0.112, 0.02, body, 0, 1.408, -0.04, 24);                                                                                                         /* the collar the hopper sits in */
     // the bean hopper on top: a clear cone you can see the level in, with a lid that lifts
-    var hop = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.07, 0.17, 14, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.28, roughness: 0.05, side: THREE.DoubleSide }));
+    var hop = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.096, 0.17, 24, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.28, roughness: 0.05, side: THREE.DoubleSide }));
     hop.position.set(0, 1.49, -0.04); hop.castShadow = false; c.add(hop);
     var lid = new THREE.Group(); lid.position.set(0, 1.575, -0.15); c.add(lid); lid.userData.coffLid = true;
-    var lm = new THREE.Mesh(roundCylGeo(0.115, 0.115, 0.018, 14), body); lm.position.set(0, 0, 0.11); lid.add(lm);
-    var beans = new THREE.Mesh(roundCylGeo(0.1, 0.065, 0.12, 12), colorMat(0x4a2a12, 1));
+    var lm = new THREE.Mesh(roundCylGeo(0.104, 0.104, 0.018, 24), body); lm.position.set(0, 0, 0.11); lid.add(lm); var lk = new THREE.Mesh(roundCylGeo(0.018, 0.022, 0.02, 12), MAT.chrome); lk.position.set(0, 0.018, 0.11); lid.add(lk);
+    var beans = new THREE.Mesh(roundCylGeo(0.093, 0.09, 0.12, 20), new THREE.MeshStandardMaterial({ map: TEX.soil || null, color: 0x3a2010, roughness: 1 }));
     beans.position.set(0, 1.46, -0.04); beans.castShadow = false; c.add(beans); beans.userData.coffBeans = true;
     // the cup stack beside it, and the cup that lands under the spout
     var cups = new THREE.Group(); cups.position.set(0.21, 0.96, -0.08); c.add(cups); cups.userData.coffCups = true; cups.userData.slots = [];
-    var brewG = new THREE.Group(); brewG.position.set(0, 0.97, 0.1); c.add(brewG); brewG.userData.coffBrew = true;
+    var brewG = new THREE.Group(); brewG.position.set(0, 1.026, 0.095); c.add(brewG); brewG.userData.coffBrew = true;
     c.hit(0.72, 1.6, 0.62, 0, 0.8, 0, { kind: 'lobbyCoffee' });
     var cupHit = c.hit(0.24, 0.2, 0.22, 0, 1.02, 0.12, { kind: 'coffeeCup' }); cupHit.userData.coffCupHit = true;   /* parked out of the world while there is no cup, so it never steals the machine's own prompt */
-    c.placard(['COFFEE', 'help yourself'], 0.42, 0.15, 0, 1.62, 0.22, { titleColor: '#ffc857' });
+    c.sign(['COFFEE', 'help yourself · $2 a cup'], 0.5, 0.16, 0, 1.8, -0.244, 0, { titleColor: '#ffc857' });
   }, after: function (c, P, inst, id) { syncCoffee(id); } });
   defProp('vending', { label: 'vending machine', x: ROOM.x - 0.5, z: 6.8, rot: 3, multi: { max: 4, price: 900, gap: 1.15, ico: '🥤', lic: 'catering' }, build: function (c, P) {
     var SKIN = [[0x8f1f1a, '#ffc857'], [0x14507a, '#8fd0ff'], [0x1d6b45, '#b6f2c9'], [0x2b2f36, '#e8eef4']];   /* a row of identical red machines would read as a copy-paste, so every unit gets its own livery */
@@ -767,9 +775,8 @@
     if (!S.upgrades.lobby) return;
     var door = colorMat(0x2a1c10, 0.6);
     [-0.147, 0.147].forEach(function (x) { c.box(0.275, 0.72, 0.014, door, x, 0.5, 0.256, { cast: false, r: 0.006 }); c.box(0.012, 0.14, 0.02, MAT.chrome, x - Math.sign(x) * 0.1, 0.62, 0.272, { cast: false }); }); c.box(0.6, 0.08, 0.012, MAT.black, 0, 0.04, 0.256, { cast: false });
-    c.box(0.345, 0.012, 0.345, MAT.chrome, 0, 1.406, -0.04, { cast: false }); [-0.172, 0.172].forEach(function (x) { c.box(0.008, 0.46, 0.008, MAT.chrome, x, 1.17, 0.132, { cast: false }); });
-    var gauge = c.cyl(0.03, 0.03, 0.014, MAT.white, 0.1, 1.17, 0.136, 20); gauge.rotation.x = Math.PI / 2; var gr = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.005, 8, 20), MAT.brass); gr.position.set(0.1, 1.17, 0.144); c.add(gr); var nd = c.box(0.003, 0.022, 0.002, colorMat(0xc0271b, 0.5), 0.105, 1.176, 0.1445, { cast: false, sharp: true }); nd.rotation.z = -0.7;
-    var wand = c.cyl(0.006, 0.006, 0.17, MAT.chrome, -0.2, 1.06, 0.1, 8); wand.rotation.z = 0.28; c.cyl(0.012, 0.012, 0.02, MAT.black, -0.178, 1.14, 0.1, 10);
+    var wand = c.cyl(0.006, 0.006, 0.15, MAT.chrome, -0.215, 1.08, 0.06, 8); wand.rotation.z = 0.22; c.cyl(0.012, 0.012, 0.02, MAT.black, -0.2, 1.15, 0.06, 10); c.cyl(0.009, 0.007, 0.02, MAT.chrome, -0.232, 1.0, 0.06, 8);
+    [-0.182, 0.182].forEach(function (x) { for (var v = 0; v < 5; v++) c.box(0.004, 0.01, 0.2, MAT.black, x, 1.2 + v * 0.03, -0.06, { cast: false, sharp: true }); });
     c.box(0.13, 0.06, 0.1, MAT.gunmetal, -0.22, 0.97, -0.14, { r: 0.008 }); for (var s = 0; s < 5; s++) { var st = c.cyl(0.003, 0.003, 0.11, MAT.wood, -0.26 + s * 0.02, 1.03, -0.14, 5); st.rotation.z = (s - 2) * 0.08; }
   });
   propExtra('vending', function (c) {

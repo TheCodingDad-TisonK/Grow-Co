@@ -43,7 +43,7 @@
       if (F.savings > 0) { var i = Math.min(FIN.cap, Math.floor(F.savings * FIN.rate)); if (i > 0) { F.savings += i; F.earned += i; logEvent('💰 Savings interest: ' + money(i), 'good'); } }
       FIN.cover.forEach(function (c) { if (F.cover[c.id]) spendOp(c.day); });
       var robbed = (S.stats.robbed || 0) - (F.seen.robbed || 0); F.seen.robbed = S.stats.robbed || 0;
-      if (F.cover.robbery && robbed > 0) { var r = Math.round(robbed * 0.75); S.bank += r; paid += r; finLog(F, 'Robbery cover: 75% of the ' + money(robbed) + ' taken', r); }
+      if (F.cover.robbery && robbed > 0) { var share = dlcHas('finance', 'full') ? 1 : 0.75, r = Math.round(robbed * share); S.bank += r; paid += r; finLog(F, 'Robbery cover: ' + (share === 1 ? 'all' : '75%') + ' of the ' + money(robbed) + ' taken', r); }
       if (F.cover.power && F.seen.cuts > 0) { var p = 150 * F.seen.cuts; S.bank += p; paid += p; finLog(F, 'Power cover: ' + F.seen.cuts + ' power cut' + (F.seen.cuts === 1 ? '' : 's'), p); }
       var breaks = (S.stats.breakins || 0) - (F.seen.breakins || 0); F.seen.breakins = S.stats.breakins || 0;
       if (F.cover.stock && breaks > 0) { var b = 400 * breaks; S.bank += b; paid += b; finLog(F, 'Break-in cover: ' + breaks + ' break-in' + (breaks === 1 ? '' : 's'), b); }

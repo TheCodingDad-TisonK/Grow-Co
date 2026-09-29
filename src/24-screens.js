@@ -183,7 +183,8 @@
     ['finance', '💰', 'Finance', function () { return paneFinance(); }, 'finance'],
     ['merch', '👕', 'Merch', function () { return paneMerch(); }, 'merch'],
     ['cup', '🏆', 'The Cup', function () { return paneCup(); }, 'cup'],
-    ['breed', '🧬', 'Cultivars', function () { return paneBreed(); }, 'breeding']
+    ['breed', '🧬', 'Cultivars', function () { return paneBreed(); }, 'breeding'],
+    ['upgrades', '⬆️', 'DLC upgrades', function () { return paneDlcUpg(); }]
   ];
   function pcApps() { return PC_APPS.filter(function (a) { return !a[4] || dlcOn(a[4]); }); }   /* an app that belongs to a DLC is on the desktop only while the DLC is on */
   function pcEl() {

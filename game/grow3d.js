@@ -490,7 +490,7 @@
     var free = (S.day || 1) <= COST.rentFreeDays;
     var rent = free ? 0 : COST.rentBase + sl * COST.rentPerSlot + (hasLic('tobacco') ? COST.rentBasement : 0) + (X.branch ? COST.rentBranch : 0);
     var power = (COST.powerBase + sl * (L.draw || 0) + (S.upgrades.hvac ? 8 : 0) + (S.upgrades.security2 ? 3 : 0) + (S.upgrades.bagline ? 4 : 0)) * solar;
-    var roster = (X.staff.driver ? 1 : 0) + (X.staff.night ? 1 : 0) + (X.staff.operator ? (hasLic('tobacco') ? 2 : 1) : 0);   /* roster hires are staff too; the operator runs the basement, which covers the two it needs */
+    var roster = (X.staff.driver ? 1 : 0) + (X.staff.night ? 1 : 0) + (X.staff.labtech ? 1 : 0) + (X.staff.operator ? (hasLic('tobacco') ? 2 : 1) : 0);   /* roster hires are staff too; the operator runs the basement, which covers the two it needs */
     var hired = crewList().filter(function (w) { return !w.off; }).length + roster, need = headcount();
     var rows = [
       { k: 'Rent', v: rent, d: free ? 'fit-out period, rent free until day ' + (COST.rentFreeDays + 1) : sl + ' slots' + (X.branch ? ' + branch' : '') + (hasLic('tobacco') ? ' + basement' : '') },
@@ -3153,7 +3153,7 @@
       bb(0.3, 0.4, 0.25, blu, bx - 0.9, 0.25, bz + 0.2); var hp = bc(0.02, 0.02, 0.5, blu, bx - 0.9, 0.62, bz + 0.2, 8);   // nutrient tank and feed line
       world.obstacles.push({ x1: bx - 1.15, x2: bx + 1.15, z1: bz - 0.5, z2: bz + 0.5, tag: 'bay', floorLevel: -1 });
       var pg = new THREE.Group(); pg.position.set(bx, Y + 0.82, bz); world.group.add(pg);
-      for (var pl = 0; pl < 6; pl++) { var plant = new THREE.Group(); plant.position.set(-0.85 + (pl % 3) * 0.85, 0, pl < 3 ? -0.2 : 0.2); var stem = new THREE.Mesh(roundCylGeo(0.018, 0.024, 1.0, 6), MAT.stem); stem.position.y = 0.5; plant.add(stem); for (var lf = 0; lf < 7; lf++) { var leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.5), MAT.leaf); leaf.position.set(Math.cos(lf * 2.2) * 0.17, 0.2 + lf * 0.12, Math.sin(lf * 2.2) * 0.17); leaf.rotation.set(-0.9, lf * 2.2 + Math.PI / 2, 0); plant.add(leaf); } pg.add(plant); }
+      for (var pl = 0; pl < 6; pl++) { var plant = new THREE.Group(); plant.position.set(-0.85 + (pl % 3) * 0.85, 0, pl < 3 ? -0.2 : 0.2); var stem = new THREE.Mesh(roundCylGeo(0.018, 0.024, 1.0, 6), MAT.stem); stem.position.y = 0.5; plant.add(stem); for (var lf = 0; lf < 9; lf++) leafAt(BIGLEAF_GEO, MAT.bigleaf, Math.cos(lf * 2.2) * 0.02, 0.14 + lf * 0.1, Math.sin(lf * 2.2) * 0.02, lf * 2.2, 0.95 - lf * 0.06, 1.25 - lf * 0.07, plant);   /* tobacco: broad leaves, biggest at the foot */ pg.add(plant); }
       pg.visible = false; tobUI.bays.push(pg);
       sign('bay' + b, 0.7, 0.3, bx + 0.7, 0.35, bz + 0.51, 0, ['BAY ' + (b + 1), 'empty']); hit(2.3, 2.3, 1.1, bx, 1.2, bz, { kind: 'tobBay', idx: b });
     }
@@ -3186,8 +3186,38 @@
     // the electrical cabinet, drums and a hand truck so the room reads as a working floor
     bb(0.9, 1.9, 0.4, colorMat(0x5f666e, 0.5, 0.6), -8.75, 0.95, -4.6, { solid: true }); bb(0.02, 0.3, 0.2, yel, -8.29, 1.5, -4.6, { cast: false }); [-0.3, 0.3].forEach(function (dz) { bb(0.02, 0.06, 0.06, glowMat(0x39d353, 1.4), -8.29, 1.1, -4.6 + dz, { cast: false }); });
     [[7.9, -2.6], [8.3, -3.4]].forEach(function (p) { var dr = bc(0.3, 0.3, 0.9, blu, p[0], 0.45, p[1], 16); world.obstacles.push({ x1: p[0] - 0.3, x2: p[0] + 0.3, z1: p[1] - 0.3, z2: p[1] + 0.3, tag: 'drum', floorLevel: -1 }); });
+    (function worksDetail() {   /* every machine gets what it would have: guards, gauges, motors, feet, pipework, a control panel */
+      var gm = MAT.gunmetal, ss = MAT.steel, copper = colorMat(0xb87333, 0.3, 1);
+      function gauge(x, y, z, ry) { var gG = new THREE.Group(); gG.position.set(x, Y + y, z); gG.rotation.y = ry || 0; world.group.add(gG); var f = new THREE.Mesh(roundCylGeo(0.06, 0.06, 0.025, 20), MAT.white); f.rotation.x = Math.PI / 2; gG.add(f); var r = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.008, 8, 22), MAT.brass); r.position.z = 0.013; gG.add(r); var n = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.045, 0.002), colorMat(0xc0271b, 0.5)); n.position.set(0.008, 0.012, 0.014); n.rotation.z = -0.6; gG.add(n); return gG; }
+      function feet(x1, x2, z1, z2) { [[x1, z1], [x2, z1], [x1, z2], [x2, z2]].forEach(function (p) { bb(0.14, 0.03, 0.14, gm, p[0], 0.015, p[1], { cast: false }); bc(0.02, 0.02, 0.03, MAT.chrome, p[0], 0.045, p[1], 8); }); }
+      function panel(x, y, z, ry) { var pg = new THREE.Group(); pg.position.set(x, Y + y, z); pg.rotation.y = ry || 0; world.group.add(pg); var bx = new THREE.Mesh(bevelGeo(0.3, 0.22, 0.05, 0.01), MAT.gloss); pg.add(bx); [[-0.09, 0x39d353], [0, 0xf2c21a], [0.09, 0xd0201a]].forEach(function (k) { var bt = new THREE.Mesh(roundCylGeo(0.022, 0.022, 0.02, 14), colorMat(k[1], 0.35)); bt.rotation.x = Math.PI / 2; bt.position.set(k[0], -0.04, 0.03); pg.add(bt); }); var ky = new THREE.Mesh(roundCylGeo(0.016, 0.016, 0.03, 10), MAT.chrome); ky.rotation.x = Math.PI / 2; ky.position.set(0.09, 0.05, 0.03); pg.add(ky); var st = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.05), new THREE.MeshBasicMaterial({ color: 0x6fdc8c, toneMapped: false })); st.position.set(-0.05, 0.05, 0.026); pg.add(st); return pg; }
+      /* the bays: a drip line over each, a reflector on the lamp bar, a drain channel in front */
+      for (var b2 = 0; b2 < 4; b2++) { var bx2 = -7.4 + b2 * 2.6, bz2 = -6.2; var dl = bc(0.012, 0.012, 2.1, MAT.black, bx2, 0.9, bz2 - 0.3, 8); dl.rotation.z = Math.PI / 2; for (var em = 0; em < 6; em++) bc(0.01, 0.004, 0.04, colorMat(0x2f6fb0, 0.4), bx2 - 0.85 + (em % 3) * 0.85, 0.875, bz2 + (em < 3 ? -0.2 : 0.2), 6); bb(2.3, 0.02, 0.5, ss, bx2, 2.35, bz2, { cast: false }); bb(2.3, 0.1, 0.02, ss, bx2, 2.3, bz2 - 0.24, { cast: false }); bb(2.3, 0.1, 0.02, ss, bx2, 2.3, bz2 + 0.24, { cast: false }); bb(2.3, 0.012, 0.12, gm, bx2, 0.006, bz2 + 0.62, { cast: false, sharp: true }); gauge(bx2 - 0.9, 0.52, bz2 + 0.34); feet(bx2 - 1.1, bx2 + 1.1, bz2 - 0.45, bz2 + 0.45); }
+      /* the kiln: strapped panels, a burner box with a gas line, a stack damper, a thermometer */
+      [0.5, 1.15, 1.8].forEach(function (y) { bb(2.64, 0.05, 0.03, gm, 5.8, y, -4.385, { cast: false }); bb(0.03, 0.05, 2.04, gm, 4.485, y, -5.4, { cast: false }); }); [4.55, 7.05].forEach(function (x) { bb(0.05, 2.3, 0.05, gm, x, 1.15, -4.39, { cast: false }); });
+      bb(0.5, 0.5, 0.4, gm, 7.35, 0.35, -4.9, { r: 0.02 }); bc(0.025, 0.025, 1.5, yel, 7.35, 1.35, -4.75, 10); var gl = bc(0.025, 0.025, 0.5, yel, 7.35, 2.1, -5.0, 10); gl.rotation.x = Math.PI / 2; var vw = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.012, 8, 18), colorMat(0xd0201a, 0.4)); vw.position.set(7.35, Y + 1.0, -4.68); world.group.add(vw);
+      gauge(5.5, 1.85, -4.32); gauge(6.75, 1.0, -4.3); bc(0.26, 0.26, 0.06, gm, 6.5, 2.35, -5.6, 16); bb(0.5, 0.03, 0.04, ss, 6.5, 2.6, -5.32, { cast: false }); feet(4.6, 7.0, -6.3, -4.5);
+      /* the shredder: a motor with a belt guard, a dust hood and its duct, an emergency stop */
+      var mt = bc(0.2, 0.2, 0.5, colorMat(0x2f5f8a, 0.45, 0.4), 5.45, 0.35, 0.9, 20); mt.rotation.x = Math.PI / 2; for (var fn = 0; fn < 7; fn++) { var fr = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.008, 6, 24), colorMat(0x264d70, 0.45, 0.4)); fr.position.set(5.45, Y + 0.35, 0.72 + fn * 0.06); world.group.add(fr); } bb(0.5, 0.6, 0.08, yel, 5.25, 0.55, 0.26, { r: 0.015 }); bb(0.3, 0.12, 0.5, gm, 5.45, 0.08, 0.9, { cast: false });
+      bb(1.3, 0.3, 1.0, ss, 4.4, 2.05, 0.9, { r: 0.02 }); bc(0.16, 0.16, 0.6, ss, 4.4, 2.5, 0.9, 16); panel(3.4, 1.55, 0.27, Math.PI); var es = bc(0.05, 0.055, 0.03, yel, 5.0, 1.2, 0.27, 16); es.rotation.x = Math.PI / 2; var eb = bc(0.035, 0.035, 0.04, colorMat(0xd0201a, 0.35), 5.0, 1.2, 0.24, 16); eb.rotation.x = Math.PI / 2; feet(3.7, 5.1, 0.4, 1.4);
+      /* the maker: a glass hood in a frame, a filter hopper with a sight glass, rollers along the bed */
+      [[-0.25, 0.45], [1.75, 0.45], [-0.25, 1.35], [1.75, 1.35]].forEach(function (p) { bb(0.04, 0.56, 0.04, MAT.alu, p[0], 1.27, p[1], { cast: false }); }); [0.45, 1.35].forEach(function (z) { bb(2.04, 0.03, 0.04, MAT.alu, 0.75, 1.54, z, { cast: false }); }); for (var rl = 0; rl < 9; rl++) { var ro = bc(0.035, 0.035, 0.7, MAT.chrome, -0.05 + rl * 0.2, 1.06, 0.9, 12); ro.rotation.x = Math.PI / 2; }
+      bb(0.12, 0.3, 0.02, glassM2(), 0.0, 1.8, 0.64, { cast: false }); bc(0.12, 0.2, 0.2, colorMat(0xd9d2c2, 0.8), 0.0, 1.5, 0.9, 16); panel(1.2, 1.0, 0.3, Math.PI); gauge(-0.1, 0.75, 0.34, Math.PI); feet(-0.25, 1.75, 0.45, 1.35);
+      /* the packer: a guard ring round the carousel, a blank magazine with its stack, an outfeed chute, a motor */
+      var gr2 = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.015, 8, 40), yel); gr2.rotation.x = Math.PI / 2; gr2.position.set(-2.8, Y + 1.5, 0.9); world.group.add(gr2); for (var gp = 0; gp < 6; gp++) { var a2 = gp * Math.PI / 3; bc(0.012, 0.012, 0.3, yel, -2.8 + Math.cos(a2) * 0.5, 1.35, 0.9 + Math.sin(a2) * 0.5, 8); }
+      for (var bk = 0; bk < 8; bk++) bb(0.26, 0.012, 0.26, colorMat(bk % 2 ? 0xf4f1ea : 0xe6dfcf, 0.8), -3.5, 1.92 + bk * 0.013, 1.2, { cast: false, sharp: true }); var ch = bb(0.5, 0.03, 0.7, ss, -3.6, 0.95, 1.75, { cast: false }); ch.rotation.x = 0.35; [-0.24, 0.24].forEach(function (o) { var cs = bb(0.02, 0.1, 0.7, ss, -3.6 + o, 0.99, 1.75, { cast: false }); cs.rotation.x = 0.35; });
+      panel(-2.3, 1.0, 0.3, Math.PI); var pm = bc(0.16, 0.16, 0.4, colorMat(0x2f5f8a, 0.45, 0.4), -1.75, 0.3, 1.25, 18); pm.rotation.z = Math.PI / 2; feet(-3.7, -1.9, 0.4, 1.4);
+      /* the belts: side guards with a warning stripe, rollers at the ends */
+      [[1.9, 3.6], [-1.75, -0.35]].forEach(function (r) { [r[0] + 0.04, r[1] - 0.04].forEach(function (x) { var er = bc(0.05, 0.05, 0.5, MAT.chrome, x, 0.92, 0.9, 14); er.rotation.x = Math.PI / 2; }); for (var st2 = 0; st2 < Math.round((r[1] - r[0]) / 0.2); st2++) bb(0.1, 0.05, 0.006, st2 % 2 ? yel : dark, r[0] + 0.1 + st2 * 0.2, 0.9, 0.612, { cast: false, sharp: true }); });
+      /* pipework along the back wall, a tool board, a fire point and floor drains */
+      var p1 = bc(0.035, 0.035, 12, copper, -1.9, 1.95, B.z1 + 0.08, 10); p1.rotation.z = Math.PI / 2; var p2 = bc(0.03, 0.03, 12, colorMat(0x2f6fb0, 0.4, 0.2), -1.9, 2.08, B.z1 + 0.08, 10); p2.rotation.z = Math.PI / 2; [-7.5, -5, -2.5, 0, 2.5].forEach(function (x) { bb(0.05, 0.22, 0.05, gm, x, 2.01, B.z1 + 0.05, { cast: false }); });
+      bb(1.4, 0.9, 0.03, colorMat(0x8a6a4a, 0.9), B.x1 + 0.04, 1.5, 1.6, { cast: false }).rotation.y = Math.PI / 2; [[1.2, 0.25, 0.03], [1.5, 0.3, 0.02], [1.8, 0.2, 0.025], [2.05, 0.28, 0.02]].forEach(function (t, i) { bb(0.02, t[1], t[2], i % 2 ? MAT.chrome : colorMat(0xd0201a, 0.5), B.x1 + 0.07, 1.55 + (i % 2) * 0.1, t[0], { cast: false }); });
+      bc(0.09, 0.09, 0.5, colorMat(0xd0201a, 0.4, 0.3), B.x2 - 0.2, 0.75, -1.5, 16); bc(0.035, 0.04, 0.1, MAT.black, B.x2 - 0.2, 1.05, -1.5, 10); bb(0.02, 0.3, 0.3, colorMat(0xd0201a, 0.5), B.x2 - 0.02, 1.6, -1.5, { cast: false });
+      [[-6, -2.9], [6, -2.9], [0, 2.0]].forEach(function (d) { bb(0.4, 0.008, 0.4, MAT.black, d[0], 0.005, d[1], { cast: false, sharp: true }); for (var s2 = 0; s2 < 5; s2++) bb(0.34, 0.006, 0.03, gm, d[0], 0.012, d[1] - 0.14 + s2 * 0.07, { cast: false, sharp: true }); });
+    })();
     syncTobRack();
   }
+  function glassM2() { return new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.35, roughness: 0.05 }); }
   function syncTobRack() {
     var g = tobUI.rackG; if (!g) return; clearKids(g); var T = tob();
     CIG_KEYS.forEach(function (k, i) { var K = CIG_SKUS[k]; var cartons = Math.min(8, Math.ceil(T.packs[k] / TOB.carton)); for (var c = 0; c < cartons; c++) { var w = K.size === 20 ? 0.3 : 0.24; var m = new THREE.Mesh(bevelGeo(w, 0.1, 0.4), colorMat(K.col, 0.6)); m.position.set(-0.75 + (c % 4) * 0.5, [0.37, 0.92, 1.47, 2.02][i] + Math.floor(c / 4) * 0.105, 0); g.add(m); var band = new THREE.Mesh(bevelGeo(w + 0.004, 0.03, 0.404), colorMat(K.top, 0.6)); band.position.copy(m.position); band.position.y += 0.03; g.add(band); } });
@@ -3198,12 +3228,12 @@
     var T = tob();
     T.bays.forEach(function (b, i) { if (b.stage !== 'grow') return; b.t += dt; if (b.t >= TOB.growT) { b.stage = 'ready'; toast('🌿 Tobacco bay ' + (i + 1) + ' is ready to harvest', 'good'); save(); } });
     var K = T.kiln; if (K.on) { if (K.kg <= 0 && T.leaf >= 1) { K.kg = Math.min(TOB.kilnMax, T.leaf); T.leaf -= K.kg; K.t = 0; } if (K.kg > 0) { K.t += dt; if (K.t >= TOB.kilnT) { T.cured += K.kg * TOB.cureYield; logEvent('🔥 Kiln finished a load: ' + kg(K.kg * TOB.cureYield) + ' of cured leaf', ''); K.kg = 0; K.t = 0; save(); } } }
-    if (T.shred.on && T.cured > 0) { var c = Math.min(T.cured, TOB.shredKgS * dt); T.cured -= c; T.cut += c; }
+    if (T.shred.on && tobSpare(T) > 0) { var c = Math.min(tobSpare(T), TOB.shredKgS * dt); T.cured -= c; T.cut += c; }
     if (T.maker.on && T.cut > 0) { var per = TOB.stickKg[T.maker.mode]; var n = Math.min(TOB.sticksS * dt, T.cut / per); T.cut = Math.max(0, T.cut - n * per); T.sticks[T.maker.mode] += n; }
     var P = T.packer; if (P.on && packerReady(T)) { P.t += dt; if (P.t >= TOB.packS) { P.t = 0; T.sticks[P.type] -= P.size; T.mat -= P.size === 20 ? 2 : 1; var sku = skuOf(P.type, P.size); T.packs[sku]++; T.made++; if (T.packs[sku] % TOB.carton === 1 || T.packs[sku] % TOB.carton === 0) syncTobRack(); } }
     if (player.floor !== -1) return;
     // everything below is only what you can see from the floor
-    var run = { kiln: K.on && K.kg > 0, shred: T.shred.on && T.cured > 0, maker: T.maker.on && T.cut > 0, packer: P.on && packerReady(T) }; var armed = { kiln: K.on, shred: T.shred.on, maker: T.maker.on, packer: P.on };
+    var run = { kiln: K.on && K.kg > 0, shred: T.shred.on && tobSpare(T) > 0, maker: T.maker.on && T.cut > 0, packer: P.on && packerReady(T) }; var armed = { kiln: K.on, shred: T.shred.on, maker: T.maker.on, packer: P.on };
     tobUI.spin.forEach(function (s) { if (run[s.key]) s.g.rotation[s.axis] += s.speed * dt; });
     tobUI.t += dt; var blink = Math.sin(tobUI.t * 6) > 0;
     Object.keys(tobUI.beacons).forEach(function (k) { var m = tobUI.beacons[k].material; m.emissiveIntensity = run[k] ? (blink ? 2.2 : 0.6) : armed[k] ? 0.7 : 0.08; m.color.setHex(run[k] ? 0x39d353 : 0xff8a1c); m.emissive.setHex(run[k] ? 0x39d353 : 0xff8a1c); });
@@ -3247,23 +3277,23 @@
   }
   // the cigarette cabinet behind the counter: stock sits behind a roller shutter, you take packs out and hand them over yourself
   function cigStock(k) { if (!S.cigStock) S.cigStock = {}; return S.cigStock[k] || 0; }
-  function anyCigStock() { return Object.keys(CIG_SKUS).filter(function (k) { return cigStock(k) > 0 && dlcOn(CIG_SKUS[k].type === 'side' ? 'lab' : 'tobacco'); }); }   /* nobody asks for what a switched-off DLC makes */
+  function anyCigStock() { return Object.keys(CIG_SKUS).filter(function (k) { return cigStock(k) > 0 && dlcOn(skuDlc(CIG_SKUS[k])); }); }   /* nobody asks for what a switched-off DLC makes */
   function toggleCigShutter() { S.cigShutter = !S.cigShutter; sfx('curtain'); toast(S.cigShutter ? '🚬 Shutter up. The cigarette cabinet is open.' : '🚬 Shutter down. The cigarette cabinet is closed.', ''); save(); }
   function cigCabInteract(h) {
     if (player.keys.ShiftLeft || player.keys.ShiftRight) { toggleLock('cigCabinet'); return; }
     if (lockedStop('cigCabinet')) return;
     if (!S.cigShutter) { toggleCigShutter(); return; }
-    if (h && h.kind === 'cigs') { S.cigStock[h.sku] = cigStock(h.sku) + h.n; S.held = null; syncCigCab(); sfx('putdown'); toast('🚬 ' + h.n + ' × ' + CIG_SKUS[h.sku].name + ' into the cabinet', 'good'); save(); return; }
+    if (h && h.kind === 'cigs') { cigStockAdd(h.sku, h.n, h.q); S.held = null; syncCigCab(); sfx('putdown'); toast('🚬 ' + h.n + ' × ' + cigLabel(h.sku, h.q) + ' into the cabinet', 'good'); save(); return; }
     var c = S.customer, lines = []; var want = c && c.cig && c.cig.given < c.cig.qty ? c.cig : null;
-    function takeLine(k, n, label) { return { label: label, cls: cigStock(k) >= 1 ? '' : 'muted', act: cigStock(k) >= 1 ? function () { if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } var m = Math.min(n, cigStock(k)); S.cigStock[k] -= m; take({ kind: 'cigs', sku: k, n: m }); syncCigCab(); save(); } : null }; }
+    function takeLine(k, n, label) { return { label: label, cls: cigStock(k) >= 1 ? '' : 'muted', act: cigStock(k) >= 1 ? function () { if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } var m = Math.min(n, cigStock(k)); S.cigStock[k] -= m; take({ kind: 'cigs', sku: k, n: m, q: cigQ(k) }); syncCigCab(); save(); } : null }; }
     if (want) lines.push(takeLine(want.sku, want.qty - want.given, '🛎️ ' + c.who + ' asked for ' + (want.qty - want.given) + ' × ' + CIG_SKUS[want.sku].name + ' <small>' + cigStock(want.sku) + ' in the cabinet</small>'));
-    Object.keys(CIG_SKUS).forEach(function (k) { lines.push(takeLine(k, 1, '🚬 Take a pack of ' + CIG_SKUS[k].name + ' <small>' + cigStock(k) + ' left · ' + money(CIG_SKUS[k].price) + '</small>')); });
+    Object.keys(CIG_SKUS).filter(function (k) { return cigStock(k) > 0 || dlcOn(skuDlc(CIG_SKUS[k])); }).forEach(function (k) { lines.push(takeLine(k, 1, '🚬 Take ' + (CIG_SKUS[k].shape || CIG_SKUS[k].type === 'side' ? '' : 'a pack of ') + cigLabel(k, cigQ(k)) + ' <small>' + cigStock(k) + ' left · ' + money(cigPrice(k, cigQ(k))) + '</small>')); });
     lines.push({ label: '⬇ Roll the shutter down', act: toggleCigShutter });
     ctxOpen('🚬 Cigarette cabinet', 'packs stay behind the shutter; you hand them to the customer', lines);
   }
   function syncCigCab() {
     var inst = propInst.cigCabinet; if (!inst) return; var g = inst.ctx.dynGroup(); var keep = g.userData.shutter; clearKids(g); if (keep) g.add(keep);
-    Object.keys(CIG_SKUS).forEach(function (k, i) { var K = CIG_SKUS[k], n = Math.min(i < 4 ? 8 : 3, cigStock(k)), big = K.size === 20; for (var p = 0; p < n; p++) { var w = big ? 0.075 : 0.06, hh = big ? 0.11 : 0.09; var m = productCigPack(K, big ? 1.3 : 1.25); m.position.set((i < 4 ? -0.45 : 0.27) + p * 0.082, [1.62, 1.27, 0.92, 0.57, 1.62, 1.27, 0.92, 0.57][i] + hh / 2, 0.06); m.traverse(function (o) { if (o.isMesh) o.castShadow = false; }); g.add(m); } });   /* the cabinet shows the same pack you hand over */
+    Object.keys(CIG_SKUS).forEach(function (k, i) { var K = CIG_SKUS[k], n = Math.min(i < 4 ? 5 : K.shape === 'cigar' ? 2 : 3, cigStock(k)), big = K.size === 20; for (var p = 0; p < n; p++) { var w = big ? 0.075 : 0.06, hh = big ? 0.11 : 0.09; var m = productCigPack(K, big ? 1.3 : 1.25); m.position.set((i < 4 ? -0.47 : i < 8 ? -0.03 : 0.25) + p * (K.shape === 'cigar' ? 0.11 : 0.082), [1.62, 1.27, 0.92, 0.57][i % 4] + (K.shape ? 0.05 : hh / 2), 0.06);   /* three columns: what the packer makes, what the lab makes, and the cigars and the honey */ m.traverse(function (o) { if (o.isMesh) o.castShadow = false; }); g.add(m); } });   /* the cabinet shows the same pack you hand over */
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = 'cigCabinet'; });
   }
   function updateShutters(dt) { updateOneShutter('goodsShelf', dt, 1.97, 1.9); updateOneShutter('cigCabinet', dt, 1.87, 1.45); }
@@ -3273,11 +3303,11 @@
   function handCigs(c, h) {
     var q = c.cig; if (!q || q.given >= q.qty) { toast(c.who + ' didn\'t ask for cigarettes', 'bad'); npc.say(custLine(c.who, 'noSmokes'), '#ffc857'); return; }
     if (q.sku !== h.sku) { toast(c.who + ' asked for ' + CIG_SKUS[q.sku].name + ', not that', 'bad'); npc.say(custLine(c.who, 'wrongSmokes', CIG_SKUS[q.sku].name), '#ff6b6b'); return; }
-    var give = Math.min(q.qty - q.given, h.n); q.given += give; h.n -= give; if (h.n <= 0) S.held = null; S.stats.cigs = (S.stats.cigs || 0) + give; sfx('rustle');
-    if (c.stage === 'pay') { c.due += CIG_SKUS[q.sku].price * give; if (c.pay === 'cash' && !c.changeGiven) c.tendered = tenderFor(c.due); }   // handed over after the rest was already rung up
+    var give = Math.min(q.qty - q.given, h.n), each = cigPrice(q.sku, h.q); q.given += give; q.paid = (q.paid || 0) + each * give; h.n -= give; if (h.n <= 0) S.held = null; S.stats.cigs = (S.stats.cigs || 0) + give; sfx('rustle');
+    if (c.stage === 'pay') { c.due += each * give; if (c.pay === 'cash' && !c.changeGiven) c.tendered = tenderFor(c.due); }   // handed over after the rest was already rung up
     npc.say(custLine(c.who, q.given >= q.qty ? 'smokes' : 'more'), '#6fdc8c'); toast('🚬 Handed over ' + give + ' × ' + CIG_SKUS[q.sku].name, 'good'); hud();
   }
-  function cigTotal(c) { return c && c.cig && c.cig.given > 0 ? CIG_SKUS[c.cig.sku].price * c.cig.given : 0; }
+  function cigTotal(c) { return c && c.cig && c.cig.given > 0 ? (typeof c.cig.paid === 'number' ? c.cig.paid : CIG_SKUS[c.cig.sku].price * c.cig.given) : 0; }   /* lab goods are priced by their grade, so the sum is kept as they are handed over */
   // ── The city: a street grid round the shop, places worth visiting, a car to get there and a map on M ──
   var CITY = { x: 122, z1: -64, z2: 96, mainZ: 17.9, backZ: -40, northZ: 78, westX: -64, eastX: 64, laneX: 4.5, blds: [], pois: [], roads: [], parks: [] };
   if (WSCITY.grow > 0) { CITY.x += WSCITY.grow; CITY.z1 -= Math.round(WSCITY.grow * 0.5); CITY.z2 += Math.round(WSCITY.grow * 0.5); }   /* a city pack widens the world: the player clamp, the traffic wrap, the drop finder and the map all read these */
@@ -4304,7 +4334,7 @@
       for (var k = 0; k < 3; k++) { var b = new THREE.Mesh(bevelGeo(0.003, 0.045, 0.01), k === 1 ? colorMat(0x9aa0a6, 0.4, 0.7) : brass); b.position.set(0, 1.405, -0.015 + k * 0.015); ring.add(b); }
       var hit = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.42, 0.42), MAT.none); hit.position.set(hx - 0.1, 1.48, -0.42); world.group.add(hit); interactable(hit, { kind: 'keyHook' });
     });
-    fixtureFromBuild('roster', 'staff roster', -Math.PI / 2, function () { box(0.04, 1.0, 1.2, colorMat(0x8a6a3a, 0.9), -4.13, 1.7, 2.35, { cast: false }); signPlane(['STAFF ROSTER', 'driver · operator · night guard'], 1.1, 0.36, -4.16, 1.95, 2.35, -Math.PI / 2, { size: 24 }); hit(0.4, 1.2, 1.3, -4.25, 1.7, 2.35, { kind: 'roster' }); });   /* on the office side of the hall wall, clear of the dashboard */
+    fixtureFromBuild('roster', 'staff roster', -Math.PI / 2, function () { box(0.04, 1.0, 1.2, colorMat(0x8a6a3a, 0.9), -4.13, 1.7, 2.35, { cast: false }); signPlane(['STAFF ROSTER', 'driver · operator · night guard · technician'], 1.1, 0.36, -4.16, 1.95, 2.35, -Math.PI / 2, { size: 24 }); hit(0.4, 1.2, 1.3, -4.25, 1.7, 2.35, { kind: 'roster' }); });   /* on the office side of the hall wall, clear of the dashboard */
     // two more doors in town: the tobacconist who buys your cartons wholesale, and the police
     /* the tobacconist and the precinct are landmarks in buildCity now, placed before anything else claims the ground */
     CITY.pois.push({ id: 'tobac', name: 'Corner Tobacconist', x: 40, z: 8, col: '#e8c27a' }, { id: 'police', name: 'Police precinct', x: CITY.police.x, z: CITY.police.z + CITY.police.d / 2, col: '#5aa0d8' });
@@ -4319,7 +4349,7 @@
     }
     var wn = 900, wgeo = new THREE.BufferGeometry(), wpos = new Float32Array(wn * 3); for (var wi = 0; wi < wn; wi++) { wpos[wi * 3] = (Math.random() - 0.5) * 36; wpos[wi * 3 + 1] = Math.random() * 16; wpos[wi * 3 + 2] = (Math.random() - 0.5) * 36; } wgeo.setAttribute('position', new THREE.BufferAttribute(wpos, 3)); exp.wx = new THREE.Points(wgeo, new THREE.PointsMaterial({ color: 0xcfe0f0, size: 0.09, transparent: true, opacity: 0.7, depthWrite: false })); exp.wx.visible = false; exp.wx.frustumCulled = false; scene.add(exp.wx);
   }
-  function outdoors() { if (drive.on || player.floor === 2) return true; if (player.floor !== 0) return false; var x = player.pos.x, z = player.pos.z; return Math.abs(x) > ROOM.x + 0.3 || z > ROOM.z + 0.2 || z < -12.6 || (z < -ROOM.z - 0.2 && (x < -0.2 || x > SEC.x2 + 0.2)); }
+  function outdoors() { if ((menuDrive && menuDrive.on) || drive.on || player.floor === 2) return true; if (player.floor !== 0) return false; var x = player.pos.x, z = player.pos.z; return Math.abs(x) > ROOM.x + 0.3 || z > ROOM.z + 0.2 || z < -12.6 || (z < -ROOM.z - 0.2 && (x < -0.2 || x > SEC.x2 + 0.2)); }
   function updateExpansion(dt) {
     var X = xs(), W = X.weather;
     // weather and season
@@ -4364,11 +4394,11 @@
   }
   function labTick(dt) {   // a lab batch runs down its timer; the caller decides whether there is power
     if (!dlcOn('lab')) return;   /* switched off: a running batch waits */
-    var X = xs(), J = X.lab.job; if (J) { J.t += dt; if (J.t >= J.dur) { X.lab.out[J.sku] += J.n; X.lab.job = null; sfx('ok'); toast('🧪 Lab batch done: ' + J.n + ' × ' + CIG_SKUS[J.sku].name + ' waiting on the lab shelf', 'good'); save(); } }
+    var X = xs(), J = X.lab.job; if (J) { J.t += dt; if (J.t >= J.dur) { labShelve(J); X.lab.job = null; sfx('ok'); toast('🧪 Lab batch done: ' + J.n + ' × ' + CIG_SKUS[J.sku].name + ' waiting on the lab shelf', 'good'); save(); } }
   }
   function roofTick(dt, catchUp) {   // catchUp: time already scaled for the daylight share, so the hour it happens to be now does not matter
     var X = xs(), W = X.weather, gh = dlcOn('greenhouse');   /* switched off: the beds wait as they are */
-    X.roof.forEach(function (b, i) { if (gh && b.stage === 'grow' && (catchUp || !nightNow())) { b.t += dt * (W.kind === 'rain' ? 1.5 : 1) * (season() === 'Winter' ? 0.5 : 1); if (b.t >= 260) { b.stage = 'ready'; toast('🌿 Roof bed ' + (i + 1) + ' is ready', 'good'); } } var g = exp.roofBeds[i]; if (g) { g.visible = gh && b.stage !== 'empty'; var sc = b.stage === 'ready' ? 1 : 0.1 + clamp(b.t / 260, 0, 1) * 0.9; g.scale.set(1, sc, 1); } });
+    X.roof.forEach(function (b, i) { if (gh && b.stage === 'grow' && (catchUp || !nightNow())) { b.t += dt * (W.kind === 'rain' || roofWatered() ? 1.5 : 1) * (season() === 'Winter' ? 0.5 : 1); if (b.t >= 260) { b.stage = 'ready'; toast('🌿 Roof bed ' + (i + 1) + ' is ready', 'good'); } } var g = exp.roofBeds[i]; if (g) { g.visible = gh && b.stage !== 'empty'; var sc = b.stage === 'ready' ? 1 : 0.1 + clamp(b.t / 260, 0, 1) * 0.9; g.scale.set(1, sc, 1); } });
   }
   // ── Delivery rounds: a burner phone for the street goods, a tablet for the RF Smoking round ──
   // Both write into one X.jobs list; `via` says which device raised it, and that decides where the
@@ -4538,7 +4568,7 @@
     exp.getaway = { g: g, dir: dir, t: 0, loot: { grabbed: r.grabbed, goods: r.goods, disp: r.disp, cigs: r.cigs || {} } }; r.grabbed = 0; r.goods = []; r.disp = {}; r.cigs = {}; toast('🚗 They jumped into a black car heading ' + (dir > 0 ? 'east' : 'west') + ' on Main Street. Catch it with yours and you get it all back.', 'bad');
   }
   function expansionNewDay(offline) {
-    var X = xs(), wages = (X.staff.driver ? 90 : 0) + (X.staff.operator ? 80 : 0) + (X.staff.night ? 70 : 0); if (wages) { var wPaid = drawFunds(wages); if (wages - wPaid > 0.5) books().arrears += wages - wPaid; if (!offline) logEvent('💼 Extra staff wages: ' + money(wages), ''); }
+    var X = xs(), wages = (X.staff.driver ? 90 : 0) + (X.staff.operator ? 80 : 0) + (X.staff.night ? 70 : 0) + (X.staff.labtech ? LAB_TECH.wage : 0); if (wages) { var wPaid = drawFunds(wages); if (wages - wPaid > 0.5) books().arrears += wages - wPaid; if (!offline) logEvent('💼 Extra staff wages: ' + money(wages), ''); }
     if (X.staff.driver) { var T = tob(), val = 0, n = 0; CIG_KEYS.forEach(function (k) { var sell = Math.max(0, T.packs[k] - COST.driverKeep); n += sell; val += sell * CIG_SKUS[k].price * TOB.driverShare; T.packs[k] -= sell; });   /* a little under the tobacconist: he saves you the drive */   /* he leaves a few of each kind on the rack so the round jobs can still be filled */ if (n) { S.bank += Math.round(val); bookSale(Math.round(val)); syncTobRack(); if (!offline) { logEvent('🚚 Your driver sold ' + n + ' packs wholesale for ' + money(Math.round(val)), 'good'); toast('🚚 Driver: ' + n + ' packs wholesaled · ' + money(Math.round(val)), 'good'); } } }
     if (X.branch) { var bu = Math.min(BRANCH_CAP, X.branchUnits || 0), inc = Math.round(bu * BRANCH_PAY + Math.max(0, S.rep) * 2); X.branchUnits = 0; S.bank += inc; bookSale(inc); logEvent('🏪 Green Leaf (your branch) sent over ' + money(inc) + ': ' + bu + ' units you dropped off at ' + money(BRANCH_PAY) + ' each, plus ' + money(Math.max(0, S.rep) * 2) + ' on your name', inc > 0 ? 'good' : ''); if (!offline) toast('🏪 Branch takings: ' + money(inc) + (bu ? '' : ' (nothing dropped off yesterday, stock it at the blue beacon)'), bu ? 'good' : ''); }
     if (!offline && weekend()) toast('📅 It\'s the weekend. Expect more people through the door.', ''); if (!offline && (S.day % 28) === 25) toast('🎉 Holiday week starts. Footfall is up by half.', 'rare');
@@ -4552,15 +4582,8 @@
     [['trunk', '🧰 Bigger boot', 800, 'holds 120 items, up from 40'], ['engine', '🏎️ Tuned engine', 1200, 'a third more top speed'], ['bar', '🛡️ Bull bar', 700, 'stops a getaway car from further off']].forEach(function (u) { var own = X.garage[u[0]]; lines.push({ label: u[1] + ' · ' + money(u[2]) + ' <small>' + (own ? 'fitted' : u[3]) + '</small>', cls: own || !inBay || S.bank < u[2] ? 'muted' : '', act: own || !inBay || S.bank < u[2] ? null : function () { S.bank -= u[2]; X.garage[u[0]] = true; sfx('cash'); toast(u[1] + ' fitted', 'good'); hud(); save(); } }); });
     ctxOpen((drive.veh === 'van' ? '🚐 Your van' : '🚗 Your car') + (inBay ? ' · at home' : ''), inBay ? 'upgrades and loading happen here, at home' : 'park at home, behind the yard gate, to load, unload or fit upgrades', lines);
   }
-  function labMenu() {
-    var X = xs(), lines = [], out = X.lab.out; if (X.lab.job) lines.push({ label: '⏳ Running: ' + X.lab.job.n + ' × ' + CIG_SKUS[X.lab.job.sku].name + ' · ' + Math.ceil(X.lab.job.dur - X.lab.job.t) + ' s left' + (powerOn() ? '' : ' · PAUSED, no power'), cls: 'muted' });
-    var strains = Object.keys(S.stash).filter(function (k) { return S.stash[k].g >= 5; }); if (!strains.length) lines.push({ label: 'Nothing to run. Bring at least 5 g of cured bud in the stash. Quality doesn\'t matter here: this is what low-grade harvests are for.', cls: 'muted' });
-    strains.slice(0, 2).forEach(function (sid) { var nm = strainById(sid).name, g = S.stash[sid].g; function job(sku, grams, n, dur, needMix) { var ok = !X.lab.job && g >= grams && (!needMix || (S.supplies.mix || 0) > 0); lines.push({ label: '🧪 ' + grams + ' g of ' + nm + ' → ' + n + ' × ' + CIG_SKUS[sku].name + ' <small>' + dur + ' s' + (needMix ? ' · uses 1 baking mix (' + (S.supplies.mix || 0) + ')' : '') + ' · sells at ' + money(CIG_SKUS[sku].price) + '</small>', cls: ok ? '' : 'muted', act: ok ? function () { stashDraw(sid, grams); if (needMix) S.supplies.mix--; X.lab.job = { sku: sku, n: n, t: 0, dur: dur }; sfx('click'); toast('🧪 Batch started', ''); save(); } : null }); } job('cart', 10, 3, 45, false); job('hash', 10, 4, 35, false); job('gummy', 5, 12, 40, true); job('choc', 5, 8, 40, true); });
-    Object.keys(out).forEach(function (k) { if (out[k] > 0) lines.push({ label: '📦 Take ' + Math.min(12, out[k]) + ' × ' + CIG_SKUS[k].name + ' <small>' + out[k] + ' on the shelf · they sell from the cigarette cabinet</small>', act: function () { if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } var n = Math.min(12, out[k]); out[k] -= n; take({ kind: 'cigs', sku: k, n: n }); save(); } }); });
-    ctxOpen('🧪 Extraction lab', 'carts, gummies and chocolate from bud of any quality', lines);
-  }
   function rosterMenu() {
-    var X = xs(), lines = []; [['driver', '🚚 Driver', 90, 'wholesales every pack above ' + COST.driverKeep + ' of each kind each morning (' + Math.round(TOB.driverShare * 100) + '%), and runs phone deliveries for you · counts as staff on the payroll'], ['operator', '🏭 Basement operator', 80, 'sows and cuts the bays, keeps the machines on, reorders materials · covers the two staff the basement needs'], ['night', '🌙 Night guard', 70, 'nobody breaks into the basement or strips the roof beds · counts as staff on the payroll']].filter(function (s) { return s[0] !== 'operator' || dlcOn('tobacco') || X.staff.operator; }).forEach(function (s) { var on = X.staff[s[0]]; lines.push({ label: s[1] + ' · ' + money(s[2]) + ' a day <small>' + s[3] + '</small>', cls: on ? 'on' : '', act: function () { X.staff[s[0]] = !on; sfx('click'); toast(s[1] + (on ? ' let go' : ' hired'), on ? '' : 'good'); save(); } }); });
+    var X = xs(), lines = []; [['driver', '🚚 Driver', 90, 'wholesales every pack above ' + COST.driverKeep + ' of each kind each morning (' + Math.round(TOB.driverShare * 100) + '%), and runs phone deliveries for you · counts as staff on the payroll'], ['operator', '🏭 Basement operator', 80, 'sows and cuts the bays, keeps the machines on, reorders materials · covers the two staff the basement needs'], ['night', '🌙 Night guard', 70, 'nobody breaks into the basement or strips the roof beds · counts as staff on the payroll'], ['labtech', '🥼 Lab technician', LAB_TECH.wage, 'runs bud under quality ' + LAB_TECH.maxQ + ' through the lab, into whatever the shop has least of · counts as staff on the payroll']].filter(function (s) { return s[0] === 'labtech' ? dlcOn('lab') || X.staff.labtech : s[0] !== 'operator' || dlcOn('tobacco') || X.staff.operator; }).forEach(function (s) { var on = X.staff[s[0]]; lines.push({ label: s[1] + ' · ' + money(s[2]) + ' a day <small>' + s[3] + '</small>', cls: on ? 'on' : '', act: function () { X.staff[s[0]] = !on; sfx('click'); toast(s[1] + (on ? ' let go' : ' hired'), on ? '' : 'good'); save(); } }); });
     ctxOpen('💼 Staff roster', 'wages come out at the start of each day', lines);
   }
   function wsPlaceMenu(poi) {   // the generic counter behind a pack place: a discount shop list, a paid service, or both
@@ -4600,7 +4623,7 @@
     if (d.kind === 'zoneClerk') return (d.poi === 'bank' ? 'Teller' : 'Clerk') + ' <small>E to do business</small>';
     if (d.kind === 'labRig') return 'Lab equipment <small>' + (X.lab.job ? 'batch running' : 'idle') + ' · E for the batch sheet</small>';
     if (d.kind === 'roofUp') return dlcOn('greenhouse') ? 'Ladder to the roof <small>greenhouse</small>' : 'Ladder to the roof <small>' + DLC_NAME.greenhouse + ' · a DLC, switched off</small>'; if (d.kind === 'roofDown') return 'Back down into the flat';
-    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; return 'Roof bed ' + (d.idx + 1) + ' <small>' + (b.stage === 'empty' ? (hasLic('cult2') ? 'sow outdoor mix · ' + money(10) : 'needs the Cultivation permit II from the office PC') : b.stage === 'ready' ? 'harvest about 25 g' : 'growing ' + Math.round(b.t / 260 * 100) + '%' + (nightNow() ? ' · asleep until daylight' : '')) + '</small>'; }
+    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; return 'Roof bed ' + (d.idx + 1) + ' <small>' + (b.stage === 'empty' ? (hasLic('cult2') ? 'sow outdoor mix · ' + money(10) : 'needs the Cultivation permit II from the office PC') : b.stage === 'ready' ? 'harvest about ' + roofGrams() + ' g' : 'growing ' + Math.round(b.t / 260 * 100) + '%' + (nightNow() ? ' · asleep until daylight' : '')) + '</small>'; }
     if (d.kind === 'generator') return S.upgrades.generator ? 'Generator <small>fuelled and on standby</small>' : 'Generator <small>buy it for ' + money(1400) + ' · power cuts stop touching you</small>';
     if (d.kind === 'roster') return 'Staff roster <small>hire a driver, a basement operator, a night guard</small>';
     if (d.kind === 'bagLine') return S.upgrades.bagline ? 'Trim & bag line <small>' + (X.bagline.on ? 'running' : 'off') + ' · ' + (S.supplies.bag || 0) + ' baggies</small>' : 'Trim & bag line <small>install for ' + money(900) + '</small>';
@@ -4617,7 +4640,7 @@
     if (d.kind === 'roofUp' && !dlcOn('greenhouse')) { dlcOff('greenhouse'); return true; }
     if (d.kind === 'roofUp') { tobFade(function () { player.floor = 2; player.pos.set(-9.4, ROOF_Y + 1.65, -3.0); player.vel.set(0, 0, 0); player.yaw = -Math.PI / 2; }); return true; }
     if (d.kind === 'roofDown') { tobFade(function () { player.floor = 1; player.pos.set(-10.6, UP.y + 1.65, -3.0); player.vel.set(0, 0, 0); }); return true; }
-    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; if (b.stage === 'empty') { if (!hasLic('cult2')) { sfx('bad'); toast('🌱 Growing on the roof needs the Cultivation permit II (under Licences on the office PC)', 'bad'); return true; } if (S.bank < 10) { toast('Seedlings cost ' + money(10), 'bad'); return true; } S.bank -= 10; b.stage = 'grow'; b.t = 0; sfx('plant'); toast('🌱 Sown. Sunlight does the rest, for free.', 'good'); } else if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; var q = randi(42, 60) + (X.weather.kind === 'rain' ? -4 : 0); stashAdd('sunflower', 25, q, 1.0); var rproc = 25 * COST.processPerGram; spendOp(rproc); logEvent('Trim, testing and compliance on the roof harvest: ' + money(rproc), ''); sfx('harvest'); toast('🌿 25 g of outdoor bud (quality ' + q + ') into the stash. Rough stuff, perfect for the lab.', 'good'); } else toast('Still growing', ''); hud(); save(); return true; }
+    if (d.kind === 'roofBed') { var b = X.roof[d.idx]; if (b.stage === 'empty') { if (!hasLic('cult2')) { sfx('bad'); toast('🌱 Growing on the roof needs the Cultivation permit II (under Licences on the office PC)', 'bad'); return true; } if (S.bank < 10) { toast('Seedlings cost ' + money(10), 'bad'); return true; } S.bank -= 10; b.stage = 'grow'; b.t = 0; sfx('plant'); toast('🌱 Sown. Sunlight does the rest, for free.', 'good'); } else if (b.stage === 'ready') { b.stage = 'empty'; b.t = 0; var rg = roofGrams(), q = randi(42, 60) + (X.weather.kind === 'rain' ? -4 : 0) + roofQBonus(); stashAdd('sunflower', rg, q, 1.0); var rproc = rg * COST.processPerGram; spendOp(rproc); logEvent('Trim, testing and compliance on the roof harvest: ' + money(rproc), ''); sfx('harvest'); toast('🌿 ' + rg + ' g of outdoor bud (quality ' + q + ') into the stash. Rough stuff, perfect for the lab.', 'good'); } else toast('Still growing', ''); hud(); save(); return true; }
     if (d.kind === 'generator') { if (S.upgrades.generator) toast('It will start itself on the next power cut', ''); else if (S.bank < 1400) toast('The generator costs ' + money(1400), 'bad'); else { S.bank -= 1400; S.upgrades.generator = true; sfx('cash'); toast('⚡ Generator installed. Power cuts won\'t stop you again.', 'good'); applyShopState(); hud(); save(); } return true; }
     if (d.kind === 'bagLine') { if (!S.upgrades.bagline) { if (S.bank < 900) toast('The trim & bag line costs ' + money(900), 'bad'); else { S.bank -= 900; S.upgrades.bagline = true; sfx('cash'); toast('Trim & bag line installed', 'good'); hud(); save(); } } else { X.bagline.on = !X.bagline.on; sfx('click'); toast(X.bagline.on ? '▶ Bag line running: an eighth every 4 s from your biggest stash, trimmed a little cleaner (+3 quality), one baggie each' : '⏹ Bag line stopped', ''); save(); } return true; }
     if (d.kind === 'dropoff') return jobHandOver(d.idx);
@@ -6106,7 +6129,8 @@
     ['finance', '💰', 'Finance', function () { return paneFinance(); }, 'finance'],
     ['merch', '👕', 'Merch', function () { return paneMerch(); }, 'merch'],
     ['cup', '🏆', 'The Cup', function () { return paneCup(); }, 'cup'],
-    ['breed', '🧬', 'Cultivars', function () { return paneBreed(); }, 'breeding']
+    ['breed', '🧬', 'Cultivars', function () { return paneBreed(); }, 'breeding'],
+    ['upgrades', '⬆️', 'DLC upgrades', function () { return paneDlcUpg(); }]
   ];
   function pcApps() { return PC_APPS.filter(function (a) { return !a[4] || dlcOn(a[4]); }); }   /* an app that belongs to a DLC is on the desktop only while the DLC is on */
   function pcEl() {
@@ -7436,26 +7460,34 @@
   defProp('lobbyCoffee', { label: 'lobby coffee machine', x: ROOM.x - 0.4, z: 8.1, rot: 3, multi: { max: 4, price: 600, gap: 0.95, ico: '☕', lic: 'catering', upg: 'lobby', name: 'Coffee machine' }, build: function (c) {
     if (!S.upgrades.lobby) return;   // stand + machine appear with the upgrade
     c.box(0.6, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(0.66, 0.04, 0.56, MAT.counterTop, 0, 0.92, 0, { cast: false });
-    var body = colorMat(0x1c1c22, 0.4, 0.3), chrome = MAT.chrome;
-    c.box(0.34, 0.46, 0.34, body, 0, 1.17, -0.04);
-    c.box(0.3, 0.05, 0.12, chrome, 0, 1.0, 0.13, { cast: false });                 /* the group head */
-    c.box(0.22, 0.015, 0.16, chrome, 0, 0.955, 0.1, { cast: false });              /* drip tray */
-    c.box(0.2, 0.012, 0.14, colorMat(0x3a3f46, 0.5), 0, 0.963, 0.1, { cast: false });
-    c.box(0.09, 0.05, 0.02, glowMat(0x6fdc8c, 1.3), -0.09, 1.34, 0.135, { cast: false });
-    c.box(0.14, 0.07, 0.02, MAT.screen, 0.06, 1.3, 0.135, { cast: false });
+    // a bean-to-cup machine: the upper half overhangs a brew bay, the cup stands on a grille under two nozzles, a lit screen and
+    // three buttons on the fascia. It stands against a back board that carries the sign, so nothing is propped up in front of it.
+    var body = colorMat(0x16171b, 0.25, 0.4), chrome = MAT.chrome, fascia = MAT.steel;
+    c.box(0.64, 1.0, 0.03, MAT.darkwood, 0, 1.44, -0.262, { cast: false }); c.box(0.68, 0.05, 0.08, MAT.darkwood, 0, 1.96, -0.24, { r: 0.012 });
+    c.box(0.36, 0.18, 0.24, body, 0, 1.03, -0.11, { r: 0.012 }); c.box(0.36, 0.28, 0.38, body, 0, 1.26, -0.04, { r: 0.03 });                                  /* the foot, and the head that overhangs it */
+    [-0.165, 0.165].forEach(function (x) { c.box(0.03, 0.18, 0.15, body, x, 1.03, 0.075, { r: 0.008 }); });                                                        /* cheeks either side of the bay */
+    c.box(0.3, 0.17, 0.006, fascia, 0, 1.03, 0.013, { cast: false, sharp: true });                                                                                 /* the back of the bay */
+    c.box(0.09, 0.035, 0.07, chrome, 0, 1.105, 0.095, { cast: false, r: 0.008 }); [-0.02, 0.02].forEach(function (x) { c.cyl(0.007, 0.005, 0.03, chrome, x, 1.075, 0.1, 8); });   /* the spout and its two nozzles */
+    c.box(0.34, 0.034, 0.17, body, 0, 0.957, 0.075, { r: 0.008 }); for (var gs = 0; gs < 7; gs++) c.box(0.27, 0.004, 0.012, chrome, 0, 0.976, 0.015 + gs * 0.02, { cast: false, sharp: true });   /* the drip tray and its grille */
+    c.box(0.33, 0.24, 0.008, fascia, 0, 1.265, 0.151, { cast: false, r: 0.006 }); c.box(0.36, 0.012, 0.006, chrome, 0, 1.135, 0.152, { cast: false });
+    c.box(0.215, 0.13, 0.008, MAT.gloss, -0.04, 1.29, 0.157, { cast: false, r: 0.006 });
+    var cscr = new THREE.Mesh(new THREE.PlaneGeometry(0.195, 0.11), new THREE.MeshBasicMaterial({ map: textTex(['COFFEE', 'espresso · latte · tea'], 312, 176, { size: 44, bg: '#0a1410', color: '#9fd8b4', titleColor: '#f0b94d', line: 'rgba(0,0,0,0)' }), toneMapped: false })); cscr.position.set(-0.04, 1.29, 0.1615); c.add(cscr);
+    [[1.335, 0x6fdc8c], [1.29, 0xf0b94d], [1.245, 0xe8eef4]].forEach(function (k) { var bt = c.cyl(0.015, 0.015, 0.012, colorMat(k[1], 0.3), 0.125, k[0], 0.157, 14); bt.rotation.x = Math.PI / 2; });
+    c.lit(0x6fdc8c, 0.012, 0.012, 0.125, 1.2, 0.1565); c.box(0.12, 0.014, 0.004, chrome, -0.04, 1.2, 0.156, { cast: false });
+    c.cyl(0.108, 0.112, 0.02, body, 0, 1.408, -0.04, 24);                                                                                                         /* the collar the hopper sits in */
     // the bean hopper on top: a clear cone you can see the level in, with a lid that lifts
-    var hop = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.07, 0.17, 14, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.28, roughness: 0.05, side: THREE.DoubleSide }));
+    var hop = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.096, 0.17, 24, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.28, roughness: 0.05, side: THREE.DoubleSide }));
     hop.position.set(0, 1.49, -0.04); hop.castShadow = false; c.add(hop);
     var lid = new THREE.Group(); lid.position.set(0, 1.575, -0.15); c.add(lid); lid.userData.coffLid = true;
-    var lm = new THREE.Mesh(roundCylGeo(0.115, 0.115, 0.018, 14), body); lm.position.set(0, 0, 0.11); lid.add(lm);
-    var beans = new THREE.Mesh(roundCylGeo(0.1, 0.065, 0.12, 12), colorMat(0x4a2a12, 1));
+    var lm = new THREE.Mesh(roundCylGeo(0.104, 0.104, 0.018, 24), body); lm.position.set(0, 0, 0.11); lid.add(lm); var lk = new THREE.Mesh(roundCylGeo(0.018, 0.022, 0.02, 12), MAT.chrome); lk.position.set(0, 0.018, 0.11); lid.add(lk);
+    var beans = new THREE.Mesh(roundCylGeo(0.093, 0.09, 0.12, 20), new THREE.MeshStandardMaterial({ map: TEX.soil || null, color: 0x3a2010, roughness: 1 }));
     beans.position.set(0, 1.46, -0.04); beans.castShadow = false; c.add(beans); beans.userData.coffBeans = true;
     // the cup stack beside it, and the cup that lands under the spout
     var cups = new THREE.Group(); cups.position.set(0.21, 0.96, -0.08); c.add(cups); cups.userData.coffCups = true; cups.userData.slots = [];
-    var brewG = new THREE.Group(); brewG.position.set(0, 0.97, 0.1); c.add(brewG); brewG.userData.coffBrew = true;
+    var brewG = new THREE.Group(); brewG.position.set(0, 1.026, 0.095); c.add(brewG); brewG.userData.coffBrew = true;
     c.hit(0.72, 1.6, 0.62, 0, 0.8, 0, { kind: 'lobbyCoffee' });
     var cupHit = c.hit(0.24, 0.2, 0.22, 0, 1.02, 0.12, { kind: 'coffeeCup' }); cupHit.userData.coffCupHit = true;   /* parked out of the world while there is no cup, so it never steals the machine's own prompt */
-    c.placard(['COFFEE', 'help yourself'], 0.42, 0.15, 0, 1.62, 0.22, { titleColor: '#ffc857' });
+    c.sign(['COFFEE', 'help yourself · $2 a cup'], 0.5, 0.16, 0, 1.8, -0.244, 0, { titleColor: '#ffc857' });
   }, after: function (c, P, inst, id) { syncCoffee(id); } });
   defProp('vending', { label: 'vending machine', x: ROOM.x - 0.5, z: 6.8, rot: 3, multi: { max: 4, price: 900, gap: 1.15, ico: '🥤', lic: 'catering' }, build: function (c, P) {
     var SKIN = [[0x8f1f1a, '#ffc857'], [0x14507a, '#8fd0ff'], [0x1d6b45, '#b6f2c9'], [0x2b2f36, '#e8eef4']];   /* a row of identical red machines would read as a copy-paste, so every unit gets its own livery */
@@ -7818,9 +7850,8 @@
     if (!S.upgrades.lobby) return;
     var door = colorMat(0x2a1c10, 0.6);
     [-0.147, 0.147].forEach(function (x) { c.box(0.275, 0.72, 0.014, door, x, 0.5, 0.256, { cast: false, r: 0.006 }); c.box(0.012, 0.14, 0.02, MAT.chrome, x - Math.sign(x) * 0.1, 0.62, 0.272, { cast: false }); }); c.box(0.6, 0.08, 0.012, MAT.black, 0, 0.04, 0.256, { cast: false });
-    c.box(0.345, 0.012, 0.345, MAT.chrome, 0, 1.406, -0.04, { cast: false }); [-0.172, 0.172].forEach(function (x) { c.box(0.008, 0.46, 0.008, MAT.chrome, x, 1.17, 0.132, { cast: false }); });
-    var gauge = c.cyl(0.03, 0.03, 0.014, MAT.white, 0.1, 1.17, 0.136, 20); gauge.rotation.x = Math.PI / 2; var gr = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.005, 8, 20), MAT.brass); gr.position.set(0.1, 1.17, 0.144); c.add(gr); var nd = c.box(0.003, 0.022, 0.002, colorMat(0xc0271b, 0.5), 0.105, 1.176, 0.1445, { cast: false, sharp: true }); nd.rotation.z = -0.7;
-    var wand = c.cyl(0.006, 0.006, 0.17, MAT.chrome, -0.2, 1.06, 0.1, 8); wand.rotation.z = 0.28; c.cyl(0.012, 0.012, 0.02, MAT.black, -0.178, 1.14, 0.1, 10);
+    var wand = c.cyl(0.006, 0.006, 0.15, MAT.chrome, -0.215, 1.08, 0.06, 8); wand.rotation.z = 0.22; c.cyl(0.012, 0.012, 0.02, MAT.black, -0.2, 1.15, 0.06, 10); c.cyl(0.009, 0.007, 0.02, MAT.chrome, -0.232, 1.0, 0.06, 8);
+    [-0.182, 0.182].forEach(function (x) { for (var v = 0; v < 5; v++) c.box(0.004, 0.01, 0.2, MAT.black, x, 1.2 + v * 0.03, -0.06, { cast: false, sharp: true }); });
     c.box(0.13, 0.06, 0.1, MAT.gunmetal, -0.22, 0.97, -0.14, { r: 0.008 }); for (var s = 0; s < 5; s++) { var st = c.cyl(0.003, 0.003, 0.11, MAT.wood, -0.26 + s * 0.02, 1.03, -0.14, 5); st.rotation.z = (s - 2) * 0.08; }
   });
   propExtra('vending', function (c) {
@@ -8115,6 +8146,7 @@
     return G;
   }
   function productCigPack(K, s) {   // a hinge-lid pack: foil collar, lid seam, printed face and a health band
+    if (K.shape === 'cigar') return productCigar(K, s); if (K.shape === 'jar') return productHoneyJar(K, s);
     var G = new THREE.Group(), big = K.size === 20;
     var w = (big ? 0.056 : 0.046) * s, ht = (big ? 0.088 : 0.074) * s, d = (big ? 0.023 : 0.019) * s;
     var bodyM = prodMat('cig' + K.name, function () { return new THREE.MeshStandardMaterial({ color: K.col, roughness: 0.55 }); });
@@ -8426,7 +8458,7 @@
     if (h.kind === 'bat') { var bw = new THREE.MeshStandardMaterial({ color: 0xb98a4a, roughness: 0.6 }); add(roundCylGeo(0.034, 0.022, 0.72, 10), bw, 0, 0.44, 0); add(roundCylGeo(0.024, 0.024, 0.16, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }), 0, 0.08, 0); add(roundCylGeo(0.032, 0.032, 0.02, 10), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), 0, 0.0, 0); add(new THREE.SphereGeometry(0.036, 10, 8), bw, 0, 0.81, 0); }
     if (h.kind === 'cigs') {
       var CK = CIG_SKUS[h.sku];
-      if (h.n > 2) {   /* a carton: a printed sleeve with the packs stacked inside the open end */
+      if (h.n > 2 && !CK.shape) {   /* a carton: a printed sleeve with the packs stacked inside the open end */
         add(bevelGeo(0.3, 0.1, 0.16), new THREE.MeshStandardMaterial({ color: CK.col, roughness: 0.6 }), 0, 0.05, 0);
         add(bevelGeo(0.302, 0.026, 0.162), new THREE.MeshStandardMaterial({ color: mixHex(CK.col, 0x000000, 0.3), roughness: 0.6 }), 0, 0.088, 0);
         add(new THREE.PlaneGeometry(0.24, 0.07), new THREE.MeshBasicMaterial({ map: textTex(['RF ' + (CK.type === 'light' ? 'LIGHT' : 'SMOKING'), '10 x ' + CK.size], 340, 100, { size: 34, bg: '#' + ('000000' + CK.col.toString(16)).slice(-6), color: '#' + ('000000' + CK.top.toString(16)).slice(-6), titleColor: '#' + ('000000' + CK.top.toString(16)).slice(-6), line: 'rgba(0,0,0,0)' }), transparent: true }), 0, 0.05, 0.0805);
@@ -8526,7 +8558,7 @@
     else if (h.kind === 'keys') { toast('🔑 Keyring back on its hook in the office', ''); setTimeout(syncKeyHook, 0); }   /* the hotbar slot clears just after this, so re-read it on the next tick */
     else if (h.kind === 'bat') { toast('Bat back by the counter', ''); if (world.batMesh) world.batMesh.visible = true; }
     else if (WEAPONS[h.kind]) { toast('The ' + WEAPONS[h.kind].name + ' is back in the weapon locker', ''); }
-    else if (h.kind === 'cigs') { S.cigStock[h.sku] = cigStock(h.sku) + h.n; syncCigCab(); toast('Packs back in the cigarette cabinet', ''); }
+    else if (h.kind === 'cigs') { cigStockAdd(h.sku, h.n, h.q); syncCigCab(); toast('Packs back in the cigarette cabinet', ''); }
     S.held = null; sfx('putdown');
     if (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies' || h.kind === 'jar') world.dirtyShelf = true; else if (h.kind === 'soil' || h.kind === 'nutrients' || h.kind === 'remedy' || h.kind === 'seed') world.dirtyRack = true; else if (h.kind === 'crate') world.dirtyStorage = true;   /* only the place it went back to is redrawn */
   }
@@ -9030,7 +9062,7 @@
   // ── UI: panels, menu, HUD ─────────────────────────────────────────
   var ui = {
     panelOpen: false, panelKind: null, panelTab: null, menuOpen: false, ctxOpen: false, started: false,
-    blocked: function () { return this.panelOpen || this.menuOpen || this.ctxOpen || this.taskOpen || this.pcOpen || this.deviceOpen || this.wheelOpen || this.devOpen || !this.started; },
+    blocked: function () { return this.panelOpen || this.menuOpen || this.ctxOpen || this.taskOpen || this.pcOpen || this.deviceOpen || this.wheelOpen || this.devOpen || this.photoOn || !this.started; },
     openPanel: function (kind, tab) {
       this.panelKind = kind; this.panelTab = tab || (kind === 'laptop' ? 'shop' : kind === 'inventory' ? 'inv' : null);
       this.panelOpen = true; $('g3-panel').hidden = false; document.exitPointerLock(); this.render(); sfx(kind === 'laptop' ? 'type' : 'panel');
@@ -9395,7 +9427,7 @@
     ['customer', '🚪 Spawn a customer'], ['premium', '🎩 Spawn a connoisseur'], ['robbery', '🚨 Start a robbery (by shop level)'], ['robSnatch', '🧤 Snatch thief'], ['robKnife', '🔪 Knife robbery'], ['robGun', '🔫 Gunman and the vault'], ['robCrew', '👥 Two-man gang'], ['arm', '🧰 Every weapon, ammo, licence, alarm'], ['basement', '🏭 Go to the basement works'], ['toCar', '🚗 Teleport next to your car'], ['vip', '🥂 Send a lounge guest up'], ['roof', '🌿 Go to the roof greenhouse'], ['heat', '🚔 Heat +40'], ['blackout', '⚡ Power cut now'], ['delivery', '📱 Burner job now'], ['round', '📋 Two tablet round jobs'], ['tobFill', '🚬 Fill the tobacco line + cabinet'], ['fight', '👊 Start a lobby fight (needs two visitors)'], ['van', '🚚 Van arrives now with the open order'], ['courier', '🏦 Courier arrives now for $100'],
     ['dust', '🪣 Spawn 6 dirt patches'], ['clean', '🧹 Clear every dirt patch'], ['morning', '🌅 Clock to 06:00'], ['noon', '☀️ Clock to 12:00'], ['evening', '🌆 Clock to 19:00'], ['night', '🌙 Clock to 23:00'], ['day', '⏭ Skip to the next day'],
     ['level', '⭐ Level +1'], ['rep', '🏆 Rep +25'], ['upgrades', '⚙️ Every upgrade'], ['licences', '🪪 Every licence'], ['clear', '🧯 Clear cooldowns, robber, fight, courier'], ['empty', '🫙 Empty every hotbar slot'], ['humid', '💧 Humidity to 80% in both rooms'],
-    ['dlcFit', '🧩 Fit every DLC bench, bay and stand, and take the field'], ['dlcRipe', '⏩ Ripen the cross, the hydro bay and the field'], ['cupNow', '🏆 Judge the Cup now'], ['merchFill', '👕 Fill the merch stand'], ['tp_farm', '📍 Teleport: the farm gate'],
+    ['dlcFit', '🧩 Fit every DLC bench, bay and stand, and take the field'], ['dlcRipe', '⏩ Ripen the cross, the hydro bay and the field'], ['cupNow', '🏆 Judge the Cup now'], ['merchFill', '👕 Fill the merch stand'], ['tp_farm', '📍 Teleport: the farm gate'], ['dlcUpgAll', '⬆️ Every DLC upgrade'], ['photo', '📷 Photo mode: fly the camera, screen clear'],
     ['tp_lobby', '📍 Teleport: lobby'], ['tp_office', '📍 Teleport: office'], ['tp_grow', '📍 Teleport: grow room'], ['tp_annex', '📍 Teleport: back room'], ['tp_security', '📍 Teleport: security room'], ['tp_yard', '📍 Teleport: yard']
   ];
   function devStrains() { var lv = S.level || 1, l = STRAINS.filter(function (st) { return (st.lvl || 1) <= lv; }); return l.length ? l : [STRAINS[0]]; }   /* the fills stick to what the seed bank would sell you at this level */
@@ -9410,7 +9442,8 @@
     ['The clock', ['morning', 'noon', 'evening', 'night', 'day']],
     ['Progress', ['level', 'rep', 'upgrades', 'licences', 'empty']],
     ['The shop floor', ['dust', 'clean', 'humid']],
-    ['DLC', ['dlcFit', 'dlcRipe', 'cupNow', 'merchFill']],
+    ['DLC', ['dlcFit', 'dlcUpgAll', 'dlcRipe', 'cupNow', 'merchFill']],
+    ['Camera', ['photo']],
     ['Go to', ['tp_lobby', 'tp_office', 'tp_grow', 'tp_annex', 'tp_security', 'tp_yard', 'basement', 'roof', 'toCar', 'tp_farm']]
   ];
   var devCon = { el: null, q: '' };
@@ -9424,12 +9457,12 @@
     return h || '<div class="g3-empty">No cheat by that name.</div>';
   }
   function devOpen() {
-    if (!dlcOn('dev')) return false; if (ui.devOpen) { devClose(); return true; } if (!ui.started || ui.menuOpen || ui.taskOpen) return false;
+    if (!dlcOn('dev')) return false; if (photo.on) { photoOff(); return true; } if (ui.devOpen) { devClose(); return true; } if (!ui.started || ui.menuOpen || ui.taskOpen) return false;
     if (!devCon.el) {
       var d = document.createElement('div'); d.id = 'g3-devcon'; d.hidden = true;
       d.innerHTML = '<div class="g3-devcon"><div class="g3-devcon-head"><h2>Dev console</h2><span>F8 or Esc closes</span><button class="g3-x" data-cheat="close" title="Close (F8)">✕</button></div><input type="search" id="g3-devcon-q" placeholder="Find a cheat" autocomplete="off" spellcheck="false"><div class="g3-devcon-body" id="g3-devcon-body"></div><p class="g3-sub2">Everything applies to the save you are playing, at once. Switch the Dev Tools DLC off in the Workshop to put this away.</p></div>';
       document.body.appendChild(d); devCon.el = d;
-      d.addEventListener('click', function (e) { var b = e.target.closest('[data-cheat]'); if (!b) { if (e.target === d) devClose(); return; } var id = b.getAttribute('data-cheat'); sfx('click'); if (id === 'close') { devClose(); return; } devAction(id); if (/^(tp_|basement$|roof$|toCar$)/.test(id)) devClose(); else $('g3-devcon-body').innerHTML = devConHtml(); });
+      d.addEventListener('click', function (e) { var b = e.target.closest('[data-cheat]'); if (!b) { if (e.target === d) devClose(); return; } var id = b.getAttribute('data-cheat'); sfx('click'); if (id === 'close') { devClose(); return; } devAction(id); if (/^(tp_|basement$|roof$|toCar$|photo$)/.test(id)) devClose(); else $('g3-devcon-body').innerHTML = devConHtml(); });
       d.querySelector('#g3-devcon-q').addEventListener('input', function (e) { devCon.q = e.target.value; $('g3-devcon-body').innerHTML = devConHtml(); });
       d.querySelector('#g3-devcon-q').addEventListener('keydown', function (e) { if (e.code !== 'Escape' && e.code !== 'F8') e.stopPropagation(); });
     }
@@ -9440,6 +9473,8 @@
     if (!dlcOn('dev')) { dlcOff('dev'); return; }
     var tp = function (x, z) { if (ui.menuOpen) closeMenu(); standUp(); player.pos.set(x, 1.65, z); player.floor = 0; toast('📍 Teleported', ''); };
     switch (id) {
+      case 'dlcUpgAll': DLC_UPG_ORDER.forEach(function (d) { if (dlcOn(d)) DLC_UPG[d].list.forEach(function (u) { if (!dlcOwns(d, u.id)) dlcUpgGive(d, u.id); }); }); break;
+      case 'photo': if (photoOn()) toast('📷 Photo mode. W A S D fly, Space and Ctrl go up and down, Shift is faster, the wheel zooms. F8 or Esc ends it.', ''); return;
       case 'money': S.bank += 1000; break; case 'pocket': S.pocket += 500; break; case 'till': S.till += 120; S.tips += 20; ['vending', 'lobbyCoffee', 'fridge', 'arcade'].forEach(function (b) { unitIds(b).forEach(function (u) { coinPay(u, 10); }); }); break;
       case 'stash': devStrains().forEach(function (st) { stashAdd(st.id, 20, 70 + st.lvl * 2, st.thc); }); break;
       case 'goods': devStrains().forEach(function (st) { ['bags', 'joints', 'cookies'].forEach(function (k) { lotAdd(k, st.id, 5, 72, st.thc); }); }); break;
@@ -9589,7 +9624,7 @@
   // ── Day / night ───────────────────────────────────────────────────
   var skyCol = new THREE.Color(), snowFog = new THREE.Color(), sunFocus = { x: 0, z: 0 };
   function updateDayNight() {
-    var h = gameHour();
+    var h = menuDrive && menuDrive.on ? menuDrive.hour : gameHour();   /* behind the main menu it is always dusk */
     var sunAlt = Math.sin((h - 6) / 12 * Math.PI); // 1 at noon, -1 at midnight
     var day = clamp(sunAlt * 1.4 + 0.1, 0, 1);
     var dusk = clamp(1 - Math.abs(sunAlt) * 3, 0, 1);
@@ -9603,7 +9638,7 @@
     scene.fog.color.copy(fogCol);
     sun.intensity = 0.1 + day * 0.9; sun.color.setRGB(1, lerp(0.7, 0.95, day) + dusk * 0.0, lerp(0.5, 0.85, day) - dusk * 0.2);
     /* the shadow box is 68 m across: centred on the shop, the car lost its shadow a block down Main St. It follows whoever you are (you, or the car you drive) in 4 m steps, so it is not redrawn for every stride */
-    var fx = drive.on && drive.g ? drive.g.position.x : player.pos.x, fz = drive.on && drive.g ? drive.g.position.z : player.pos.z; if (player.floor === -1) { fx = 0; fz = 0; }   /* the basement rooms sit far out on x, under ground: nothing there takes the sun */
+    var fx = drive.on && drive.g ? drive.g.position.x : player.pos.x, fz = drive.on && drive.g ? drive.g.position.z : player.pos.z; if (player.floor === -1) { fx = 0; fz = 0; } if (menuDrive && menuDrive.on) { fx = menuDrive.pos.x; fz = menuDrive.pos.z; }   /* the basement rooms sit far out on x, under ground: nothing there takes the sun */
     fx = Math.round(fx / 4) * 4; fz = Math.round(fz / 4) * 4; if (fx !== sunFocus.x || fz !== sunFocus.z) { sunFocus.x = fx; sunFocus.z = fz; renderer.shadowMap.needsUpdate = true; }
     var ang = (h - 6) / 12 * Math.PI; sun.position.set(fx + Math.cos(ang) * 30, Math.max(2, Math.sin(ang) * 30), fz + 12); sun.target.position.set(fx, 0, fz);
     hemi.intensity = (0.12 + day * 0.28) * (wk === 'snow' ? 1 + 0.2 * wxm : wk === 'storm' ? 0.85 : 1); hemi.color.setRGB(lerp(0.3, 0.75, day), lerp(0.35, 0.85, day), lerp(0.6, 1.0, day));
@@ -9620,7 +9655,7 @@
     if (sec.view.on && !ui.blocked()) { if (e.code === 'Escape' || e.code === 'KeyE') camExit(); else if (/^Digit[1-6]$/.test(e.code)) camShow(+e.code.charAt(5) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') camShow(sec.view.idx + 1); else if (e.code === 'ArrowLeft' || e.code === 'KeyA') camShow(sec.view.idx - 1); e.preventDefault(); return; }
     if (e.code === 'Escape' && postPick >= 0) { postPick = -1; toast('📍 Cancelled', ''); e.preventDefault(); return; }
     if (e.code === 'F8') { devOpen(); e.preventDefault(); return; }
-    if (e.code === 'Escape') { if (!ui.blocked() && runHooks(hooks.keydown, e)) { e.preventDefault(); return; } if (ui.devOpen) { devClose(); } else if (ui.pcOpen) { pcClose(); } else if (ui.deviceOpen) { deviceClose(); } else if (ui.wheelOpen) { wheelClose(); } else if (ui.ctxOpen) { ctxClose(); } else if (ui.panelOpen) { ui.closePanel(); } else if (ui.menuOpen) { closeMenu(); } else { openMenu(); } e.preventDefault(); return; }
+    if (e.code === 'Escape') { if (!ui.blocked() && runHooks(hooks.keydown, e)) { e.preventDefault(); return; } if (photo.on) { photoOff(); } else if (ui.devOpen) { devClose(); } else if (ui.pcOpen) { pcClose(); } else if (ui.deviceOpen) { deviceClose(); } else if (ui.wheelOpen) { wheelClose(); } else if (ui.ctxOpen) { ctxClose(); } else if (ui.panelOpen) { ui.closePanel(); } else if (ui.menuOpen) { closeMenu(); } else { openMenu(); } e.preventDefault(); return; }
     if (ui.ctxOpen) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') { ctxClose(); e.preventDefault(); } return; }
     if (ui.pcOpen || ui.deviceOpen || ui.wheelOpen) {   /* the PC desktop, a device or the wheel is up: only its own keys work */
       if (ui.deviceOpen && ((e.code === 'KeyF' && dev.kind === 'phone') || e.code === 'KeyJ')) { deviceClose(); e.preventDefault(); }
@@ -9743,7 +9778,7 @@
   function breedChild(a, b) {
     var r = Math.random, avg = function (k) { return (a[k] + b[k]) / 2; };
     var c = { growMs: avg('growMs') * randf(0.9, 1.1), yield: avg('yield') * randf(0.92, 1.18), thc: avg('thc') * randf(0.95, 1.15) };
-    var star = r() < 0.14 ? pick(['yield', 'thc', 'growMs']) : '';   /* now and then one plant in the tray stands out */
+    var star = r() < (dlcHas('breeding', 'library') ? 0.28 : 0.14) ? pick(['yield', 'thc', 'growMs']) : '';   /* now and then one plant in the tray stands out */
     if (star === 'yield') c.yield *= 1.18; else if (star === 'thc') c.thc *= 1.14; else if (star === 'growMs') c.growMs *= 0.82;
     return { id: 'bred' + now().toString(36), name: breedName(a, b), emoji: '🧬', seed: Math.max(8, Math.round(avg('seed') * 1.3)), growMs: Math.round(clamp(c.growMs, 120000, 3600000 * 2)), yield: Math.round(clamp(c.yield, 4, 60) * 10) / 10, thc: Math.round(clamp(c.thc, 0.5, 4) * 100) / 100, lvl: Math.max(a.lvl || 1, b.lvl || 1), bud: breedMix(a.bud, b.bud, r()), hair: breedMix(a.hair, b.hair, r()), leaf: breedMix(a.leaf, b.leaf, r()), bred: true, parents: [a.id, b.id], star: star };
   }
@@ -9836,9 +9871,9 @@
     var C = cupState(), e = C.entry, lvl = S.level || 1, day = S.day || 1; C.entry = null;
     var field = CUP.rivals.map(function (n) { return { who: n, score: 46 + Math.min(40, lvl * 2.5) + randf(-8, 8) }; });
     if (!e) { field.sort(function (a, b) { return b.score - a.score; }); C.history.unshift({ day: day, place: 0, note: field[0].who + ' took the Cup. You had no jar in.' }); C.history.length = Math.min(C.history.length, 8); logEvent('🏆 Cup day: ' + field[0].who + ' took it. You had no jar in.', ''); return; }
-    var st = strainById(e.strain), mine = { who: 'you', score: cupScore(e.q, e.thc) + randf(-5, 5) }; field.push(mine); field.sort(function (a, b) { return b.score - a.score; });
+    var st = strainById(e.strain), mine = { who: 'you', score: cupScore(e.q, e.thc) + randf(-5, 5) + (dlcHas('cup', 'jar') ? 4 : 0) }; field.push(mine); field.sort(function (a, b) { return b.score - a.score; });
     var place = field.indexOf(mine) + 1, metal = ['', 'gold', 'silver', 'bronze'][place] || '', prize = place === 1 ? 1200 + lvl * 100 : place === 2 ? 500 : place === 3 ? 200 : 0, rep = [0, 12, 6, 3][place] || 1;
-    S.rep += rep; if (prize) S.bank += prize; gainXp(place <= 3 ? 60 - place * 12 : 8);
+    if (dlcHas('cup', 'sponsor')) prize = Math.round(prize * 1.5); if (dlcHas('cup', 'press')) rep *= 2; S.rep += rep; if (prize) S.bank += prize; gainXp(place <= 3 ? 60 - place * 12 : 8);
     if (metal) { C.trophies.push({ metal: metal, strain: st.name, day: day }); if (C.trophies.length > 40) C.trophies.shift(); }
     var said = place === 1 ? '🏆 You won the Cannabis Cup with ' + st.name + '. ' + money(prize) + ' prize money and a gold cup for the cabinet (rep +' + rep + ').' : place <= 3 ? '🏆 ' + st.name + ' came ' + (place === 2 ? 'second' : 'third') + ' at the Cup: ' + money(prize) + ' and a ' + metal + ' cup (rep +' + rep + ').' : '🏆 ' + st.name + ' came ' + place + 'th of ' + field.length + ' at the Cup. ' + field[0].who + ' took it (rep +1).';
     C.history.unshift({ day: day, place: place, note: st.name + ', quality ' + e.q + ': ' + (place === 1 ? 'first' : place === 2 ? 'second' : place === 3 ? 'third' : place + 'th') + ' of ' + field.length + (prize ? ', ' + money(prize) : '') }); C.history.length = Math.min(C.history.length, 8);
@@ -9895,7 +9930,7 @@
   var FARM = { x1: -116, x2: -72, z1: -62.5, z2: -46.5, lease: 2500, rent: 40, rows: 5, per: 8, seeds: 6, sun: 0.6, dryS: 300, gateX: -78, rowZ: [-49.6, -52.3, -55.0, -57.7, -60.4], rowX1: -112, rowX2: -84, barn: { x: -76.4, z: -56.2, w: 6.4, d: 8.6 }, home: { x: 9, z: -16 } };
   var farm = { g: null, rows: [], gate: null, gateObs: null, barnDyn: null, syncT: 0 };
   function farmState() { var F = dlcState('farm', { leased: false, rows: [], barn: [], boot: [] }); while (F.rows.length < FARM.rows) F.rows.push(null); return F; }
-  function farmSeason() { return season() !== 'Winter'; }
+  function farmSeason() { return season() !== 'Winter' || dlcHas('farm', 'tunnels'); }
   function farmReserve() { CITY.parks.push({ x1: FARM.x1 - 1, x2: FARM.x2 + 1, z1: FARM.z1 - 1, z2: FARM.z2 + 1, farm: true }); }   /* before the town fills its blocks, so nobody builds a terrace on the field */
   function farmAt(x, z) { for (var i = 0; i < CITY.parks.length; i++) { var p = CITY.parks[i]; if (p.farm && x > p.x1 - 1.5 && x < p.x2 + 1.5 && z > p.z1 - 1.5 && z < p.z2 + 4.5) return true; } return false; }   /* the field, its fence and the verge in front of its gate */
   function farmYield(st, q) { return Math.round(st.yield * 0.55 * (0.6 + q / 160) * FARM.per * 10) / 10; }
@@ -10002,12 +10037,12 @@
     },
     tick: function (dt, offline) {
       var F = farmState(); if (!F.leased && !F.boot.length && !F.barn.length) return; var wet = /rain|storm/.test(xs().weather.kind), h = gameHour(), sun = farmSeason() && h >= 6 && h <= 20;
-      F.rows.forEach(function (r) { if (!r) return; if (wet) r.water = 1; else r.water = Math.max(0, r.water - dt / 900); if (r.progress >= 1 || !sun) return; var ok = r.water > 0.15; r.progress = Math.min(1, r.progress + (1000 / strainById(r.strain).growMs) * FARM.sun * (ok ? 1 : 0.25) * dt); r.quality = clamp(r.quality + (ok ? 0.008 : -0.03) * dt, 25, 62); });
+      F.rows.forEach(function (r) { if (!r) return; if (wet || dlcHas('farm', 'drip')) r.water = 1; else r.water = Math.max(0, r.water - dt / 900); if (r.progress >= 1 || !sun) return; var ok = r.water > 0.15; r.progress = Math.min(1, r.progress + (1000 / strainById(r.strain).growMs) * FARM.sun * (ok ? 1 : 0.25) * dt); r.quality = clamp(r.quality + (ok ? 0.008 : -0.03) * dt, 25, 62); });
       F.barn.forEach(function (l) { l.t += dt; });
       if (F.boot.length && !offline && !drive.on && farmVehicleNear(FARM.home.x, FARM.home.z, 10)) { var g = 0; F.boot.forEach(function (l) { stashAdd(l.strain, l.grams, l.q, l.thc); g += l.grams; }); F.boot = []; world.dirtyShelf = true; sfx('cash'); toast('🚜 Unloaded ' + gram(g) + ' of field bud into the stash', 'good'); logEvent('🚜 Brought ' + gram(g) + ' home from the field', 'good'); }
     },
     update: function (dt) {
-      if (!farm.g) return; var p = drive.on && drive.g ? drive.g.position : player.pos, near = p.x < FARM.x2 + 60 && p.z < FARM.z2 + 60; farm.g.visible = near && (player.floor || 0) === 0; if (!farm.g.visible) return;
+      if (!farm.g) return; var p = menuDrive.on ? menuDrive.pos : drive.on && drive.g ? drive.g.position : player.pos, near = p.x < FARM.x2 + 60 && p.z < FARM.z2 + 60; farm.g.visible = near && (menuDrive.on || (player.floor || 0) === 0); if (!farm.g.visible) return;
       farm.syncT -= dt; if (farm.syncT > 0) return; farm.syncT = 1.5; var F = farmState(); farm.rows.forEach(function (R, i) { var r = F.rows[i]; if (r) R.figs.forEach(function (f) { f.userData.set(r.progress, 1.5); }); });
     },
     newDay: function () {
@@ -10059,7 +10094,7 @@
       if (F.savings > 0) { var i = Math.min(FIN.cap, Math.floor(F.savings * FIN.rate)); if (i > 0) { F.savings += i; F.earned += i; logEvent('💰 Savings interest: ' + money(i), 'good'); } }
       FIN.cover.forEach(function (c) { if (F.cover[c.id]) spendOp(c.day); });
       var robbed = (S.stats.robbed || 0) - (F.seen.robbed || 0); F.seen.robbed = S.stats.robbed || 0;
-      if (F.cover.robbery && robbed > 0) { var r = Math.round(robbed * 0.75); S.bank += r; paid += r; finLog(F, 'Robbery cover: 75% of the ' + money(robbed) + ' taken', r); }
+      if (F.cover.robbery && robbed > 0) { var share = dlcHas('finance', 'full') ? 1 : 0.75, r = Math.round(robbed * share); S.bank += r; paid += r; finLog(F, 'Robbery cover: ' + (share === 1 ? 'all' : '75%') + ' of the ' + money(robbed) + ' taken', r); }
       if (F.cover.power && F.seen.cuts > 0) { var p = 150 * F.seen.cuts; S.bank += p; paid += p; finLog(F, 'Power cover: ' + F.seen.cuts + ' power cut' + (F.seen.cuts === 1 ? '' : 's'), p); }
       var breaks = (S.stats.breakins || 0) - (F.seen.breakins || 0); F.seen.breakins = S.stats.breakins || 0;
       if (F.cover.stock && breaks > 0) { var b = 400 * breaks; S.bank += b; paid += b; finLog(F, 'Break-in cover: ' + breaks + ' break-in' + (breaks === 1 ? '' : 's'), b); }
@@ -10137,7 +10172,7 @@
       var H = hydroState(); if (!H.owned) return; var live = H.sites.filter(function (p) { return p && p.progress < 1; }), lit = powerOn(), ok = hydroOk(H);
       if (!live.length) return; var was = ok;
       H.ph = clamp(H.ph + HYDRO.phDrift * live.length * dt, 4.5, 8); H.feed = clamp(H.feed - HYDRO.feedUse * live.length * dt, 0, 100);
-      live.forEach(function (p) { if (!lit) return; var st = strainById(p.strain); p.progress = Math.min(1, p.progress + (1000 / st.growMs) * (ok ? HYDRO.spd : HYDRO.slow) * dt); p.quality = clamp(p.quality + (ok ? 0.03 : -0.05) * dt, 25, 90); });
+      live.forEach(function (p) { if (!lit) return; var st = strainById(p.strain); p.progress = Math.min(1, p.progress + (1000 / st.growMs) * (ok ? HYDRO.spd : HYDRO.slow) * dt); p.quality = clamp(p.quality + (ok ? 0.03 : -0.05) * dt, 25, dlcHas('hydrobay', 'chiller') ? 100 : 90); });
       if (was && !hydroOk(H)) { toast('💧 The hydroponics bay has slowed: ' + hydroWhy(H), 'bad'); logEvent('💧 Hydroponics bay: ' + hydroWhy(H), 'bad'); }
     },
     update: function () {
@@ -10148,17 +10183,20 @@
     }
   });
   // ── DLC: Merch & Brand ──
+  var MERCH_HOODIE = { id: 'hoodie', ico: '🧥', name: 'Hoodie', one: 'a hoodie', cost: 16, sell: 42 };
   var MERCH = { price: 600, lot: 10, wait: 90, items: [
     { id: 'tee', ico: '👕', name: 'T-shirt', one: 'a T-shirt', cost: 9, sell: 24 }, { id: 'cap', ico: '🧢', name: 'Cap', one: 'a cap', cost: 7, sell: 18 },
     { id: 'mug', ico: '☕', name: 'Mug', one: 'a mug', cost: 5, sell: 14 }, { id: 'tote', ico: '👜', name: 'Tote bag', one: 'a tote bag', cost: 4, sell: 12 }],
     levels: [0, 10, 30, 60, 100, 150, 210, 280, 360, 450, 550], tiers: [[0.8, 'keen', 1.35], [1, 'fair', 1], [1.25, 'dear', 0.6]] };
-  function merchState() { var M = dlcState('merch', { owned: false, stock: {}, tier: 1, brand: 0, sold: 0, takings: 0, orders: [], t: 0 }); MERCH.items.forEach(function (it) { if (typeof M.stock[it.id] !== 'number') M.stock[it.id] = 0; }); return M; }
+  function merchState() { var M = dlcState('merch', { owned: false, stock: {}, tier: 1, brand: 0, sold: 0, takings: 0, orders: [], t: 0 }); if (typeof M.stock.hoodie !== 'number') M.stock.hoodie = 0; MERCH.items.forEach(function (it) { if (typeof M.stock[it.id] !== 'number') M.stock[it.id] = 0; }); return M; }
+  function merchCap() { return dlcHas('merch', 'racks') ? 80 : 40; }
+  upgProp(MERCH, 'items', function (b) { return dlcHas('merch', 'hoodie') ? b.concat([MERCH_HOODIE]) : b; });
   function merchItem(id) { return MERCH.items.filter(function (it) { return it.id === id; })[0]; }
   function merchLevel() { var b = merchState().brand, l = 0; MERCH.levels.forEach(function (n, i) { if (b >= n) l = i; }); return l; }
   function merchPrice(it) { return Math.round(it.sell * MERCH.tiers[merchState().tier][0]); }
   function merchFootfall() { return 1 + merchLevel() * 0.02; }
   function merchOrder(id) {
-    var M = merchState(), it = merchItem(id); if (!it || !M.owned) return; if (M.stock[id] + M.orders.filter(function (o) { return o.id === id; }).length * MERCH.lot > 40) { toast('The stand holds 40 of each and no more', 'bad'); return; }
+    var M = merchState(), it = merchItem(id); if (!it || !M.owned) return; if (M.stock[id] + M.orders.filter(function (o) { return o.id === id; }).length * MERCH.lot > merchCap()) { toast('The stand holds ' + merchCap() + ' of each and no more', 'bad'); return; }
     if (!payBank(it.cost * MERCH.lot, 'A box of ' + MERCH.lot)) return; M.orders.push({ id: id, t: MERCH.wait });
     toast(it.ico + ' ' + MERCH.lot + ' × ' + it.name.toLowerCase() + ' ordered. The printer sends them round in a minute or two.', 'good'); logEvent(it.ico + ' Ordered ' + MERCH.lot + ' × ' + it.name.toLowerCase() + ' for the merch stand: ' + money(it.cost * MERCH.lot), '');
   }
@@ -10194,6 +10232,7 @@
     [1, -1].forEach(function (face) {
       var ry = face > 0 ? 0 : Math.PI, z0 = face * 0.06;
       for (var i = 0; i < Math.min(5, Math.ceil(M.stock.tee / 4)); i++) { var t = add(TEE_GEO, fabricMat(MERCH_COLS[(i + (face > 0 ? 0 : 2)) % 5]), face * (-0.56 + i * 0.28), 1.42, z0 + face * (0.05 + (i % 2) * 0.03), ry); t.rotation.y += face * 0.18; t.scale.setScalar(0.78); var mk = merchMark(0.12); mk.position.set(0, 0.02, 0.018); t.add(mk); add(roundCylGeo(0.004, 0.004, 0.16, 6), MAT.chrome, t.position.x, 1.66, t.position.z - face * 0.0, 0).rotation.x = Math.PI / 2; }
+      for (var hd2 = 0; hd2 < Math.min(3, Math.ceil((M.stock.hoodie || 0) / 5)); hd2++) { var hm = fabricMat([0x15171b, 0x2f6b4a, 0x7a2f3a][hd2]), hx = face * (-0.5 + hd2 * 0.5), hb2 = add(TEE_GEO, hm, hx, 1.06, z0 + face * 0.06, ry); hb2.scale.set(0.9, 0.95, 1.6); var hood = add(new THREE.SphereGeometry(0.075, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), hm, hx, 1.24, z0 + face * 0.05, ry); hood.scale.set(1, 1.1, 0.7); var mk3 = merchMark(0.1); mk3.position.set(0, 0.0, 0.012); hb2.add(mk3); }
       for (var c2 = 0; c2 < Math.min(4, Math.ceil(M.stock.cap / 5)); c2++) { var cm = fabricMat(MERCH_COLS[(c2 + 1) % 5]), cx = face * (-0.5 + c2 * 0.33), cap = add(new THREE.SphereGeometry(0.085, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), cm, cx, 1.875, z0 + face * 0.1, ry); var pk = add(bevelGeo(0.13, 0.012, 0.09, 0.005), cm, cx, 1.88, z0 + face * 0.19, ry); pk.rotation.x = face * 0.12; }
       for (var m2 = 0; m2 < Math.min(5, Math.ceil(M.stock.mug / 4)); m2++) { var mm = colorMat(MERCH_COLS[(m2 + 3) % 5], 0.25), mx = face * (-0.56 + m2 * 0.28); add(roundCylGeo(0.04, 0.036, 0.09, 18), mm, mx, 0.795, z0 + face * 0.14, ry); var hd = add(new THREE.TorusGeometry(0.024, 0.007, 8, 14, Math.PI), mm, mx + 0.042, 0.795, z0 + face * 0.14, 0); hd.rotation.z = -Math.PI / 2; }
       for (var b = 0; b < Math.min(3, Math.ceil(M.stock.tote / 6)); b++) { var bm = fabricMat(b % 2 ? 0xe9dfc6 : 0x2f6b4a), bx = face * (-0.4 + b * 0.4), bag = add(bevelGeo(0.26, 0.3, 0.03, 0.01), bm, bx, 0.36, z0 + face * 0.16, ry); var mk2 = merchMark(0.13); mk2.position.set(0, -0.02, 0.0165); bag.add(mk2); var hl = add(new THREE.TorusGeometry(0.06, 0.006, 6, 14, Math.PI), bm, bx, 0.51, z0 + face * 0.16, ry); }
@@ -10222,6 +10261,393 @@
     },
     footfall: merchFootfall
   });
+  // ── Tobacco Works: cigars ──
+  // The table takes cured leaf before the shredder gets it, so you say how much leaf the shredder has to leave alone.
+  // A lot of five is rolled at the table and laid in the humidor beside it. It ages there, and only an aged cigar leaves it.
+  var CIGAR = { leaf: 0.02, lot: 5, rollS: 40, ageS: 480, cap: 40, keep: [0, 0.5, 1, 2], take: 10 };
+  CIG_SKUS.cigar = { name: 'RF Reserve cigar', type: 'cigar', shape: 'cigar', size: 1, price: 24, col: 0x5a3a1e, top: 0xe8c27a };
+  upgProp(CIGAR, 'ageS', function (b) { return dlcHas('tobacco', 'humidor') ? b / 2 : b; });
+  upgProp(CIGAR, 'cap', function (b) { return dlcHas('tobacco', 'humidor') ? 80 : b; });
+  var cigarUI = { table: null, hum: null, dyn: null, tScr: null, hScr: null, syncT: 0, shown: -1 };
+  function cigarState() { var C = dlcState('cigars', { job: null, humidor: [], keep: 0.5, rolled: 0 }); if (CIGAR.keep.indexOf(C.keep) < 0) C.keep = 0.5; return C; }
+  function cigarCount(C) { return C.humidor.reduce(function (a, b) { return a + b.n; }, 0); }
+  function cigarAged(C) { return C.humidor.reduce(function (a, b) { return a + (b.t >= CIGAR.ageS ? b.n : 0); }, 0); }
+  function tobSpare(T) { return Math.max(0, T.cured - (dlcOn('tobacco') ? cigarState().keep : 0)); }   /* what the shredder may take: the rest is kept whole for the rolling table */
+  function cigarCan(C, T) { return !C.job && T.cured >= CIGAR.leaf * CIGAR.lot - 1e-6 && cigarCount(C) + CIGAR.lot <= CIGAR.cap; }
+  function cigarStart(quiet) {
+    var C = cigarState(), T = tob(); if (C.job) return false; if (!quiet && !tobLicensed()) return false;
+    if (cigarCount(C) + CIGAR.lot > CIGAR.cap) { if (!quiet) toast('The humidor is full: ' + CIGAR.cap + ' cigars', 'bad'); return false; }
+    if (T.cured < CIGAR.leaf * CIGAR.lot - 1e-6) { if (!quiet) toast('Rolling ' + CIGAR.lot + ' cigars takes ' + kg(CIGAR.leaf * CIGAR.lot) + ' of cured leaf, and there is ' + kg(T.cured), 'bad'); return false; }
+    T.cured = Math.max(0, T.cured - CIGAR.leaf * CIGAR.lot); C.job = { t: 0 }; if (!quiet) { sfx('rustle'); toast('🍂 Rolling ' + CIGAR.lot + ' cigars. They go in the humidor when they are done.', 'good'); save(); } return true;
+  }
+  function cigarTake() {
+    var C = cigarState(), n = Math.min(CIGAR.take, cigarAged(C)); if (n <= 0) { toast('Nothing in the humidor has aged yet', ''); return false; } if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return false; }
+    var left = n; C.humidor.forEach(function (b) { if (b.t < CIGAR.ageS || left <= 0) return; var k = Math.min(b.n, left); b.n -= k; left -= k; }); C.humidor = C.humidor.filter(function (b) { return b.n > 0; });
+    take({ kind: 'cigs', sku: 'cigar', n: n }); toast('🚬 ' + n + ' aged cigars. They sell from the cigarette cabinet.', 'good'); cigarSync(true); save(); return true;
+  }
+  function cigarTableMenu() {
+    var C = cigarState(), T = tob(), lines = [];
+    if (C.job) lines.push({ label: '⏳ Rolling ' + CIGAR.lot + ' cigars <small>' + minsLeft(CIGAR.rollS - C.job.t) + ' to go</small>', cls: 'muted' });
+    else lines.push({ label: '🍂 Roll ' + CIGAR.lot + ' cigars <small>' + kg(CIGAR.leaf * CIGAR.lot) + ' of cured leaf · ' + CIGAR.rollS + ' s · no paper, no filters</small>', cls: cigarCan(C, T) ? '' : 'muted', act: function () { cigarStart(false); } });
+    lines.push({ label: 'Cured leaf <b>' + kg(T.cured) + '</b> <small>whole leaf from the kiln, before the shredder cuts it</small>' });
+    CIGAR.keep.forEach(function (k) { lines.push({ label: (k ? '🍃 Keep ' + kg(k) + ' back from the shredder' : '🍃 Let the shredder take all of it') + ' <small>' + (k ? Math.floor(k / CIGAR.leaf) + ' cigars worth' : 'cigarettes only') + '</small>', cls: C.keep === k ? 'on' : '', act: function () { C.keep = k; toast(k ? 'The shredder leaves ' + kg(k) + ' of whole leaf for the table' : 'The shredder takes all the cured leaf', ''); save(); } }); });
+    lines.push({ label: 'A cigar sells for ' + money(CIG_SKUS.cigar.price) + ' once it has aged ' + Math.round(CIGAR.ageS / 60) + ' min in the humidor. A basement operator rolls for you while there is leaf.', cls: 'muted' });
+    ctxOpen('🍂 Rolling table', cigarCount(C) + ' of ' + CIGAR.cap + ' in the humidor · ' + C.rolled + ' rolled so far', lines);
+  }
+  function cigarHumidorMenu() {
+    var C = cigarState(), aged = cigarAged(C), lines = [];
+    lines.push({ label: '🚬 Take ' + Math.min(CIGAR.take, aged) + ' aged cigars <small>' + aged + ' ready · up to the cigarette cabinet with them</small>', cls: aged ? '' : 'muted', act: aged ? cigarTake : null });
+    if (!C.humidor.length) lines.push({ label: 'Empty. Roll a lot at the table beside it.', cls: 'muted' });
+    C.humidor.forEach(function (b) { var done = b.t >= CIGAR.ageS; lines.push({ label: b.n + ' cigars <small>' + (done ? 'aged' : 'aged in ' + minsLeft(CIGAR.ageS - b.t)) + '</small>', cls: done ? 'on' : 'muted' }); });
+    ctxOpen('🗄️ Humidor', '70% humidity · holds ' + CIGAR.cap, lines);
+  }
+  function cigarModel(s) {   // one cigar: a tapered body, a rounded head and a band
+    var G = new THREE.Group(), wrap = colorMat(0x5a3a1e, 0.75), b = new THREE.Mesh(roundCylGeo(0.0085 * s, 0.0095 * s, 0.125 * s, 12), wrap); b.rotation.z = Math.PI / 2; b.castShadow = true; G.add(b);
+    var hd = new THREE.Mesh(new THREE.SphereGeometry(0.0085 * s, 10, 8), wrap); hd.position.x = -0.0625 * s; hd.scale.x = 1.4; G.add(hd);
+    var bd = new THREE.Mesh(new THREE.CylinderGeometry(0.0092 * s, 0.0094 * s, 0.018 * s, 12), colorMat(0xb5121b, 0.5)); bd.rotation.z = Math.PI / 2; bd.position.x = -0.03 * s; G.add(bd);
+    var gd = new THREE.Mesh(new THREE.CylinderGeometry(0.0094 * s, 0.0096 * s, 0.004 * s, 12), MAT.brass); gd.rotation.z = Math.PI / 2; gd.position.x = -0.03 * s; G.add(gd);
+    return G;
+  }
+  function productCigar(K, s) {   // what you hold and what stands in the cabinet: three cigars in an open cedar tray
+    var G = new THREE.Group(), cedar = colorMat(0x9a6a3a, 0.7); var tray = new THREE.Mesh(bevelGeo(0.075 * s, 0.012 * s, 0.14 * s), cedar); tray.position.y = -0.03 * s; G.add(tray);
+    for (var i = 0; i < 3; i++) { var c = cigarModel(s); c.rotation.y = Math.PI / 2; c.position.set((i - 1) * 0.022 * s, -0.014 * s, 0); G.add(c); }
+    return G;
+  }
+  function cigarSync(force) {   // the cigars you can see: on the table while a lot is being rolled, on the shelves of the humidor
+    var U = cigarUI; if (!U.dyn) return; var C = cigarState(), n = cigarCount(C), key = n * 10 + (C.job ? 1 : 0); if (!force && key === U.shown) return; U.shown = key; clearKids(U.dyn);
+    var show = Math.min(36, n); for (var i = 0; i < show; i++) { var c = cigarModel(1.15), row = Math.floor(i / 12), col = i % 12; c.rotation.y = Math.PI / 2; c.position.set(2.2 - 0.33 + col * 0.06, [0.142, 0.582, 1.002][row], 0.02); U.dyn.add(c); }
+    if (C.job) for (var j = 0; j < 3; j++) { var t = cigarModel(1.15); t.position.set(-0.18 + j * 0.03, 0.967, 0.02 + j * 0.035); t.rotation.y = 0.3; U.dyn.add(t); }
+  }
+  function buildCigars() {
+    var Y = BASE.y, g = new THREE.Group(); g.position.set(1.5, Y, 2.62); g.rotation.y = Math.PI; world.group.add(g); cigarUI.table = g;   /* front is local +z, which is north here: the table backs on to the south wall */
+    function b(w, h, d, m, x, y, z, o) { o = o || {}; o.parent = g; return box(w, h, d, m, x, y, z, o); }
+    function c(rt, rb, h, m, x, y, z, seg) { return cyl(rt, rb, h, m, x, y, z, g, seg); }
+    var oak = MAT.darkwood, leafM = colorMat(0x7a5a2c, 0.9), leafD = colorMat(0x5a3f1c, 0.9);
+    // the table: a thick top, a drawer, a shelf of moulds underneath
+    b(1.8, 0.06, 0.7, MAT.wood, 0, 0.9, 0, { r: 0.015 }); [[-0.84, -0.3], [0.84, -0.3], [-0.84, 0.3], [0.84, 0.3]].forEach(function (p) { b(0.07, 0.87, 0.07, oak, p[0], 0.435, p[1]); }); b(1.64, 0.1, 0.03, oak, 0, 0.82, 0.31, { cast: false }); b(1.64, 0.03, 0.56, oak, 0, 0.3, 0, { cast: false });
+    b(0.5, 0.09, 0.02, oak, 0.45, 0.82, 0.33, { cast: false, r: 0.006 }); c(0.012, 0.012, 0.02, MAT.brass, 0.45, 0.82, 0.345, 10).rotation.x = Math.PI / 2;
+    // on it: a stack of whole leaf, a cutting board with the curved knife, a mould, a pot of gum, a lamp
+    for (var i = 0; i < 6; i++) { var lf = b(0.42 - i * 0.02, 0.008, 0.26, i % 2 ? leafM : leafD, -0.6, 0.936 + i * 0.008, -0.08, { cast: false, r: 0.003 }); lf.rotation.y = (i - 3) * 0.09; }
+    b(0.5, 0.025, 0.34, colorMat(0xc9a36a, 0.8), -0.05, 0.943, 0.08, { r: 0.008 }); var kn = b(0.16, 0.004, 0.06, MAT.steel, 0.1, 0.958, 0.16, { cast: false, r: 0.002 }); kn.rotation.y = 0.5; b(0.04, 0.02, 0.07, oak, 0.17, 0.966, 0.19, { cast: false }).rotation.y = 0.5;
+    b(0.36, 0.05, 0.2, colorMat(0x8a5a3a, 0.8), 0.5, 0.955, -0.12, { r: 0.006 }); for (var m = 0; m < 5; m++) b(0.02, 0.012, 0.17, colorMat(0x2a1a0e, 0.9), 0.38 + m * 0.06, 0.981, -0.12, { cast: false, sharp: true });
+    c(0.035, 0.03, 0.05, MAT.ceramic, 0.3, 0.955, 0.22, 14); c(0.004, 0.004, 0.1, MAT.wood, 0.31, 1.0, 0.22, 6).rotation.z = 0.4;
+    c(0.07, 0.08, 0.02, MAT.black, 0.78, 0.94, -0.22, 16); var arm = c(0.008, 0.008, 0.5, MAT.brass, 0.72, 1.18, -0.22, 8); arm.rotation.z = 0.25; var shd = c(0.05, 0.11, 0.1, colorMat(0x1f4a35, 0.35, 0.2), 0.62, 1.42, -0.22, 20); shd.rotation.z = 0.5; var bl = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), glowMat(0xffe9c0, 1.4)); bl.position.set(0.6, 1.39, -0.22); g.add(bl);
+    // a stool in front, a sack of leaf beside it
+    c(0.17, 0.17, 0.04, oak, 0.0, 0.6, 0.75, 20); [[-0.11, 0.64], [0.11, 0.64], [0, 0.87]].forEach(function (p) { c(0.014, 0.018, 0.6, MAT.gunmetal, p[0], 0.3, p[1], 8); });
+    // the humidor: a cedar-lined cabinet behind a glass door, three lit levels, a hygrometer in the pediment
+    var cedar = colorMat(0xb98a55, 0.7), litM = glowMat(0xffe2b0, 1.2);
+    b(0.95, 1.7, 0.03, oak, 2.2, 0.85, -0.255); [-0.46, 0.46].forEach(function (x) { b(0.03, 1.7, 0.5, oak, 2.2 + x, 0.85, -0.02); }); b(0.95, 0.12, 0.5, oak, 2.2, 0.06, -0.02); b(0.95, 0.2, 0.5, oak, 2.2, 1.6, -0.02); b(1.0, 0.06, 0.55, oak, 2.2, 1.73, -0.02, { r: 0.015 });
+    b(0.89, 1.4, 0.01, cedar, 2.2, 0.82, -0.235, { cast: false, sharp: true }); b(0.89, 0.01, 0.44, cedar, 2.2, 0.125, -0.02, { cast: false, sharp: true }); [0.56, 0.98].forEach(function (y) { b(0.89, 0.02, 0.4, cedar, 2.2, y, -0.03, { cast: false }); });
+    [0.535, 0.955, 1.485].forEach(function (y) { b(0.8, 0.012, 0.02, litM, 2.2, y, 0.17, { cast: false, sharp: true }); });
+    b(0.87, 1.38, 0.012, new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.14, roughness: 0.03 }), 2.2, 0.81, 0.235, { cast: false, sharp: true }); [-0.43, 0.43].forEach(function (x) { b(0.035, 1.4, 0.03, oak, 2.2 + x, 0.81, 0.24, { cast: false }); }); [0.135, 1.49].forEach(function (y) { b(0.9, 0.035, 0.03, oak, 2.2, y, 0.24, { cast: false }); }); b(0.014, 0.2, 0.03, MAT.brass, 2.56, 0.85, 0.262, { cast: false });
+    var hy = c(0.045, 0.045, 0.02, MAT.white, 2.2, 1.6, 0.235, 20); hy.rotation.x = Math.PI / 2; var hr = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.006, 8, 22), MAT.brass); hr.position.set(2.2, 1.6, 0.247); g.add(hr);
+    cigarUI.tScr = readout(0.34, 0.2, '#e8c27a'); cigarUI.tScr.position.set(-0.6, 1.5, -0.3); g.add(cigarUI.tScr); b(0.4, 0.26, 0.03, MAT.gloss, -0.6, 1.5, -0.32, { r: 0.008, cast: false });
+    cigarUI.hScr = readout(0.3, 0.16, '#e8c27a'); cigarUI.hScr.position.set(2.2, 1.95, 0.0); g.add(cigarUI.hScr); b(0.36, 0.22, 0.03, MAT.gloss, 2.2, 1.95, -0.02, { r: 0.008, cast: false }); b(0.02, 0.2, 0.02, MAT.gunmetal, 2.2, 1.8, -0.02, { cast: false });
+    cigarUI.dyn = new THREE.Group(); g.add(cigarUI.dyn);
+    var sg = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.4), new THREE.MeshBasicMaterial({ map: textTex(['ROLLING TABLE', 'whole leaf in · cigars out'], 480, 128, { titleColor: '#e8c27a' }), transparent: true })); sg.position.set(0.1, 2.35, -0.33); g.add(sg); signBack(sg, 1.5, 0.4);
+    [[1.5, 0.95, 0.4, 'cigarTable', 1.9, 1.4, 0.9], [-0.7, 0.9, 0.35, 'cigarHumidor', 1.0, 1.8, 0.7]].forEach(function (h) { var m = new THREE.Mesh(new THREE.BoxGeometry(h[4], h[5], h[6]), MAT.none); m.position.set(h[0], Y + h[1], 2.62 - h[2] + 0.35); world.group.add(m); interactable(m, { kind: h[3] }); });
+    world.obstacles.push({ x1: 0.6, x2: 2.4, z1: 2.27, z2: 2.97, tag: 'cigartable', floorLevel: -1 }); world.obstacles.push({ x1: -1.2, x2: -0.2, z1: 2.35, z2: 2.9, tag: 'humidor', floorLevel: -1 });
+    g.traverse(function (o) { if (o.isMesh) o.receiveShadow = true; }); cigarSync(true);
+  }
+  hooks.boot.push(buildCigars);
+  dlcDefine({ id: 'tobacco', name: DLC_NAME.tobacco, kinds: ['cigarTable', 'cigarHumidor'],
+    prompt: function (d) {
+      var C = cigarState(); if (d.kind === 'cigarHumidor') return 'Humidor <small>' + cigarAged(C) + ' aged · ' + (cigarCount(C) - cigarAged(C)) + ' ageing</small>';
+      return 'Rolling table <small>' + (C.job ? 'rolling · ' + minsLeft(CIGAR.rollS - C.job.t) : kg(tob().cured) + ' of whole leaf') + '</small>';
+    },
+    interact: function (d) { if (d.kind === 'cigarHumidor') cigarHumidorMenu(); else cigarTableMenu(); },
+    tick: function (dt) {
+      var C = cigarState(); C.humidor.forEach(function (b) { b.t += dt; });
+      if (C.job) { C.job.t += dt; if (C.job.t >= CIGAR.rollS) { C.job = null; C.rolled += CIGAR.lot; var last = C.humidor[C.humidor.length - 1]; if (last && last.t < 20) last.n += CIGAR.lot; else C.humidor.push({ n: CIGAR.lot, t: 0 }); if (player.floor === -1) toast('🍂 ' + CIGAR.lot + ' cigars rolled and laid in the humidor', 'good'); } }
+      else if (xs().staff.operator && hasLic('tobacco')) cigarStart(true);
+    },
+    update: function (dt) {
+      var U = cigarUI; if (!U.table) return; var here = player.floor === -1; if (!here) return; U.syncT -= dt; if (U.syncT > 0) return; U.syncT = 0.5;
+      var C = cigarState(), T = tob(); cigarSync(false);
+      U.tScr.userData.draw([C.job ? 'Rolling' : 'Rolling table', C.job ? minsLeft(CIGAR.rollS - C.job.t) + ' to go' : 'leaf ' + kg(T.cured), 'kept back ' + kg(C.keep), C.rolled + ' rolled']);
+      U.hScr.userData.draw(['Humidor 70%', cigarAged(C) + ' aged', (cigarCount(C) - cigarAged(C)) + ' ageing · holds ' + CIGAR.cap]);
+    }
+  });
+  // ── Extraction Lab: grades and a technician ──
+  // Quality used to stop at the lab door. Now a batch remembers the quality of its bud, the shelf and the cabinet keep a running
+  // average for each product, and the price follows the grade. Stock made before this has no grade and sells at the list price.
+  var LAB_JOBS = { cart: { g: 10, n: 3, dur: 45 }, hash: { g: 10, n: 4, dur: 35 }, gummy: { g: 5, n: 12, dur: 40, mix: true }, choc: { g: 5, n: 8, dur: 40, mix: true } };
+  var LAB_TECH = { wage: 85, maxQ: 60, grams: 10, stock: 24 };
+  var LAB_GRADES = [[80, 'A', 1.3], [60, 'B', 1.1], [40, 'C', 1], [0, 'D', 0.85]];
+  var labUI = { tech: null, t: 0 };
+  function labState() { var L = xs().lab; if (!L.q || typeof L.q !== 'object') L.q = {}; if (typeof L.honey !== 'number') L.honey = 0; return L; }
+  function mixQ(qa, na, qb, nb) { if (qa === undefined || na <= 0) return qb; if (qb === undefined || nb <= 0) return qa; return (qa * na + qb * nb) / (na + nb); }
+  function labGradeOf(q) { if (typeof q !== 'number') return null; for (var i = 0; i < LAB_GRADES.length; i++) if (q >= LAB_GRADES[i][0]) return LAB_GRADES[i]; return LAB_GRADES[LAB_GRADES.length - 1]; }
+  function labGrade(q) { var g = labGradeOf(q); return g ? g[1] : ''; }
+  function cigQ(sku) { return S.cigQ && typeof S.cigQ[sku] === 'number' ? S.cigQ[sku] : undefined; }
+  function skuDlc(K) { return K.dlc || (K.type === 'side' ? 'lab' : 'tobacco'); }
+  function cigPrice(sku, q) { var K = CIG_SKUS[sku], g = K.type === 'side' && dlcOn('lab') ? labGradeOf(q) : null; return g ? Math.max(1, Math.round(K.price * g[2])) : K.price; }
+  function cigLabel(sku, q) { var K = CIG_SKUS[sku], g = K.type === 'side' ? labGrade(q) : ''; return K.name + (g ? ' · grade ' + g : ''); }
+  function cigStockAdd(sku, n, q) {
+    if (!S.cigStock) S.cigStock = {}; if (!S.cigQ || typeof S.cigQ !== 'object') S.cigQ = {}; var have = cigStock(sku);
+    if (typeof q === 'number') S.cigQ[sku] = have > 0 ? mixQ(typeof S.cigQ[sku] === 'number' ? S.cigQ[sku] : 50, have, q, n) : q;
+    S.cigStock[sku] = have + n;
+  }
+  function labJobDur(sku) { return Math.round(LAB_JOBS[sku].dur * (dlcHas('lab', 'column') ? 2 / 3 : 1)); }
+  function labJobN(sku) { return Math.round(LAB_JOBS[sku].n * (dlcHas('lab', 'still') ? 1.25 : 1)); }
+  function labNeeds(sku) { var L = labState(); return !LAB_JOBS[sku].mix ? '' : L.honey > 0 ? 'honey' : (S.supplies.mix || 0) > 0 ? 'mix' : 'none'; }
+  function labStart(sid, sku, quiet) {
+    var L = labState(), J = LAB_JOBS[sku], s = S.stash[sid]; if (!J || L.job || !s || s.g < J.g) return false; var need = labNeeds(sku); if (need === 'none') return false;
+    var d = stashDraw(sid, J.g); if (need === 'honey') L.honey--; else if (need === 'mix') S.supplies.mix--;
+    var q = clamp(d.q + (need === 'honey' ? 8 : 0) + (dlcHas('lab', 'bench') ? 10 : 0), 0, 100);
+    L.job = { sku: sku, n: labJobN(sku), t: 0, dur: labJobDur(sku), q: Math.round(q) }; world.dirtyShelf = true;
+    if (!quiet) { sfx('click'); toast('🧪 Batch started: grade ' + labGrade(q), ''); save(); } return true;
+  }
+  function labShelve(J) { var L = labState(); if (typeof J.q === 'number') L.q[J.sku] = mixQ(L.q[J.sku], L.out[J.sku] || 0, J.q, J.n); L.out[J.sku] = (L.out[J.sku] || 0) + J.n; }
+  function labTechPick() {   // the technician takes the roughest bud there is enough of, and makes what the shop has least of
+    var L = labState(), bud = Object.keys(S.stash).filter(function (k) { var s = S.stash[k]; return s.g >= LAB_TECH.grams && s.qSum / s.g < LAB_TECH.maxQ; }).sort(function (a, b) { return S.stash[a].qSum / S.stash[a].g - S.stash[b].qSum / S.stash[b].g; })[0];
+    if (!bud) return null;
+    var sku = Object.keys(LAB_JOBS).filter(function (k) { return labNeeds(k) !== 'none' && (L.out[k] || 0) + cigStock(k) < LAB_TECH.stock; }).sort(function (a, b) { return (L.out[a] || 0) + cigStock(a) - (L.out[b] || 0) - cigStock(b); })[0];
+    return sku ? { strain: bud, sku: sku } : null;
+  }
+  function labMenu() {
+    var X = xs(), L = labState(), lines = [], out = L.out, h = held();
+    if (L.job) lines.push({ label: '⏳ Running: ' + L.job.n + ' × ' + cigLabel(L.job.sku, L.job.q) + ' · ' + Math.ceil(L.job.dur - L.job.t) + ' s left' + (powerOn() ? '' : ' · paused, no power'), cls: 'muted' });
+    if (h && h.kind === 'cigs' && h.sku === 'honey') lines.push({ label: '🍯 Put ' + h.n + ' × honey in the lab store <small>a jar does the work of a baking mix, and the batch comes out 8 points better</small>', act: function () { L.honey += h.n; S.hotbar[S.slot] = null; sfx('putdown'); toast('🍯 Honey in the lab store: ' + L.honey + ' jars', 'good'); save(); } });
+    var strains = Object.keys(S.stash).filter(function (k) { return S.stash[k].g >= 5; }).sort(function (a, b) { return S.stash[b].g - S.stash[a].g; });
+    if (!strains.length) lines.push({ label: 'Nothing to run. Bring at least 5 g of cured bud in the stash. Any bud will do, and better bud makes a better grade.', cls: 'muted' });
+    strains.slice(0, 2).forEach(function (sid) {
+      var nm = strainById(sid).name, s = S.stash[sid], q = s.qSum / s.g;
+      Object.keys(LAB_JOBS).forEach(function (sku) {
+        var J = LAB_JOBS[sku], need = labNeeds(sku), jq = clamp(q + (need === 'honey' ? 8 : 0) + (dlcHas('lab', 'bench') ? 10 : 0), 0, 100), ok = !L.job && s.g >= J.g && need !== 'none';
+        lines.push({ label: '🧪 ' + J.g + ' g of ' + nm + ' → ' + labJobN(sku) + ' × ' + CIG_SKUS[sku].name + ' · grade ' + labGrade(jq) + ' <small>' + labJobDur(sku) + ' s' + (J.mix ? (need === 'honey' ? ' · uses 1 honey (' + L.honey + ')' : ' · uses 1 baking mix (' + (S.supplies.mix || 0) + ')') : '') + ' · sells at ' + money(cigPrice(sku, jq)) + '</small>', cls: ok ? '' : 'muted', act: ok ? function () { labStart(sid, sku, false); } : null });
+      });
+    });
+    lines.push({ label: (X.staff.labtech ? '🥼 The technician is on the payroll' : '🥼 No technician') + ' <small>' + (X.staff.labtech ? 'runs bud under quality ' + LAB_TECH.maxQ + ' into whatever the shop has least of' : 'hire one at the staff roster board in the office: ' + money(LAB_TECH.wage) + ' a day') + '</small>', cls: X.staff.labtech ? 'on' : 'muted' });
+    Object.keys(out).forEach(function (k) { if (out[k] > 0) lines.push({ label: '📦 Take ' + Math.min(12, out[k]) + ' × ' + cigLabel(k, L.q[k]) + ' <small>' + out[k] + ' on the shelf · ' + money(cigPrice(k, L.q[k])) + ' each from the cigarette cabinet</small>', act: function () { if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } var n = Math.min(12, out[k]); out[k] -= n; take({ kind: 'cigs', sku: k, n: n, q: L.q[k] }); save(); } }); });
+    ctxOpen('🧪 Extraction lab', 'the grade follows the bud: A from quality 80, B from 60, C from 40', lines);
+  }
+  hooks.boot.push(function () {   // the technician stands at the rig while one is hired
+    var h = makeHuman({ shirt: 0xf2f4f5, pants: 0x2b3340, coat: 0xf2f4f5, glasses: true, longSleeve: true, hair: 0x3a2a1c, mood: 'happy' }); h.position.set(19.2, -200, -3.4); h.rotation.y = Math.PI * 0.85; world.group.add(h);
+    var hb = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.9, 0.9), MAT.none); hb.position.y = 0.95; h.add(hb); interactable(hb, { kind: 'labTech' }); labUI.tech = h;
+  });
+  dlcDefine({ id: 'lab', name: DLC_NAME.lab, kinds: ['labTech'],
+    prompt: function () { var L = labState(); return 'Lab technician <small>' + (L.job ? 'running ' + cigLabel(L.job.sku, L.job.q) : 'waiting for bud under quality ' + LAB_TECH.maxQ) + ' · E for the batch sheet</small>'; },
+    interact: function () { labMenu(); },
+    tick: function (dt) {
+      labUI.t += dt; if (labUI.t < 5) return; labUI.t = 0; var X = xs(); if (!X.staff.labtech || labState().job || !powerOn()) return;
+      var p = labTechPick(); if (p && labStart(p.strain, p.sku, true)) logEvent('🥼 The technician started ' + labState().job.n + ' × ' + cigLabel(p.sku, labState().job.q) + ' from ' + strainById(p.strain).name, '');
+    },
+    update: function (dt) { var h = labUI.tech; if (!h) return; var on = !!xs().staff.labtech; h.position.y = on ? BASE.y : -200; if (on && player.floor === -1 && player.pos.x > 12 && player.pos.x < 26) animateHuman(h, dt, 'idle', 0, player.pos); }
+  });
+  // ── The drive behind the menu ──
+  // The menu sits over the running game, so the view behind it is only a matter of where the camera is. While the splash or the
+  // main menu is up the camera leaves the player and rides a closed loop of streets, a little above roof-of-a-car height so it
+  // never drives through the traffic. The clock is held at dusk for as long as it lasts: low sun, street lamps and lit windows.
+  // Nothing about the player or the save is touched, and the moment the game starts the camera is the player's again.
+  var menuDrive = { on: false, u: 0.68, hour: 17.1, speed: 6.5, curve: null, len: 1, pos: new THREE.Vector3(0, 2.4, CITY.mainZ), look: new THREE.Vector3(), tan: new THREE.Vector3(), was: false };
+  function menuDriveWanted() {
+    if (ui.started) return false; var mm = document.getElementById('rf-mainmenu'), sp = document.getElementById('rf-splash');
+    return !!((mm && !mm.hidden) || (sp && !sp.hidden));
+  }
+  function menuDriveCurve() {
+    var m = CITY.mainZ, b = CITY.backZ, w = CITY.westX, e = CITY.eastX, c = 9, y = 2.4;
+    var pts = [[w + c, m], [-30, m], [0, m], [30, m], [e - c, m], [e, m - c], [e, (m + b) / 2], [e, b + c], [e - c, b], [20, b], [-20, b], [w + c, b], [w, b + c], [w, (m + b) / 2], [w, m - c]].reverse().map(function (p) { return new THREE.Vector3(p[0], y, p[1]); });   /* driven so that the inside of the loop, where the shop stands, is on the right: the menu card covers the left */
+    var cv = new THREE.CatmullRomCurve3(pts, true, 'centripetal'); menuDrive.len = cv.getLength(); return cv;
+  }
+  function updateMenuDrive(dt) {
+    var want = menuDriveWanted(); menuDrive.on = want;
+    if (!want) { if (menuDrive.was) { menuDrive.was = false; hands.visible = true; renderer.shadowMap.needsUpdate = true; } return; }
+    if (!menuDrive.curve) menuDrive.curve = menuDriveCurve();
+    menuDrive.was = true; hands.visible = false;
+    menuDrive.u = (menuDrive.u + dt * menuDrive.speed / menuDrive.len) % 1;
+    var cv = menuDrive.curve, p = cv.getPointAt(menuDrive.u), a = cv.getPointAt((menuDrive.u + 14 / menuDrive.len) % 1), t = now() / 1000;
+    menuDrive.pos.copy(p); menuDrive.pos.y = 2.4 + Math.sin(t * 0.6) * 0.04;
+    menuDrive.tan.subVectors(a, p).normalize();
+    /* the shop is inside the loop, so the view leans that way: to the right of the way we are going */
+    menuDrive.look.set(a.x - menuDrive.tan.z * 3.2, 1.9, a.z + menuDrive.tan.x * 3.2);
+    camera.position.copy(menuDrive.pos); camera.lookAt(menuDrive.look);
+  }
+  // ── Dev Tools: photo mode ──
+  // Started from the dev console. You stay where you stand and the game goes on around you; only the view moves. W A S D fly,
+  // Space and Ctrl go up and down, Shift is faster, the wheel changes the lens. F8 or Esc puts the camera back in your head.
+  var photo = { on: false, pos: new THREE.Vector3(), yaw: 0, pitch: 0, fov: 0, dir: new THREE.Vector3(), side: new THREE.Vector3() };
+  (function () { var st = document.createElement('style'); st.textContent = 'body.g3-photo > div, body.g3-photo > canvas.g3-dash { visibility: hidden !important; }'; document.head.appendChild(st); })();
+  function photoOn() {
+    if (photo.on) return true; if (drive.on || sec.view.on) { toast('Get out of the car or the camera view first', 'bad'); return false; }
+    photo.on = true; ui.photoOn = true; photo.pos.copy(camera.position); photo.yaw = player.yaw; photo.pitch = player.pitch; photo.fov = camera.fov;
+    setTimeout(function () { if (photo.on) document.body.classList.add('g3-photo'); }, 3500); try { canvas.requestPointerLock(); } catch (e) {}
+    return true;
+  }
+  function photoOff() {
+    if (!photo.on) return; photo.on = false; ui.photoOn = false; document.body.classList.remove('g3-photo'); camera.fov = photo.fov; camera.updateProjectionMatrix();
+    camera.position.set(player.pos.x, player.pos.y, player.pos.z); camera.rotation.set(player.pitch, player.yaw, 0); if (!ui.blocked()) lockPointer(); toast('📷 Back in your own head', '');
+  }
+  function updatePhoto(dt) {
+    if (!photo.on) return; var k = player.keys, sp = (k.ShiftLeft || k.ShiftRight ? 9 : 3) * dt, f = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0), s = (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0), u = (k.Space ? 1 : 0) - (k.ControlLeft || k.ControlRight ? 1 : 0);
+    camera.rotation.set(photo.pitch, photo.yaw, 0); camera.getWorldDirection(photo.dir); photo.side.crossVectors(photo.dir, camera.up).normalize();
+    photo.pos.addScaledVector(photo.dir, f * sp).addScaledVector(photo.side, s * sp); photo.pos.y += u * sp;
+    camera.position.copy(photo.pos); hands.visible = false;
+  }
+  document.addEventListener('mousemove', function (e) { if (!photo.on || document.pointerLockElement !== canvas) return; var sx = 0.0022 * SET.sens; photo.yaw -= e.movementX * sx; photo.pitch = clamp(photo.pitch - e.movementY * sx * (SET.invertY ? -1 : 1), -1.5, 1.5); });
+  document.addEventListener('wheel', function (e) { if (!photo.on) return; camera.fov = clamp(camera.fov + (e.deltaY > 0 ? 3 : -3), 20, 95); camera.updateProjectionMatrix(); }, { passive: true });
+  // ── Roof Greenhouse: barrels and hives ──
+  // Both are upgrades of the DLC, so they stand on the roof only once they are bought. The barrels fill in the rain and drain
+  // into the beds: a watered bed grows as fast as it does in the rain. The hives lift what a bed gives and make honey, which
+  // sells from the cabinet or goes into the lab's gummies and chocolate in place of a baking mix.
+  var ROOFX = { drain: 0.012, fill: 0.5, jars: 12, take: 6, bx: -3.3, bz: -1.8, hx: -7.9, hz: -3.2 };
+  CIG_SKUS.honey = { name: 'Roof honey', type: 'honey', shape: 'jar', dlc: 'greenhouse', size: 1, price: 9, col: 0xd99a1e, top: 0xfff3c8 };
+  var roofx = { barrels: null, hives: null, hits: [], obs: [], scr: null, level: null, bees: [], t: 0, syncT: 0 };
+  function roofxState() { return dlcState('roofkit', { water: 60, honey: 0 }); }
+  function roofWatered() { return dlcHas('greenhouse', 'barrels') && roofxState().water > 1; }
+  function roofGrams() { return dlcHas('greenhouse', 'hives') ? 30 : 25; }
+  function roofQBonus() { return dlcHas('greenhouse', 'vents') ? 12 : 0; }
+  function productHoneyJar(K, s) {
+    var G = new THREE.Group(), glass = new THREE.MeshPhysicalMaterial({ color: 0xe0a028, transparent: true, opacity: 0.9, roughness: 0.12 });
+    var body = new THREE.Mesh(roundCylGeo(0.024 * s, 0.022 * s, 0.06 * s, 16), glass); body.castShadow = true; G.add(body);
+    var lid = new THREE.Mesh(roundCylGeo(0.025 * s, 0.025 * s, 0.012 * s, 16), MAT.brass); lid.position.y = 0.036 * s; G.add(lid);
+    var lab = new THREE.Mesh(new THREE.CylinderGeometry(0.0245 * s, 0.0245 * s, 0.028 * s, 16, 1, true, -0.9, 1.8), new THREE.MeshBasicMaterial({ map: textTex(['HONEY', 'from the roof'], 180, 90, { size: 30, bg: '#fff3c8', color: '#5a3a0a', titleColor: '#5a3a0a', line: 'rgba(0,0,0,0)' }) })); G.add(lab);
+    return G;
+  }
+  function roofExtrasSync() {   // what is bought stands on the roof; what is not is out of the way, hit boxes and all
+    var gh = dlcOn('greenhouse'), hasB = gh && dlcOwns('greenhouse', 'barrels'), hasH = gh && dlcOwns('greenhouse', 'hives');
+    if (roofx.barrels) roofx.barrels.visible = hasB; if (roofx.hives) roofx.hives.visible = hasH;
+    roofx.hits.forEach(function (h) { var on = h.userData.interact.kind === 'roofBarrel' ? hasB : hasH; h.position.y = on ? h.userData.homeY : -300; });
+    roofx.obs.forEach(function (o) { var on = o.kind === 'b' ? hasB : hasH; o.ob.x1 = on ? o.x1 : 1e6; o.ob.x2 = on ? o.x2 : 1e6; });
+  }
+  function buildRoofExtras() {
+    var RY = ROOF_Y, B = new THREE.Group(), H = new THREE.Group(); B.position.set(ROOFX.bx, RY, ROOFX.bz); H.position.set(ROOFX.hx, RY, ROOFX.hz); world.group.add(B); world.group.add(H); roofx.barrels = B; roofx.hives = H;
+    function b(g, w, h, d, m, x, y, z, o) { o = o || {}; o.parent = g; o.floorLevel = 2; return box(w, h, d, m, x, y, z, o); }
+    var blue = colorMat(0x2f6fb0, 0.45, 0.1), timber = MAT.wood, pipe = MAT.black;
+    // two barrels on a timber stand, a downpipe from the gutter, a tap, the manifold the drip lines leave from
+    b(B, 0.9, 0.06, 1.7, timber, 0, 0.42, 0); [[-0.38, -0.75], [0.38, -0.75], [-0.38, 0.75], [0.38, 0.75], [-0.38, 0], [0.38, 0]].forEach(function (p) { b(B, 0.08, 0.4, 0.08, timber, p[0], 0.2, p[1]); });
+    [-0.42, 0.42].forEach(function (z) { cyl(0.32, 0.3, 0.95, blue, 0, 0.925, z, B, 28); cyl(0.33, 0.33, 0.04, colorMat(0x255a90, 0.45, 0.1), 0, 1.41, z, B, 28); [0.65, 1.15].forEach(function (y) { var r = new THREE.Mesh(new THREE.TorusGeometry(0.318, 0.014, 8, 32), colorMat(0x255a90, 0.45, 0.1)); r.rotation.x = Math.PI / 2; r.position.set(0, y, z); B.add(r); }); cyl(0.05, 0.05, 0.05, MAT.black, 0.12, 1.45, z, B, 12); });
+    var dp = cyl(0.04, 0.04, 1.6, MAT.alu, -0.34, 2.25, 0.42, B, 12); var el = cyl(0.04, 0.04, 0.34, MAT.alu, -0.17, 1.47, 0.42, B, 12); el.rotation.z = Math.PI / 2; var lk = cyl(0.022, 0.022, 0.5, pipe, 0, 0.62, 0, B, 8); lk.rotation.x = Math.PI / 2;
+    cyl(0.02, 0.02, 0.1, MAT.brass, 0.34, 0.6, -0.42, B, 10).rotation.z = Math.PI / 2; b(B, 0.03, 0.06, 0.012, colorMat(0xd0201a, 0.4), 0.4, 0.66, -0.42, { cast: false });
+    b(B, 0.12, 0.1, 0.5, MAT.gunmetal, 0.5, 0.2, 0, { r: 0.01 }); for (var i = 0; i < 6; i++) { var ln = cyl(0.008, 0.008, 0.5, pipe, 0.75, 0.04, -0.2 + i * 0.08, B, 6); ln.rotation.z = Math.PI / 2; }
+    b(B, 0.05, 0.9, 0.02, MAT.gloss, 0.335, 0.95, 0.42, { cast: false }); roofx.level = b(B, 0.03, 0.8, 0.012, glowMat(0x7cc4ff, 1.1), 0.35, 0.95, 0.42, { cast: false, sharp: true });
+    roofx.scr = readout(0.3, 0.18, '#7cc4ff'); roofx.scr.position.set(0.47, 1.35, 0); roofx.scr.rotation.y = Math.PI / 2; B.add(roofx.scr); b(B, 0.03, 0.24, 0.36, MAT.gloss, 0.45, 1.35, 0, { r: 0.008, cast: false }); b(B, 0.03, 0.9, 0.03, MAT.gunmetal, 0.45, 0.8, 0.1, { cast: false });
+    // two hives: a stand, a brood box, two supers and a pitched lid; an entrance board on the front
+    [-0.7, 0.7].forEach(function (x, n) {
+      b(H, 0.6, 0.05, 0.6, timber, x, 0.32, 0); [[-0.24, -0.24], [0.24, -0.24], [-0.24, 0.24], [0.24, 0.24]].forEach(function (p) { b(H, 0.06, 0.3, 0.06, timber, x + p[0], 0.15, p[1]); });
+      [[0.47, 0.26, 0xf4f1ea], [0.7, 0.18, n ? 0xe8d27a : 0xa9d3a0], [0.89, 0.18, 0xf4f1ea]].forEach(function (L) { b(H, 0.5, L[1], 0.5, colorMat(L[2], 0.8), x, L[0], 0, { r: 0.012 }); b(H, 0.1, 0.02, 0.03, MAT.gunmetal, x, L[0] + 0.02, 0.26, { cast: false }); });
+      var lid = b(H, 0.62, 0.05, 0.62, MAT.alu, x, 1.01, 0, { r: 0.01 }); b(H, 0.5, 0.012, 0.12, timber, x, 0.35, 0.32, { cast: false }).rotation.x = 0.2; b(H, 0.18, 0.02, 0.01, MAT.black, x, 0.375, 0.252, { cast: false, sharp: true });
+    });
+    for (var k = 0; k < 14; k++) { var bee = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 5), colorMat(k % 2 ? 0x1a1a1a : 0xe0a028, 0.6)); H.add(bee); roofx.bees.push({ m: bee, hive: k % 2 ? 0.7 : -0.7, r: 0.35 + (k % 5) * 0.12, sp: 1.6 + (k % 4) * 0.5, ph: k * 1.7, h: 0.5 + (k % 3) * 0.25 }); }
+    var sg = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.26), new THREE.MeshBasicMaterial({ map: textTex(['BEES AT WORK', 'move slowly'], 288, 84, { titleColor: '#f0b94d' }), transparent: true })); sg.position.set(0, 1.45, -0.45); H.add(sg); signBack(sg, 0.9, 0.26); b(H, 0.04, 1.3, 0.04, timber, 0, 0.65, -0.47);
+    [[ROOFX.bx, 0.8, ROOFX.bz, 1.3, 1.7, 2.0, 'roofBarrel'], [ROOFX.hx, 0.6, ROOFX.hz, 2.2, 1.3, 0.9, 'roofHive']].forEach(function (h) { var m = new THREE.Mesh(new THREE.BoxGeometry(h[3], h[4], h[5]), MAT.none); m.position.set(h[0], RY + h[1], h[2]); m.userData.homeY = RY + h[1]; world.group.add(m); interactable(m, { kind: h[6] }); roofx.hits.push(m); });
+    [['b', ROOFX.bx - 0.5, ROOFX.bx + 0.6, ROOFX.bz - 0.9, ROOFX.bz + 0.9], ['h', ROOFX.hx - 1.05, ROOFX.hx + 1.05, ROOFX.hz - 0.4, ROOFX.hz + 0.4]].forEach(function (o) { var ob = { x1: o[1], x2: o[2], z1: o[3], z2: o[4], tag: 'roofkit', floorLevel: 2 }; world.obstacles.push(ob); roofx.obs.push({ kind: o[0], ob: ob, x1: o[1], x2: o[2] }); });
+    roofExtrasSync();
+  }
+  hooks.boot.push(buildRoofExtras);
+  hooks.frame.push(function (dt) {   // runs whether the DLC is on or not, so switching it off clears the roof
+    roofx.syncT -= dt; if (roofx.syncT > 0) return; roofx.syncT = 1; if (roofx.barrels) roofExtrasSync();
+  });
+  dlcDefine({ id: 'greenhouse', name: DLC_NAME.greenhouse, kinds: ['roofBarrel', 'roofHive'],
+    prompt: function (d) {
+      var R = roofxState(); if (d.kind === 'roofBarrel') return 'Rain barrels <small>' + Math.round(R.water) + '% full · ' + (R.water > 1 ? 'the beds are watered' : 'empty: the beds wait for rain') + '</small>';
+      return 'Beehives <small>' + R.honey + ' jar' + (R.honey === 1 ? '' : 's') + ' of honey to take' + (season() === 'Winter' ? ' · the bees sit the winter out' : '') + '</small>';
+    },
+    interact: function (d) {
+      var R = roofxState();
+      if (d.kind === 'roofBarrel') { ctxOpen('🛢️ Rain barrels', 'rain fills them, the drip lines empty them', [{ label: 'Water <b>' + Math.round(R.water) + '%</b> <small>' + (R.water > 1 ? 'watered beds grow half as fast again' : 'the beds grow at their own pace until it rains') + '</small>', cls: R.water > 1 ? 'on' : 'bad' }, { label: '🚰 Fill them from the tap <small>for a dry spell</small>', cls: R.water > 95 ? 'muted' : '', act: R.water > 95 ? null : function () { R.water = 100; sfx('pour'); toast('🚰 The barrels are full', 'good'); save(); } }]); return; }
+      var n = Math.min(ROOFX.take, R.honey);
+      ctxOpen('🐝 Beehives', 'a jar a day from spring to autumn · they hold ' + ROOFX.jars, [{ label: '🍯 Take ' + n + ' jar' + (n === 1 ? '' : 's') + ' of honey <small>' + R.honey + ' in the hives · ' + money(CIG_SKUS.honey.price) + ' a jar from the cigarette cabinet, or into the lab store</small>', cls: n ? '' : 'muted', act: n ? function () { if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } R.honey -= n; take({ kind: 'cigs', sku: 'honey', n: n }); toast('🍯 ' + n + ' jar' + (n === 1 ? '' : 's') + ' of honey', 'good'); save(); } : null }, { label: 'With the hives on the roof a bed gives ' + roofGrams() + ' g.', cls: 'muted' }]);
+    },
+    tick: function (dt) {
+      if (!dlcOwns('greenhouse', 'barrels')) return; var R = roofxState(), wet = /rain|storm/.test(xs().weather.kind);
+      if (wet) R.water = Math.min(100, R.water + ROOFX.fill * dt); else { var n = xs().roof.filter(function (b) { return b.stage === 'grow'; }).length; R.water = Math.max(0, R.water - ROOFX.drain * n * dt); }
+    },
+    newDay: function (offline) { if (!dlcOwns('greenhouse', 'hives') || season() === 'Winter') return; var R = roofxState(); if (R.honey < ROOFX.jars) { R.honey++; if (!offline && R.honey === ROOFX.jars) toast('🐝 The hives are full of honey', ''); } },
+    update: function (dt) {
+      if (player.floor !== 2 || !roofx.barrels) return; roofx.t += dt; var R = roofxState();
+      if (roofx.hives.visible) roofx.bees.forEach(function (b) { var a = roofx.t * b.sp + b.ph; b.m.position.set(b.hive + Math.cos(a) * b.r, b.h + Math.sin(a * 1.7) * 0.18 + 0.2, 0.3 + Math.sin(a) * b.r * 0.8); });
+      if (roofx.barrels.visible) { var f = clamp(R.water / 100, 0.02, 1); roofx.level.scale.y = f; roofx.level.position.y = 0.55 + 0.4 * f; roofx.scr.userData.draw(['Rain barrels', Math.round(R.water) + '% full', R.water > 1 ? 'beds watered' : 'empty']); }
+    }
+  });
+  // ── DLC upgrades ──
+  // An upgrade belongs to one DLC and is kept in S.dlcUpg[dlc][id]. It counts only while its DLC is switched on, so switching
+  // a DLC off puts its numbers back and switching it on again brings the upgrades back with it.
+  // Most upgrades change one number. upgProp() turns that number into a getter, so every place that reads it (the rule, the
+  // prompt, the sign on the machine) sees the upgraded figure without being told.
+  var DLC_UPG = {}, DLC_UPG_ORDER = [];
+  function dlcUpgDefine(dlc, ico, list) { DLC_UPG[dlc] = { ico: ico, list: list }; DLC_UPG_ORDER.push(dlc); }
+  function dlcUpgState() { if (!S.dlcUpg || typeof S.dlcUpg !== 'object' || Array.isArray(S.dlcUpg)) S.dlcUpg = {}; return S.dlcUpg; }
+  function dlcOwns(dlc, id) { var u = dlcUpgState()[dlc]; return !!(u && u[id]); }
+  function dlcHas(dlc, id) { return dlcOwns(dlc, id) && dlcOn(dlc); }
+  function dlcUpgFind(dlc, id) { var G = DLC_UPG[dlc]; return G ? G.list.filter(function (u) { return u.id === id; })[0] : null; }
+  function dlcUpgGive(dlc, id) { var st = dlcUpgState(); if (!st[dlc] || typeof st[dlc] !== 'object') st[dlc] = {}; st[dlc][id] = true; var u = dlcUpgFind(dlc, id); if (u && u.after) { try { u.after(); } catch (e) { console.error('[dlc upgrade ' + dlc + ':' + id + ']', e); } } }
+  function dlcUpgBuy(dlc, id) {
+    var u = dlcUpgFind(dlc, id); if (!u || dlcOwns(dlc, id)) return false; if (!dlcOn(dlc)) { dlcOff(dlc); return false; }
+    if ((S.level || 1) < (u.lvl || 1)) { sfx('bad'); toast(u.name + ' needs level ' + u.lvl, 'bad'); return false; }
+    if (!payBank(u.price, u.name)) return false;
+    dlcUpgGive(dlc, id); gainXp(15); toast(u.ico + ' ' + u.name + ' is in', 'good'); logEvent(u.ico + ' Bought ' + u.name + ' for ' + money(u.price), 'good'); hud(); save(); return true;
+  }
+  function upgProp(obj, key, fn) { var base = obj[key]; Object.defineProperty(obj, key, { get: function () { return fn(base); }, set: function (v) { base = v; }, configurable: true, enumerable: true }); }
+
+  dlcUpgDefine('tobacco', '🚬', [
+    { id: 'kiln', ico: '🔥', name: 'Forced-air kiln', price: 1800, lvl: 3, d: 'A load cures in 40 s, down from 60.' },
+    { id: 'maker', ico: '⚙️', name: 'High-speed maker', price: 2400, lvl: 5, d: 'Rolls 10 sticks a second, up from 6, and the packer closes a pack in 0.8 s.' },
+    { id: 'humidor', ico: '🗄️', name: 'Cedar humidor', price: 1500, lvl: 4, d: 'Cigars age in half the time and the humidor holds 80, up from 40.' }]);
+  dlcUpgDefine('lab', '🧪', [
+    { id: 'column', ico: '🧯', name: 'Second column', price: 2200, lvl: 4, d: 'Every batch takes a third less time.' },
+    { id: 'still', ico: '⚗️', name: 'Short-path still', price: 1800, lvl: 5, d: 'Every batch makes a quarter more.' },
+    { id: 'bench', ico: '🔬', name: 'Test bench', price: 1200, lvl: 3, d: 'Every batch comes out 10 points of quality higher.' }]);
+  dlcUpgDefine('greenhouse', '🌿', [
+    { id: 'barrels', ico: '🛢️', name: 'Rain barrels and drip lines', price: 900, lvl: 2, d: 'Barrels fill when it rains and water the beds. Watered beds grow half as fast again.', after: function () { roofExtrasSync(); } },
+    { id: 'hives', ico: '🐝', name: 'Two beehives', price: 1400, lvl: 3, d: 'A bed gives 30 g instead of 25, and the hives make a jar of honey a day outside winter.', after: function () { roofExtrasSync(); } },
+    { id: 'vents', ico: '🪟', name: 'Shade cloth and vents', price: 1100, lvl: 4, d: 'What you cut on the roof is 12 points of quality better.' }]);
+  dlcUpgDefine('breeding', '🧬', [
+    { id: 'culture', ico: '🧫', name: 'Tissue culture', price: 1200, lvl: 4, d: 'A cross takes 5 minutes, down from 8.' },
+    { id: 'tumbler', ico: '🌰', name: 'Seed tumbler', price: 800, lvl: 3, d: 'A cross gives 10 seeds, up from 6.' },
+    { id: 'library', ico: '📚', name: 'Genetic library', price: 1500, lvl: 5, d: 'Room for 20 cultivars of your own, and twice the chance of a plant that stands out.' }]);
+  dlcUpgDefine('hydrobay', '💧', [
+    { id: 'doser', ico: '🎚️', name: 'Auto doser', price: 1600, lvl: 4, d: 'The pH holds itself at 6.0.' },
+    { id: 'tank', ico: '🛢️', name: 'Bigger tank', price: 900, lvl: 3, d: 'The feed lasts twice as long.' },
+    { id: 'chiller', ico: '❄️', name: 'Root chiller', price: 1400, lvl: 5, d: 'Quality on the rack climbs to 100, up from 90.' }]);
+  dlcUpgDefine('cup', '🏆', [
+    { id: 'jar', ico: '🫙', name: 'Presentation jar', price: 600, lvl: 2, d: 'Your entry scores 4 points more with the judges.' },
+    { id: 'sponsor', ico: '🤝', name: 'A sponsor', price: 1500, lvl: 5, d: 'Prize money is half as much again.' },
+    { id: 'press', ico: '📰', name: 'Press coverage', price: 900, lvl: 3, d: 'The rep you win at the Cup is doubled.' }]);
+  dlcUpgDefine('merch', '👕', [
+    { id: 'hoodie', ico: '🧥', name: 'Hoodies', price: 700, lvl: 3, d: 'A new line on the stand, and the dearest: costs $16, sells for $42.', after: function () { if (propInst.merchStand) buildProp('merchStand'); } },
+    { id: 'express', ico: '⚡', name: 'Express printing', price: 500, lvl: 2, d: 'A box arrives in 30 s, down from 90.' },
+    { id: 'racks', ico: '🗄️', name: 'Bigger stand', price: 650, lvl: 3, d: 'The stand holds 80 of each, up from 40.' }]);
+  dlcUpgDefine('farm', '🚜', [
+    { id: 'drip', ico: '💧', name: 'Drip irrigation', price: 1800, lvl: 4, d: 'The rows water themselves from the tank by the gate.' },
+    { id: 'tunnels', ico: '⛺', name: 'Polytunnels', price: 2600, lvl: 6, d: 'Frost takes nothing, and rows keep growing through the winter.', after: function () { if (typeof farmSync === 'function') farmSync(); } },
+    { id: 'fans', ico: '🌬️', name: 'Barn fans', price: 1200, lvl: 3, d: 'The crop dries in half the time.' }]);
+  dlcUpgDefine('finance', '💰', [
+    { id: 'premium', ico: '💎', name: 'Premium account', price: 2000, lvl: 5, d: 'Savings earn 0.8% a day, up to $1,000 a day.' },
+    { id: 'standing', ico: '📄', name: 'Good standing', price: 1000, lvl: 3, d: 'A loan costs 8%, down from 12%.' },
+    { id: 'full', ico: '🛡️', name: 'Full cover', price: 1500, lvl: 4, d: 'Robbery cover pays back everything that was taken.' }]);
+
+  upgProp(TOB, 'kilnT', function (b) { return dlcHas('tobacco', 'kiln') ? 40 : b; });
+  upgProp(TOB, 'sticksS', function (b) { return dlcHas('tobacco', 'maker') ? 10 : b; });
+  upgProp(TOB, 'packS', function (b) { return dlcHas('tobacco', 'maker') ? 0.8 : b; });
+  upgProp(BREED, 'ms', function (b) { return dlcHas('breeding', 'culture') ? 300000 : b; });
+  upgProp(BREED, 'seeds', function (b) { return dlcHas('breeding', 'tumbler') ? 10 : b; });
+  upgProp(BREED, 'max', function (b) { return dlcHas('breeding', 'library') ? 20 : b; });
+  upgProp(HYDRO, 'phDrift', function (b) { return dlcHas('hydrobay', 'doser') ? 0 : b; });
+  upgProp(HYDRO, 'feedUse', function (b) { return dlcHas('hydrobay', 'tank') ? b / 2 : b; });
+  upgProp(MERCH, 'wait', function (b) { return dlcHas('merch', 'express') ? 30 : b; });
+  upgProp(FARM, 'dryS', function (b) { return dlcHas('farm', 'fans') ? b / 2 : b; });
+  upgProp(FIN, 'rate', function (b) { return dlcHas('finance', 'premium') ? 0.008 : b; });
+  upgProp(FIN, 'cap', function (b) { return dlcHas('finance', 'premium') ? 1000 : b; });
+  upgProp(FIN, 'interest', function (b) { return dlcHas('finance', 'standing') ? 0.08 : b; });
+
+  function paneDlcUpg() {
+    var h = '', any = false;
+    DLC_UPG_ORDER.forEach(function (dlc) {
+      if (!dlcOn(dlc)) return; any = true;
+      var G = DLC_UPG[dlc], own = G.list.filter(function (u) { return dlcOwns(dlc, u.id); }).length;
+      h += '<div class="g3-box"><h3>' + G.ico + ' ' + esc(DLC_NAME[dlc] || dlc) + ' · ' + own + ' of ' + G.list.length + '</h3>';
+      G.list.forEach(function (u) {
+        var has = dlcOwns(dlc, u.id), lv = (S.level || 1) >= (u.lvl || 1), ok = !has && lv && S.bank >= u.price;
+        h += '<div class="g3-row"><span class="ico">' + u.ico + '</span><span class="meta"><span class="n">' + u.name + (has ? '' : ' · ' + money(u.price)) + '</span><span class="own">' + u.d + (has || lv ? '' : ' From level ' + u.lvl + '.') + '</span></span><button class="g3-btn' + (has ? ' primary' : '') + '" data-act="dlcUpgBuy" data-id="' + dlc + ':' + u.id + '"' + (ok ? '' : ' disabled') + '>' + (has ? 'Fitted' : 'Buy') + '</button></div>';
+      });
+      h += '</div>';
+    });
+    if (!any) return '<div class="g3-grid"><div class="g3-box"><h3>⬆️ Upgrades</h3><div class="g3-empty">Every DLC has three upgrades of its own, and no DLC is switched on. Switch one on under Workshop and DLC in the main menu.</div></div></div>';
+    return '<div class="desc" style="margin:0 0 12px">Three upgrades for every DLC you have switched on. They are paid from the bank and last for good. The bank holds ' + money(S.bank) + '.</div><div class="g3-grid">' + h + '</div>';
+  }
+  hooks.panel.dlcupg = function () { return { title: '⬆️ DLC upgrades', body: paneDlcUpg() }; };
+  hooks.panelClick.push(function (act, b) { if (act !== 'dlcUpgBuy') return false; var id = String(b.getAttribute('data-id') || '').split(':'); dlcUpgBuy(id[0], id[1]); return true; });
   // ── Boot ──────────────────────────────────────────────────────────
   // A failure anywhere from reading the save to the last build call reloads the page once in recovery: load() then
   // opens a fresh shop in memory and leaves the save slot alone. A second failure only reports itself.
@@ -10341,7 +10767,7 @@
     if (now() - deskBoard.lastFetch > 30000) fetchDesk(); updateDeskBoard();
     updateCurtains(dt); updateStaffDoor(dt); radio.update(); syncBroom(); updateTv(dt); editUpdate(); runHooks(hooks.frame, dt);
     if (!ui.menuOpen) { updatePlayer(dt); syncHands(dt); updateSmoke(dt); updateScope(dt); updateTrigger(); updatePlantVisuals(dt); updateNpc(dt); updateLineup(dt); updateRopeGates(dt); updateLoungers(dt); updateRobbers(dt); updatePolice(dt); updateTobacco(powerOn() ? dt : 0); updateExpansion(dt); updateDoors(dt); updateShutters(dt); updateIntro(dt); updateCity(dt); updateMachines(dt); updateVip(dt); updateFight(dt); updateTruck(dt); updateCourier(dt); updatePeds(dt); updateVanShop(dt); updateProps(dt); updateDehums(dt); updateBursts(dt); updateFocus(); deskTouchUpdate(); touchUpdate(); }
-    updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt); updatePcZoom(dt);
+    updateDayNight(); updateLightBudget(); updateShadowTimer(); updateSecurity(dt); updatePcZoom(dt); updateMenuDrive(dt); updatePhoto(dt);
     if (_df.t && now() - _df.t > 250) { _df.t = 0; defightScene(); }
     if (sec.view.on) { var vc = sec.cams[sec.view.idx]; vc.aspect = camera.aspect; vc.updateProjectionMatrix(); $('g3-cam-time').textContent = clockText(); var vcTown = (vc.layers.mask & (1 << TOWN_LAYER)) !== 0; vc.layers.enable(TOWN_LAYER); renderer.render(scene, vc); if (!vcTown) vc.layers.disable(TOWN_LAYER); } else renderer.render(scene, camera);
     if (SET.fps) { fpsAcc += dt; fpsN++; fpsT += dt; if (fpsT > 0.5) { $('h-fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; fpsT = 0; } }
@@ -10355,7 +10781,7 @@
     resetShop: resetShop, setPageReload: function (fn) { pageReload = fn; }, devStrains: devStrains, dlcOn: dlcOn, propGone: propGone, inGoneProp: inGoneProp, fixtures: function () { return fxById; }, applyFixtures: applyFixtures,
     sun: sun, traffic: function () { return traffic; }, truck: function () { return truck; }, shutterOpen: shutterOpen, anyCigStock: anyCigStock, syncGoods: syncGoods, applyDlcWorld: applyDlcWorld, staffDoorLocked: staffDoorLocked, keyStaffDoor: keyStaffDoor, toggleStaffDoor: toggleStaffDoor, navKey: navKey, ghParts: function () { return exp.ghParts; }, openMenu: openMenu, closeMenu: closeMenu, npcState: function () { return npc.state; },
     lineCount: lineCount, lineShown: lineShown, exitPath: exitPath, ropeGates: function () { return ropeGates; }, ropeSegs: function () { return ropeSegList; },
-    robbers: function () { return robbers; }, heist: function () { return heist; }, maskUp: maskUp, guardOdds: guardOdds, devOpen: devOpen, devClose: devClose,
+    robbers: function () { return robbers; }, heist: function () { return heist; }, maskUp: maskUp, guardOdds: guardOdds, dlcUpg: { list: DLC_UPG, has: dlcHas, owns: dlcOwns, buy: dlcUpgBuy, give: dlcUpgGive, pane: paneDlcUpg }, cigar: { state: cigarState, start: cigarStart, take: cigarTake, aged: cigarAged, count: cigarCount, CIGAR: CIGAR }, lab: { state: labState, start: labStart, menu: labMenu, tick: labTick, shelve: labShelve, techPick: labTechPick, price: cigPrice, grade: labGrade, stockAdd: cigStockAdd, cigQ: cigQ, JOBS: LAB_JOBS, TECH: LAB_TECH }, roofx: { state: roofxState, watered: roofWatered, grams: roofGrams, sync: roofExtrasSync, parts: roofx }, menuDrive: menuDrive, photo: { on: photoOn, off: photoOff, state: photo, update: updatePhoto }, updateMenuDrive: updateMenuDrive, TOB: TOB, tob: tob, tobSpare: tobSpare, devOpen: devOpen, devClose: devClose,
     dlc: { state: dlcState, step: dlcStep, newDay: dlcNewDay, footfall: dlcFootfall, breed: breedState, breedStart: breedStart, breedFinish: breedFinish, BREED: BREED, hydro: hydroState, hydroOk: hydroOk, HYDRO: HYDRO, cup: cupState, cupEnter: cupEnter, cupJudge: cupJudge, cupNext: cupNext, merch: merchState, merchSell: merchSell, merchOrder: merchOrder, merchLevel: merchLevel, farm: farmState, farmSow: farmSow, farmHarvest: farmHarvest, FARM: FARM, fin: finState, finBorrow: finBorrow, finMove: finMove, FIN: FIN, interact: dlcInteract, prompt: dlcPrompt }, npc: npc, guard: guard, useHeld: useHeld, trigger: trigger, scope: scope,
     price: { bag: bagPrice, joint: jointPrice, cookie: cookiePrice, unit: unitPrice, repMult: repMult, footfall: footfall, bagGrams: bagGrams },
     bills: billLines, dailyFixed: dailyFixed, headcount: headcount, taxDue: taxDue, bizTax: bizTax, tillWatch: tillWatch, tillHeavy: tillHeavy, toggleShopOpen: toggleShopOpen, breakWait: breakWait, lineup: function () { return lineup; },

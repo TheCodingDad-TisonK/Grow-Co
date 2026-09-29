@@ -1,16 +1,19 @@
 //@ DLC: Merch & Brand. A stand of T-shirts, caps, mugs and tote bags in the lobby: people buy while they wait, and the shop's name gets about
   // ── DLC: Merch & Brand ──
+  var MERCH_HOODIE = { id: 'hoodie', ico: '🧥', name: 'Hoodie', one: 'a hoodie', cost: 16, sell: 42 };
   var MERCH = { price: 600, lot: 10, wait: 90, items: [
     { id: 'tee', ico: '👕', name: 'T-shirt', one: 'a T-shirt', cost: 9, sell: 24 }, { id: 'cap', ico: '🧢', name: 'Cap', one: 'a cap', cost: 7, sell: 18 },
     { id: 'mug', ico: '☕', name: 'Mug', one: 'a mug', cost: 5, sell: 14 }, { id: 'tote', ico: '👜', name: 'Tote bag', one: 'a tote bag', cost: 4, sell: 12 }],
     levels: [0, 10, 30, 60, 100, 150, 210, 280, 360, 450, 550], tiers: [[0.8, 'keen', 1.35], [1, 'fair', 1], [1.25, 'dear', 0.6]] };
-  function merchState() { var M = dlcState('merch', { owned: false, stock: {}, tier: 1, brand: 0, sold: 0, takings: 0, orders: [], t: 0 }); MERCH.items.forEach(function (it) { if (typeof M.stock[it.id] !== 'number') M.stock[it.id] = 0; }); return M; }
+  function merchState() { var M = dlcState('merch', { owned: false, stock: {}, tier: 1, brand: 0, sold: 0, takings: 0, orders: [], t: 0 }); if (typeof M.stock.hoodie !== 'number') M.stock.hoodie = 0; MERCH.items.forEach(function (it) { if (typeof M.stock[it.id] !== 'number') M.stock[it.id] = 0; }); return M; }
+  function merchCap() { return dlcHas('merch', 'racks') ? 80 : 40; }
+  upgProp(MERCH, 'items', function (b) { return dlcHas('merch', 'hoodie') ? b.concat([MERCH_HOODIE]) : b; });
   function merchItem(id) { return MERCH.items.filter(function (it) { return it.id === id; })[0]; }
   function merchLevel() { var b = merchState().brand, l = 0; MERCH.levels.forEach(function (n, i) { if (b >= n) l = i; }); return l; }
   function merchPrice(it) { return Math.round(it.sell * MERCH.tiers[merchState().tier][0]); }
   function merchFootfall() { return 1 + merchLevel() * 0.02; }
   function merchOrder(id) {
-    var M = merchState(), it = merchItem(id); if (!it || !M.owned) return; if (M.stock[id] + M.orders.filter(function (o) { return o.id === id; }).length * MERCH.lot > 40) { toast('The stand holds 40 of each and no more', 'bad'); return; }
+    var M = merchState(), it = merchItem(id); if (!it || !M.owned) return; if (M.stock[id] + M.orders.filter(function (o) { return o.id === id; }).length * MERCH.lot > merchCap()) { toast('The stand holds ' + merchCap() + ' of each and no more', 'bad'); return; }
     if (!payBank(it.cost * MERCH.lot, 'A box of ' + MERCH.lot)) return; M.orders.push({ id: id, t: MERCH.wait });
     toast(it.ico + ' ' + MERCH.lot + ' × ' + it.name.toLowerCase() + ' ordered. The printer sends them round in a minute or two.', 'good'); logEvent(it.ico + ' Ordered ' + MERCH.lot + ' × ' + it.name.toLowerCase() + ' for the merch stand: ' + money(it.cost * MERCH.lot), '');
   }
@@ -46,6 +49,7 @@
     [1, -1].forEach(function (face) {
       var ry = face > 0 ? 0 : Math.PI, z0 = face * 0.06;
       for (var i = 0; i < Math.min(5, Math.ceil(M.stock.tee / 4)); i++) { var t = add(TEE_GEO, fabricMat(MERCH_COLS[(i + (face > 0 ? 0 : 2)) % 5]), face * (-0.56 + i * 0.28), 1.42, z0 + face * (0.05 + (i % 2) * 0.03), ry); t.rotation.y += face * 0.18; t.scale.setScalar(0.78); var mk = merchMark(0.12); mk.position.set(0, 0.02, 0.018); t.add(mk); add(roundCylGeo(0.004, 0.004, 0.16, 6), MAT.chrome, t.position.x, 1.66, t.position.z - face * 0.0, 0).rotation.x = Math.PI / 2; }
+      for (var hd2 = 0; hd2 < Math.min(3, Math.ceil((M.stock.hoodie || 0) / 5)); hd2++) { var hm = fabricMat([0x15171b, 0x2f6b4a, 0x7a2f3a][hd2]), hx = face * (-0.5 + hd2 * 0.5), hb2 = add(TEE_GEO, hm, hx, 1.06, z0 + face * 0.06, ry); hb2.scale.set(0.9, 0.95, 1.6); var hood = add(new THREE.SphereGeometry(0.075, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), hm, hx, 1.24, z0 + face * 0.05, ry); hood.scale.set(1, 1.1, 0.7); var mk3 = merchMark(0.1); mk3.position.set(0, 0.0, 0.012); hb2.add(mk3); }
       for (var c2 = 0; c2 < Math.min(4, Math.ceil(M.stock.cap / 5)); c2++) { var cm = fabricMat(MERCH_COLS[(c2 + 1) % 5]), cx = face * (-0.5 + c2 * 0.33), cap = add(new THREE.SphereGeometry(0.085, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), cm, cx, 1.875, z0 + face * 0.1, ry); var pk = add(bevelGeo(0.13, 0.012, 0.09, 0.005), cm, cx, 1.88, z0 + face * 0.19, ry); pk.rotation.x = face * 0.12; }
       for (var m2 = 0; m2 < Math.min(5, Math.ceil(M.stock.mug / 4)); m2++) { var mm = colorMat(MERCH_COLS[(m2 + 3) % 5], 0.25), mx = face * (-0.56 + m2 * 0.28); add(roundCylGeo(0.04, 0.036, 0.09, 18), mm, mx, 0.795, z0 + face * 0.14, ry); var hd = add(new THREE.TorusGeometry(0.024, 0.007, 8, 14, Math.PI), mm, mx + 0.042, 0.795, z0 + face * 0.14, 0); hd.rotation.z = -Math.PI / 2; }
       for (var b = 0; b < Math.min(3, Math.ceil(M.stock.tote / 6)); b++) { var bm = fabricMat(b % 2 ? 0xe9dfc6 : 0x2f6b4a), bx = face * (-0.4 + b * 0.4), bag = add(bevelGeo(0.26, 0.3, 0.03, 0.01), bm, bx, 0.36, z0 + face * 0.16, ry); var mk2 = merchMark(0.13); mk2.position.set(0, -0.02, 0.0165); bag.add(mk2); var hl = add(new THREE.TorusGeometry(0.06, 0.006, 6, 14, Math.PI), bm, bx, 0.51, z0 + face * 0.16, ry); }

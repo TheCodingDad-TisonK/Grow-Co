@@ -27,6 +27,7 @@
     return G;
   }
   function productCigPack(K, s) {   // a hinge-lid pack: foil collar, lid seam, printed face and a health band
+    if (K.shape === 'cigar') return productCigar(K, s); if (K.shape === 'jar') return productHoneyJar(K, s);
     var G = new THREE.Group(), big = K.size === 20;
     var w = (big ? 0.056 : 0.046) * s, ht = (big ? 0.088 : 0.074) * s, d = (big ? 0.023 : 0.019) * s;
     var bodyM = prodMat('cig' + K.name, function () { return new THREE.MeshStandardMaterial({ color: K.col, roughness: 0.55 }); });
@@ -338,7 +339,7 @@
     if (h.kind === 'bat') { var bw = new THREE.MeshStandardMaterial({ color: 0xb98a4a, roughness: 0.6 }); add(roundCylGeo(0.034, 0.022, 0.72, 10), bw, 0, 0.44, 0); add(roundCylGeo(0.024, 0.024, 0.16, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 }), 0, 0.08, 0); add(roundCylGeo(0.032, 0.032, 0.02, 10), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), 0, 0.0, 0); add(new THREE.SphereGeometry(0.036, 10, 8), bw, 0, 0.81, 0); }
     if (h.kind === 'cigs') {
       var CK = CIG_SKUS[h.sku];
-      if (h.n > 2) {   /* a carton: a printed sleeve with the packs stacked inside the open end */
+      if (h.n > 2 && !CK.shape) {   /* a carton: a printed sleeve with the packs stacked inside the open end */
         add(bevelGeo(0.3, 0.1, 0.16), new THREE.MeshStandardMaterial({ color: CK.col, roughness: 0.6 }), 0, 0.05, 0);
         add(bevelGeo(0.302, 0.026, 0.162), new THREE.MeshStandardMaterial({ color: mixHex(CK.col, 0x000000, 0.3), roughness: 0.6 }), 0, 0.088, 0);
         add(new THREE.PlaneGeometry(0.24, 0.07), new THREE.MeshBasicMaterial({ map: textTex(['RF ' + (CK.type === 'light' ? 'LIGHT' : 'SMOKING'), '10 x ' + CK.size], 340, 100, { size: 34, bg: '#' + ('000000' + CK.col.toString(16)).slice(-6), color: '#' + ('000000' + CK.top.toString(16)).slice(-6), titleColor: '#' + ('000000' + CK.top.toString(16)).slice(-6), line: 'rgba(0,0,0,0)' }), transparent: true }), 0, 0.05, 0.0805);
@@ -438,7 +439,7 @@
     else if (h.kind === 'keys') { toast('🔑 Keyring back on its hook in the office', ''); setTimeout(syncKeyHook, 0); }   /* the hotbar slot clears just after this, so re-read it on the next tick */
     else if (h.kind === 'bat') { toast('Bat back by the counter', ''); if (world.batMesh) world.batMesh.visible = true; }
     else if (WEAPONS[h.kind]) { toast('The ' + WEAPONS[h.kind].name + ' is back in the weapon locker', ''); }
-    else if (h.kind === 'cigs') { S.cigStock[h.sku] = cigStock(h.sku) + h.n; syncCigCab(); toast('Packs back in the cigarette cabinet', ''); }
+    else if (h.kind === 'cigs') { cigStockAdd(h.sku, h.n, h.q); syncCigCab(); toast('Packs back in the cigarette cabinet', ''); }
     S.held = null; sfx('putdown');
     if (h.kind === 'joints' || h.kind === 'bags' || h.kind === 'cookies' || h.kind === 'jar') world.dirtyShelf = true; else if (h.kind === 'soil' || h.kind === 'nutrients' || h.kind === 'remedy' || h.kind === 'seed') world.dirtyRack = true; else if (h.kind === 'crate') world.dirtyStorage = true;   /* only the place it went back to is redrawn */
   }

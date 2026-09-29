@@ -8,7 +8,7 @@
   function breedChild(a, b) {
     var r = Math.random, avg = function (k) { return (a[k] + b[k]) / 2; };
     var c = { growMs: avg('growMs') * randf(0.9, 1.1), yield: avg('yield') * randf(0.92, 1.18), thc: avg('thc') * randf(0.95, 1.15) };
-    var star = r() < 0.14 ? pick(['yield', 'thc', 'growMs']) : '';   /* now and then one plant in the tray stands out */
+    var star = r() < (dlcHas('breeding', 'library') ? 0.28 : 0.14) ? pick(['yield', 'thc', 'growMs']) : '';   /* now and then one plant in the tray stands out */
     if (star === 'yield') c.yield *= 1.18; else if (star === 'thc') c.thc *= 1.14; else if (star === 'growMs') c.growMs *= 0.82;
     return { id: 'bred' + now().toString(36), name: breedName(a, b), emoji: '🧬', seed: Math.max(8, Math.round(avg('seed') * 1.3)), growMs: Math.round(clamp(c.growMs, 120000, 3600000 * 2)), yield: Math.round(clamp(c.yield, 4, 60) * 10) / 10, thc: Math.round(clamp(c.thc, 0.5, 4) * 100) / 100, lvl: Math.max(a.lvl || 1, b.lvl || 1), bud: breedMix(a.bud, b.bud, r()), hair: breedMix(a.hair, b.hair, r()), leaf: breedMix(a.leaf, b.leaf, r()), bred: true, parents: [a.id, b.id], star: star };
   }

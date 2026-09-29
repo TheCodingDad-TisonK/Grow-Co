@@ -2,7 +2,7 @@
   // ── Day / night ───────────────────────────────────────────────────
   var skyCol = new THREE.Color(), snowFog = new THREE.Color(), sunFocus = { x: 0, z: 0 };
   function updateDayNight() {
-    var h = gameHour();
+    var h = menuDrive && menuDrive.on ? menuDrive.hour : gameHour();   /* behind the main menu it is always dusk */
     var sunAlt = Math.sin((h - 6) / 12 * Math.PI); // 1 at noon, -1 at midnight
     var day = clamp(sunAlt * 1.4 + 0.1, 0, 1);
     var dusk = clamp(1 - Math.abs(sunAlt) * 3, 0, 1);
@@ -16,7 +16,7 @@
     scene.fog.color.copy(fogCol);
     sun.intensity = 0.1 + day * 0.9; sun.color.setRGB(1, lerp(0.7, 0.95, day) + dusk * 0.0, lerp(0.5, 0.85, day) - dusk * 0.2);
     /* the shadow box is 68 m across: centred on the shop, the car lost its shadow a block down Main St. It follows whoever you are (you, or the car you drive) in 4 m steps, so it is not redrawn for every stride */
-    var fx = drive.on && drive.g ? drive.g.position.x : player.pos.x, fz = drive.on && drive.g ? drive.g.position.z : player.pos.z; if (player.floor === -1) { fx = 0; fz = 0; }   /* the basement rooms sit far out on x, under ground: nothing there takes the sun */
+    var fx = drive.on && drive.g ? drive.g.position.x : player.pos.x, fz = drive.on && drive.g ? drive.g.position.z : player.pos.z; if (player.floor === -1) { fx = 0; fz = 0; } if (menuDrive && menuDrive.on) { fx = menuDrive.pos.x; fz = menuDrive.pos.z; }   /* the basement rooms sit far out on x, under ground: nothing there takes the sun */
     fx = Math.round(fx / 4) * 4; fz = Math.round(fz / 4) * 4; if (fx !== sunFocus.x || fz !== sunFocus.z) { sunFocus.x = fx; sunFocus.z = fz; renderer.shadowMap.needsUpdate = true; }
     var ang = (h - 6) / 12 * Math.PI; sun.position.set(fx + Math.cos(ang) * 30, Math.max(2, Math.sin(ang) * 30), fz + 12); sun.target.position.set(fx, 0, fz);
     hemi.intensity = (0.12 + day * 0.28) * (wk === 'snow' ? 1 + 0.2 * wxm : wk === 'storm' ? 0.85 : 1); hemi.color.setRGB(lerp(0.3, 0.75, day), lerp(0.35, 0.85, day), lerp(0.6, 1.0, day));
@@ -33,7 +33,7 @@
     if (sec.view.on && !ui.blocked()) { if (e.code === 'Escape' || e.code === 'KeyE') camExit(); else if (/^Digit[1-6]$/.test(e.code)) camShow(+e.code.charAt(5) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') camShow(sec.view.idx + 1); else if (e.code === 'ArrowLeft' || e.code === 'KeyA') camShow(sec.view.idx - 1); e.preventDefault(); return; }
     if (e.code === 'Escape' && postPick >= 0) { postPick = -1; toast('📍 Cancelled', ''); e.preventDefault(); return; }
     if (e.code === 'F8') { devOpen(); e.preventDefault(); return; }
-    if (e.code === 'Escape') { if (!ui.blocked() && runHooks(hooks.keydown, e)) { e.preventDefault(); return; } if (ui.devOpen) { devClose(); } else if (ui.pcOpen) { pcClose(); } else if (ui.deviceOpen) { deviceClose(); } else if (ui.wheelOpen) { wheelClose(); } else if (ui.ctxOpen) { ctxClose(); } else if (ui.panelOpen) { ui.closePanel(); } else if (ui.menuOpen) { closeMenu(); } else { openMenu(); } e.preventDefault(); return; }
+    if (e.code === 'Escape') { if (!ui.blocked() && runHooks(hooks.keydown, e)) { e.preventDefault(); return; } if (photo.on) { photoOff(); } else if (ui.devOpen) { devClose(); } else if (ui.pcOpen) { pcClose(); } else if (ui.deviceOpen) { deviceClose(); } else if (ui.wheelOpen) { wheelClose(); } else if (ui.ctxOpen) { ctxClose(); } else if (ui.panelOpen) { ui.closePanel(); } else if (ui.menuOpen) { closeMenu(); } else { openMenu(); } e.preventDefault(); return; }
     if (ui.ctxOpen) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') { ctxClose(); e.preventDefault(); } return; }
     if (ui.pcOpen || ui.deviceOpen || ui.wheelOpen) {   /* the PC desktop, a device or the wheel is up: only its own keys work */
       if (ui.deviceOpen && ((e.code === 'KeyF' && dev.kind === 'phone') || e.code === 'KeyJ')) { deviceClose(); e.preventDefault(); }

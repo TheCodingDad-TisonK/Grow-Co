@@ -55,7 +55,7 @@
       bb(0.3, 0.4, 0.25, blu, bx - 0.9, 0.25, bz + 0.2); var hp = bc(0.02, 0.02, 0.5, blu, bx - 0.9, 0.62, bz + 0.2, 8);   // nutrient tank and feed line
       world.obstacles.push({ x1: bx - 1.15, x2: bx + 1.15, z1: bz - 0.5, z2: bz + 0.5, tag: 'bay', floorLevel: -1 });
       var pg = new THREE.Group(); pg.position.set(bx, Y + 0.82, bz); world.group.add(pg);
-      for (var pl = 0; pl < 6; pl++) { var plant = new THREE.Group(); plant.position.set(-0.85 + (pl % 3) * 0.85, 0, pl < 3 ? -0.2 : 0.2); var stem = new THREE.Mesh(roundCylGeo(0.018, 0.024, 1.0, 6), MAT.stem); stem.position.y = 0.5; plant.add(stem); for (var lf = 0; lf < 7; lf++) { var leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.5), MAT.leaf); leaf.position.set(Math.cos(lf * 2.2) * 0.17, 0.2 + lf * 0.12, Math.sin(lf * 2.2) * 0.17); leaf.rotation.set(-0.9, lf * 2.2 + Math.PI / 2, 0); plant.add(leaf); } pg.add(plant); }
+      for (var pl = 0; pl < 6; pl++) { var plant = new THREE.Group(); plant.position.set(-0.85 + (pl % 3) * 0.85, 0, pl < 3 ? -0.2 : 0.2); var stem = new THREE.Mesh(roundCylGeo(0.018, 0.024, 1.0, 6), MAT.stem); stem.position.y = 0.5; plant.add(stem); for (var lf = 0; lf < 9; lf++) leafAt(BIGLEAF_GEO, MAT.bigleaf, Math.cos(lf * 2.2) * 0.02, 0.14 + lf * 0.1, Math.sin(lf * 2.2) * 0.02, lf * 2.2, 0.95 - lf * 0.06, 1.25 - lf * 0.07, plant);   /* tobacco: broad leaves, biggest at the foot */ pg.add(plant); }
       pg.visible = false; tobUI.bays.push(pg);
       sign('bay' + b, 0.7, 0.3, bx + 0.7, 0.35, bz + 0.51, 0, ['BAY ' + (b + 1), 'empty']); hit(2.3, 2.3, 1.1, bx, 1.2, bz, { kind: 'tobBay', idx: b });
     }
@@ -88,8 +88,38 @@
     // the electrical cabinet, drums and a hand truck so the room reads as a working floor
     bb(0.9, 1.9, 0.4, colorMat(0x5f666e, 0.5, 0.6), -8.75, 0.95, -4.6, { solid: true }); bb(0.02, 0.3, 0.2, yel, -8.29, 1.5, -4.6, { cast: false }); [-0.3, 0.3].forEach(function (dz) { bb(0.02, 0.06, 0.06, glowMat(0x39d353, 1.4), -8.29, 1.1, -4.6 + dz, { cast: false }); });
     [[7.9, -2.6], [8.3, -3.4]].forEach(function (p) { var dr = bc(0.3, 0.3, 0.9, blu, p[0], 0.45, p[1], 16); world.obstacles.push({ x1: p[0] - 0.3, x2: p[0] + 0.3, z1: p[1] - 0.3, z2: p[1] + 0.3, tag: 'drum', floorLevel: -1 }); });
+    (function worksDetail() {   /* every machine gets what it would have: guards, gauges, motors, feet, pipework, a control panel */
+      var gm = MAT.gunmetal, ss = MAT.steel, copper = colorMat(0xb87333, 0.3, 1);
+      function gauge(x, y, z, ry) { var gG = new THREE.Group(); gG.position.set(x, Y + y, z); gG.rotation.y = ry || 0; world.group.add(gG); var f = new THREE.Mesh(roundCylGeo(0.06, 0.06, 0.025, 20), MAT.white); f.rotation.x = Math.PI / 2; gG.add(f); var r = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.008, 8, 22), MAT.brass); r.position.z = 0.013; gG.add(r); var n = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.045, 0.002), colorMat(0xc0271b, 0.5)); n.position.set(0.008, 0.012, 0.014); n.rotation.z = -0.6; gG.add(n); return gG; }
+      function feet(x1, x2, z1, z2) { [[x1, z1], [x2, z1], [x1, z2], [x2, z2]].forEach(function (p) { bb(0.14, 0.03, 0.14, gm, p[0], 0.015, p[1], { cast: false }); bc(0.02, 0.02, 0.03, MAT.chrome, p[0], 0.045, p[1], 8); }); }
+      function panel(x, y, z, ry) { var pg = new THREE.Group(); pg.position.set(x, Y + y, z); pg.rotation.y = ry || 0; world.group.add(pg); var bx = new THREE.Mesh(bevelGeo(0.3, 0.22, 0.05, 0.01), MAT.gloss); pg.add(bx); [[-0.09, 0x39d353], [0, 0xf2c21a], [0.09, 0xd0201a]].forEach(function (k) { var bt = new THREE.Mesh(roundCylGeo(0.022, 0.022, 0.02, 14), colorMat(k[1], 0.35)); bt.rotation.x = Math.PI / 2; bt.position.set(k[0], -0.04, 0.03); pg.add(bt); }); var ky = new THREE.Mesh(roundCylGeo(0.016, 0.016, 0.03, 10), MAT.chrome); ky.rotation.x = Math.PI / 2; ky.position.set(0.09, 0.05, 0.03); pg.add(ky); var st = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.05), new THREE.MeshBasicMaterial({ color: 0x6fdc8c, toneMapped: false })); st.position.set(-0.05, 0.05, 0.026); pg.add(st); return pg; }
+      /* the bays: a drip line over each, a reflector on the lamp bar, a drain channel in front */
+      for (var b2 = 0; b2 < 4; b2++) { var bx2 = -7.4 + b2 * 2.6, bz2 = -6.2; var dl = bc(0.012, 0.012, 2.1, MAT.black, bx2, 0.9, bz2 - 0.3, 8); dl.rotation.z = Math.PI / 2; for (var em = 0; em < 6; em++) bc(0.01, 0.004, 0.04, colorMat(0x2f6fb0, 0.4), bx2 - 0.85 + (em % 3) * 0.85, 0.875, bz2 + (em < 3 ? -0.2 : 0.2), 6); bb(2.3, 0.02, 0.5, ss, bx2, 2.35, bz2, { cast: false }); bb(2.3, 0.1, 0.02, ss, bx2, 2.3, bz2 - 0.24, { cast: false }); bb(2.3, 0.1, 0.02, ss, bx2, 2.3, bz2 + 0.24, { cast: false }); bb(2.3, 0.012, 0.12, gm, bx2, 0.006, bz2 + 0.62, { cast: false, sharp: true }); gauge(bx2 - 0.9, 0.52, bz2 + 0.34); feet(bx2 - 1.1, bx2 + 1.1, bz2 - 0.45, bz2 + 0.45); }
+      /* the kiln: strapped panels, a burner box with a gas line, a stack damper, a thermometer */
+      [0.5, 1.15, 1.8].forEach(function (y) { bb(2.64, 0.05, 0.03, gm, 5.8, y, -4.385, { cast: false }); bb(0.03, 0.05, 2.04, gm, 4.485, y, -5.4, { cast: false }); }); [4.55, 7.05].forEach(function (x) { bb(0.05, 2.3, 0.05, gm, x, 1.15, -4.39, { cast: false }); });
+      bb(0.5, 0.5, 0.4, gm, 7.35, 0.35, -4.9, { r: 0.02 }); bc(0.025, 0.025, 1.5, yel, 7.35, 1.35, -4.75, 10); var gl = bc(0.025, 0.025, 0.5, yel, 7.35, 2.1, -5.0, 10); gl.rotation.x = Math.PI / 2; var vw = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.012, 8, 18), colorMat(0xd0201a, 0.4)); vw.position.set(7.35, Y + 1.0, -4.68); world.group.add(vw);
+      gauge(5.5, 1.85, -4.32); gauge(6.75, 1.0, -4.3); bc(0.26, 0.26, 0.06, gm, 6.5, 2.35, -5.6, 16); bb(0.5, 0.03, 0.04, ss, 6.5, 2.6, -5.32, { cast: false }); feet(4.6, 7.0, -6.3, -4.5);
+      /* the shredder: a motor with a belt guard, a dust hood and its duct, an emergency stop */
+      var mt = bc(0.2, 0.2, 0.5, colorMat(0x2f5f8a, 0.45, 0.4), 5.45, 0.35, 0.9, 20); mt.rotation.x = Math.PI / 2; for (var fn = 0; fn < 7; fn++) { var fr = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.008, 6, 24), colorMat(0x264d70, 0.45, 0.4)); fr.position.set(5.45, Y + 0.35, 0.72 + fn * 0.06); world.group.add(fr); } bb(0.5, 0.6, 0.08, yel, 5.25, 0.55, 0.26, { r: 0.015 }); bb(0.3, 0.12, 0.5, gm, 5.45, 0.08, 0.9, { cast: false });
+      bb(1.3, 0.3, 1.0, ss, 4.4, 2.05, 0.9, { r: 0.02 }); bc(0.16, 0.16, 0.6, ss, 4.4, 2.5, 0.9, 16); panel(3.4, 1.55, 0.27, Math.PI); var es = bc(0.05, 0.055, 0.03, yel, 5.0, 1.2, 0.27, 16); es.rotation.x = Math.PI / 2; var eb = bc(0.035, 0.035, 0.04, colorMat(0xd0201a, 0.35), 5.0, 1.2, 0.24, 16); eb.rotation.x = Math.PI / 2; feet(3.7, 5.1, 0.4, 1.4);
+      /* the maker: a glass hood in a frame, a filter hopper with a sight glass, rollers along the bed */
+      [[-0.25, 0.45], [1.75, 0.45], [-0.25, 1.35], [1.75, 1.35]].forEach(function (p) { bb(0.04, 0.56, 0.04, MAT.alu, p[0], 1.27, p[1], { cast: false }); }); [0.45, 1.35].forEach(function (z) { bb(2.04, 0.03, 0.04, MAT.alu, 0.75, 1.54, z, { cast: false }); }); for (var rl = 0; rl < 9; rl++) { var ro = bc(0.035, 0.035, 0.7, MAT.chrome, -0.05 + rl * 0.2, 1.06, 0.9, 12); ro.rotation.x = Math.PI / 2; }
+      bb(0.12, 0.3, 0.02, glassM2(), 0.0, 1.8, 0.64, { cast: false }); bc(0.12, 0.2, 0.2, colorMat(0xd9d2c2, 0.8), 0.0, 1.5, 0.9, 16); panel(1.2, 1.0, 0.3, Math.PI); gauge(-0.1, 0.75, 0.34, Math.PI); feet(-0.25, 1.75, 0.45, 1.35);
+      /* the packer: a guard ring round the carousel, a blank magazine with its stack, an outfeed chute, a motor */
+      var gr2 = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.015, 8, 40), yel); gr2.rotation.x = Math.PI / 2; gr2.position.set(-2.8, Y + 1.5, 0.9); world.group.add(gr2); for (var gp = 0; gp < 6; gp++) { var a2 = gp * Math.PI / 3; bc(0.012, 0.012, 0.3, yel, -2.8 + Math.cos(a2) * 0.5, 1.35, 0.9 + Math.sin(a2) * 0.5, 8); }
+      for (var bk = 0; bk < 8; bk++) bb(0.26, 0.012, 0.26, colorMat(bk % 2 ? 0xf4f1ea : 0xe6dfcf, 0.8), -3.5, 1.92 + bk * 0.013, 1.2, { cast: false, sharp: true }); var ch = bb(0.5, 0.03, 0.7, ss, -3.6, 0.95, 1.75, { cast: false }); ch.rotation.x = 0.35; [-0.24, 0.24].forEach(function (o) { var cs = bb(0.02, 0.1, 0.7, ss, -3.6 + o, 0.99, 1.75, { cast: false }); cs.rotation.x = 0.35; });
+      panel(-2.3, 1.0, 0.3, Math.PI); var pm = bc(0.16, 0.16, 0.4, colorMat(0x2f5f8a, 0.45, 0.4), -1.75, 0.3, 1.25, 18); pm.rotation.z = Math.PI / 2; feet(-3.7, -1.9, 0.4, 1.4);
+      /* the belts: side guards with a warning stripe, rollers at the ends */
+      [[1.9, 3.6], [-1.75, -0.35]].forEach(function (r) { [r[0] + 0.04, r[1] - 0.04].forEach(function (x) { var er = bc(0.05, 0.05, 0.5, MAT.chrome, x, 0.92, 0.9, 14); er.rotation.x = Math.PI / 2; }); for (var st2 = 0; st2 < Math.round((r[1] - r[0]) / 0.2); st2++) bb(0.1, 0.05, 0.006, st2 % 2 ? yel : dark, r[0] + 0.1 + st2 * 0.2, 0.9, 0.612, { cast: false, sharp: true }); });
+      /* pipework along the back wall, a tool board, a fire point and floor drains */
+      var p1 = bc(0.035, 0.035, 12, copper, -1.9, 1.95, B.z1 + 0.08, 10); p1.rotation.z = Math.PI / 2; var p2 = bc(0.03, 0.03, 12, colorMat(0x2f6fb0, 0.4, 0.2), -1.9, 2.08, B.z1 + 0.08, 10); p2.rotation.z = Math.PI / 2; [-7.5, -5, -2.5, 0, 2.5].forEach(function (x) { bb(0.05, 0.22, 0.05, gm, x, 2.01, B.z1 + 0.05, { cast: false }); });
+      bb(1.4, 0.9, 0.03, colorMat(0x8a6a4a, 0.9), B.x1 + 0.04, 1.5, 1.6, { cast: false }).rotation.y = Math.PI / 2; [[1.2, 0.25, 0.03], [1.5, 0.3, 0.02], [1.8, 0.2, 0.025], [2.05, 0.28, 0.02]].forEach(function (t, i) { bb(0.02, t[1], t[2], i % 2 ? MAT.chrome : colorMat(0xd0201a, 0.5), B.x1 + 0.07, 1.55 + (i % 2) * 0.1, t[0], { cast: false }); });
+      bc(0.09, 0.09, 0.5, colorMat(0xd0201a, 0.4, 0.3), B.x2 - 0.2, 0.75, -1.5, 16); bc(0.035, 0.04, 0.1, MAT.black, B.x2 - 0.2, 1.05, -1.5, 10); bb(0.02, 0.3, 0.3, colorMat(0xd0201a, 0.5), B.x2 - 0.02, 1.6, -1.5, { cast: false });
+      [[-6, -2.9], [6, -2.9], [0, 2.0]].forEach(function (d) { bb(0.4, 0.008, 0.4, MAT.black, d[0], 0.005, d[1], { cast: false, sharp: true }); for (var s2 = 0; s2 < 5; s2++) bb(0.34, 0.006, 0.03, gm, d[0], 0.012, d[1] - 0.14 + s2 * 0.07, { cast: false, sharp: true }); });
+    })();
     syncTobRack();
   }
+  function glassM2() { return new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.35, roughness: 0.05 }); }
   function syncTobRack() {
     var g = tobUI.rackG; if (!g) return; clearKids(g); var T = tob();
     CIG_KEYS.forEach(function (k, i) { var K = CIG_SKUS[k]; var cartons = Math.min(8, Math.ceil(T.packs[k] / TOB.carton)); for (var c = 0; c < cartons; c++) { var w = K.size === 20 ? 0.3 : 0.24; var m = new THREE.Mesh(bevelGeo(w, 0.1, 0.4), colorMat(K.col, 0.6)); m.position.set(-0.75 + (c % 4) * 0.5, [0.37, 0.92, 1.47, 2.02][i] + Math.floor(c / 4) * 0.105, 0); g.add(m); var band = new THREE.Mesh(bevelGeo(w + 0.004, 0.03, 0.404), colorMat(K.top, 0.6)); band.position.copy(m.position); band.position.y += 0.03; g.add(band); } });
@@ -100,12 +130,12 @@
     var T = tob();
     T.bays.forEach(function (b, i) { if (b.stage !== 'grow') return; b.t += dt; if (b.t >= TOB.growT) { b.stage = 'ready'; toast('🌿 Tobacco bay ' + (i + 1) + ' is ready to harvest', 'good'); save(); } });
     var K = T.kiln; if (K.on) { if (K.kg <= 0 && T.leaf >= 1) { K.kg = Math.min(TOB.kilnMax, T.leaf); T.leaf -= K.kg; K.t = 0; } if (K.kg > 0) { K.t += dt; if (K.t >= TOB.kilnT) { T.cured += K.kg * TOB.cureYield; logEvent('🔥 Kiln finished a load: ' + kg(K.kg * TOB.cureYield) + ' of cured leaf', ''); K.kg = 0; K.t = 0; save(); } } }
-    if (T.shred.on && T.cured > 0) { var c = Math.min(T.cured, TOB.shredKgS * dt); T.cured -= c; T.cut += c; }
+    if (T.shred.on && tobSpare(T) > 0) { var c = Math.min(tobSpare(T), TOB.shredKgS * dt); T.cured -= c; T.cut += c; }
     if (T.maker.on && T.cut > 0) { var per = TOB.stickKg[T.maker.mode]; var n = Math.min(TOB.sticksS * dt, T.cut / per); T.cut = Math.max(0, T.cut - n * per); T.sticks[T.maker.mode] += n; }
     var P = T.packer; if (P.on && packerReady(T)) { P.t += dt; if (P.t >= TOB.packS) { P.t = 0; T.sticks[P.type] -= P.size; T.mat -= P.size === 20 ? 2 : 1; var sku = skuOf(P.type, P.size); T.packs[sku]++; T.made++; if (T.packs[sku] % TOB.carton === 1 || T.packs[sku] % TOB.carton === 0) syncTobRack(); } }
     if (player.floor !== -1) return;
     // everything below is only what you can see from the floor
-    var run = { kiln: K.on && K.kg > 0, shred: T.shred.on && T.cured > 0, maker: T.maker.on && T.cut > 0, packer: P.on && packerReady(T) }; var armed = { kiln: K.on, shred: T.shred.on, maker: T.maker.on, packer: P.on };
+    var run = { kiln: K.on && K.kg > 0, shred: T.shred.on && tobSpare(T) > 0, maker: T.maker.on && T.cut > 0, packer: P.on && packerReady(T) }; var armed = { kiln: K.on, shred: T.shred.on, maker: T.maker.on, packer: P.on };
     tobUI.spin.forEach(function (s) { if (run[s.key]) s.g.rotation[s.axis] += s.speed * dt; });
     tobUI.t += dt; var blink = Math.sin(tobUI.t * 6) > 0;
     Object.keys(tobUI.beacons).forEach(function (k) { var m = tobUI.beacons[k].material; m.emissiveIntensity = run[k] ? (blink ? 2.2 : 0.6) : armed[k] ? 0.7 : 0.08; m.color.setHex(run[k] ? 0x39d353 : 0xff8a1c); m.emissive.setHex(run[k] ? 0x39d353 : 0xff8a1c); });
@@ -149,23 +179,23 @@
   }
   // the cigarette cabinet behind the counter: stock sits behind a roller shutter, you take packs out and hand them over yourself
   function cigStock(k) { if (!S.cigStock) S.cigStock = {}; return S.cigStock[k] || 0; }
-  function anyCigStock() { return Object.keys(CIG_SKUS).filter(function (k) { return cigStock(k) > 0 && dlcOn(CIG_SKUS[k].type === 'side' ? 'lab' : 'tobacco'); }); }   /* nobody asks for what a switched-off DLC makes */
+  function anyCigStock() { return Object.keys(CIG_SKUS).filter(function (k) { return cigStock(k) > 0 && dlcOn(skuDlc(CIG_SKUS[k])); }); }   /* nobody asks for what a switched-off DLC makes */
   function toggleCigShutter() { S.cigShutter = !S.cigShutter; sfx('curtain'); toast(S.cigShutter ? '🚬 Shutter up. The cigarette cabinet is open.' : '🚬 Shutter down. The cigarette cabinet is closed.', ''); save(); }
   function cigCabInteract(h) {
     if (player.keys.ShiftLeft || player.keys.ShiftRight) { toggleLock('cigCabinet'); return; }
     if (lockedStop('cigCabinet')) return;
     if (!S.cigShutter) { toggleCigShutter(); return; }
-    if (h && h.kind === 'cigs') { S.cigStock[h.sku] = cigStock(h.sku) + h.n; S.held = null; syncCigCab(); sfx('putdown'); toast('🚬 ' + h.n + ' × ' + CIG_SKUS[h.sku].name + ' into the cabinet', 'good'); save(); return; }
+    if (h && h.kind === 'cigs') { cigStockAdd(h.sku, h.n, h.q); S.held = null; syncCigCab(); sfx('putdown'); toast('🚬 ' + h.n + ' × ' + cigLabel(h.sku, h.q) + ' into the cabinet', 'good'); save(); return; }
     var c = S.customer, lines = []; var want = c && c.cig && c.cig.given < c.cig.qty ? c.cig : null;
-    function takeLine(k, n, label) { return { label: label, cls: cigStock(k) >= 1 ? '' : 'muted', act: cigStock(k) >= 1 ? function () { if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } var m = Math.min(n, cigStock(k)); S.cigStock[k] -= m; take({ kind: 'cigs', sku: k, n: m }); syncCigCab(); save(); } : null }; }
+    function takeLine(k, n, label) { return { label: label, cls: cigStock(k) >= 1 ? '' : 'muted', act: cigStock(k) >= 1 ? function () { if (hotbarFull()) { toast('Your hands are full (G puts things down)', 'bad'); return; } var m = Math.min(n, cigStock(k)); S.cigStock[k] -= m; take({ kind: 'cigs', sku: k, n: m, q: cigQ(k) }); syncCigCab(); save(); } : null }; }
     if (want) lines.push(takeLine(want.sku, want.qty - want.given, '🛎️ ' + c.who + ' asked for ' + (want.qty - want.given) + ' × ' + CIG_SKUS[want.sku].name + ' <small>' + cigStock(want.sku) + ' in the cabinet</small>'));
-    Object.keys(CIG_SKUS).forEach(function (k) { lines.push(takeLine(k, 1, '🚬 Take a pack of ' + CIG_SKUS[k].name + ' <small>' + cigStock(k) + ' left · ' + money(CIG_SKUS[k].price) + '</small>')); });
+    Object.keys(CIG_SKUS).filter(function (k) { return cigStock(k) > 0 || dlcOn(skuDlc(CIG_SKUS[k])); }).forEach(function (k) { lines.push(takeLine(k, 1, '🚬 Take ' + (CIG_SKUS[k].shape || CIG_SKUS[k].type === 'side' ? '' : 'a pack of ') + cigLabel(k, cigQ(k)) + ' <small>' + cigStock(k) + ' left · ' + money(cigPrice(k, cigQ(k))) + '</small>')); });
     lines.push({ label: '⬇ Roll the shutter down', act: toggleCigShutter });
     ctxOpen('🚬 Cigarette cabinet', 'packs stay behind the shutter; you hand them to the customer', lines);
   }
   function syncCigCab() {
     var inst = propInst.cigCabinet; if (!inst) return; var g = inst.ctx.dynGroup(); var keep = g.userData.shutter; clearKids(g); if (keep) g.add(keep);
-    Object.keys(CIG_SKUS).forEach(function (k, i) { var K = CIG_SKUS[k], n = Math.min(i < 4 ? 8 : 3, cigStock(k)), big = K.size === 20; for (var p = 0; p < n; p++) { var w = big ? 0.075 : 0.06, hh = big ? 0.11 : 0.09; var m = productCigPack(K, big ? 1.3 : 1.25); m.position.set((i < 4 ? -0.45 : 0.27) + p * 0.082, [1.62, 1.27, 0.92, 0.57, 1.62, 1.27, 0.92, 0.57][i] + hh / 2, 0.06); m.traverse(function (o) { if (o.isMesh) o.castShadow = false; }); g.add(m); } });   /* the cabinet shows the same pack you hand over */
+    Object.keys(CIG_SKUS).forEach(function (k, i) { var K = CIG_SKUS[k], n = Math.min(i < 4 ? 5 : K.shape === 'cigar' ? 2 : 3, cigStock(k)), big = K.size === 20; for (var p = 0; p < n; p++) { var w = big ? 0.075 : 0.06, hh = big ? 0.11 : 0.09; var m = productCigPack(K, big ? 1.3 : 1.25); m.position.set((i < 4 ? -0.47 : i < 8 ? -0.03 : 0.25) + p * (K.shape === 'cigar' ? 0.11 : 0.082), [1.62, 1.27, 0.92, 0.57][i % 4] + (K.shape ? 0.05 : hh / 2), 0.06);   /* three columns: what the packer makes, what the lab makes, and the cigars and the honey */ m.traverse(function (o) { if (o.isMesh) o.castShadow = false; }); g.add(m); } });   /* the cabinet shows the same pack you hand over */
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = 'cigCabinet'; });
   }
   function updateShutters(dt) { updateOneShutter('goodsShelf', dt, 1.97, 1.9); updateOneShutter('cigCabinet', dt, 1.87, 1.45); }
@@ -175,8 +205,8 @@
   function handCigs(c, h) {
     var q = c.cig; if (!q || q.given >= q.qty) { toast(c.who + ' didn\'t ask for cigarettes', 'bad'); npc.say(custLine(c.who, 'noSmokes'), '#ffc857'); return; }
     if (q.sku !== h.sku) { toast(c.who + ' asked for ' + CIG_SKUS[q.sku].name + ', not that', 'bad'); npc.say(custLine(c.who, 'wrongSmokes', CIG_SKUS[q.sku].name), '#ff6b6b'); return; }
-    var give = Math.min(q.qty - q.given, h.n); q.given += give; h.n -= give; if (h.n <= 0) S.held = null; S.stats.cigs = (S.stats.cigs || 0) + give; sfx('rustle');
-    if (c.stage === 'pay') { c.due += CIG_SKUS[q.sku].price * give; if (c.pay === 'cash' && !c.changeGiven) c.tendered = tenderFor(c.due); }   // handed over after the rest was already rung up
+    var give = Math.min(q.qty - q.given, h.n), each = cigPrice(q.sku, h.q); q.given += give; q.paid = (q.paid || 0) + each * give; h.n -= give; if (h.n <= 0) S.held = null; S.stats.cigs = (S.stats.cigs || 0) + give; sfx('rustle');
+    if (c.stage === 'pay') { c.due += each * give; if (c.pay === 'cash' && !c.changeGiven) c.tendered = tenderFor(c.due); }   // handed over after the rest was already rung up
     npc.say(custLine(c.who, q.given >= q.qty ? 'smokes' : 'more'), '#6fdc8c'); toast('🚬 Handed over ' + give + ' × ' + CIG_SKUS[q.sku].name, 'good'); hud();
   }
-  function cigTotal(c) { return c && c.cig && c.cig.given > 0 ? CIG_SKUS[c.cig.sku].price * c.cig.given : 0; }
+  function cigTotal(c) { return c && c.cig && c.cig.given > 0 ? (typeof c.cig.paid === 'number' ? c.cig.paid : CIG_SKUS[c.cig.sku].price * c.cig.given) : 0; }   /* lab goods are priced by their grade, so the sum is kept as they are handed over */

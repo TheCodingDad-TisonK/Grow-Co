@@ -1,5 +1,40 @@
 # Changelog
 
+## v1.28: every DLC, upgraded
+
+**Three upgrades for every DLC.** A new **DLC upgrades** app on the office PC lists the DLC you have switched on, each with three upgrades of its own: 27 in all. They are paid from the bank and last for good. The guide has the full list.
+
+**The Tobacco Works**
+
+- **Cigars.** A rolling table and a humidor in the basement. Whole cured leaf is rolled five cigars at a time, and a cigar ages 8 minutes in the humidor before it may leave. They sell from the cabinet for $24. At the table you say how much leaf the shredder has to leave alone.
+- **Every machine rebuilt**: guards, gauges, motors, control panels, pipework and feet on the bays, the kiln, the shredder, the maker and the packer. The tobacco in the bays has broad leaves.
+- Upgrades: forced-air kiln, high-speed maker, cedar humidor.
+
+**The Extraction Lab**
+
+- **Grades.** What the lab makes has a grade from A to D, from the quality of the bud that went in, and the price follows it: 30% over the list price for an A, 15% under for a D. Stock made before this update has no grade and sells at the list price.
+- **A lab technician** for $85 a day, hired at the staff roster board in the office. He runs bud under quality 60 into whatever the shop has least of.
+- Upgrades: second column, short-path still, test bench.
+
+**The Roof Greenhouse**
+
+- **Rain barrels and drip lines.** They fill in the rain and water the beds, and a watered bed grows half as fast again.
+- **Two beehives.** A bed gives 30 g instead of 25, and the hives make a jar of honey a day outside winter. Honey sells from the cabinet, or takes the place of a baking mix in the lab.
+- A third upgrade, shade cloth and vents, lifts the quality of what you cut.
+
+**Dev Tools**
+
+- **Photo mode.** The camera flies and the screen is clear.
+- A button that fits every DLC upgrade.
+
+**The six DLC of v1.27** each have their three upgrades too, from an auto doser for the hydroponics bay to polytunnels for the farm and hoodies for the merch stand.
+
+**The Workshop** shows what is in each DLC: a list of what it adds, its three upgrades, and whether it is new or updated. A DLC that is switched off is no longer greyed out.
+
+**The main menu has a view.** Behind the menu and the splash screen the camera drives round the block at dusk, past the shop front, with the street lamps on and the windows lit.
+
+**The lobby coffee machine** is rebuilt as a bean-to-cup machine: a brew bay with two nozzles, a grille, a lit screen, a straight hopper, and its sign on a board behind it instead of on stilts in front.
+
 ## v1.27.1: the rest of the furniture
 
 The rebuild in v1.27 left a few things with only the new light and materials. They have their own rebuild now:

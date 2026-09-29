@@ -66,7 +66,12 @@
       html += '<h3 class="rf-ws-head">' + k + ' <small>' + groups[k].filter(function (p) { return p.on; }).length + ' of ' + groups[k].length + ' on</small></h3>';
       if (k === 'DLC') {
         html += '<p class="rf-ws-lead">Whole parts of the game, all free. Switch one on and it\'s in every save. Switch it off and it\'s hidden, but nothing in your saves is lost: switch it back on and it\'s all still there.</p><div class="rf-ws-dlcs">';
-        groups[k].forEach(function (p) { html += '<div class="rf-ws-dlc' + (p.on ? ' on' : '') + '" data-dlc="' + esc(p.dlc) + '"><div class="art"><span>' + esc(p.icon) + '</span></div><div class="rf-ws-body"><b>' + esc(p.name) + '</b><span class="what">' + esc(p.counts) + '</span><small>' + esc(p.blurb) + '</small></div>' + wsSwitch(p) + '</div>'; });
+        groups[k].forEach(function (p) {
+          html += '<div class="rf-ws-dlc' + (p.on ? ' on' : '') + '" data-dlc="' + esc(p.dlc) + '"><div class="art"><span>' + esc(p.icon) + '</span>' + (p.tag ? '<i class="tag">' + esc(p.tag) + '</i>' : '') + '</div>' +
+            '<div class="rf-ws-body"><b>' + esc(p.name) + '</b><span class="what">' + esc(p.counts) + '</span><small>' + esc(p.blurb) + '</small>' +
+            (p.features.length ? '<ul class="feat">' + p.features.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
+            (p.upgrades.length ? '<div class="upg"><em>Three upgrades</em>' + p.upgrades.map(function (u) { return '<span>' + esc(u) + '</span>'; }).join('') + '</div>' : '') + '</div>' + wsSwitch(p) + '</div>';
+        });
         html += '</div>'; return;
       }
       html += '<div class="rf-ws-grid">';

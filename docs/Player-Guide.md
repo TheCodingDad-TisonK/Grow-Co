@@ -19,6 +19,7 @@ This page is generated from `game/guide.js`, the same text the game shows in its
 - [The shop van](#the-shop-van)
 - [The Workshop: content packs and DLC](#the-workshop-content-packs-and-dlc)
 - [Breeding, hydroponics, the Cup, merch, the farm and the bank](#breeding-hydroponics-the-cup-merch-the-farm-and-the-bank)
+- [DLC upgrades](#dlc-upgrades)
 - [Upstairs and the roof](#upstairs-and-the-roof)
 - [The keyring, doors and locking up](#the-keyring-doors-and-locking-up)
 - [Machines, drinks and the bin](#machines-drinks-and-the-bin)
@@ -125,7 +126,7 @@ Tax is paid once a month: 15% excise sits inside every sale, business tax is 10%
 
 - **Crew**: up to three on the shop floor, **Jo**, **Mika** and **Sam**. Hire them at the office PC under **Staff**. Each one costs more than the last. They serve the window, restock the supply rack and the machines, sweep, or tend the plants.
 - **The guard** is on the door from day one, at $60 a day while he's on shift. He checks IDs. Send him on patrol to put robbers off and break up fights sooner, or give him a chore. He's back on the door whenever someone walks in.
-- The **staff roster** board in the office hires three more: a **driver** (every morning he wholesales every pack above 6 of each kind, and he runs phone deliveries), a **basement operator** (keeps the line running) and a **night guard** (stops break-ins). Roster hires count towards the staff a bigger shop needs.
+- The **staff roster** board in the office hires more: a **driver** (every morning he wholesales every pack above 6 of each kind, and he runs phone deliveries), a **basement operator** (keeps the line running) a **night guard** (stops break-ins) and, with the Extraction Lab, a **lab technician** (runs your rough bud through the lab). Roster hires count towards the staff a bigger shop needs.
 - Your crew and the guard carry keys. The Doors chapter has the details.
 - Wages come out at the start of each day: the bank first, then the vault, then the till. A crew member you can't pay walks out.
 
@@ -200,6 +201,12 @@ Its door is on the basement's left wall. It takes cured bud of **any quality** f
 - One batch at a time. Collect the result from the same equipment and stock it in the cigarette cabinet.
 - A power cut pauses the lab unless you own the generator.
 
+**Grades.** A batch remembers the quality of the bud that went into it, and what it makes has a grade: **A** from quality 80, **B** from 60, **C** from 40 and **D** under that. A sells for 30% over the list price, B for 10% over, C at list and D for 15% under. Rough bud still makes money here. Good bud makes more. The lab shelf and the cabinet keep the average of what is put on them.
+
+**The technician.** Hire one at the staff roster board in the office for $85 a day. He runs bud **under quality 60** through the lab, 10 g at a time, into whatever the shop has least of, and never touches your good bud. You still carry what he makes up to the cabinet.
+
+**Honey.** E on the lab with roof honey in your hands puts it in the lab store. A jar does the work of a baking mix in gummies and chocolate, and the batch comes out 8 points better.
+
 ## The town, the car and the map
 
 You have two vehicles. The **car** lives in the **garage** on the east side of the yard. E on its roller door opens and shuts it, so open it before you drive out. The **van** stands in the bay under the canopy. Both leave through the **yard gate**, which opens for you, then down the lane to the back street, where a striped **barrier** lifts as you drive up and drops behind you. On foot, E opens the gate or raises the barrier. Press **M** anywhere for the map.
@@ -227,6 +234,8 @@ Two devices, one key. **J** opens the **Deliveries** screen anywhere, on foot or
 **The tablet.** It sits on its dock in the office and wakes up the moment you hold the **tobacco licence**. E takes it. Carry it into the car or the van and it drops into the dash cradle, so it rides the round without taking a hotbar slot. E on the dock puts it back.
 
 The tablet lists up to four **RF Smoking** orders at once: an address, how many packs of which cigarette, what it pays and how long is left. Load the packs into the car or the van at home (**Shift+E** on it), drive the round, and pull up at the amber marker. **You don't have to get out.** Stop within a few metres and the dashboard offers the drop, and **E** hands it over from the driver's seat. The packs come **out of the boot**, so you never carry them. The money is **invoiced to the bank**, there's no heat, and each drop is worth a point of rep. Jobs further out pay more for the drive.
+
+**Cigars.** A **rolling table** and a **humidor** stand against the front wall of the basement. The table rolls whole cured leaf, before the shredder cuts it: a lot of five takes 0.1 kg and 40 s, and needs no paper or filters. At the table you also say how much leaf the shredder has to leave alone. The lot goes into the humidor, where a cigar has to **age for 8 minutes** before it may leave. E on the humidor takes up to ten aged cigars, and they sell from the cigarette cabinet for $24 each. A basement operator rolls for you while there is leaf and room.
 
 Every drop has a coloured ring on the ground under its beacon, and the numbers on the Deliveries screen match the numbers on the **map** (M). Amber is a tablet drop, green a burner one. Miss a deadline and you lose a point of rep. A hired **driver** clears jobs himself after about a minute, and takes a cut of the tablet ones.
 
@@ -305,11 +314,31 @@ A ripe plant is cut with E and goes on the drying line like any other harvest.
 
 Switch any of them off and its things leave the shop, but nothing in your save is lost: a cross on the bench, plants on the rack, stock on the stand, rows in the field, your savings and your loan are all there when you switch it back on.
 
+## DLC upgrades
+
+Every DLC has **three upgrades** of its own. They are in the **DLC upgrades** app on the office PC, which lists the DLC you have switched on. An upgrade is paid from the bank, wants a shop level, and lasts for good. Switch a DLC off and its upgrades sleep with it. Switch it on again and they are back.
+
+| Key | What it does |
+|---|---|
+| **Tobacco Works** | Forced-air kiln ($1,800): a load cures in 40 s. High-speed maker ($2,400): 10 sticks a second and a faster packer. Cedar humidor ($1,500): cigars age in half the time, and it holds 80. |
+| **Extraction Lab** | Second column ($2,200): a third less time. Short-path still ($1,800): a quarter more from every batch. Test bench ($1,200): 10 points of quality on every batch. |
+| **Roof Greenhouse** | Rain barrels and drip lines ($900). Two beehives ($1,400). Shade cloth and vents ($1,100): 12 points of quality on what you cut. |
+| **Breeding Lab** | Tissue culture ($1,200): a cross takes 5 minutes. Seed tumbler ($800): 10 seeds from a cross. Genetic library ($1,500): room for 20 cultivars, twice the chance of a standout. |
+| **Hydroponics Bay** | Auto doser ($1,600): the pH holds itself. Bigger tank ($900): the feed lasts twice as long. Root chiller ($1,400): quality climbs to 100. |
+| **Cannabis Cup** | Presentation jar ($600): 4 points more from the judges. A sponsor ($1,500): prize money half as much again. Press coverage ($900): double the rep. |
+| **Merch & Brand** | Hoodies ($700): a new line that sells for $42. Express printing ($500): a box in 30 s. Bigger stand ($650): holds 80 of each. |
+| **Out-of-town Farm** | Drip irrigation ($1,800): the rows water themselves. Polytunnels ($2,600): no frost, and the field works through the winter. Barn fans ($1,200): the crop dries in half the time. |
+| **Bank & Insurance** | Premium account ($2,000): 0.8% a day, up to $1,000. Good standing ($1,000): loans cost 8%. Full cover ($1,500): robbery cover pays back everything. |
+
+**Dev Tools** has nothing to buy. It gained **photo mode** (the camera flies and the screen is clear: W A S D, Space and Ctrl for up and down, Shift for speed, the wheel zooms, F8 or Esc ends it) and a button that fits every DLC upgrade.
+
 ## Upstairs and the roof
 
 - The **office stairs** lead to your flat: kitchen, table, couch and TV, bed. Eating gives you a speed boost (**V** eats a snack anywhere), and the bed sleeps through the night.
 - The **lobby stairs** lead to the **connoisseur lounge**. With the connoisseur permit, guests book it, walk up on their own and wait to be served quality 70 or better. They pay triple and tip.
 - A ladder in the flat climbs to the **roof greenhouse** (a free DLC, under Workshop and DLC in the main menu): six beds that grow in daylight only. They need the **Cultivation permit II**. Seedlings are $10 a bed, and each harvest pays its trimming and compliance like any other.
+
+**Rain barrels and beehives** are upgrades of the Roof Greenhouse. The **barrels** fill when it rains and drain into the beds through drip lines: a watered bed grows as fast as it does in the rain. In a dry spell they run out, and E on them fills them from the tap. The **hives** stand outside the glasshouse. With them a bed gives 30 g instead of 25, and they make a jar of honey a day from spring to autumn, up to 12. Honey sells from the cigarette cabinet for $9 a jar, or goes into the lab.
 
 ## The keyring, doors and locking up
 

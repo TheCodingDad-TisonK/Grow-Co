@@ -176,7 +176,7 @@
     var free = (S.day || 1) <= COST.rentFreeDays;
     var rent = free ? 0 : COST.rentBase + sl * COST.rentPerSlot + (hasLic('tobacco') ? COST.rentBasement : 0) + (X.branch ? COST.rentBranch : 0);
     var power = (COST.powerBase + sl * (L.draw || 0) + (S.upgrades.hvac ? 8 : 0) + (S.upgrades.security2 ? 3 : 0) + (S.upgrades.bagline ? 4 : 0)) * solar;
-    var roster = (X.staff.driver ? 1 : 0) + (X.staff.night ? 1 : 0) + (X.staff.operator ? (hasLic('tobacco') ? 2 : 1) : 0);   /* roster hires are staff too; the operator runs the basement, which covers the two it needs */
+    var roster = (X.staff.driver ? 1 : 0) + (X.staff.night ? 1 : 0) + (X.staff.labtech ? 1 : 0) + (X.staff.operator ? (hasLic('tobacco') ? 2 : 1) : 0);   /* roster hires are staff too; the operator runs the basement, which covers the two it needs */
     var hired = crewList().filter(function (w) { return !w.off; }).length + roster, need = headcount();
     var rows = [
       { k: 'Rent', v: rent, d: free ? 'fit-out period, rent free until day ' + (COST.rentFreeDays + 1) : sl + ' slots' + (X.branch ? ' + branch' : '') + (hasLic('tobacco') ? ' + basement' : '') },

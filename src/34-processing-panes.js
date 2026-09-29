@@ -344,7 +344,7 @@
     ['customer', '🚪 Spawn a customer'], ['premium', '🎩 Spawn a connoisseur'], ['robbery', '🚨 Start a robbery (by shop level)'], ['robSnatch', '🧤 Snatch thief'], ['robKnife', '🔪 Knife robbery'], ['robGun', '🔫 Gunman and the vault'], ['robCrew', '👥 Two-man gang'], ['arm', '🧰 Every weapon, ammo, licence, alarm'], ['basement', '🏭 Go to the basement works'], ['toCar', '🚗 Teleport next to your car'], ['vip', '🥂 Send a lounge guest up'], ['roof', '🌿 Go to the roof greenhouse'], ['heat', '🚔 Heat +40'], ['blackout', '⚡ Power cut now'], ['delivery', '📱 Burner job now'], ['round', '📋 Two tablet round jobs'], ['tobFill', '🚬 Fill the tobacco line + cabinet'], ['fight', '👊 Start a lobby fight (needs two visitors)'], ['van', '🚚 Van arrives now with the open order'], ['courier', '🏦 Courier arrives now for $100'],
     ['dust', '🪣 Spawn 6 dirt patches'], ['clean', '🧹 Clear every dirt patch'], ['morning', '🌅 Clock to 06:00'], ['noon', '☀️ Clock to 12:00'], ['evening', '🌆 Clock to 19:00'], ['night', '🌙 Clock to 23:00'], ['day', '⏭ Skip to the next day'],
     ['level', '⭐ Level +1'], ['rep', '🏆 Rep +25'], ['upgrades', '⚙️ Every upgrade'], ['licences', '🪪 Every licence'], ['clear', '🧯 Clear cooldowns, robber, fight, courier'], ['empty', '🫙 Empty every hotbar slot'], ['humid', '💧 Humidity to 80% in both rooms'],
-    ['dlcFit', '🧩 Fit every DLC bench, bay and stand, and take the field'], ['dlcRipe', '⏩ Ripen the cross, the hydro bay and the field'], ['cupNow', '🏆 Judge the Cup now'], ['merchFill', '👕 Fill the merch stand'], ['tp_farm', '📍 Teleport: the farm gate'],
+    ['dlcFit', '🧩 Fit every DLC bench, bay and stand, and take the field'], ['dlcRipe', '⏩ Ripen the cross, the hydro bay and the field'], ['cupNow', '🏆 Judge the Cup now'], ['merchFill', '👕 Fill the merch stand'], ['tp_farm', '📍 Teleport: the farm gate'], ['dlcUpgAll', '⬆️ Every DLC upgrade'], ['photo', '📷 Photo mode: fly the camera, screen clear'],
     ['tp_lobby', '📍 Teleport: lobby'], ['tp_office', '📍 Teleport: office'], ['tp_grow', '📍 Teleport: grow room'], ['tp_annex', '📍 Teleport: back room'], ['tp_security', '📍 Teleport: security room'], ['tp_yard', '📍 Teleport: yard']
   ];
   function devStrains() { var lv = S.level || 1, l = STRAINS.filter(function (st) { return (st.lvl || 1) <= lv; }); return l.length ? l : [STRAINS[0]]; }   /* the fills stick to what the seed bank would sell you at this level */
@@ -359,7 +359,8 @@
     ['The clock', ['morning', 'noon', 'evening', 'night', 'day']],
     ['Progress', ['level', 'rep', 'upgrades', 'licences', 'empty']],
     ['The shop floor', ['dust', 'clean', 'humid']],
-    ['DLC', ['dlcFit', 'dlcRipe', 'cupNow', 'merchFill']],
+    ['DLC', ['dlcFit', 'dlcUpgAll', 'dlcRipe', 'cupNow', 'merchFill']],
+    ['Camera', ['photo']],
     ['Go to', ['tp_lobby', 'tp_office', 'tp_grow', 'tp_annex', 'tp_security', 'tp_yard', 'basement', 'roof', 'toCar', 'tp_farm']]
   ];
   var devCon = { el: null, q: '' };
@@ -373,12 +374,12 @@
     return h || '<div class="g3-empty">No cheat by that name.</div>';
   }
   function devOpen() {
-    if (!dlcOn('dev')) return false; if (ui.devOpen) { devClose(); return true; } if (!ui.started || ui.menuOpen || ui.taskOpen) return false;
+    if (!dlcOn('dev')) return false; if (photo.on) { photoOff(); return true; } if (ui.devOpen) { devClose(); return true; } if (!ui.started || ui.menuOpen || ui.taskOpen) return false;
     if (!devCon.el) {
       var d = document.createElement('div'); d.id = 'g3-devcon'; d.hidden = true;
       d.innerHTML = '<div class="g3-devcon"><div class="g3-devcon-head"><h2>Dev console</h2><span>F8 or Esc closes</span><button class="g3-x" data-cheat="close" title="Close (F8)">✕</button></div><input type="search" id="g3-devcon-q" placeholder="Find a cheat" autocomplete="off" spellcheck="false"><div class="g3-devcon-body" id="g3-devcon-body"></div><p class="g3-sub2">Everything applies to the save you are playing, at once. Switch the Dev Tools DLC off in the Workshop to put this away.</p></div>';
       document.body.appendChild(d); devCon.el = d;
-      d.addEventListener('click', function (e) { var b = e.target.closest('[data-cheat]'); if (!b) { if (e.target === d) devClose(); return; } var id = b.getAttribute('data-cheat'); sfx('click'); if (id === 'close') { devClose(); return; } devAction(id); if (/^(tp_|basement$|roof$|toCar$)/.test(id)) devClose(); else $('g3-devcon-body').innerHTML = devConHtml(); });
+      d.addEventListener('click', function (e) { var b = e.target.closest('[data-cheat]'); if (!b) { if (e.target === d) devClose(); return; } var id = b.getAttribute('data-cheat'); sfx('click'); if (id === 'close') { devClose(); return; } devAction(id); if (/^(tp_|basement$|roof$|toCar$|photo$)/.test(id)) devClose(); else $('g3-devcon-body').innerHTML = devConHtml(); });
       d.querySelector('#g3-devcon-q').addEventListener('input', function (e) { devCon.q = e.target.value; $('g3-devcon-body').innerHTML = devConHtml(); });
       d.querySelector('#g3-devcon-q').addEventListener('keydown', function (e) { if (e.code !== 'Escape' && e.code !== 'F8') e.stopPropagation(); });
     }
@@ -389,6 +390,8 @@
     if (!dlcOn('dev')) { dlcOff('dev'); return; }
     var tp = function (x, z) { if (ui.menuOpen) closeMenu(); standUp(); player.pos.set(x, 1.65, z); player.floor = 0; toast('📍 Teleported', ''); };
     switch (id) {
+      case 'dlcUpgAll': DLC_UPG_ORDER.forEach(function (d) { if (dlcOn(d)) DLC_UPG[d].list.forEach(function (u) { if (!dlcOwns(d, u.id)) dlcUpgGive(d, u.id); }); }); break;
+      case 'photo': if (photoOn()) toast('📷 Photo mode. W A S D fly, Space and Ctrl go up and down, Shift is faster, the wheel zooms. F8 or Esc ends it.', ''); return;
       case 'money': S.bank += 1000; break; case 'pocket': S.pocket += 500; break; case 'till': S.till += 120; S.tips += 20; ['vending', 'lobbyCoffee', 'fridge', 'arcade'].forEach(function (b) { unitIds(b).forEach(function (u) { coinPay(u, 10); }); }); break;
       case 'stash': devStrains().forEach(function (st) { stashAdd(st.id, 20, 70 + st.lvl * 2, st.thc); }); break;
       case 'goods': devStrains().forEach(function (st) { ['bags', 'joints', 'cookies'].forEach(function (k) { lotAdd(k, st.id, 5, 72, st.thc); }); }); break;

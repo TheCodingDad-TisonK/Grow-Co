@@ -2,7 +2,7 @@
   // ── UI: panels, menu, HUD ─────────────────────────────────────────
   var ui = {
     panelOpen: false, panelKind: null, panelTab: null, menuOpen: false, ctxOpen: false, started: false,
-    blocked: function () { return this.panelOpen || this.menuOpen || this.ctxOpen || this.taskOpen || this.pcOpen || this.deviceOpen || this.wheelOpen || this.devOpen || !this.started; },
+    blocked: function () { return this.panelOpen || this.menuOpen || this.ctxOpen || this.taskOpen || this.pcOpen || this.deviceOpen || this.wheelOpen || this.devOpen || this.photoOn || !this.started; },
     openPanel: function (kind, tab) {
       this.panelKind = kind; this.panelTab = tab || (kind === 'laptop' ? 'shop' : kind === 'inventory' ? 'inv' : null);
       this.panelOpen = true; $('g3-panel').hidden = false; document.exitPointerLock(); this.render(); sfx(kind === 'laptop' ? 'type' : 'panel');
