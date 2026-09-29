@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.27.1: the rest of the furniture
+
+The rebuild in v1.27 left a few things with only the new light and materials. They have their own rebuild now:
+
+- **Vending machines**: a lit cabinet, a card reader, vents down both sides and chrome trim.
+- **The lobby coffee machine**: a steam wand, a pressure gauge, a cup rail, a stirrer caddy and doors on its stand.
+- **Bookshelves**, downstairs and in the flat: a cornice, a plinth, a light under the top and a plant on it.
+- **The goods shelf**: a light under every shelf and brass edges.
+- **The lounge**: cushions and brass arm caps on the armchairs, a brass rim on the table, glasses on coasters and a rug.
+- **The side table in the hall**: a drawer, a brass clock and books underneath.
+- **The flat**: a runner, napkins, salt and pepper and a bread board on the dining table, a side table with a plant by the couch, a footboard, a throw and slippers for the bed, panelled fronts on the window seat, a border and fringe on the rug, and a brass mirror frame and a tray of bottles on the dresser.
+
 ## v1.27: a new look, six new DLC and a dev console
 
 **Everything looks better.** Every object in the shop has been rebuilt, not only retouched.

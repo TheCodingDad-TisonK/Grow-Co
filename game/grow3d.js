@@ -7806,6 +7806,89 @@
     [[0, 2.065, 1.06, 0.03], [0, 1.335, 1.06, 0.03]].forEach(function (f) { c.box(f[2], f[3], 0.035, MAT.alu, f[0], f[1], 0.005, { cast: false }); }); [-0.515, 0.515].forEach(function (x) { c.box(0.03, 0.76, 0.035, MAT.alu, x, 1.7, 0.005, { cast: false }); });
     c.box(0.5, 0.02, 0.09, MAT.alu, 0, 1.22, 0.045); c.box(0.5, 0.06, 0.008, MAT.alu, 0, 1.25, 0.088, { cast: false }); [[-0.15, 0x6fdc8c], [0.0, 0xffc857], [0.15, 0x7cc4ff]].forEach(function (l) { c.box(0.11, 0.16, 0.012, colorMat(l[1], 0.8), l[0], 1.31, 0.05, { cast: false }).rotation.x = -0.15; });
   });
+  function bookshelfExtra(w, h) { return function (c) {
+    c.box(w + 0.1, 0.05, 0.38, MAT.darkwood, 0, h + 0.025, 0.02, { r: 0.012 }); c.box(w + 0.05, 0.035, 0.35, MAT.darkwood, 0, h - 0.015, 0.012, { cast: false }); c.box(w + 0.04, 0.1, 0.02, MAT.darkwood, 0, 0.05, 0.16, { cast: false });
+    [-1, 1].forEach(function (sd) { c.box(0.07, h - 0.1, 0.012, MAT.darkwood, sd * (w / 2 - 0.03), h / 2, 0.156, { cast: false }); });
+    c.box(w - 0.14, 0.012, 0.02, glowMat(0xffe2b0, 1.0), 0, h - 0.075, 0.12, { cast: false, sharp: true });
+    c.cyl(0.05, 0.04, 0.07, MAT.ceramic, -w / 2 + 0.2, h + 0.085, 0.02, 16); for (var i = 0; i < 7; i++) leafAt(LEAF_GEO_SM, MAT.bigleaf, -w / 2 + 0.2, h + 0.12, 0.02, i * 0.9, 0.5 + (i % 3) * 0.2, 0.26, c.group);
+    c.box(0.2, 0.03, 0.14, colorMat(0x8a2a2a, 0.8), w / 2 - 0.25, h + 0.065, 0.02).rotation.y = 0.3; c.box(0.18, 0.025, 0.13, colorMat(0x2f6b9a, 0.8), w / 2 - 0.25, h + 0.093, 0.02).rotation.y = -0.1;
+  }; }
+  propExtra('bookshelf', bookshelfExtra(1.0, 1.8)); propExtra('upBooks', bookshelfExtra(1.6, 2.0));
+  propExtra('lobbyCoffee', function (c) {
+    if (!S.upgrades.lobby) return;
+    var door = colorMat(0x2a1c10, 0.6);
+    [-0.147, 0.147].forEach(function (x) { c.box(0.275, 0.72, 0.014, door, x, 0.5, 0.256, { cast: false, r: 0.006 }); c.box(0.012, 0.14, 0.02, MAT.chrome, x - Math.sign(x) * 0.1, 0.62, 0.272, { cast: false }); }); c.box(0.6, 0.08, 0.012, MAT.black, 0, 0.04, 0.256, { cast: false });
+    c.box(0.345, 0.012, 0.345, MAT.chrome, 0, 1.406, -0.04, { cast: false }); [-0.172, 0.172].forEach(function (x) { c.box(0.008, 0.46, 0.008, MAT.chrome, x, 1.17, 0.132, { cast: false }); });
+    var gauge = c.cyl(0.03, 0.03, 0.014, MAT.white, 0.1, 1.17, 0.136, 20); gauge.rotation.x = Math.PI / 2; var gr = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.005, 8, 20), MAT.brass); gr.position.set(0.1, 1.17, 0.144); c.add(gr); var nd = c.box(0.003, 0.022, 0.002, colorMat(0xc0271b, 0.5), 0.105, 1.176, 0.1445, { cast: false, sharp: true }); nd.rotation.z = -0.7;
+    var wand = c.cyl(0.006, 0.006, 0.17, MAT.chrome, -0.2, 1.06, 0.1, 8); wand.rotation.z = 0.28; c.cyl(0.012, 0.012, 0.02, MAT.black, -0.178, 1.14, 0.1, 10);
+    c.box(0.13, 0.06, 0.1, MAT.gunmetal, -0.22, 0.97, -0.14, { r: 0.008 }); for (var s = 0; s < 5; s++) { var st = c.cyl(0.003, 0.003, 0.11, MAT.wood, -0.26 + s * 0.02, 1.03, -0.14, 5); st.rotation.z = (s - 2) * 0.08; }
+  });
+  propExtra('vending', function (c) {
+    var dark = colorMat(0x1a1d21, 0.6);
+    c.box(0.012, 1.3, 0.02, glowMat(0xeaf6ff, 1.3), -0.405, 1.12, 0.27, { cast: false, sharp: true });
+    c.box(0.012, 1.78, 0.012, MAT.chrome, 0.19, 1.03, 0.362, { cast: false }); c.box(0.99, 0.02, 0.02, MAT.chrome, 0, 1.935, 0.37, { cast: false });
+    c.box(0.11, 0.15, 0.03, MAT.gloss, 0.315, 0.74, 0.368, { cast: false, r: 0.008 }); c.lit(0x39a0ff, 0.07, 0.05, 0.315, 0.765, 0.3845); c.lit(0x6fdc8c, 0.07, 0.008, 0.315, 0.69, 0.3845);
+    for (var v = 0; v < 8; v++) { c.box(0.004, 0.014, 0.34, dark, 0.477, 0.3 + v * 0.045, 0, { cast: false, sharp: true }); c.box(0.004, 0.014, 0.34, dark, -0.477, 0.3 + v * 0.045, 0, { cast: false, sharp: true }); }
+    [[-0.4, -0.3], [0.4, -0.3], [-0.4, 0.3], [0.4, 0.3]].forEach(function (p) { c.box(0.1, 0.012, 0.1, MAT.black, p[0], 0.006, p[1] * 1.15, { cast: false, sharp: true }); });
+    c.box(0.56, 0.035, 0.012, MAT.chrome, -0.13, 0.575, 0.362, { cast: false }); c.sign(['take it from the tray'], 0.4, 0.04, -0.13, 0.26, 0.362, 0, { size: 14, bg: '#1a1d21', titleColor: '#cfd6dc', line: 'rgba(0,0,0,0)' });
+  });
+  propExtra('goodsShelf', function (c) {
+    var w = goodsWidth(); [1.3, 1.86].forEach(function (y) { warmStrip(c, w - 0.2, 0, y - 0.026, 0.14); }); warmStrip(c, w - 0.2, 0, 1.99, 0.14);
+    [-1, 1].forEach(function (s) { c.box(0.012, 1.9, 0.012, MAT.brass, s * (w / 2 + 0.002), 1.0, 0.31, { cast: false }); });
+  });
+  propExtra('vipTable', function (c) {
+    var brass = colorMat(0xc9a24a, 0.35, 0.8), plush = colorMat(0x6e2a4a, 0.95);
+    var rim = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.012, 8, 44), brass); rim.rotation.x = Math.PI / 2; rim.position.y = 0.625; c.add(rim);
+    c.box(3.3, 0.012, 1.9, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x2a1420, roughness: 1 }), 0, 0.006, 0, { cast: false, sharp: true }); c.box(3.0, 0.004, 1.6, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x4a2034, roughness: 1 }), 0, 0.014, 0, { cast: false, sharp: true });
+    [-0.95, 0.95].forEach(function (x) { var sd = x > 0 ? 1 : -1; c.box(0.5, 0.1, 0.5, plush, x - sd * 0.06, 0.5, 0, { r: 0.04 }); var bc = c.box(0.1, 0.4, 0.48, plush, x + sd * 0.215, 0.76, 0, { r: 0.04 }); for (var b = 0; b < 4; b++) c.cyl(0.012, 0.012, 0.012, brass, x + sd * 0.16, 0.68 + Math.floor(b / 2) * 0.18, -0.12 + (b % 2) * 0.24, 8).rotation.z = Math.PI / 2; [-0.32, 0.32].forEach(function (z) { c.box(0.62, 0.02, 0.13, brass, x, 0.74, z, { cast: false, r: 0.008 }); }); });
+    [[-0.28, 0.12], [0.26, -0.14]].forEach(function (g) { c.cyl(0.045, 0.045, 0.006, MAT.black, g[0], 0.648, g[1], 16); c.cyl(0.032, 0.026, 0.085, MAT.jar, g[0], 0.693, g[1], 14); c.cyl(0.028, 0.024, 0.03, colorMat(0xd9a23a, 0.3, 0, { transparent: true, opacity: 0.8 }), g[0], 0.667, g[1], 12); });
+    c.cyl(0.06, 0.05, 0.02, MAT.gunmetal, 0.02, 0.655, -0.25, 16);
+  });
+  propExtra('hallClockTable', function (c) {
+    c.box(0.4, 0.1, 0.014, MAT.darkwood, 0, 0.63, 0.247, { cast: false, r: 0.006 }); c.cyl(0.012, 0.012, 0.02, MAT.brass, 0, 0.63, 0.262, 10).rotation.x = Math.PI / 2;
+    var ck = c.cyl(0.055, 0.055, 0.035, MAT.brass, 0.13, 0.785, 0.14, 24); ck.rotation.x = Math.PI / 2; var cf = c.cyl(0.046, 0.046, 0.004, MAT.white, 0.13, 0.785, 0.159, 24); cf.rotation.x = Math.PI / 2; var h1 = c.box(0.004, 0.035, 0.002, MAT.black, 0.13, 0.797, 0.162, { cast: false, sharp: true }); var h2 = c.box(0.003, 0.028, 0.002, MAT.black, 0.141, 0.785, 0.162, { cast: false, sharp: true }); h2.rotation.z = Math.PI / 2; c.box(0.09, 0.012, 0.04, MAT.brass, 0.13, 0.726, 0.14, { cast: false });
+    [[0.3, 0x8a2a2a], [0.26, 0x2f6b9a], [0.22, 0xe0c25a]].forEach(function (b, i) { c.box(b[0], 0.035, 0.2, colorMat(b[1], 0.85), 0.02, 0.284 + i * 0.036, 0, { cast: false }).rotation.y = (i - 1) * 0.15; });
+  });
+  propExtra('dining', function (c) {
+    [-0.38, 0.38].forEach(function (z) { c.box(1.38, 0.08, 0.03, MAT.darkwood, 0, 0.675, z, { cast: false }); }); [-0.72, 0.72].forEach(function (x) { c.box(0.03, 0.08, 0.74, MAT.darkwood, x, 0.675, 0, { cast: false }); });
+    c.box(1.62, 0.004, 0.3, fabricMat(0xefe6d2), 0, 0.779, 0, { cast: false, sharp: true });
+    [-0.35, 0.35].forEach(function (x) { var rng = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.006, 6, 28), colorMat(0x2f6b9a, 0.4)); rng.rotation.x = Math.PI / 2; rng.position.set(x, 0.794, 0); c.add(rng); c.box(0.1, 0.012, 0.1, fabricMat(0x3a5a3a), x - 0.3, 0.786, 0.22, { cast: false }).rotation.y = 0.4; });
+    c.cyl(0.018, 0.016, 0.06, MAT.white, 0.13, 0.808, 0.12, 10); c.cyl(0.018, 0.016, 0.06, colorMat(0x3a3a3a, 0.5), 0.17, 0.808, 0.1, 10); c.cyl(0.019, 0.019, 0.012, MAT.chrome, 0.13, 0.842, 0.12, 10); c.cyl(0.019, 0.019, 0.012, MAT.chrome, 0.17, 0.842, 0.1, 10);
+    c.box(0.34, 0.02, 0.2, MAT.wood, -0.02, 0.79, -0.26, { cast: false, r: 0.008 }).rotation.y = 0.2; var loaf = c.box(0.2, 0.08, 0.1, colorMat(0xb8793a, 0.9), -0.02, 0.84, -0.26, { r: 0.04 }); loaf.rotation.y = 0.2;
+    c.box(2.6, 0.012, 2.4, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x3d4a3a, roughness: 1 }), 0, 0.006, 0, { cast: false, sharp: true });
+  });
+  propExtra('couchUp', function (c) {
+    c.box(0.45, 0.04, 0.45, MAT.wood, 1.6, 0.55, -0.1, { r: 0.012 }); legs4({ box: function (a, b, e, m, px, py, pz) { return c.box(a, b, e, m, px + 1.6, py, pz - 0.1); } }, 0.45, 0.45, 0.53, MAT.darkwood, 0.05, 0.035);
+    c.cyl(0.06, 0.045, 0.09, MAT.ceramic, 1.6, 0.615, -0.1, 16); for (var i = 0; i < 9; i++) leafAt(LEAF_GEO_SM, MAT.bigleaf, 1.6, 0.66, -0.1, i * 0.7, 0.4 + (i % 3) * 0.22, 0.34, c.group);
+    for (var f = 0; f < 30; f++) { c.box(0.012, 0.004, 0.09, colorMat(0xd8c9a8, 1), -2.2 + f * 0.152, 0.006, 3.24, { cast: false, sharp: true }); c.box(0.012, 0.004, 0.09, colorMat(0xd8c9a8, 1), -2.2 + f * 0.152, 0.006, -0.44, { cast: false, sharp: true }); }
+    c.solid(1.35, 1.85, -0.35, 0.15);
+  });
+  propExtra('bed', function (c) {
+    c.box(1.72, 0.06, 0.13, MAT.wood, 0, 1.08, -1.05, { r: 0.02 }); c.box(1.64, 0.5, 0.06, MAT.darkwood, 0, 0.27, 1.07, { r: 0.012 }); c.box(1.7, 0.05, 0.09, MAT.wood, 0, 0.54, 1.07, { r: 0.015 });
+    c.box(1.57, 0.035, 0.42, fabricMat(0xe0c25a), 0, 0.787, 0.76, { r: 0.015 }); c.box(1.58, 0.1, 0.03, fabricMat(0xe0c25a), 0, 0.73, 1.0, { cast: false });
+    [-0.34, 0.34].forEach(function (x) { c.box(0.5, 0.1, 0.34, fabricMat(0x3a6a4a), x, 0.79, -0.6, { r: 0.045 }).rotation.x = 0.5; });
+    c.box(0.55, 0.02, 0.5, MAT.wood, 1.1, 0.558, -0.9, { cast: false });
+    [-0.34, -0.16].forEach(function (x, i) { var sl = c.box(0.1, 0.05, 0.26, fabricMat(0x8a4a2a), x, 0.045, 1.35, { r: 0.022 }); sl.rotation.y = i ? 0.08 : -0.12; c.box(0.1, 0.04, 0.12, fabricMat(0x6e3a20), x + (i ? 0.005 : -0.008), 0.075, 1.28, { r: 0.018 }).rotation.y = i ? 0.08 : -0.12; });
+  });
+  propExtra('windowSeat', function (c) {
+    for (var i = 0; i < 6; i++) { c.box(0.9, 0.3, 0.014, MAT.darkwood, -2.5 + i * 1.0, 0.245, 0.306, { cast: false, r: 0.008 }); c.cyl(0.014, 0.014, 0.02, MAT.brass, -2.5 + i * 1.0, 0.33, 0.32, 10).rotation.x = Math.PI / 2; }
+    c.box(6.02, 0.07, 0.02, MAT.darkwood, 0, 0.035, 0.31, { cast: false }); c.box(6.04, 0.025, 0.64, MAT.wood, 0, 0.455, 0.0, { cast: false });
+    [-2, -1, 0, 1, 2].forEach(function (x) { c.box(0.012, 0.082, 0.6, fabricMat(0x2f4a30), x, 0.49, 0, { cast: false, sharp: true }); }); c.box(6.0, 0.02, 0.02, fabricMat(0x2f4a30), 0, 0.52, 0.295, { cast: false });
+    c.box(0.5, 0.09, 0.36, fabricMat(0xc9b28a), 2.7, 0.575, 0.0, { r: 0.03 }); c.box(0.5, 0.05, 0.36, fabricMat(0xb89a6e), 2.7, 0.64, 0.0, { r: 0.022 });
+    c.cyl(0.04, 0.035, 0.09, colorMat(0x6fdc8c, 0.5), 1.55, 0.575, 0.12, 14);
+  });
+  propExtra('upRug', function (c) {
+    var cream = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0xd8c9a8, roughness: 1 });
+    [-1.0, 1.0].forEach(function (z) { c.box(3.0, 0.004, 0.035, cream, 0, 0.026, z, { cast: false, sharp: true }); }); [-1.5, 1.5].forEach(function (x) { c.box(0.035, 0.004, 2.035, cream, x, 0.026, 0, { cast: false, sharp: true }); });
+    var dia = c.box(0.9, 0.004, 0.9, cream, 0, 0.0255, 0, { cast: false, sharp: true }); dia.rotation.y = Math.PI / 4; var di2 = c.box(0.72, 0.004, 0.72, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x6a4f7a, roughness: 1 }), 0, 0.027, 0, { cast: false, sharp: true }); di2.rotation.y = Math.PI / 4;
+    for (var f = 0; f < 26; f++) [-1.85, 1.85].forEach(function (x) { c.box(0.1, 0.004, 0.014, cream, x, 0.006, -1.25 + f * 0.1, { cast: false, sharp: true }); });
+  });
+  propExtra('upDresser', function (c) {
+    c.box(1.23, 0.07, 0.53, MAT.black, 0, 0.035, 0, { cast: false });
+    [-0.055, 0.455].forEach(function (x) { c.box(0.015, 0.62, 0.035, MAT.brass, x, 1.3, -0.195, { cast: false }); }); [0.995, 1.605].forEach(function (y) { c.box(0.525, 0.015, 0.035, MAT.brass, 0.2, y, -0.195, { cast: false }); });
+    c.box(0.3, 0.014, 0.2, MAT.brass, 0.3, 0.947, 0.1, { cast: false, r: 0.006 }); [[0.22, 0xe05a8a, 0.09], [0.3, 0x7cc4ff, 0.12], [0.38, 0xf0b94d, 0.07]].forEach(function (b) { c.cyl(0.022, 0.026, b[2], colorMat(b[1], 0.15, 0, { transparent: true, opacity: 0.8 }), b[0], 0.954 + b[2] / 2, 0.1, 12); c.cyl(0.01, 0.01, 0.025, MAT.brass, b[0], 0.966 + b[2], 0.1, 8); });
+    c.box(0.22, 0.05, 0.16, colorMat(0x3a2418, 0.6), -0.1, 0.965, 0.12, { r: 0.012 });
+  });
   // ── Build mode (F2): grab, carry, rotate and drop props and fixtures; placements persist in the save. The creative
   //    catalogue (grow3d-creative.js) is part of the same mode through hooks.editMode: it takes the keys only for your
   //    own builds and the piece you are placing, and everything else here stays furniture. ──
