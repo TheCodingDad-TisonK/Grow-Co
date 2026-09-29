@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.28.1: a tidier Workshop
+
+- **Smaller cards.** A card in the Workshop shows a name, a line about it and its switch. **See more** opens the rest: what a DLC adds and its three upgrades, or everything a content pack has in it.
+- **One look for everything.** Content packs are drawn like the DLC, each kind in its own colour.
+- **The search and filter bar is solid.** Cards no longer show through it as they scroll underneath.
+- **The drive shows behind the Workshop and the guide** too, as it does behind the main menu.
+
 ## v1.28: every DLC, upgraded
 
 **Three upgrades for every DLC.** A new **DLC upgrades** app on the office PC lists the DLC you have switched on, each with three upgrades of its own: 27 in all. They are paid from the bank and last for good. The guide has the full list.

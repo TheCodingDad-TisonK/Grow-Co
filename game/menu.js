@@ -64,30 +64,24 @@
     if (!order.length) return '<div class="rf-ws-none">Nothing matches that. Clear the search or pick another shelf.</div>';
     order.forEach(function (k) {
       html += '<h3 class="rf-ws-head">' + k + ' <small>' + groups[k].filter(function (p) { return p.on; }).length + ' of ' + groups[k].length + ' on</small></h3>';
-      if (k === 'DLC') {
-        html += '<p class="rf-ws-lead">Whole parts of the game, all free. Switch one on and it\'s in every save. Switch it off and it\'s hidden, but nothing in your saves is lost: switch it back on and it\'s all still there.</p><div class="rf-ws-dlcs">';
-        groups[k].forEach(function (p) {
-          html += '<div class="rf-ws-dlc' + (p.on ? ' on' : '') + '" data-dlc="' + esc(p.dlc) + '"><div class="art"><span>' + esc(p.icon) + '</span>' + (p.tag ? '<i class="tag">' + esc(p.tag) + '</i>' : '') + '</div>' +
-            '<div class="rf-ws-body"><b>' + esc(p.name) + '</b><span class="what">' + esc(p.counts) + '</span><small>' + esc(p.blurb) + '</small>' +
-            (p.features.length ? '<ul class="feat">' + p.features.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
-            (p.upgrades.length ? '<div class="upg"><em>Three upgrades</em>' + p.upgrades.map(function (u) { return '<span>' + esc(u) + '</span>'; }).join('') + '</div>' : '') + '</div>' + wsSwitch(p) + '</div>';
-        });
-        html += '</div>'; return;
-      }
-      html += '<div class="rf-ws-grid">';
-      groups[k].forEach(function (p) {
-        var open = wsView.open === p.id, inside = open ? WS.details(p.id) : [];
-        html += '<div class="rf-ws-card' + (p.on ? ' on' : '') + (open ? ' open' : '') + '"><div class="rf-ws-ico">' + esc(p.icon) + '</div>' +
-          '<div class="rf-ws-body"><b>' + esc(p.name) + '</b><small>' + esc(p.blurb) + '</small>' +
-          '<span class="rf-ws-meta">' + esc(p.counts) + ' · by ' + esc(p.author) + (p.group ? ' · one at a time' : '') + '</span>' +
-          '<button class="rf-ws-more" data-rf="ws-open" data-id="' + esc(p.id) + '">' + (open ? 'Hide what\'s inside' : 'See what\'s inside') + '</button></div>' +
-          '<div class="rf-ws-act">' + wsSwitch(p) +
-          (p.user ? '<button class="small" data-rf="ws-exp" data-id="' + esc(p.id) + '" title="Save the manifest">⬇</button><button class="danger small" data-rf="ws-del" data-id="' + esc(p.id) + '" title="Remove this pack">🗑</button>' : '') + '</div>' +
-          (open ? '<ul class="rf-ws-in">' + (inside.length ? inside.map(function (r) { return '<li><i>' + esc(r[0]) + '</i><b>' + esc(r[1]) + '</b><span>' + esc(r[2]) + '</span></li>'; }).join('') : '<li><span>Nothing in it yet.</span></li>') + '</ul>' : '') + '</div>';
-      });
-      html += '</div>';
+      if (k === 'DLC') html += '<p class="rf-ws-lead">Whole parts of the game, all free. Switch one on and it\'s in every save. Switch it off and it\'s hidden, but nothing in your saves is lost: switch it back on and it\'s all still there.</p>';
+      html += '<div class="rf-ws-packs">' + groups[k].map(function (p) { return wsCard(p, k); }).join('') + '</div>';
     });
     return html;
+  }
+  // One card for a DLC and a content pack alike. Closed, it is a name, a line and a switch. "See more" opens what is in it.
+  function wsCard(p, k) {
+    var WS = window.RF_WORKSHOP, open = wsView.open === p.id, tag = p.dlc ? p.tag : '', more = '';   /* a pack stands under the heading of its kind, so it needs no tag to say so */
+    if (open) {
+      if (p.dlc) more = (p.features.length ? '<ul class="feat dots">' + p.features.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
+        (p.upgrades.length ? '<div class="upg"><em>Three upgrades</em>' + p.upgrades.map(function (u) { return '<span>' + esc(u) + '</span>'; }).join('') + '</div>' : '');
+      else { var inside = WS.details(p.id); more = '<ul class="feat">' + (inside.length ? inside.map(function (r) { return '<li><i>' + esc(r[0]) + '</i><b>' + esc(r[1]) + '</b>' + (r[2] ? '<span>' + esc(r[2]) + '</span>' : '') + '</li>'; }).join('') : '<li><span>Nothing in it yet.</span></li>') + '</ul><span class="rf-ws-meta">by ' + esc(p.author) + '</span>'; }
+    }
+    return '<div class="rf-ws-pack' + (p.on ? ' on' : '') + (open ? ' open' : '') + '"' + (p.dlc ? ' data-dlc="' + esc(p.dlc) + '"' : ' data-kind="' + esc(k) + '"') + '><div class="art"><span>' + esc(p.icon) + '</span></div>' +
+      '<div class="rf-ws-body"><b>' + esc(p.name) + (tag ? '<i class="tag">' + esc(tag) + '</i>' : '') + '</b><span class="what">' + esc(p.counts) + (p.group ? ' · one at a time' : '') + '</span><small>' + esc(p.blurb) + '</small>' + more +
+      '<button class="rf-ws-more" data-rf="ws-open" data-id="' + esc(p.id) + '">' + (open ? 'See less' : 'See more') + '</button></div>' +
+      '<div class="rf-ws-act">' + wsSwitch(p) +
+      (p.user ? '<button class="small" data-rf="ws-exp" data-id="' + esc(p.id) + '" title="Save the manifest">⬇</button><button class="danger small" data-rf="ws-del" data-id="' + esc(p.id) + '" title="Remove this pack">🗑</button>' : '') + '</div></div>';
   }
   function wsChipsHtml() {
     var kinds = ['All', 'On'], seen = {}; window.RF_WORKSHOP.packs().forEach(function (p) { var k = wsGroupOf(p); if (!seen[k]) { seen[k] = 1; kinds.push(k); } });

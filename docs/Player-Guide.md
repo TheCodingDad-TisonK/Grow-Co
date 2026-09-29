@@ -252,7 +252,7 @@ The van in the bay under the canopy is also a shop on wheels. It sells what you 
 
 ## The Workshop: content packs and DLC
 
-**DLC** comes first in the Workshop, all ten free: **RF Smoking: the Tobacco Works**, **The Extraction Lab**, **The Roof Greenhouse**, **The Breeding Lab**, **The Hydroponics Bay**, **The Cannabis Cup**, **Merch & Brand**, **The Out-of-town Farm**, **Bank & Insurance** and **Dev Tools**. Each card says what it adds, and **See what's inside** opens the full list. A new shop starts without them. Switch one on and it's in every save. Switch it off and it's hidden, but nothing in your saves is lost: switch it back on and it's all still there, a lab batch or a roof bed carrying on where it stopped.
+**DLC** comes first in the Workshop, all ten free: **RF Smoking: the Tobacco Works**, **The Extraction Lab**, **The Roof Greenhouse**, **The Breeding Lab**, **The Hydroponics Bay**, **The Cannabis Cup**, **Merch & Brand**, **The Out-of-town Farm**, **Bank & Insurance** and **Dev Tools**. Each card says what it adds, and **See more** opens what is in it and its three upgrades. A new shop starts without them. Switch one on and it's in every save. Switch it off and it's hidden, but nothing in your saves is lost: switch it back on and it's all still there, a lab batch or a roof bed carrying on where it stopped.
 
 The **Workshop** is on the main menu. Content packs change what the game has in it: more strains to grow, more lamps and tents, more for the counter display, more town, a different car, snow at Christmas or fireworks at New Year. Turn packs on or off, then press **Apply and rebuild the shop** once and the shop reloads. Your save isn't touched, because a pack only adds things you can then go and buy.
 
