@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.28.2: a faster shop
+
+- **Far fewer draws.** A second after loading, the shop's fixed geometry (walls, floors, shelves, the parts of furniture that never move) is merged into a few hundred draws instead of thousands. On a full shop that is roughly 1.5x the frame rate, and the picture is the same.
+- **Nothing freezes.** Anything that later moves, opens, hides or changes colour goes back to drawing itself on the next pass, so doors, shutters, machines and people all behave as before.
+- **For comparing:** add `?nobake=1` to the address to switch the merge off, or `?bakelog=1` to see what it hands back.
+
 ## v1.28.1: a tidier Workshop
 
 - **Smaller cards.** A card in the Workshop shows a name, a line about it and its switch. **See more** opens the rest: what a DLC adds and its three upgrades, or everything a content pack has in it.
