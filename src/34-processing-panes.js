@@ -145,7 +145,7 @@
     h += row('$', money(B.dayGross) + ' taken today', money(B.monthGross) + ' so far this month');
     h += row('−', money(B.dayOther) + ' spent on the crop today', 'trimming, testing and compliance at $' + COST.processPerGram.toFixed(2) + ' a gram, ' + money(B.monthOther) + ' this month');
     h += row('%', money(taxDue()) + ' tax owed', Math.round(ECON.excise * 100) + '% excise sits inside every sale, plus ' + Math.round(ECON.taxRate * 100) + '% on the month, and ' + Math.round(ECON.taxHighRate * 100) + '% on what the month takes over ' + money(ECON.taxHighFrom) + '. Due on day ' + taxDay() + '.');
-    if (B.arrears > 0.5) h += row('!', money(B.arrears) + ' in arrears', 'unpaid bills. Rep falls every day this stands');
+    if (B.arrears > 0.5) h += row('!', money(B.arrears) + ' in arrears', 'unpaid bills, paid down by instalment on each morning the bills clear. Rep falls on any morning they cannot be paid');
     if (L && L.short > 0.5) h += '<div class="desc">Day ' + L.day + ': ' + money(L.short) + ' of that morning\'s bill went unpaid.</div>';
     return h;
   }

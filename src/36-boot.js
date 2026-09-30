@@ -136,7 +136,7 @@
 //#endif
   // the automated tests (tests/) and the balance report (tools/balance.js) reach in here; the game never reads it
   window.RFGROW.test = {
-    simTick: simTick, simStep: step, spawnCustomer: spawnCustomer, newCustomer: newCustomer, finalizeSale: finalizeSale, handOver: handOver,
+    simTick: simTick, settings: SET, simStep: step, spawnCustomer: spawnCustomer, newCustomer: newCustomer, finalizeSale: finalizeSale, handOver: handOver,
     resetShop: resetShop, setPageReload: function (fn) { pageReload = fn; }, devStrains: devStrains, dlcOn: dlcOn, propGone: propGone, inGoneProp: inGoneProp, fixtures: function () { return fxById; }, applyFixtures: applyFixtures,
     sun: sun, traffic: function () { return traffic; }, truck: function () { return truck; }, shutterOpen: shutterOpen, anyCigStock: anyCigStock, syncGoods: syncGoods, applyDlcWorld: applyDlcWorld, staffDoorLocked: staffDoorLocked, keyStaffDoor: keyStaffDoor, toggleStaffDoor: toggleStaffDoor, navKey: navKey, ghParts: function () { return exp.ghParts; }, openMenu: openMenu, closeMenu: closeMenu, npcState: function () { return npc.state; },
     lineCount: lineCount, lineShown: lineShown, exitPath: exitPath, ropeGates: function () { return ropeGates; }, ropeSegs: function () { return ropeSegList; },

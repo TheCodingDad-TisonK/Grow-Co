@@ -75,4 +75,11 @@ test('a day that rolled while the game was shut starts in the morning', async (h
   h.T.simStep(1, true);
   h.eq(S.day, day + 1, 'time away turns the calendar one day at most');
   h.ok(S.clock <= 8, 'the leftover clock is capped at the morning, not left near midnight: ' + S.clock);
+  // with the sky pinned to one hour the days run on dayAcc instead, and the same cap applies
+  const SET = h.T.settings, was = SET.dayNight; SET.dayNight = 'clock';
+  try {
+    S.dayAcc = 47.5; h.T.simStep(1, true);
+    h.eq(S.day, day + 2, 'the pinned-sky calendar also turns one day at most');
+    h.ok(S.dayAcc <= 8, 'the pinned-sky accumulator is capped the same way: ' + S.dayAcc);
+  } finally { SET.dayNight = was; }
 });
