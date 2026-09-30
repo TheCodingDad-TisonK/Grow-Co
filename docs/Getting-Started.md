@@ -39,3 +39,5 @@ There are **three save slots**. The main menu lists them with their day, level a
 The game saves by itself, all the time. The desktop app keeps the save in its own local storage inside your user profile. In a browser it lives in that browser's storage for that address. The delete button on a slot erases that shop, and **Reset save** in the pause menu erases the one you're playing.
 
 Add `?save=name` to the address (browser or `npm run serve`) to play a separate save slot, which is handy for testing.
+
+The game merges the shop's fixed geometry into a few hundred draws a second after it loads, which is where most of the frame rate comes from. `?nobake=1` switches that off (to compare), and `?bakelog=1` prints every part the merge later has to give back because something moved it.
