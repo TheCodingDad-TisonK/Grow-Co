@@ -149,7 +149,8 @@
     freeSlots: 8,          // up to eight slots is still a job one person can do
     slotsPerGrower: 3,     // past that, one more grower for every three further slots
     processPerGram: 0.55,  // trimming, lab testing and compliance on every gram harvested
-    arrearsRep: 2          // reputation lost for every day the bills go unpaid
+    arrearsRep: 2,         // reputation lost for every day the bills go unpaid
+    arrearsShare: 0.5      // at most this share of what the bank still holds after the bills goes on the arrears each morning, so one good day is never swept away whole
   };
   function headcount() {   // nobody runs a commercial grow room and a basement works on their own; the branch has its own manager on the bill
     return Math.max(0, Math.ceil((slots() - COST.freeSlots) / COST.slotsPerGrower)) + (hasLic('tobacco') ? 2 : 0);
@@ -208,7 +209,7 @@
       if (!offline) toast('Bills unpaid: ' + money(short) + ' into arrears', 'bad');
     } else {
       logEvent('Morning bills paid: ' + money(fixed) + ' (' + rows.slice(0, 3).map(function (r) { return r.k.toLowerCase() + ' ' + money(r.v); }).join(', ') + ')', '');
-      if (B.arrears > 0.5) { var cl = drawFunds(Math.min(B.arrears, S.bank)); if (cl > 0.5) { B.arrears -= cl; logEvent('Paid ' + money(cl) + ' off the arrears' + (B.arrears > 0.5 ? ', ' + money(B.arrears) + ' still owing' : ', all square'), B.arrears > 0.5 ? '' : 'good'); } }
+      if (B.arrears > 0.5) { var cl = drawFunds(Math.min(B.arrears, Math.floor(S.bank * COST.arrearsShare))); if (cl > 0.5) { B.arrears -= cl; var arrTxt = 'Paid ' + money(cl) + ' off the arrears' + (B.arrears > 0.5 ? ', ' + money(B.arrears) + ' still owing' : ', all square'); logEvent(arrTxt, B.arrears > 0.5 ? '' : 'good'); if (!offline) toast('🏦 ' + arrTxt, B.arrears > 0.5 ? '' : 'good'); } }   /* an instalment, never the whole balance: the rest of the debt waits for tomorrow */
     }
     payWages(offline);
     monthlyTax(offline);

@@ -53,3 +53,33 @@ test('a cash customer pays into the till once the change is right', async (h) =>
   h.eq(h.S.customer, null, 'the customer is done');
   h.eq(h.S.till, till0 + c.due, 'the till keeps exactly the bill');
 });
+
+// the morning bill: arrears are paid down in instalments, and a day that rolls while the shop was shut starts in the morning
+test('the arrears sweep takes at most half of what the bank holds after the bills', async (h) => {
+  const S = h.S, share = h.T.data.COST.arrearsShare;
+  h.ok(share > 0 && share < 1, 'the arrears share is a fraction');
+  S.day = 20; S.bank = 6000; S.vault = 0; S.till = 0; S.pocket = 0;
+  if (!S.books) S.books = {}; S.books.arrears = 5000; S.books.dayOther = 0; S.books.monthOther = 0;
+  S.clock = 23.99; h.T.simStep(1, false);   // 1 s is 0.02 h at the default day length, so the day rolls once
+  h.eq(S.day, 21, 'one day rolled');
+  const paid = S.books.lastBill.paid; h.ok(paid > 0 && paid < 6000, 'the bills were paid in full');
+  const left = 6000 - paid, cl = Math.floor(left * share);
+  h.eq(S.books.arrears, 5000 - cl, 'the arrears came down by the instalment only');
+  h.ok(S.bank >= left - cl - 1, 'the bank keeps the other half: ' + S.bank + ' of ' + left);
+  h.ok((S.log || []).some((l) => /off the arrears/.test(l.msg)), 'the instalment is logged');
+});
+
+test('a day that rolled while the game was shut starts in the morning', async (h) => {
+  const S = h.S, day = S.day || 1;
+  S.clock = 47.5;   // nearly two days of clock built up while away
+  h.T.simStep(1, true);
+  h.eq(S.day, day + 1, 'time away turns the calendar one day at most');
+  h.ok(S.clock <= 8, 'the leftover clock is capped at the morning, not left near midnight: ' + S.clock);
+  // with the sky pinned to one hour the days run on dayAcc instead, and the same cap applies
+  const SET = h.T.settings, was = SET.dayNight; SET.dayNight = 'clock';
+  try {
+    S.dayAcc = 47.5; h.T.simStep(1, true);
+    h.eq(S.day, day + 2, 'the pinned-sky calendar also turns one day at most');
+    h.ok(S.dayAcc <= 8, 'the pinned-sky accumulator is capped the same way: ' + S.dayAcc);
+  } finally { SET.dayNight = was; }
+});
