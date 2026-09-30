@@ -92,7 +92,7 @@
       lit: function (col, w, h, x, y, z, ry, rx) { var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col, toneMapped: false })); m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, 0); g.add(m); return m; },   /* a lit strip or a pilot light: shown in its own colour whatever the room is doing */
       group: g, obstacles: obs, floor: floorLevel, dyn: null
     };
-    ctx.dynGroup = function () { if (!ctx.dyn) { ctx.dyn = new THREE.Group(); g.add(ctx.dyn); } return ctx.dyn; };
+    ctx.dynGroup = function () { if (!ctx.dyn) { ctx.dyn = new THREE.Group(); ctx.dyn.userData.dyn = true; g.add(ctx.dyn); } return ctx.dyn; };   /* what a sync() refills is never baked */
     return ctx;
   }
   function rotAABB(o, rot) { var r = ((rot % 4) + 4) % 4; if (r === 0) return o; if (r === 1) return { x1: o.z1, x2: o.z2, z1: -o.x2, z2: -o.x1 }; if (r === 2) return { x1: -o.x2, x2: -o.x1, z1: -o.z2, z2: -o.z1 }; return { x1: -o.z2, x2: -o.z1, z1: o.x1, z2: o.x2 }; }
