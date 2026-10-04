@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.28.3: the Desktop shortcut comes back
+
+- **Desktop shortcut on every install.** The installer created the Grow Co shortcut only on the very first install, so an update after it had gone left the Desktop empty. It is created on every install now.
+
 ## v1.28.2: a faster shop
 
 - **Far fewer draws.** A second after loading, the shop's fixed geometry (walls, floors, shelves, the parts of furniture that never move) is merged into a few hundred draws instead of thousands. On a full shop that is roughly 1.5x the frame rate, and the picture is the same.
