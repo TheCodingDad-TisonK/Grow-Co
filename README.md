@@ -14,7 +14,9 @@
 > Grow Co. has nothing to do with Farming Simulator, GIANTS Software, or any Farming Simulator mod, including the Realistic Farming mods by the same author. It is not a mod, not an add-on, not part of that suite, and it is not affiliated with or endorsed by GIANTS Software.
 > It is a separate, standalone hobby project that came alive for one reason: its author enjoyed building it.
 
-![The till is a tablet above the cash drawer](screenshots/01-till-tablet.jpg)
+![Grow Co. main menu: three save slots on the street at dusk](gallery/00-main-menu.jpg)
+
+More screenshots: the [gallery](gallery/README.md).
 
 ## What it is
 
@@ -48,13 +50,6 @@ It's one HTML page and plain JavaScript on top of [three.js](https://threejs.org
 | **Three save slots** | Three shops, side by side, each deleted on its own. Any shop exports to a file and imports back from the pause menu. |
 | **Bug reports** | F7 opens a form that gathers your version, system and savegame and files a labelled GitHub issue. |
 | **Living world** | Day and night, seasons, rain, storms and snow, weekends, a holiday week, power cuts and a generator. |
-
-![The office PC and its apps](screenshots/02-office-pc.jpg)
-![The security room: camera feeds and the wall tablet](screenshots/03-security-room.jpg)
-![The control cabinet: a tablet, switches, levers and displays](screenshots/04-control-cabinet.jpg)
-![Your phone, on F](screenshots/05-phone.jpg)
-![The quick wheel on Tab](screenshots/06-quick-wheel.jpg)
-![The street outside](screenshots/07-the-street.jpg)
 
 ## Install and play
 
@@ -102,7 +97,7 @@ tools/
   balance/            the balance model and the report behind docs/Balance.md
                       plus the static server, icon builder, guide exporter, release zip
 docs/                 the wiki source; pushed to the GitHub wiki by a workflow
-screenshots/
+gallery/              screenshots, with their own README
 ```
 
 Working on the code: edit a part in `src/`, then `npm run build` and `npm test`. The [Architecture](docs/Architecture.md) page explains the parts, the tests and the balance model.
