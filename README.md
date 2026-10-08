@@ -127,6 +127,10 @@ Fork it. The [modding guide](docs/Modding-Guide.md) walks through the patterns t
 
 A game by **TheCodingDad**, who also makes the Realistic Farming mods for Farming Simulator. This game is a separate hobby project and has nothing to do with those mods or with Farming Simulator; the website and Discord links are simply where to find the author. Built on [three.js](https://threejs.org) (MIT) and [Electron](https://www.electronjs.org) (MIT).
 
+## Support
+
+Grow Co. is free and stays free. If you want to follow the work and play new versions a week early, there is a Patreon: https://www.patreon.com/cw/thecodingdad. Three tiers: Crate ($3, the dev logs and a vote on what comes next), Pallet ($8, early builds and the dev console), Forklift ($20, your name in the game and a prop or a client named after you). Supporters are listed in `SUPPORTERS.md`.
+
 ## License
 
 [MIT](LICENSE). Do what you like with it. Keep the notice.
