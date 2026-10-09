@@ -5,8 +5,9 @@ Grow Co. is deliberately simple to run and a little unusual to read. This page i
 ## The shape of it
 
 - **One page.** `game/index.html` holds the canvas, the HUD and every overlay (start card, panels, pause menu, context menu).
+- **On Co Engine.** Since 1.29.0 the renderer, the scene and camera, the geometry kit (`box`, `cyl`, `sprite`, the eased boxes and cylinders), the save slot and the settings, the sound synth, the log and the toasts, the frame loop and the dev link are [Co Engine](https://github.com/TheCodingDad-TisonK/Co-Engine)'s parts, fetched by `npm install` at the tag `package.json` pins and joined in front of the shop's own parts. The shop keeps its own player, focus and input, props and build mode, people, route grid, day and night, screens and doors: where its kit and the engine's differ, the shop's functions carry names of their own (`signTex`, `emitMat`, `makePerson`, `growBuildProp`, `grabPointer` and so on) and the engine's passes for those things are switched off through `GAME`. The desk-hosted copy of the game is frozen as it was before the move.
 - **One closure.** `game/grow3d.js` is a single immediately invoked function. All state and every system live inside it as plain `var`s and function declarations. Nothing is a module, nothing is bundled.
-- **Written in parts.** That file is built from the parts in `src/` (see below). Edit the parts, never `game/grow3d.js`.
+- **Written in parts.** That file is built from the engine's parts and the parts in `src/` (see below). Edit the parts, never `game/grow3d.js`.
 - **One save object.** The whole game state is `S`, a JSON-safe object written to `localStorage`.
 - **One loop.** `frame()` runs every animation frame and calls each system's `update…(dt)` in a fixed order, then renders.
 - **One handle.** `window.RFGROW` exposes the running game for the build catalogue plug-in, for the console, and for tests.
@@ -17,7 +18,7 @@ Players and hosts need no build step: `game/` is committed ready to run. Open th
 
 `game/grow3d.js` is too big to read or review as one file, so it is written as about forty parts in `src/`, one system each (`11-customers-line.js`, `20-robberies.js`, `29-prop-defs.js`...). `npm run build` joins them in file-name order into `game/grow3d.js`. Nothing about the running game changes: it is still one file and one closure, and the day the parts were made the joined file was byte-for-byte the old one.
 
-- `NN-name.js` goes into both builds. `NN-name.desk.js` goes only into the desk build (the office wall screen that reads the Implementation Desk's API), `NN-name.shop.js` only into this standalone build.
+- `NN-name.js` is a part; they join in file-name order after the engine's. (Until 1.28 there were two builds, with `.desk.js` and `.shop.js` flavour parts and `//#if desk` blocks; the desk copy is frozen now and the standalone is the only build.) build.
 - A small difference inside a shared part is a block at column 0: `//#if desk`, `//#else`, `//#endif` (or `//#if shop`).
 - A line starting `//@` at column 0 is a note for the reader and is left out of the build. Every part opens with one.
 - The build refuses to join the parts if two of them declare the same top-level function: in one closure a second `function foo(` silently replaces the first.

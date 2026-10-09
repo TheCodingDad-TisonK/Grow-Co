@@ -1,0 +1,13 @@
+{
+  "name": "Grow Co",
+  "title": "Grow Co.",
+  "out": "game/grow3d.js",
+  "src": "src",
+  "engine": "node_modules/co-engine/engine",
+  "page": "game/index.html",
+  "versionGlobal": "RF_VERSION",
+  "three": false,
+  "background": "#0b0f14",
+  "pictures": "Grow Co",
+  "icon": "game/logo-256.png"
+}

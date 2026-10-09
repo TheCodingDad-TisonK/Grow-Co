@@ -17,7 +17,7 @@
     return { pot: pot, soil: soil };
   }
   function buildTent() {
-    if (world.tentGroup) { world.group.remove(world.tentGroup); disposeTree(world.tentGroup); world.interact = world.interact.filter(function (m) { return !m.userData.tent; }); world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'tent' && o.tag !== 'pot'; }); }
+    if (world.tentGroup) { world.group.remove(world.tentGroup); dropTree(world.tentGroup); world.interact = world.interact.filter(function (m) { return !m.userData.tent; }); world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'tent' && o.tag !== 'pot'; }); }
     var g = new THREE.Group(); world.tentGroup = g; world.group.add(g);
     var ts = tentSize(); var h = 2.4; var ox = TENT_ORIGIN.x, oz = TENT_ORIGIN.z;
     // tent shell: back + two sides + roof, open front (toward +z). Mylar inside.
@@ -52,7 +52,7 @@
       // windowsill tier: no lamp; a dangling empty hook and a note
       cyl(0.01, 0.01, 0.4, MAT.metal, ox, h - 0.32, oz, world.lampGroup, 6);
       var hook = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 6, 12, Math.PI), MAT.metal); hook.position.set(ox, h - 0.52, oz); world.lampGroup.add(hook);
-      var note = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.38), new THREE.MeshBasicMaterial({ map: textTex(['no lamp yet', 'plants use the window'], 512, 160, { size: 42, color: '#ffc857' }), transparent: true, side: THREE.DoubleSide })); note.position.set(ox, h - 0.62, oz); world.lampGroup.add(note);
+      var note = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.38), new THREE.MeshBasicMaterial({ map: signTex(['no lamp yet', 'plants use the window'], 512, 160, { size: 42, color: '#ffc857' }), transparent: true, side: THREE.DoubleSide })); note.position.set(ox, h - 0.62, oz); world.lampGroup.add(note);
     } else {
       var lampMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: L.color, emissiveIntensity: 1.6 + li * 0.4 });
       var n = li === 1 ? 2 : 1; var lw = li === 1 ? 0.25 : Math.min(ts.w - 0.8, 0.6 + ts.cols * 0.35);
@@ -65,7 +65,7 @@
           var dd = li === 2 ? 0.5 : 0.36; var housing = new THREE.Mesh(bevelGeo(lw, 0.08, dd), colorMat(li === 2 ? 0x2a2d33 : 0xd8dce0, 0.4, 0.5)); housing.position.set(lx, h - 0.46, oz); world.lampGroup.add(housing);
           for (var fin = 0; fin < 7; fin++) { var f = new THREE.Mesh(bevelGeo(lw - 0.06, 0.05, 0.01), colorMat(0x8a8f96, 0.4, 0.6)); f.position.set(lx, h - 0.39, oz - dd / 2 + 0.05 + fin * (dd - 0.1) / 6); world.lampGroup.add(f); }
           if (li === 2) { for (var bar = 0; bar < 4; bar++) { var strip = new THREE.Mesh(bevelGeo(lw - 0.08, 0.015, 0.05), lampMat); strip.position.set(lx, h - 0.505, oz - dd / 2 + 0.08 + bar * (dd - 0.16) / 3); world.lampGroup.add(strip); } for (var dio = 0; dio < 10; dio++) { for (var bar2 = 0; bar2 < 4; bar2++) { var d = new THREE.Mesh(bevelGeo(0.02, 0.01, 0.02), colorMat(0xffffff, 0.2, 0.2, { emissive: new THREE.Color(0xffffff), emissiveIntensity: 1.5 })); d.position.set(lx - (lw - 0.14) / 2 + dio * (lw - 0.14) / 9, h - 0.514, oz - dd / 2 + 0.08 + bar2 * (dd - 0.16) / 3); world.lampGroup.add(d); } } }
-          else { var refl = new THREE.Mesh(bevelGeo(lw - 0.04, 0.02, dd - 0.04), lampMat); refl.position.set(lx, h - 0.51, oz); world.lampGroup.add(refl); var tube = new THREE.Mesh(roundCylGeo(0.02, 0.02, lw - 0.2, 10), glowMat(0xffd080, 2.2)); tube.rotation.z = Math.PI / 2; tube.position.set(lx, h - 0.53, oz); world.lampGroup.add(tube); var ball = new THREE.Mesh(bevelGeo(0.18, 0.1, 0.12), MAT.plastic); ball.position.set(lx + lw / 2 + 0.1, h - 0.46, oz); world.lampGroup.add(ball); }
+          else { var refl = new THREE.Mesh(bevelGeo(lw - 0.04, 0.02, dd - 0.04), lampMat); refl.position.set(lx, h - 0.51, oz); world.lampGroup.add(refl); var tube = new THREE.Mesh(roundCylGeo(0.02, 0.02, lw - 0.2, 10), emitMat(0xffd080, 2.2)); tube.rotation.z = Math.PI / 2; tube.position.set(lx, h - 0.53, oz); world.lampGroup.add(tube); var ball = new THREE.Mesh(bevelGeo(0.18, 0.1, 0.12), MAT.plastic); ball.position.set(lx + lw / 2 + 0.1, h - 0.46, oz); world.lampGroup.add(ball); }
         }
       }
       tentLight.color.setHex(L.color);
@@ -73,7 +73,7 @@
     tentLight.intensity = L.intensity; tentLight.position.set(ox, h - 0.5, oz); tentLight.target.position.set(ox, 0, oz); tentLight.distance = 7; tentLight.angle = Math.PI / (li >= 2 ? 2.6 : 3.4);
     tentFill.color.setHex(li === 0 ? 0xfff1d0 : L.color); tentFill.intensity = li === 0 ? 0.45 : 0.35 + li * 0.35; tentFill.position.set(ox, h - 0.7, oz); tentFill.distance = Math.max(ts.w, ts.d) + 2;
     // thermometer / hygrometer on the back wall of the tent
-    var hyg = new THREE.Mesh(bevelGeo(0.12, 0.08, 0.02), MAT.white); hyg.position.set(ox + ts.w / 2 - 0.4, 1.5, oz - ts.d / 2 + 0.04); g.add(hyg); var hs = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.04), new THREE.MeshBasicMaterial({ map: textTex(['24° 58%'], 160, 80, { size: 40, bg: '#101410', titleColor: '#6fdc8c', line: 'rgba(0,0,0,0)' }) })); hs.position.set(ox + ts.w / 2 - 0.4, 1.5, oz - ts.d / 2 + 0.051); g.add(hs);
+    var hyg = new THREE.Mesh(bevelGeo(0.12, 0.08, 0.02), MAT.white); hyg.position.set(ox + ts.w / 2 - 0.4, 1.5, oz - ts.d / 2 + 0.04); g.add(hyg); var hs = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.04), new THREE.MeshBasicMaterial({ map: signTex(['24° 58%'], 160, 80, { size: 40, bg: '#101410', titleColor: '#6fdc8c', line: 'rgba(0,0,0,0)' }) })); hs.position.set(ox + ts.w / 2 - 0.4, 1.5, oz - ts.d / 2 + 0.051); g.add(hs);
     // pots
     for (var i = 0; i < ts.cols * ts.rows; i++) {
       var sp = slotPos(i); var hasPot = i < (S.supplies.pot || 0) || !!plantAtSlot(i);
@@ -99,9 +99,9 @@
       world.obstacles.push({ x1: ox + ts.w / 2 + 0.1, x2: ox + ts.w / 2 + 0.6, z1: oz - ts.d / 2 + 0.05, z2: oz - ts.d / 2 + 0.55, tag: 'tent' });
     }
     // security camera when owned
-    if (S.upgrades.security) { var cam = box(0.16, 0.1, 0.24, MAT.black, ox + ts.w / 2 - 0.15, h - 0.15, oz + ts.d / 2 - 0.15, { parent: g }); cam.rotation.y = -0.6; var lens = new THREE.Mesh(roundCylGeo(0.03, 0.04, 0.04, 12), MAT.black); lens.rotation.x = Math.PI / 2; lens.rotation.y = -0.6; lens.position.set(ox + ts.w / 2 - 0.22, h - 0.15, oz + ts.d / 2 - 0.05); g.add(lens); var led = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), glowMat(0xff0000, 2)); led.position.set(ox + ts.w / 2 - 0.05, h - 0.15, oz + ts.d / 2 - 0.05); g.add(led); }
+    if (S.upgrades.security) { var cam = box(0.16, 0.1, 0.24, MAT.black, ox + ts.w / 2 - 0.15, h - 0.15, oz + ts.d / 2 - 0.15, { parent: g }); cam.rotation.y = -0.6; var lens = new THREE.Mesh(roundCylGeo(0.03, 0.04, 0.04, 12), MAT.black); lens.rotation.x = Math.PI / 2; lens.rotation.y = -0.6; lens.position.set(ox + ts.w / 2 - 0.22, h - 0.15, oz + ts.d / 2 - 0.05); g.add(lens); var led = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), emitMat(0xff0000, 2)); led.position.set(ox + ts.w / 2 - 0.05, h - 0.15, oz + ts.d / 2 - 0.05); g.add(led); }
     // tent sign
-    var tentSign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.5), new THREE.MeshBasicMaterial({ map: textTex(['GROW TENT', ts.cols * ts.rows + ' slots · ' + L.name], 512, 170, { size: 40, titleColor: '#6fdc8c' }), transparent: true })); tentSign.position.set(ox, h - 0.2, oz + ts.d / 2 + 0.03); g.add(tentSign);
+    var tentSign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.5), new THREE.MeshBasicMaterial({ map: signTex(['GROW TENT', ts.cols * ts.rows + ' slots · ' + L.name], 512, 170, { size: 40, titleColor: '#6fdc8c' }), transparent: true })); tentSign.position.set(ox, h - 0.2, oz + ts.d / 2 + 0.03); g.add(tentSign);
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = 'tent'; });
     // rebuild plants
     for (var pid in world.plants) { var pm2 = world.plants[pid]; if (pm2.parent) pm2.parent.remove(pm2); }
@@ -164,7 +164,7 @@
     for (var q = 0; q < 8; q++) { var mm = new THREE.Mesh(new THREE.SphereGeometry(0.04 + Math.random() * 0.03, 8, 8), new THREE.MeshStandardMaterial({ color: 0xd8dcd0, roughness: 1, transparent: true, opacity: 0.85 })); mm.scale.y = 0.5; mm.position.set((Math.random() - 0.5) * 0.24, 0.3 + Math.random() * 0.55, (Math.random() - 0.5) * 0.24); mold.add(mm); }
     mold.visible = false; g.userData.mold = mold;
     // status label sprite
-    var label = new THREE.Sprite(new THREE.SpriteMaterial({ map: textTex([''], 8, 8), transparent: true, depthWrite: false })); label.scale.set(0.9, 0.36, 1); label.position.y = 1.55; g.add(label); g.userData.label = label; g.userData.labelKey = '';
+    var label = new THREE.Sprite(new THREE.SpriteMaterial({ map: signTex([''], 8, 8), transparent: true, depthWrite: false })); label.scale.set(0.9, 0.36, 1); label.position.y = 1.55; g.add(label); g.userData.label = label; g.userData.labelKey = '';
     g.userData.plantId = p.id;
     return g;
   }
@@ -178,7 +178,7 @@
       m.position.set(sp.x, 0.3, sp.z);
       m.userData.slot = p.slot;
     }
-    for (var pid in world.plants) if (!seen[pid]) { var mm = world.plants[pid]; world.tentGroup.remove(mm); disposeTree(mm); world.interact = world.interact.filter(function (x) { return x !== mm.userData.hit; }); delete world.plants[pid]; }
+    for (var pid in world.plants) if (!seen[pid]) { var mm = world.plants[pid]; world.tentGroup.remove(mm); dropTree(mm); world.interact = world.interact.filter(function (x) { return x !== mm.userData.hit; }); delete world.plants[pid]; }
   }
   var _thirstCol = new THREE.Color(0x9a8a3a), _moldCol = new THREE.Color(0x777766);
   function updatePlantVisuals(dt) {
@@ -216,7 +216,7 @@
         var lines = [st.emoji + ' ' + st.name, (pr >= 1 ? '✓ ready' : sg.label + ' ' + Math.round(pr * 100) + '%') + ' · q' + Math.round(p.quality)];
         var extra = []; if (p.hazard) extra.push(p.hazard === 'pest' ? '⚠ pests' : '⚠ mould'); if (droop > 0.6) extra.push('💧 thirsty'); if (p.fed) extra.push('🧪 fed');
         if (extra.length) lines.push(extra.join('  '));
-        var old = m.userData.label.material.map; m.userData.label.material.map = textTex(lines, 512, lines.length > 2 ? 230 : 170, { size: 40, titleColor: pr >= 1 ? '#6fdc8c' : '#e8f1ea', line: p.hazard ? 'rgba(255,107,107,.7)' : pr >= 1 ? 'rgba(111,220,140,.8)' : 'rgba(111,220,140,.35)' }); m.userData.label.material.needsUpdate = true; if (old) old.dispose();
+        var old = m.userData.label.material.map; m.userData.label.material.map = signTex(lines, 512, lines.length > 2 ? 230 : 170, { size: 40, titleColor: pr >= 1 ? '#6fdc8c' : '#e8f1ea', line: p.hazard ? 'rgba(255,107,107,.7)' : pr >= 1 ? 'rgba(111,220,140,.8)' : 'rgba(111,220,140,.35)' }); m.userData.label.material.needsUpdate = true; if (old) old.dispose();
         m.userData.label.scale.set(1.0, lines.length > 2 ? 0.45 : 0.33, 1);
       }
       m.userData.label.position.y = height + 0.45;
@@ -231,7 +231,7 @@
   function goodsWidth() { return goodsCols() * GOODS_CELL; }
   function syncGoods() {
     var inst = propInst.goodsShelf; if (!inst) return;
-    var gg = inst.ctx.dynGroup(); var gate = gg.userData.shutter; clearKids(gg); if (gate) gg.add(gate);   /* restocking must not throw the roll gate away with the goods */
+    var gg = inst.ctx.dynGroup(); var gate = gg.userData.shutter; dropKids(gg); if (gate) gg.add(gate);   /* restocking must not throw the roll gate away with the goods */
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'goods'; });
     var cellW = 0.8, cellY = [0.185, 0.76, 1.32], cols = goodsCols();
     STRAINS.forEach(function (st, i) {
@@ -241,7 +241,7 @@
       // price card on the back panel
       var bq = bags.n ? bags.qSum / bags.n : 0, jq = joints.n ? joints.qSum / joints.n : 0;
       var lines = [st.emoji + ' ' + st.name, any ? ('bags ' + bags.n + (bags.n ? ' · ' + money(bagPrice(bq, bags.thcSum / bags.n)) : '') + '   joints ' + joints.n + (joints.n ? ' · ' + money(jointPrice(jq, joints.thcSum / joints.n)) : '') + (cookies.n ? '   cookies ' + cookies.n + ' · ' + money(cookiePrice(cookies.qSum / cookies.n, cookies.thcSum / cookies.n)) : '')) : 'sold out'];
-      var card = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.12), new THREE.MeshBasicMaterial({ map: textTex(lines, 448, 78, { size: 26, bg: any ? '#f3e9cf' : '#d9d2c2', color: '#222', titleColor: any ? '#1a6a2a' : '#666', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide })); card.position.set(cx, cy - 0.075, 0.222); card.rotation.x = -0.35; gg.add(card);   // price tag hangs off the front lip of each shelf, tilted up so the low rows read from standing height
+      var card = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.12), new THREE.MeshBasicMaterial({ map: signTex(lines, 448, 78, { size: 26, bg: any ? '#f3e9cf' : '#d9d2c2', color: '#222', titleColor: any ? '#1a6a2a' : '#666', line: 'rgba(0,0,0,0)' }), transparent: true, side: THREE.DoubleSide })); card.position.set(cx, cy - 0.075, 0.222); card.rotation.x = -0.35; gg.add(card);   // price tag hangs off the front lip of each shelf, tilted up so the low rows read from standing height
       // bags: stacked flat, three per layer
       for (var b = 0; b < Math.min(bags.n, 9); b++) { var bm = productBaggie(st, 1.15); bm.position.set(cx - 0.26 + (b % 3) * 0.11, cy + 0.05 + Math.floor(b / 3) * 0.05, 0.02 + (b % 2) * 0.03); bm.rotation.set(-1.35, (b % 3 - 1) * 0.12, 0); gg.add(bm); }   /* the same baggie the customer is handed */
       if (bags.n > 0) { var bh = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.28, 0.3), MAT.none); bh.position.set(cx - 0.16, cy + 0.14, 0.02); gg.add(bh); interactable(bh, { kind: 'lot', item: 'bags', strain: st.id }); bh.userData.dynGroup = 'goods'; bh.userData.propId = 'goodsShelf'; }
@@ -275,7 +275,7 @@
   }
   function rackFront(k) {   // where to stand to reach an item's bay
     var i = rackBays()[k]; if (i === undefined || !propInst.storeRack) return { x: WP.annex.x, z: WP.annex.z };
-    var v = propWorld('storeRack', rackBayX(i), 0.8); return { x: v.x, z: v.z };
+    var v = growPropWorld('storeRack', rackBayX(i), 0.8); return { x: v.x, z: v.z };
   }
   function rackCrate() {   // the crate in your hands goes back up, into its item's bay
     var h = held(); if (!h || h.kind !== 'crate') return false;
@@ -288,20 +288,20 @@
     var G = new THREE.Group();
     var body = new THREE.Mesh(bevelGeo(w, h, d), prodMat('crateKraft', function () { return new THREE.MeshStandardMaterial({ color: 0xa8804a, roughness: 0.9 }); })); body.castShadow = true; G.add(body);
     var tape = new THREE.Mesh(bevelGeo(w + 0.01, 0.025, d + 0.01), prodMat('crateTape', function () { return new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.9 }); })); G.add(tape);
-    var face = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, h) * 0.7, Math.min(w, h) * 0.7), prodMat('crateIco' + id, function () { return new THREE.MeshBasicMaterial({ map: textTex([itemIcon(id)], 96, 96, { size: 64, bg: '#f3e9cf', line: 'rgba(0,0,0,0)' }), transparent: true }); }));
+    var face = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, h) * 0.7, Math.min(w, h) * 0.7), prodMat('crateIco' + id, function () { return new THREE.MeshBasicMaterial({ map: signTex([itemIcon(id)], 96, 96, { size: 64, bg: '#f3e9cf', line: 'rgba(0,0,0,0)' }), transparent: true }); }));
     face.position.z = d / 2 + 0.002; G.add(face);
     return G;
   }
   function syncStorage() {
     var inst = propInst.storeRack; if (!inst) return;
-    var gg = inst.ctx.dynGroup(); clearKids(gg);
+    var gg = inst.ctx.dynGroup(); dropKids(gg);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'storage'; });
     var B = rackBays(), byBay = {}; Object.keys(B).forEach(function (k) { byBay[B[k]] = k; });
     var plateOpt = { size: 30, bg: '#f7f3e6', color: '#1c1f24', titleColor: '#1c1f24', line: 'rgba(0,0,0,0)' };
     for (var i = 0; i < RACK.cols * RACK.y.length; i++) {
       var x = rackBayX(i), y = rackBayY(i), id = byBay[i], code = rackBayCode(i);
-      var plateM = id ? new THREE.MeshBasicMaterial({ map: textTex([code + '  ' + itemIcon(id) + ' ' + itemName(id) + '  ×' + S.storage[id]], 500, 90, plateOpt) })
-        : prodMat('bayPlate' + code, function () { return new THREE.MeshBasicMaterial({ map: textTex([code + '  empty'], 500, 90, Object.assign({}, plateOpt, { color: '#8a8f96', titleColor: '#8a8f96' })) }); });
+      var plateM = id ? new THREE.MeshBasicMaterial({ map: signTex([code + '  ' + itemIcon(id) + ' ' + itemName(id) + '  ×' + S.storage[id]], 500, 90, plateOpt) })
+        : prodMat('bayPlate' + code, function () { return new THREE.MeshBasicMaterial({ map: signTex([code + '  empty'], 500, 90, Object.assign({}, plateOpt, { color: '#8a8f96', titleColor: '#8a8f96' })) }); });
       var plate = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.09), plateM); plate.position.set(x, y - 0.035, 0.296); gg.add(plate);
       if (!id) continue;
       var stacks = Math.min(2, Math.ceil(S.storage[id] / itemPack(id)));
@@ -311,7 +311,7 @@
     gg.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'storeRack'; });
   }
   function syncDisplay() {
-    var dg = world.displayGroup; if (!dg) return; clearKids(dg); var d = S.display || {};
+    var dg = world.displayGroup; if (!dg) return; dropKids(dg); var d = S.display || {};
     for (var i = 0; i < Math.min(d.lighter || 0, 8); i++) { var lt = new THREE.Mesh(bevelGeo(0.025, 0.07, 0.012), colorMat([0xc94a3a, 0x2f6b9a, 0x3aa36a, 0xffd166, 0xf2f2f2, 0x7a5aa8][i % 6], 0.4)); lt.position.set(0.73 + i * 0.045, 1.12, 4.32); dg.add(lt); var cap = new THREE.Mesh(bevelGeo(0.025, 0.015, 0.012), MAT.chrome); cap.position.set(0.73 + i * 0.045, 1.163, 4.32); dg.add(cap); }
     for (var p = 0; p < Math.min(d.rpaper || 0, 5); p++) { var pk = new THREE.Mesh(bevelGeo(0.05, 0.075, 0.012), colorMat(p % 2 ? 0xf5f0e0 : 0xd9b36a, 0.8)); pk.position.set(0.75 + p * 0.065, 1.195, 4.18); pk.rotation.x = 0.15; dg.add(pk); }
     for (var q = 0; q < Math.min(d.rgrinder || 0, 3); q++) { var gr = new THREE.Mesh(roundCylGeo(0.028, 0.028, 0.03, 12), colorMat([0x2a2d33, 0x8a6a2a, 0x3a3f46][q], 0.4, 0.6)); gr.position.set(1.07 + q * 0.065, 1.1, 4.3); dg.add(gr); }
@@ -319,9 +319,9 @@
   }
   function syncShelf() {
     if (!propInst.cureShelf || !propInst.dryRack || !propInst.bench) return;
-    var g = propInst.cureShelf.ctx.dynGroup(); clearKids(g);
-    var lg = propInst.dryRack.ctx.dynGroup(); clearKids(lg);
-    var bg = propInst.bench.ctx.dynGroup(); clearKids(bg);
+    var g = propInst.cureShelf.ctx.dynGroup(); dropKids(g);
+    var lg = propInst.dryRack.ctx.dynGroup(); dropKids(lg);
+    var bg = propInst.bench.ctx.dynGroup(); dropKids(bg);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'shelf' && m.userData.dynGroup !== 'bench'; });
     syncGoods(); syncStorage(); syncDisplay();
     var jarsOwned = S.supplies.jar || 0;
@@ -333,7 +333,7 @@
       var jar = new THREE.Mesh(roundCylGeo(0.09, 0.09, 0.2, 14), MAT.jar); jar.position.set(x, y + 0.1, z); g.add(jar);
       if (filled) { var jh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.3, 0.24), MAT.none); jh.position.set(x, y + 0.12, z); g.add(jh); interactable(jh, { kind: 'jar', bid: cured[i].id }); jh.userData.dynGroup = 'shelf'; jh.userData.propId = 'cureShelf'; }
       var lid = new THREE.Mesh(roundCylGeo(0.095, 0.095, 0.025, 14), MAT.jarLid); lid.position.set(x, y + 0.21, z); g.add(lid);
-      if (filled) { var b = cured[i]; var bst2 = strainById(b.strain || 'sunflower'), fl2 = clamp(b.grams / 24, 0.3, 1); var nugM2 = prodMat('jarnug' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: bst2.bud, roughness: 0.9 }); }); var nugD2 = prodMat('jarnugd' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: mixHex(bst2.bud, 0x30401f, 0.38), roughness: 0.95 }); }); for (var nz2 = 0; nz2 < Math.round(5 + fl2 * 13); nz2++) { var na2 = nz2 * 2.399, nr2 = 0.05 * Math.sqrt(((nz2 % 7) / 7) + 0.14); var nm2 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.019 + (nz2 % 3) * 0.005, 0), nz2 % 4 === 0 ? nugD2 : nugM2); nm2.position.set(x + Math.cos(na2) * nr2, y + 0.025 + (nz2 % 5) * 0.026 * fl2, z + Math.sin(na2) * nr2); nm2.scale.set(1, 0.8, 1); nm2.rotation.set(na2, na2 * 1.7, 0.3); nm2.castShadow = false; g.add(nm2); } var waits = i >= cureSlots(); var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: textTex(waits ? [gram(b.grams) + ' q' + Math.round(b.quality), 'waiting for a jar'] : [gram(b.grams) + ' q' + Math.round(b.quality)], 160, 60, { size: waits ? 18 : 30, bg: waits ? '#f3d9b0' : '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); lbl.position.set(x, y + 0.1, z + 0.095); g.add(lbl); }
+      if (filled) { var b = cured[i]; var bst2 = strainById(b.strain || 'sunflower'), fl2 = clamp(b.grams / 24, 0.3, 1); var nugM2 = prodMat('jarnug' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: bst2.bud, roughness: 0.9 }); }); var nugD2 = prodMat('jarnugd' + bst2.id, function () { return new THREE.MeshStandardMaterial({ color: mixHex(bst2.bud, 0x30401f, 0.38), roughness: 0.95 }); }); for (var nz2 = 0; nz2 < Math.round(5 + fl2 * 13); nz2++) { var na2 = nz2 * 2.399, nr2 = 0.05 * Math.sqrt(((nz2 % 7) / 7) + 0.14); var nm2 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.019 + (nz2 % 3) * 0.005, 0), nz2 % 4 === 0 ? nugD2 : nugM2); nm2.position.set(x + Math.cos(na2) * nr2, y + 0.025 + (nz2 % 5) * 0.026 * fl2, z + Math.sin(na2) * nr2); nm2.scale.set(1, 0.8, 1); nm2.rotation.set(na2, na2 * 1.7, 0.3); nm2.castShadow = false; g.add(nm2); } var waits = i >= cureSlots(); var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: signTex(waits ? [gram(b.grams) + ' q' + Math.round(b.quality), 'waiting for a jar'] : [gram(b.grams) + ' q' + Math.round(b.quality)], 160, 60, { size: waits ? 18 : 30, bg: waits ? '#f3d9b0' : '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); lbl.position.set(x, y + 0.1, z + 0.095); g.add(lbl); }
     }
     if (S.upgrades.rack) { var rack = new THREE.Mesh(bevelGeo(3.0, 0.02, 0.45), MAT.metal); rack.position.set(0, 2.75, 0); g.add(rack); }
     var hw = 3.25, ly = 2.1; var n = drying.length;
@@ -348,14 +348,14 @@
     }
     // bench contents (local: bench runs along x, working side is +z; the stash jar sits left, packed goods pile right)
     var by = 0.93;
-    if (S.supplies.grinder) { var gr = new THREE.Mesh(roundCylGeo(0.06, 0.06, 0.05, 20), MAT.chrome); gr.position.set(-0.45, by + 0.025, 0.1); bg.add(gr); var grTop = new THREE.Mesh(roundCylGeo(0.06, 0.06, 0.02, 20), colorMat(0x3a3f46, 0.4, 0.6)); grTop.position.set(-0.45, by + 0.06, 0.1); bg.add(grTop); for (var gt = 0; gt < 8; gt++) { var tooth = new THREE.Mesh(bevelGeo(0.012, 0.012, 0.012), MAT.chrome); var ga = gt / 8 * Math.PI * 2; tooth.position.set(-0.45 + Math.cos(ga) * 0.035, by + 0.075, 0.1 + Math.sin(ga) * 0.035); bg.add(tooth); } var gl = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.03), new THREE.MeshBasicMaterial({ map: textTex(['GRIND'], 80, 30, { size: 20, bg: 'rgba(0,0,0,0)', color: '#e8f1ea', titleColor: '#e8f1ea', line: 'rgba(0,0,0,0)' }), transparent: true })); gl.position.set(-0.45, by + 0.025, 0.161); bg.add(gl); }
-    if (S.upgrades.roller) { var rm = new THREE.Mesh(bevelGeo(0.34, 0.14, 0.22), colorMat(0x2a2d33, 0.4, 0.3)); rm.position.set(0.55, by + 0.07, -0.05); bg.add(rm); var rmTop = new THREE.Mesh(bevelGeo(0.3, 0.02, 0.18), MAT.chrome); rmTop.position.set(0.55, by + 0.15, -0.05); bg.add(rmTop); var slot = new THREE.Mesh(bevelGeo(0.2, 0.03, 0.03), MAT.black); slot.position.set(0.55, by + 0.1, 0.07); bg.add(slot); var rmled = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), glowMat(0x00ff66, 2)); rmled.position.set(0.68, by + 0.12, 0.065); bg.add(rmled); }
-    if ((S.supplies.bag || 0) > 0) { var bagbox = new THREE.Mesh(bevelGeo(0.16, 0.1, 0.1), colorMat(0xe8e8ee, 0.6)); bagbox.position.set(-0.15, by + 0.05, -0.22); bg.add(bagbox); var bagLbl = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['BAGGIES'], 120, 50, { size: 24, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); bagLbl.position.set(-0.15, by + 0.05, -0.169); bg.add(bagLbl); }
+    if (S.supplies.grinder) { var gr = new THREE.Mesh(roundCylGeo(0.06, 0.06, 0.05, 20), MAT.chrome); gr.position.set(-0.45, by + 0.025, 0.1); bg.add(gr); var grTop = new THREE.Mesh(roundCylGeo(0.06, 0.06, 0.02, 20), colorMat(0x3a3f46, 0.4, 0.6)); grTop.position.set(-0.45, by + 0.06, 0.1); bg.add(grTop); for (var gt = 0; gt < 8; gt++) { var tooth = new THREE.Mesh(bevelGeo(0.012, 0.012, 0.012), MAT.chrome); var ga = gt / 8 * Math.PI * 2; tooth.position.set(-0.45 + Math.cos(ga) * 0.035, by + 0.075, 0.1 + Math.sin(ga) * 0.035); bg.add(tooth); } var gl = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.03), new THREE.MeshBasicMaterial({ map: signTex(['GRIND'], 80, 30, { size: 20, bg: 'rgba(0,0,0,0)', color: '#e8f1ea', titleColor: '#e8f1ea', line: 'rgba(0,0,0,0)' }), transparent: true })); gl.position.set(-0.45, by + 0.025, 0.161); bg.add(gl); }
+    if (S.upgrades.roller) { var rm = new THREE.Mesh(bevelGeo(0.34, 0.14, 0.22), colorMat(0x2a2d33, 0.4, 0.3)); rm.position.set(0.55, by + 0.07, -0.05); bg.add(rm); var rmTop = new THREE.Mesh(bevelGeo(0.3, 0.02, 0.18), MAT.chrome); rmTop.position.set(0.55, by + 0.15, -0.05); bg.add(rmTop); var slot = new THREE.Mesh(bevelGeo(0.2, 0.03, 0.03), MAT.black); slot.position.set(0.55, by + 0.1, 0.07); bg.add(slot); var rmled = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), emitMat(0x00ff66, 2)); rmled.position.set(0.68, by + 0.12, 0.065); bg.add(rmled); }
+    if ((S.supplies.bag || 0) > 0) { var bagbox = new THREE.Mesh(bevelGeo(0.16, 0.1, 0.1), colorMat(0xe8e8ee, 0.6)); bagbox.position.set(-0.15, by + 0.05, -0.22); bg.add(bagbox); var bagLbl = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.05), new THREE.MeshBasicMaterial({ map: signTex(['BAGGIES'], 120, 50, { size: 24, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,0)' }) })); bagLbl.position.set(-0.15, by + 0.05, -0.169); bg.add(bagLbl); }
     if ((S.supplies.paper || 0) > 0) { var pp = new THREE.Mesh(bevelGeo(0.08, 0.02, 0.05), colorMat(0xffffff, 0.6)); pp.position.set(0.05, by + 0.01, -0.22); bg.add(pp); var pp2 = new THREE.Mesh(bevelGeo(0.08, 0.02, 0.05), colorMat(0xd8c8a0, 0.6)); pp2.position.set(0.14, by + 0.01, -0.2); pp2.rotation.y = 0.3; bg.add(pp2); }
-    var toShelf = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.07), new THREE.MeshBasicMaterial({ map: textTex(['packed goods → shelf'], 300, 70, { size: 24, bg: '#f3e9cf', color: '#222', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }), transparent: true })); toShelf.position.set(1.0, by + 0.001, 0.2); toShelf.rotation.x = -Math.PI / 2; bg.add(toShelf);
+    var toShelf = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.07), new THREE.MeshBasicMaterial({ map: signTex(['packed goods → shelf'], 300, 70, { size: 24, bg: '#f3e9cf', color: '#222', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }), transparent: true })); toShelf.position.set(1.0, by + 0.001, 0.2); toShelf.rotation.x = -Math.PI / 2; bg.add(toShelf);
     var stash = new THREE.Mesh(roundCylGeo(0.11, 0.11, 0.26, 20), MAT.jar); stash.position.set(-0.85, by + 0.13, -0.12); bg.add(stash); var stashLid = new THREE.Mesh(roundCylGeo(0.115, 0.115, 0.03, 20), MAT.jarLid); stashLid.position.set(-0.85, by + 0.275, -0.12); bg.add(stashLid);
     if (S.cured.g > 0) { var fill = clamp(S.cured.g / 60, 0.08, 1); var sm = new THREE.Mesh(roundCylGeo(0.095, 0.095, 0.22 * fill, 14), MAT.bud); sm.position.set(-0.85, by + 0.02 + 0.11 * fill, -0.12); bg.add(sm); }
-    var stashLbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.07), new THREE.MeshBasicMaterial({ map: textTex(['STASH', gram(S.cured.g)], 160, 70, { size: 26, bg: '#f3e9cf', color: '#222', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }), transparent: true })); stashLbl.position.set(-0.85, by + 0.12, -0.12 + 0.111); bg.add(stashLbl);
+    var stashLbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.07), new THREE.MeshBasicMaterial({ map: signTex(['STASH', gram(S.cured.g)], 160, 70, { size: 26, bg: '#f3e9cf', color: '#222', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }), transparent: true })); stashLbl.position.set(-0.85, by + 0.12, -0.12 + 0.111); bg.add(stashLbl);
     bg.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'bench'; }); g.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'cureShelf'; }); lg.traverse(function (o) { if (o.isMesh) o.userData.propId = o.userData.propId || 'dryRack'; });
   }
 

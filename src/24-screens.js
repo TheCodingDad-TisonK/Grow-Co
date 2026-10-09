@@ -4,7 +4,7 @@
     // the stand: a weighted foot on the drawer cabinet, an arm, and a hinge block behind the screen
     box(0.2, 0.016, 0.16, MAT.alu, x, 1.196, z + 0.04, { cast: false, r: 0.006 });
     var arm = box(0.052, 0.27, 0.024, MAT.alu, x, 1.325, z + 0.062, { r: 0.009 }); arm.rotation.x = -0.12;
-    var sc = touchScreen({ id: 'pos', kind: 'pos', w: 500, h: 375, scale: 1.8, pw: 0.48, ph: 0.36, draw: drawPos, tap: posTap, live: 1000 });
+    var sc = touchPanel({ id: 'pos', kind: 'pos', w: 500, h: 375, scale: 1.8, pw: 0.48, ph: 0.36, draw: drawPos, tap: posTap, live: 1000 });
     var g = new THREE.Group(); g.position.set(x, 1.45, z); g.rotation.set(0.42, Math.PI, 0); world.group.add(g); world.posGroup = g;
     screenShell(g, 0.48, 0.36, { bezel: 0.022, depth: 0.022 });
     var hinge = new THREE.Mesh(bevelGeo(0.13, 0.09, 0.034), MAT.gunmetal); hinge.position.set(0, -0.02, -0.04); hinge.castShadow = true; g.add(hinge);
@@ -79,7 +79,7 @@
   var SEC_PAGES = ['cams', 'doors', 'alerts'], SEC_PAGE_LABEL = { cams: 'Cameras', doors: 'Doors', alerts: 'Alerts' };
   var secScreen = { page: 0, sc: null };
   function buildSecScreen(x, y, z, ry) {   /* a big tablet screen on the wall to the right of the chair: nothing on the desk, nothing in front of the wall of feeds */
-    var sc = touchScreen({ id: 'sec', kind: 'secscreen', w: 1120, h: 700, pw: 1.2, ph: 0.75, draw: drawSecScreen, tap: secTap, wheel: function (dir) { secScreen.page = ((secScreen.page + dir) % 3 + 3) % 3; }, live: 1000 });
+    var sc = touchPanel({ id: 'sec', kind: 'secscreen', w: 1120, h: 700, pw: 1.2, ph: 0.75, draw: drawSecScreen, tap: secTap, wheel: function (dir) { secScreen.page = ((secScreen.page + dir) % 3 + 3) % 3; }, live: 1000 });
     var g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; world.group.add(g); secScreen.g = g;
     screenShell(g, 1.2, 0.75, { bezel: 0.026, depth: 0.034, led: 0xffc857 });
     var mount = new THREE.Mesh(bevelGeo(0.4, 0.3, 0.03), MAT.gunmetal); mount.position.z = -0.052; g.add(mount);
@@ -134,7 +134,7 @@
   }
 
   // ── the office PC: sit at the desk, E on the PC, and its desktop comes up with the shop, the seed bank, gear, staff, the bank and the rest as apps ──
-  function officeSeat() { var inst = propInst.officeDesk; if (!inst) return null; var p = propWorld('officeDesk', 0, 0.78); return { x: p.x, z: p.z, yaw: inst.g.rotation.y }; }
+  function officeSeat() { var inst = propInst.officeDesk; if (!inst) return null; var p = growPropWorld('officeDesk', 0, 0.78); return { x: p.x, z: p.z, yaw: inst.g.rotation.y }; }
   var pc = { open: false, app: null, el: null };
   // what the monitor on the desk shows when nobody is sitting at it: the PC's own desktop, alive. The wallpaper, the icons and
   // the dock are the ones the real desktop has, and the window that is open on it is the shop's figures as they stand.
@@ -178,7 +178,7 @@
     ['desk', '🖥️', typeof drawShopBoard === 'function' ? 'Live desk' : 'Dashboard', function () { return paneDesk(); }],
     ['diary', '📒', 'Diary', function () { return paneLog(); }],
     ['stats', '📊', 'Stats', function () { return paneStats(); }],
-    ['settings', '⚙', 'Settings', function () { return '<div class="g3-box">' + settingsHtml() + '</div>'; }],
+    ['settings', '⚙', 'Settings', function () { return '<div class="g3-box">' + growSettingsHtml() + '</div>'; }],
     ['guide', '📖', 'Guide', function () { return '<div class="g3-box g3-menu-body" style="margin:0;padding:12px 14px">' + guideHtml() + '</div>'; }],
     ['finance', '💰', 'Finance', function () { return paneFinance(); }, 'finance'],
     ['merch', '👕', 'Merch', function () { return paneMerch(); }, 'merch'],
@@ -201,7 +201,7 @@
     var seat = officeSeat(); if (seat && (!sit.on || sit.spot !== world.officeSeat)) { world.officeSeat = seat; if (sit.on) standUp(); sitDown(seat); }
     pcEl(); pc.open = true; ui.pcOpen = true; pc.el.hidden = false; pc.el.classList.remove('leaving'); pc.el.style.opacity = String(clamp(((pc.z || 0) - 0.5) / 0.5, 0, 1)); document.exitPointerLock(); pcRender(); sfx('type');
   }
-  function pcClose() { if (!pc.open) return; pc.open = false; ui.pcOpen = false; pc.el.classList.add('leaving'); if (!ui.blocked()) lockPointer(); sfx('close'); }
+  function pcClose() { if (!pc.open) return; pc.open = false; ui.pcOpen = false; pc.el.classList.add('leaving'); if (!ui.blocked()) grabPointer(); sfx('close'); }
   // Sitting down at the PC takes you into its screen: the camera travels from the chair to the glass while the desktop fades
   // up over it, full screen, and the same in reverse when you get up. pc.z is how far in you are, 0 to 1.
   var pcCam = { to: new THREE.Vector3(), q: new THREE.Quaternion(), n: new THREE.Vector3() };
@@ -235,7 +235,7 @@
     ['people', '👥', 'People', function () { return panePeople(); }],
     ['map', '🗺️', 'Map', null],
     ['msgs', '💬', 'Messages', function () { return '<h3>💬 Messages</h3>' + paneLogInner(40); }],
-    ['settings', '⚙️', 'Settings', function () { return settingsHtml(); }]
+    ['settings', '⚙️', 'Settings', function () { return growSettingsHtml(); }]
   ];
   function deviceEl() {
     if (dev.el) return dev.el;
@@ -248,7 +248,7 @@
     return d;
   }
   function deviceOpen(kind, app) { deviceEl(); dev.open = true; dev.kind = kind; dev.app = app || null; ui.deviceOpen = true; dev.el.hidden = false; document.exitPointerLock(); deviceRender(); sfx('panel'); }
-  function deviceClose() { if (!dev.open) return; dev.open = false; ui.deviceOpen = false; dev.el.hidden = true; if (!ui.blocked()) lockPointer(); sfx('close'); }
+  function deviceClose() { if (!dev.open) return; dev.open = false; ui.deviceOpen = false; dev.el.hidden = true; if (!ui.blocked()) grabPointer(); sfx('close'); }
   function phoneOpen() { if (dev.open && dev.kind === 'phone') { deviceClose(); return; } if (ui.blocked()) return; deviceOpen('phone'); }
   function paneWallet() { var X = xs(); return '<h3>👛 Wallet</h3>' + moneyRows() + '<div class="g3-row"><span class="ico">🔥</span><span class="meta"><span class="n">Heat ' + Math.round(X.heat) + ' / 100</span><span class="own">' + (X.heat >= 60 ? 'inspections likely' : X.heat >= 30 ? 'you have been noticed' : 'quiet') + '</span></span></div>' + (S.vault + S.pocket > 0 ? '<button class="g3-btn wide" data-act="courierCall" data-id="all">🏦 Book the bank courier for ' + money(Math.floor(S.vault + S.pocket)) + '</button>' : '<div class="g3-empty">Nothing in the vault or your pocket to send to the bank.</div>') + '<p class="g3-sub2" style="margin-top:10px">The courier collects the cash at the back door and banks it. The ATM in town and the vault in the office do the rest.</p>'; }
   function panePeople() {
@@ -273,7 +273,7 @@
     $('g3-dev-time').textContent = clockText() + ' · day ' + (S.day || 1);
     if (dev.kind === 'phone') {
       var X = xs();
-      if (!dev.app) { body.innerHTML = '<div class="g3-ph-home"><div class="g3-ph-widget"><b>' + clockText() + '</b><span>' + season() + ' · ' + X.weather.kind + ' · ' + (shop().open ? 'shop open' : 'shop closed') + '</span><span>bank ' + money(S.bank) + ' · pocket ' + money(S.pocket) + ' · heat ' + Math.round(X.heat) + '</span></div><div class="g3-ph-apps">' + PHONE_APPS.map(function (a) { var badge = a[0] === 'burner' ? jobsOf('phone').length : 0; return '<button class="g3-ph-app" data-dev="' + a[0] + '"><span class="ico">' + a[1] + (badge ? '<i>' + badge + '</i>' : '') + '</span><span class="n">' + a[2] + '</span></button>'; }).join('') + '</div></div>'; nav.innerHTML = '<button data-dev="close">✕ put away (F)</button>'; }
+      if (!dev.app) { body.innerHTML = '<div class="g3-ph-home"><div class="g3-ph-widget"><b>' + clockText() + '</b><span>' + seasonLabel() + ' · ' + X.weather.kind + ' · ' + (shop().open ? 'shop open' : 'shop closed') + '</span><span>bank ' + money(S.bank) + ' · pocket ' + money(S.pocket) + ' · heat ' + Math.round(X.heat) + '</span></div><div class="g3-ph-apps">' + PHONE_APPS.map(function (a) { var badge = a[0] === 'burner' ? jobsOf('phone').length : 0; return '<button class="g3-ph-app" data-dev="' + a[0] + '"><span class="ico">' + a[1] + (badge ? '<i>' + badge + '</i>' : '') + '</span><span class="n">' + a[2] + '</span></button>'; }).join('') + '</div></div>'; nav.innerHTML = '<button data-dev="close">✕ put away (F)</button>'; }
       else { var app = null; PHONE_APPS.forEach(function (a) { if (a[0] === dev.app) app = a; }); body.innerHTML = '<div class="g3-ph-screen">' + (app && app[3] ? app[3]() : '') + '</div>'; nav.innerHTML = '<button data-dev="home">◀ home</button><button data-dev="close">✕ put away (F)</button>'; }
     } else {
       body.innerHTML = paneTablet(); nav.innerHTML = '<button data-dev="close">✕ put down (J)</button>';
@@ -304,30 +304,11 @@
     html += '<div class="g3-wheel-center" id="g3-wheel-center"><b>Quick wheel</b><span>Tab or Esc closes</span></div>';
     wheel.el.innerHTML = html; wheel.el.hidden = false; wheel.open = true; ui.wheelOpen = true; document.exitPointerLock(); sfx('panel');
   }
-  function wheelClose(keep) { if (!wheel.open) return; wheel.open = false; ui.wheelOpen = false; wheel.el.hidden = true; if (!keep && !ui.blocked()) lockPointer(); }
-  function wheelPick(i) { var it = wheel.items[i]; if (!it) return; wheelClose(true); sfx('click'); it.act(); afterAction(); if (!ui.blocked()) lockPointer(); }
+  function wheelClose(keep) { if (!wheel.open) return; wheel.open = false; ui.wheelOpen = false; wheel.el.hidden = true; if (!keep && !ui.blocked()) grabPointer(); }
+  function wheelPick(i) { var it = wheel.items[i]; if (!it) return; wheelClose(true); sfx('click'); it.act(); afterAction(); if (!ui.blocked()) grabPointer(); }
   function paneDesk() {
-//#if desk
-    var d = deskBoard.data;
-    var h = '<div class="g3-box"><div class="g3-chips">' + DESK_PAGES.map(function (p, i) { return '<button class="g3-btn' + (i === deskBoard.page ? ' primary' : '') + '" data-act="deskPage" data-id="' + i + '">' + DESK_PAGE_LABEL[p] + '</button>'; }).join('') + '</div><div class="desc">The wall screen shows the page picked here; it goes back to rotating when you close this panel.</div></div>';
-    h += '<div class="g3-grid"><div class="g3-box"><h3>🧑‍💻 Seats</h3>';
-    if (!d.seats.length) h += '<div class="g3-empty">no seat data yet</div>';
-    d.seats.forEach(function (s) { h += '<div class="g3-row"><span class="ico">' + (s.running ? (s.state === 'needs-input' || s.state === 'input' ? '🔴' : s.state === 'working' || s.state === 'busy' ? '🟡' : '🟢') : '⚫') + '</span><span class="meta"><span class="n">' + esc(s.label) + (s.role ? ' <small>' + esc(s.role) + '</small>' : '') + '</span><span class="own">' + esc(s.running ? s.state : 'off') + (s.model ? ' · ' + esc(s.model) : '') + (s.detail ? ' · ' + esc(s.detail).slice(0, 90) : '') + '</span>' + (deskBoard.seatLog[s.key] || []).slice(-3).reverse().map(function (e) { return '<span class="own" style="display:block;opacity:.8">' + shortAgo(e.t) + ' ' + (SEAT_KIND_ICO[e.kind] || '·') + ' ' + esc(e.text).slice(0, 110) + '</span>'; }).join('') + '</span></div>'; });
-    h += '<h3 style="margin-top:12px">🐕 Watchdogs' + (d.runnerAlive === false ? ' <small style="color:var(--bad,#ff6b6b)">runner down</small>' : '') + '</h3>';
-    if (!d.checks.length) h += '<div class="g3-empty">no watchdog data</div>';
-    d.checks.forEach(function (c) { h += '<div class="g3-row"><span class="ico">' + (c.state === 'healthy' || c.state === 'ok' ? '🟢' : c.state === 'unknown' ? '⚫' : c.state === 'degraded' ? '🟡' : '🔴') + '</span><span class="meta"><span class="n">' + esc(c.name) + '</span><span class="own">' + esc(c.detail).slice(0, 120) + '</span></span></div>'; });
-    if (d.health) h += '<h3 style="margin-top:12px">🩺 Desk health</h3><div class="g3-chips">' + chip('ok', d.health.pass) + chip('warn', d.health.warn) + chip('fail', d.health.fail) + '</div>';
-    h += '</div><div class="g3-box"><h3>🔀 Open PRs (' + d.prs.length + ')</h3>';
-    if (!d.prs.length) h += '<div class="g3-empty">no open PRs</div>';
-    d.prs.forEach(function (p) { h += '<div class="g3-row"><span class="ico">' + (p.draft ? '📝' : p.review === 'APPROVED' ? '✅' : p.review === 'CHANGES_REQUESTED' ? '❌' : '🕐') + '</span><span class="meta"><span class="n">' + esc(p.repo) + ' #' + p.n + ' · ' + esc(p.title) + '</span><span class="own">' + esc((p.author ? p.author + ' · ' : '') + (p.review || 'review pending').toLowerCase().replace('_', ' ')) + (p.draft ? ' · draft' : '') + (p.ci && p.ci.failure ? ' · CI failing' : p.ci && p.ci.pending ? ' · CI pending' : '') + ' · ' + deskAge(p.updated) + ' ago</span></span></div>'; });
-    if (d.fleet && d.fleet.summary) { var fs = d.fleet.summary; h += '<h3 style="margin-top:12px">🚜 Fleet</h3><div class="g3-chips">' + chip('clean', fs.clean + '/' + fs.total) + chip('dirty', fs.dirty) + chip('behind', fs.behind) + chip('open PRs', fs.prs) + '</div>'; var dirty = d.fleet.mods.filter(function (m) { return m.status === 'dirty'; }); dirty.forEach(function (m) { h += '<div class="g3-row"><span class="ico">🟡</span><span class="meta"><span class="n">' + esc(m.mod) + '</span><span class="own">' + m.dirtyCount + ' uncommitted' + (m.ahead ? ' · ' + m.ahead + ' ahead' : '') + '</span></span></div>'; }); }
-    if (d.notif) { h += '<h3 style="margin-top:12px">🔔 GitHub inbox · ' + d.notif.unread + ' unread</h3>'; d.notif.items.forEach(function (n) { h += '<div class="g3-row"><span class="ico">' + (n.unread ? '🔵' : '⚪') + '</span><span class="meta"><span class="n">' + esc(n.repo.split('/').pop()) + ' · ' + esc(n.title) + '</span><span class="own">' + esc(n.type + ' · ' + n.reason) + ' · ' + deskAge(n.updatedAt) + ' ago</span></span></div>'; }); }
-    if (d.inbox && d.inbox.pending.length) { h += '<h3 style="margin-top:12px">📒 Ledger inbox · ' + d.inbox.pending.length + ' pending</h3>'; d.inbox.pending.slice(0, 5).forEach(function (it) { h += '<div class="g3-row"><span class="ico">🟡</span><span class="meta"><span class="n">' + esc(String(it.title || it.summary || it.line || '').slice(0, 120)) + '</span></span></div>'; }); }
-    h += '<div class="g3-chips" style="margin-top:10px"><span class="g3-chip">updated <b>' + (d.at ? new Date(d.at).toLocaleTimeString('en-GB') : 'not yet') + '</b></span>' + (d.err ? '<span class="g3-chip amber">' + esc(d.err) + '</span>' : '') + '</div><button class="g3-btn wide" data-act="deskRefresh">↻ Refresh now</button><button class="g3-btn wide" data-act="deskOpen">↗ Open the desk in a new tab</button></div></div>';
-//#else
     var all = dashRows(); var h = '<div class="g3-box"><div class="g3-chips">' + DESK_PAGES.map(function (p, i) { return '<button class="g3-btn' + (i === deskBoard.page ? ' primary' : '') + '" data-act="deskPage" data-id="' + i + '">' + DESK_PAGE_LABEL[p] + '</button>'; }).join('') + '</div></div>';
     (all[DESK_PAGES[deskBoard.page]] || []).forEach(function (r) { h += '<div class="g3-row"><span class="ico">📊</span><span class="meta"><span class="n">' + esc(r[0]) + ' · ' + esc(r[1]) + '</span><span class="own">' + esc(r[2]) + '</span></span></div>'; });
-//#endif
     return h;
   }
 

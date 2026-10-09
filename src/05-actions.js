@@ -36,7 +36,7 @@
       if (slotIdx >= slots()) { toast('That slot is outside the tent', 'bad'); return; }
       if (S.potSoil[slotIdx]) { toast('That pot already has soil', 'bad'); return; }
       S.potSoil[slotIdx] = true; S.held = null; world.dirty = true;
-      var sp = slotPos(slotIdx); burst(sp.x, 0.5, sp.z, 0x5a3a22, 18, 'out'); sfx('plant'); toast('🪴 Filled the pot', 'good');
+      var sp = slotPos(slotIdx); spark(sp.x, 0.5, sp.z, 0x5a3a22, 18, 'out'); sfx('plant'); toast('🪴 Filled the pot', 'good');
     },
     plant: function (id, slotIdx) {
       var h = held();
@@ -52,11 +52,11 @@
       if (S.upgrades.genetics) p.quality = clamp(p.quality + 10, 20, 100);   // genetics lab: better starting stock
       S.plants.push(p); S.stats.plants++;
       sfx('plant'); toast('🌱 Planted ' + strainById(id).name, 'good'); world.dirty = true;
-      var sp = slotPos(slotIdx); burst(sp.x, 0.6, sp.z, 0x8bd97a, 20, 'up');
+      var sp = slotPos(slotIdx); spark(sp.x, 0.6, sp.z, 0x8bd97a, 20, 'up');
     },
-    water: function (pid) { var p = plantById(pid); if (!p) return; var h = held(); if (!h || h.kind !== 'can') { toast('Grab the watering can first', 'bad'); return; } if (S.upgrades.autowater) { toast('The auto-waterer has it covered', ''); return; } if (p.thirst < 0.05) { toast('Not thirsty yet', ''); return; } p.thirst = 0; toast('💧 Watered', 'good'); sfx('water'); var sp = slotPosOf(pid); burst(sp.x, 1.3, sp.z, 0x6fc3ff, 30, 'down'); },
-    feed: function (pid) { var p = plantById(pid); if (!p) return; if (p.fed) { toast('Already fed', 'bad'); return; } var h = held(); if (!h || h.kind !== 'nutrients') { toast('Bring nutrients from the supply rack', 'bad'); return; } S.held = null; world.dirty = true; p.fed = true; p.quality = clamp(p.quality + 12, 20, 100); toast('🧪 Fed (quality +12)', 'good'); sfx('feed'); var sp = slotPosOf(pid); burst(sp.x, 0.7, sp.z, 0xd9ff5a, 20, 'up'); },
-    treat: function (pid) { var p = plantById(pid); if (!p || !p.hazard) { toast('Nothing to treat', ''); return; } var h = held(); if (!h || h.kind !== 'remedy') { toast('Bring pest spray from the supply rack', 'bad'); return; } S.held = null; p.hazard = null; toast('🧴 Treated', 'good'); sfx('spray'); var sp = slotPosOf(pid); burst(sp.x, 1.0, sp.z, 0xffffff, 26, 'out'); world.dirty = true; },
+    water: function (pid) { var p = plantById(pid); if (!p) return; var h = held(); if (!h || h.kind !== 'can') { toast('Grab the watering can first', 'bad'); return; } if (S.upgrades.autowater) { toast('The auto-waterer has it covered', ''); return; } if (p.thirst < 0.05) { toast('Not thirsty yet', ''); return; } p.thirst = 0; toast('💧 Watered', 'good'); sfx('water'); var sp = slotPosOf(pid); spark(sp.x, 1.3, sp.z, 0x6fc3ff, 30, 'down'); },
+    feed: function (pid) { var p = plantById(pid); if (!p) return; if (p.fed) { toast('Already fed', 'bad'); return; } var h = held(); if (!h || h.kind !== 'nutrients') { toast('Bring nutrients from the supply rack', 'bad'); return; } S.held = null; world.dirty = true; p.fed = true; p.quality = clamp(p.quality + 12, 20, 100); toast('🧪 Fed (quality +12)', 'good'); sfx('feed'); var sp = slotPosOf(pid); spark(sp.x, 0.7, sp.z, 0xd9ff5a, 20, 'up'); },
+    treat: function (pid) { var p = plantById(pid); if (!p || !p.hazard) { toast('Nothing to treat', ''); return; } var h = held(); if (!h || h.kind !== 'remedy') { toast('Bring pest spray from the supply rack', 'bad'); return; } S.held = null; p.hazard = null; toast('🧴 Treated', 'good'); sfx('spray'); var sp = slotPosOf(pid); spark(sp.x, 1.0, sp.z, 0xffffff, 26, 'out'); world.dirty = true; },
     harvest: function (pid) {
       var idx = -1; for (var i = 0; i < S.plants.length; i++) if (S.plants[i].id === pid) idx = i;
       if (idx < 0) return; var p = S.plants[idx];
@@ -73,7 +73,7 @@
       take({ kind: 'harvest', grams: wet, quality: q, thc: st.thc, strain: p.strain }); sfx('harvest');
       logEvent('✂️ Harvested ' + gram(wet) + ' of ' + st.name + ' (quality ' + Math.round(q) + ')', 'good');
       toast('✂️ Harvested ' + gram(wet) + '. Hang it on the drying line.', 'good'); world.dirty = true;
-      burst(sp.x, 1.0, sp.z, st.bud, 40, 'out');
+      spark(sp.x, 1.0, sp.z, st.bud, 40, 'out');
     },
     hang: function () {
       var h = held(); if (!h || h.kind !== 'harvest') { toast('Nothing to hang', 'bad'); return; }
@@ -149,7 +149,7 @@
       S.rep += rep; gainXp(Math.round(total / 8));
       logEvent('💵 Sold ' + c.qty + ' ' + kindName(c.want, c.qty) + ' to ' + c.who + ' for ' + money(total) + ' (rep +' + rep + ')', c.premium ? 'rare' : 'good');
       toast('💵 ' + money(total) + ' (rep +' + rep + ')', 'good'); sfx('cash'); registerSale(c.who + ' ' + money(total));
-      burst(0, 1.4, 5.6, 0xffd766, 40, 'up');
+      spark(0, 1.4, 5.6, 0xffd766, 40, 'up');
       npc.leaveHappy(); S.customer = null;
     },
     buyLic: function (id) {
@@ -179,11 +179,11 @@
       if (!u || S.upgrades[id]) return;
       if (u.req && !S.upgrades[u.req]) { var ur = UPGRADES.filter(function (x) { return x.id === u.req; })[0]; toast('Needs the ' + (ur ? ur.name : u.req) + ' first', 'bad'); return; } if (u.lvl && S.level < u.lvl) { toast('Unlocks at level ' + u.lvl, 'bad'); return; }
       if (!spend(u.price)) return; S.upgrades[id] = true;
-      logEvent('⭐ Installed ' + u.name, 'rare'); toast('⭐ ' + u.name, 'rare'); world.dirty = true; if (id === 'lobby') buildProp('lobbyCoffee');
+      logEvent('⭐ Installed ' + u.name, 'rare'); toast('⭐ ' + u.name, 'rare'); world.dirty = true; if (id === 'lobby') growBuildProp('lobbyCoffee');
     }
   };
 
   // ── Extension hooks (creative mode lives in grow3d-creative.js) ──
   var hooks = { frame: [], keydown: [], mousedown: [], panel: {}, panelClick: [], panelInput: [], boot: [], blockFocus: [], unlock: [], editMode: [] };   /* editMode(on): build mode switched; the creative catalogue rides along */
-  function runHooks(list, a, b) { for (var i = 0; i < list.length; i++) { if (list[i](a, b)) return true; } return false; }
+  function runHookList(list, a, b) { for (var i = 0; i < list.length; i++) { if (list[i](a, b)) return true; } return false; }
 

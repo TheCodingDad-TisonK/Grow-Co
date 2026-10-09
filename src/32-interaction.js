@@ -2,8 +2,8 @@
   // ── Interaction ───────────────────────────────────────────────────
   var ray = new THREE.Raycaster(); ray.layers.enable(TOWN_LAYER); ray.far = 3.4; var center = new THREE.Vector2(0, 0);
   var focus = null;
-  function updateFocus() {
-    if (edit.on || runHooks(hooks.blockFocus)) return;
+  function growUpdateFocus() {
+    if (edit.on || runHookList(hooks.blockFocus)) return;
     if (ui.blocked() || !player.locked || drive.on) { setFocus(null); return; }
     ray.setFromCamera(center, camera);
     var hits = ray.intersectObjects(world.interact, false);
@@ -88,11 +88,7 @@
       return c.who + ' <small>still wants ' + all.join(', ') + (c.premium ? ' · quality ' + c.minQ + '+' : '') + ' · see the ticket top left</small>';
     }
     if (d.kind === 'water') return h && h.kind === 'can' ? 'Put the can back' : (h ? 'Hands full <small>G to put down</small>' : 'Pick up the watering can');
-//#if desk
-    if (d.kind === 'tv') return 'TV <small>' + { off: 'off', desk: 'live desk', growcam: 'grow cam', news: 'house news' }[TV_CHANNELS[tv.channel]] + ' · E next channel</small>';
-//#else
     if (d.kind === 'tv') return 'TV <small>' + { off: 'off', desk: 'shop dashboard', growcam: 'grow cam', news: 'house news' }[TV_CHANNELS[tv.channel]] + ' · E next channel</small>';
-//#endif
     if (d.kind === 'secdesk') return sec.view.on ? 'Leave the cameras' : sit.on ? 'Watch the cameras' : 'Sit down and watch the cameras';
     if (d.kind === 'seccam') return 'Security camera <small>' + secCamName(d.idx) + ' · feeds the security room</small>';
     if (d.kind === 'couch') return sit.on ? (h && h.kind === 'joints' && !smoke.on ? 'Spark one up' : 'Get up') : (h && h.kind === 'snack' ? 'Eat on the couch' : h && h.kind === 'joints' ? 'Sit down and spark one up' : 'Sit on the couch');
@@ -111,11 +107,7 @@
     if (d.kind === 'frontdoor') return shop().open ? 'Lock the front door <small>closes the shop</small>' : 'Unlock the front door <small>opens the shop</small>';
     if (d.kind === 'broom') return h && h.kind === 'broom' ? 'Hang the broom back up' : (h ? 'Hands full <small>G to put down</small>' : 'Take the broom <small>' + dustList().length + ' dusty spot' + (dustList().length === 1 ? '' : 's') + '</small>');
     if (d.kind === 'dust') return h && h.kind === 'broom' ? 'Sweep up the dirt' : 'Dirt on the floor <small>grab the broom in the processing room</small>';
-//#if desk
-    if (d.kind === 'deskboard') { var hz = deskBoard.hotZone; return (deskBoard.view === 'shop' ? 'Shop dashboard' : 'Live desk board') + ' <small>' + (hz ? 'tap: ' + esc(hz.label) : deskLabel(DESK_PAGES[deskBoard.page]) + (deskBoard.view === 'shop' ? '' : ' · ' + deskBoard.data.prs.length + ' open PRs') + ' · touch screen: look and press E, wheel flips') + '</small>'; }
-//#else
     if (d.kind === 'deskboard') { var hz = deskBoard.hotZone; return 'Shop dashboard <small>' + (hz ? 'tap: ' + esc(hz.label) : DESK_PAGE_LABEL[DESK_PAGES[deskBoard.page]] + ' · touch screen: look and press E, wheel flips') + '</small>'; }
-//#endif
     if (d.kind === 'switch') return (roomLit(d.room) ? 'Lights off' : 'Lights on') + ' <small>' + ROOM_NAMES[d.room] + '</small>';
     if (d.kind === 'dehum') return 'Dehumidifier <small>' + dehumLabel(d.zone) + ' · RH ' + Math.round(S.rh[d.zone]) + '% · E next setting</small>';
     if (d.kind === 'storeItem') { var sn = S.storage[d.item] || 0, bayT = d.bay !== undefined ? 'bay ' + rackBayCode(d.bay) + ' · ' : ''; if (h && h.kind === 'crate') return 'Rack your crate <small>' + h.n + ' × ' + itemName(h.item) + (h.item === d.item ? ' back in ' + bayT + 'Shift+E takes the rest of this bay instead' : ' goes in its own bay') + '</small>'; if (h && hotbarFull()) return 'Hands full <small>G to put down · 1 to 6 picks a slot</small>'; return 'Take a crate of ' + itemName(d.item) + ' <small>' + bayT + sn + ' in stock · E takes ' + Math.min(sn, itemPack(d.item)) + ' · Shift+E all</small>'; }
@@ -142,7 +134,7 @@
     var vipP = vipPrompt(d, h); if (vipP) return vipP;
     var expP = expPrompt(d, h); if (expP) return expP;
     if (d.kind === 'keyHook') return keyHookPrompt(h);
-    var doorP = doorPrompt(d); if (doorP) return doorP;
+    var doorP = slideDoorPrompt(d); if (doorP) return doorP;
     if (d.kind === 'queuer') return 'Customer <small>in line · E to have a word</small>'; if (d.kind === 'rope') return 'Rope line <small>E to change it · F2 moves it</small>'; if (d.kind === 'lounger') { var lg = loungers.filter(function (l) { return l.id === d.lid; })[0]; if (!lg) return ''; if (fight && (fight.a === lg || fight.b === lg)) return h && h.kind === 'bat' ? 'Swing <small>or press E to break it up</small>' : 'Break it up <small>' + fight.a.who + ' and ' + fight.b.who + '</small>'; return (h && h.kind === 'bat' ? 'Swing at ' : '') + lg.who + ' <small>' + (lg.state === 'smoke' ? 'having a smoke' : lg.state === 'use' ? 'at the ' + lg.useKind : lg.state === 'down' ? 'on the floor' : 'in the lobby') + '</small>'; }
     if (d.kind === 'stock') return isGoods(h) ? 'Lock ' + h.n + ' ' + kindName(h.kind, h.n) + ' in the stock cabinet <small>' + stockCount() + ' stored · Shift+E opens it</small>' : 'Stock cabinet <small>' + stockCount() + ' packed goods stored · E opens</small>';
     if (d.kind === 'worker') return crewName(d.idx || 0) + ' <small>' + workerTaskLabel(d.idx || 0) + ' · Shift+E gives orders · Ctrl+E sends them home</small>';
@@ -349,7 +341,7 @@
   }
   var ctxActions = {};
   $('g3-ctx-btns').addEventListener('click', function (e) { var l = e.target.closest('[data-ctx]'); if (!l) return; var fn = ctxActions[l.getAttribute('data-ctx')]; ctxClose(); sfx('click'); if (fn) fn(); afterAction(); });
-  function ctxClose() { $('g3-ctx').hidden = true; ui.ctxOpen = false; if (!ui.panelOpen && !ui.menuOpen) lockPointer(); }
+  function ctxClose() { $('g3-ctx').hidden = true; ui.ctxOpen = false; if (!ui.panelOpen && !ui.menuOpen) grabPointer(); }
   function ctxPlant(pid) {
     var p = plantById(pid); if (!p) return; var st = strainById(p.strain); var sg = stageFor(p.progress);
     var lines = [];

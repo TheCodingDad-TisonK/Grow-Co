@@ -34,7 +34,7 @@
     [-0.29, 0.29].forEach(function (x) { c.box(0.03, 0.2, 0.04, shellM, x, 0.6, 0.02); c.box(0.03, 0.03, 0.14, shellM, x, 0.5, 0.05); c.box(0.07, 0.03, 0.27, seatM, x, 0.712, -0.02, { r: 0.012 }); });
     c.solid(-0.3, 0.3, -0.3, 0.3);
   }
-  defProp('officeDesk', { label: 'office desk', x: -ROOM.x + 0.55, z: 1.0, rot: 1, build: function (c) {
+  growDefProp('officeDesk', { label: 'office desk', x: -ROOM.x + 0.55, z: 1.0, rot: 1, build: function (c) {
     // desk along local x, laptop faces the chair at +z; drawers on the right, cable tidy, lamp, mug, notepad
     c.box(1.6, 0.05, 0.72, MAT.wood, 0, 0.78, 0, { solid: true }); c.box(1.62, 0.02, 0.74, MAT.darkwood, 0, 0.745, 0, { cast: false });
     c.box(0.06, 0.78, 0.06, MAT.metal, -0.74, 0.39, -0.3); c.box(0.06, 0.78, 0.06, MAT.metal, -0.74, 0.39, 0.3); c.box(0.06, 0.02, 0.6, MAT.metal, -0.74, 0.01, 0);
@@ -58,23 +58,23 @@
     c.box(0.15, 0.006, 0.022, keyM, -0.15, 0.828, 0.186, { cast: false }); c.box(0.05, 0.006, 0.022, keyL, -0.3, 0.828, 0.186, { cast: false }); c.box(0.05, 0.006, 0.022, keyL, 0.0, 0.828, 0.186, { cast: false });
     var mouse = c.box(0.058, 0.03, 0.105, MAT.gloss, 0.17, 0.824, 0.12, { r: 0.014 }); mouse.rotation.y = 0.12; c.box(0.006, 0.006, 0.02, colorMat(0x6fdc8c, 0.4, 0, { emissive: new THREE.Color(0x6fdc8c), emissiveIntensity: 0.8 }), 0.167, 0.838, 0.095, { cast: false });
     c.box(0.19, 0.44, 0.44, MAT.gloss, -0.35, 0.23, -0.05, { r: 0.012 }); c.box(0.004, 0.36, 0.36, MAT.glass, -0.253, 0.23, -0.05, { cast: false });   /* the tower, with a window in its side */
-    c.box(0.004, 0.3, 0.012, glowMat(0x6fdc8c, 1.4), -0.256, 0.23, 0.1, { cast: false }); c.cyl(0.05, 0.05, 0.02, colorMat(0x22262b, 0.4, 0.6), -0.3, 0.3, -0.05, 18).rotation.z = Math.PI / 2;
-    c.box(0.012, 0.012, 0.004, glowMat(0x6fdc8c, 1.2), -0.35, 0.42, 0.172, { cast: false }); c.light(new THREE.PointLight(0x6fdc8c, 0.12, 1.0), -0.2, 0.25, 0.1);
+    c.box(0.004, 0.3, 0.012, emitMat(0x6fdc8c, 1.4), -0.256, 0.23, 0.1, { cast: false }); c.cyl(0.05, 0.05, 0.02, colorMat(0x22262b, 0.4, 0.6), -0.3, 0.3, -0.05, 18).rotation.z = Math.PI / 2;
+    c.box(0.012, 0.012, 0.004, emitMat(0x6fdc8c, 1.2), -0.35, 0.42, 0.172, { cast: false }); c.light(new THREE.PointLight(0x6fdc8c, 0.12, 1.0), -0.2, 0.25, 0.1);
     c.hit(0.66, 0.46, 0.3, -0.15, 1.08, -0.12, { kind: 'laptop', label: 'PC', prompt: 'Use the PC' });
     c.cyl(0.075, 0.08, 0.018, MAT.gunmetal, -0.65, 0.814, -0.22, 24); var la1 = c.box(0.016, 0.36, 0.016, MAT.alu, -0.65, 0.99, -0.26, { sharp: true }); la1.rotation.x = -0.22; var la2 = c.box(0.016, 0.34, 0.016, MAT.alu, -0.65, 1.2, -0.17, { sharp: true }); la2.rotation.x = 1.05;
     c.cyl(0.013, 0.013, 0.03, MAT.soft, -0.65, 1.16, -0.3, 10).rotation.z = Math.PI / 2; var lh = c.box(0.05, 0.014, 0.26, MAT.gunmetal, -0.65, 1.27, 0.02, { r: 0.005 }); lh.rotation.x = 0.12; c.lit(0xfff0cc, 0.036, 0.22, -0.65, 1.2615, 0.02, 0, Math.PI / 2 + 0.12);
     c.light(new THREE.PointLight(0xffe0a8, 0.35, 2.5), -0.6, 1.15, -0.1);
     c.cyl(0.04, 0.035, 0.09, colorMat(0xf5f5f0, 0.5), 0.2, 0.85, -0.2, 14); var hdl = new THREE.Mesh(new THREE.TorusGeometry(0.025, 0.007, 6, 12, Math.PI), colorMat(0xf5f5f0, 0.5)); hdl.position.set(0.24, 0.85, -0.2); hdl.rotation.y = Math.PI / 2; c.add(hdl);
-    c.box(0.16, 0.01, 0.22, MAT.white, 0.5, 0.81, 0.15, { cast: false }); c.box(0.14, 0.002, 0.2, new THREE.MeshBasicMaterial({ map: textTex(['to do', 'water · feed', 'order soil', 'call supplier'], 140, 200, { size: 24, bg: '#fffbe6', color: '#333', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }) }), 0.5, 0.816, 0.15, { cast: false }); var pen = c.cyl(0.005, 0.005, 0.14, colorMat(0x2a4a8a, 0.4), 0.62, 0.815, 0.15, 6); pen.rotation.set(Math.PI / 2, 0, 0.3);
-    c.box(0.24, 0.12, 0.16, MAT.plastic, -0.55, 0.86, 0.22); c.box(0.2, 0.01, 0.12, MAT.white, -0.55, 0.925, 0.22, { cast: false }); c.box(0.02, 0.01, 0.06, glowMat(0x6fdc8c, 1), -0.45, 0.925, 0.28, { cast: false });   // small printer
+    c.box(0.16, 0.01, 0.22, MAT.white, 0.5, 0.81, 0.15, { cast: false }); c.box(0.14, 0.002, 0.2, new THREE.MeshBasicMaterial({ map: signTex(['to do', 'water · feed', 'order soil', 'call supplier'], 140, 200, { size: 24, bg: '#fffbe6', color: '#333', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }) }), 0.5, 0.816, 0.15, { cast: false }); var pen = c.cyl(0.005, 0.005, 0.14, colorMat(0x2a4a8a, 0.4), 0.62, 0.815, 0.15, 6); pen.rotation.set(Math.PI / 2, 0, 0.3);
+    c.box(0.24, 0.12, 0.16, MAT.plastic, -0.55, 0.86, 0.22); c.box(0.2, 0.01, 0.12, MAT.white, -0.55, 0.925, 0.22, { cast: false }); c.box(0.02, 0.01, 0.06, emitMat(0x6fdc8c, 1), -0.45, 0.925, 0.28, { cast: false });   // small printer
     c.box(0.1, 0.06, 0.04, MAT.black, -0.1, 0.5, -0.33, { cast: false }); c.cyl(0.008, 0.008, 0.5, MAT.black, -0.1, 0.25, -0.35, 5);   // cable tidy + power lead
     c.box(1.62, 0.05, 0.05, MAT.darkwood, 0, 0.755, -0.37, { cast: false });
     officeChairBuild({ box: function (w, h, d, mat, x, y, z, o) { return c.box(w, h, d, mat, x, y + 0, z + 0.75, o); }, cyl: function (rt, rb, h, mat, x, y, z, s) { return c.cyl(rt, rb, h, mat, x, y, z + 0.75, s); }, solid: function (a, b, d, e) { c.solid(a, b, d + 0.75, e + 0.75); } });
     // a name plate where the sign on a stick used to stand: a wedge of dark wood with a brass plate
     var npl = c.box(0.24, 0.06, 0.05, MAT.darkwood, 0.55, 0.835, -0.24, { r: 0.01 }); npl.rotation.x = -0.35;
-    var npf = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.04), new THREE.MeshStandardMaterial({ map: textTex(['GROW CO. · OFFICE'], 420, 80, { size: 40, bold: true, bg: '#c9a24a', color: '#2a2210', titleColor: '#2a2210', line: 'rgba(60,45,10,.6)' }), roughness: 0.35, metalness: 0.7 })); npf.position.set(0.55, 0.838, -0.213); npf.rotation.x = -0.35; c.add(npf);
+    var npf = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.04), new THREE.MeshStandardMaterial({ map: signTex(['GROW CO. · OFFICE'], 420, 80, { size: 40, bold: true, bg: '#c9a24a', color: '#2a2210', titleColor: '#2a2210', line: 'rgba(60,45,10,.6)' }), roughness: 0.35, metalness: 0.7 })); npf.position.set(0.55, 0.838, -0.213); npf.rotation.x = -0.35; c.add(npf);
   } });
-  defProp('tabletDock', { label: 'tablet dock', x: -10.4, z: 3.55, rot: 2, build: function (c) {
+  growDefProp('tabletDock', { label: 'tablet dock', x: -10.4, z: 3.55, rot: 2, build: function (c) {
     // a charging plinth against the office wall: the tablet stands in the cradle, screen out, until you take it
     var body = colorMat(0x2b2f35, 0.55, 0.3);
     c.box(0.52, 0.05, 0.36, MAT.darkwood, 0, 0.93, 0, { cast: false }); c.box(0.54, 0.02, 0.38, MAT.darkwood, 0, 0.955, 0, { cast: false });
@@ -84,14 +84,14 @@
     var lit = hasLic('tobacco'), inDock = xs().tablet === 'dock';
     var tg = new THREE.Group(); tg.position.set(0, 0.975, -0.05); tg.rotation.x = -0.3; tg.userData.tabletBody = true; tg.userData.builtLit = lit; c.add(tg);
     var shell = new THREE.Mesh(bevelGeo(0.38, 0.28, 0.016), colorMat(0x1b1f24, 0.4, 0.5)); shell.position.y = 0.13; shell.castShadow = true; tg.add(shell);
-    var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.345, 0.245), lit ? new THREE.MeshBasicMaterial({ map: textTex(['RF SMOKING', 'delivery round'], 300, 210, { size: 34, bg: '#0d1511', color: '#8fa596', titleColor: '#ffc857' }) }) : MAT.screen);
+    var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.345, 0.245), lit ? new THREE.MeshBasicMaterial({ map: signTex(['RF SMOKING', 'delivery round'], 300, 210, { size: 34, bg: '#0d1511', color: '#8fa596', titleColor: '#ffc857' }) }) : MAT.screen);
     scr.position.set(0, 0.13, 0.01); tg.add(scr);
-    c.cyl(0.016, 0.016, 0.02, glowMat(lit ? 0x6fdc8c : 0xd0201a, 1.4), 0.21, 0.962, 0.1, 10);   /* charge light: green once the licence is in */
+    c.cyl(0.016, 0.016, 0.02, emitMat(lit ? 0x6fdc8c : 0xd0201a, 1.4), 0.21, 0.962, 0.1, 10);   /* charge light: green once the licence is in */
     c.sign(['DELIVERY ROUND'], 0.40, 0.072, 0, 0.74, 0.178, 0, { size: 13, titleColor: '#ffc857', bg: '#141a16' });   /* the plinth front face is at z 0.17, and the plate is only 128 px wide: one short line at 13 px is what fits */
     c.solid(-0.27, 0.27, -0.2, 0.2);
     c.hit(0.56, 0.9, 0.44, 0, 0.72, 0.02, { kind: 'tabletDock' });
   } });
-  defProp('rack', { label: 'supply rack', x: -ROOM.x + 0.45, z: -1.0, rot: 1, build: function (c) {
+  growDefProp('rack', { label: 'supply rack', x: -ROOM.x + 0.45, z: -1.0, rot: 1, build: function (c) {
     // boltless steel shelving: decks with a rolled lip, punched uprights, a cross brace at the back, levelling feet
     var shelfM = MAT.steel, postM = MAT.gunmetal; for (var s = 0; s < 4; s++) { var sy = 0.25 + s * 0.55; c.box(0.9, 0.03, 0.5, shelfM, 0, sy, 0); c.box(0.9, 0.05, 0.016, postM, 0, sy - 0.006, 0.25, { cast: false }); c.box(0.9, 0.05, 0.016, postM, 0, sy - 0.006, -0.25, { cast: false }); [-0.445, 0.445].forEach(function (x) { c.box(0.016, 0.05, 0.5, postM, x, sy - 0.006, 0, { cast: false }); }); c.sign([['SOIL', 'FEED · SPRAY', 'PAPERS · BAGS', 'POTS · JARS'][s]], 0.16, 0.03, -0.32, sy - 0.006, 0.2595, 0, { size: 13, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,.3)' }); }
     [[-0.44, -0.24], [0.44, -0.24], [-0.44, 0.24], [0.44, 0.24]].forEach(function (p) { c.box(0.04, 2.0, 0.04, postM, p[0], 1.0, p[1]); for (var h = 0; h < 12; h++) c.box(0.012, 0.03, 0.042, MAT.black, p[0], 0.1 + h * 0.16, p[1], { cast: false, sharp: true }); c.cyl(0.03, 0.036, 0.024, MAT.soft, p[0], 0.012, p[1], 12); });
@@ -100,7 +100,7 @@
     c.solid(-0.5, 0.5, -0.3, 0.3); c.hit(0.9, 2.0, 0.5, 0, 1.0, 0, { kind: 'inventory', label: 'Supply rack', prompt: 'Check stock' });
     c.sign(['SUPPLIES', 'soil · nutrients · spray · seeds'], 0.9, 0.3, 0, 2.2, 0.02, 0, { titleColor: '#6fdc8c' }); c.dynGroup();
   }, after: function () { syncRack(); } });
-  defProp('cabinet', { label: 'filing cabinet', x: -4.6, z: 3.3, rot: 3, build: function (c) {
+  growDefProp('cabinet', { label: 'filing cabinet', x: -4.6, z: 3.3, rot: 3, build: function (c) {
     // three drawers, each with a pull, a card in a holder and its own shadow gap; a lock at the top corner
     var cabM = colorMat(0x70777f, 0.4, 0.55), frontM = colorMat(0x7d848c, 0.36, 0.55); c.box(0.5, 1.16, 0.6, cabM, 0, 0.62, 0, { solid: true }); c.box(0.46, 0.04, 0.56, MAT.soft, 0, 0.02, 0, { cast: false });
     [0.24, 0.62, 1.0].forEach(function (y) { c.box(0.46, 0.35, 0.006, MAT.black, 0, y, 0.302, { cast: false, sharp: true }); c.box(0.445, 0.335, 0.024, frontM, 0, y, 0.312, { r: 0.006 }); c.box(0.2, 0.022, 0.014, MAT.black, 0, y + 0.1, 0.325, { cast: false, sharp: true }); c.box(0.2, 0.008, 0.022, MAT.chrome, 0, y + 0.113, 0.33, { cast: false, sharp: true }); c.box(0.11, 0.055, 0.004, MAT.chrome, 0, y - 0.04, 0.326, { cast: false, sharp: true }); c.box(0.098, 0.043, 0.004, MAT.white, 0, y - 0.04, 0.3275, { cast: false, sharp: true }); });
@@ -114,10 +114,10 @@
     for (var r = 0; r < rows; r++) { var sy = 0.3 + r * ((h - 0.4) / rows); c.box(w - 0.06, 0.025, 0.28, MAT.wood, 0, sy, 0.01, { cast: false }); var bx = -w / 2 + 0.06; var lean = 0; while (bx < w / 2 - 0.12) { var bw = randf(0.035, 0.08), bh = randf(0.2, 0.32); var bk = c.box(bw, bh, randf(0.16, 0.22), colorMat(pick([0xc94a3a, 0x2f6b9a, 0x3aa36a, 0xe0c25a, 0x7a5aa8, 0xf2f2f2, 0x8a4a2a, 0x1c1c22]), 0.9), bx + bw / 2, sy + bh / 2 + 0.012, 0.03, { cast: false }); if (Math.random() < 0.15 && bx > -w / 2 + 0.2) { bk.rotation.z = 0.18; bk.position.x += 0.02; bx += 0.03; } bx += bw + 0.008; if (Math.random() < 0.12) bx += randf(0.05, 0.12); } if (r === rows - 1) { c.cyl(0.05, 0.04, 0.12, MAT.jar, w / 2 - 0.15, sy + 0.07, 0.05, 12); } }
     c.box(w, 0.06, 0.32, MAT.darkwood, 0, h - 0.03, 0.005);
   }
-  defProp('bookshelf', { label: 'bookshelf', x: -4.3, z: -0.9, rot: 3, build: function (c) { bookshelfBuild(c, 1.0, 1.8, 4); } });
-  defProp('fernOffice', { label: 'fern', x: -11.5, z: 3.4, build: function (c) { c.fern(0, 0, 1.0); } });
-  defProp('fernHall', { label: 'fern', x: 3.6, z: 3.5, build: function (c) { c.fern(0, 0, 0.9); } });
-  defProp('fernLobby', { label: 'fern', x: 10.8, z: 5.0, build: function (c) { c.fern(0, 0, 1.1); } });
+  growDefProp('bookshelf', { label: 'bookshelf', x: -4.3, z: -0.9, rot: 3, build: function (c) { bookshelfBuild(c, 1.0, 1.8, 4); } });
+  growDefProp('fernOffice', { label: 'fern', x: -11.5, z: 3.4, build: function (c) { c.fern(0, 0, 1.0); } });
+  growDefProp('fernHall', { label: 'fern', x: 3.6, z: 3.5, build: function (c) { c.fern(0, 0, 0.9); } });
+  growDefProp('fernLobby', { label: 'fern', x: 10.8, z: 5.0, build: function (c) { c.fern(0, 0, 1.1); } });
   function sofaBuild(c, w, seatM, pipeM) {
     // upholstery is soft, so every cushion is a box with a generous radius: a plinth, seat pads, back pads that lean, rolled arms, turned feet
     var d = 0.85; c.box(w, 0.22, d, pipeM, 0, 0.2, 0, { solid: true, r: 0.03 }); c.box(w - 0.04, 0.04, d - 0.04, MAT.black, 0, 0.07, 0, { cast: false });
@@ -126,17 +126,17 @@
     [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (l) { c.cyl(0.028, 0.018, 0.09, MAT.darkwood, l[0] * (w / 2 - 0.1), 0.045, l[1] * (d / 2 - 0.1), 12); });
   }
   function coffeeTableBuild(c, x, z, w, d) { c.box(w, 0.035, d, MAT.wood, x, 0.42, z, { solid: true }); c.box(w - 0.1, 0.02, d - 0.1, MAT.darkwood, x, 0.2, z, { cast: false }); legs4({ box: function (a, b, e, m, px, py, pz) { return c.box(a, b, e, m, px + x, py, pz + z); } }, w, d, 0.4, MAT.chrome, 0.06, 0.03); }
-  defProp('sofa', { label: 'sofa + coffee table', x: -2.4, z: -1.3, rot: 0, build: function (c) {
+  growDefProp('sofa', { label: 'sofa + coffee table', x: -2.4, z: -1.3, rot: 0, build: function (c) {
     var seatM = fabricMat(0x4a3b5c), pipeM = fabricMat(0x352a42);
     sofaBuild(c, 1.9, seatM, pipeM);
     [-0.5, 0.5].forEach(function (x) { var cu = c.box(0.4, 0.13, 0.4, fabricMat(x < 0 ? 0xe0c25a : 0x3aa36a), x, 0.62, -0.14, { r: 0.055 }); cu.rotation.set(1.05, x < 0 ? 0.2 : -0.15, 0); });
     coffeeTableBuild(c, 0, 1.15, 1.0, 0.6);
-    c.box(0.3, 0.02, 0.22, new THREE.MeshBasicMaterial({ map: textTex(['GROW', 'monthly'], 150, 110, { size: 30, bg: '#6fdc8c', color: '#062010', titleColor: '#062010', line: 'rgba(0,0,0,0)' }) }), -0.15, 0.45, 1.15, { cast: false }); c.box(0.26, 0.015, 0.2, colorMat(0xffc857), -0.05, 0.462, 1.2, { cast: false }).rotation.y = 0.2;
+    c.box(0.3, 0.02, 0.22, new THREE.MeshBasicMaterial({ map: signTex(['GROW', 'monthly'], 150, 110, { size: 30, bg: '#6fdc8c', color: '#062010', titleColor: '#062010', line: 'rgba(0,0,0,0)' }) }), -0.15, 0.45, 1.15, { cast: false }); c.box(0.26, 0.015, 0.2, colorMat(0xffc857), -0.05, 0.462, 1.2, { cast: false }).rotation.y = 0.2;
     c.cyl(0.05, 0.04, 0.12, MAT.jar, 0.3, 0.5, 1.25); c.cyl(0.03, 0.03, 0.06, colorMat(0x8a2a2a, 0.5), 0.3, 0.47, 1.25, 10);
     var cst = c.cyl(0.14, 0.12, 0.12, colorMat(0x2a2d33, 0.5), 0.32, 0.5, 1.05, 16); c.box(0.16, 0.16, 0.16, colorMat(0x1a1c1e, 0.5), 0.32, 0.5, 1.05).visible = false;
     c.hit(2.0, 1.2, 1.0, 0, 0.6, 0, { kind: 'couch', seat: 'sofa' });
-  }, after: function (c, P) { var v = propWorld('sofa', 0, 0.1); world.sofaSeat = { x: v.x, z: v.z, yaw: P.rot * Math.PI / 2 - Math.PI }; } });
-  defProp('fridge', { label: 'drinks fridge', x: 3.3, z: -1.5, rot: 0, multi: { max: 3, price: 500, gap: 1.0, ico: '🧊' }, build: function (c) {
+  }, after: function (c, P) { var v = growPropWorld('sofa', 0, 0.1); world.sofaSeat = { x: v.x, z: v.z, yaw: P.rot * Math.PI / 2 - Math.PI }; } });
+  growDefProp('fridge', { label: 'drinks fridge', x: 3.3, z: -1.5, rot: 0, multi: { max: 3, price: 500, gap: 1.0, ico: '🧊' }, build: function (c) {
     // a shop's display fridge: a black cabinet, a lit header, light strips up both sides of a white interior, a louvred kick plate
     // and a hinged glass door in a black frame. The shelves hold what is actually in it.
     var shellM = MAT.gloss, inner = colorMat(0xf2f5f7, 0.6), frameM = colorMat(0x15181b, 0.35, 0.4);
@@ -163,7 +163,7 @@
     c.light(new THREE.PointLight(0xbfe8ff, 0.55, 2.6), 0, 1.45, 0.15);
     c.hit(0.82, 1.9, 0.72, 0, 0.95, 0, { kind: 'fridge' });
   }, after: function (c, P, inst, id) { syncFridge(id); } });
-  defProp('coffeeBar', { label: 'coffee bar', x: 1.2, z: -1.7, rot: 0, build: function (c) {
+  growDefProp('coffeeBar', { label: 'coffee bar', x: 1.2, z: -1.7, rot: 0, build: function (c) {
     c.box(1.2, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(1.26, 0.04, 0.56, MAT.counterTop, 0, 0.92, 0, { cast: false }); c.box(1.2, 0.06, 0.02, MAT.chrome, 0, 0.03, 0.25, { cast: false });
     drawer(c, 0.5, 0.2, 0.02, -0.3, 0.7, 0.24); drawer(c, 0.5, 0.2, 0.02, 0.3, 0.7, 0.24);
     // the espresso machine: a polished body on four feet, a group head with its portafilter, a steam wand, a gauge, and cups warming on top
@@ -182,7 +182,7 @@
     c.box(0.1, 0.12, 0.07, MAT.ceramic, 0.3, 1.0, -0.15, { r: 0.012 }); c.sign(['sugar'], 0.08, 0.04, 0.3, 1.0, -0.114, 0, { size: 20, bg: 'rgba(0,0,0,0)', color: '#333', titleColor: '#333', line: 'rgba(0,0,0,0)' });
     c.placard(['COFFEE', 'help yourself'], 0.42, 0.16, 0.36, 1.22, 0.2, { titleColor: '#ffc857' });
   } });
-  defProp('waterCooler', { label: 'water cooler', x: -3.6, z: 3.5, rot: 3, build: function (c) {
+  growDefProp('waterCooler', { label: 'water cooler', x: -3.6, z: 3.5, rot: 3, build: function (c) {
     // a white tower with a dark alcove the cups stand in, two taps over a gridded drip tray, the bottle upside down on top, a cup tube on the side
     var white = colorMat(0xeef0f2, 0.35, 0.05), grey = colorMat(0xc9cdd2, 0.4, 0.1);
     c.box(0.34, 0.92, 0.34, white, 0, 0.47, 0, { r: 0.03 }); c.box(0.36, 0.03, 0.36, MAT.soft, 0, 0.015, 0, { cast: false }); c.box(0.3, 0.26, 0.02, colorMat(0x1a1d21, 0.5), 0, 0.68, 0.168, { cast: false }); c.box(0.26, 0.012, 0.11, grey, 0, 0.555, 0.2, { cast: false }); for (var gs = 0; gs < 6; gs++) c.box(0.24, 0.005, 0.006, MAT.black, 0, 0.563, 0.158 + gs * 0.017, { cast: false, sharp: true });
@@ -193,7 +193,7 @@
     var water = new THREE.Mesh(new THREE.CylinderGeometry(0.128, 0.128, 0.3, 24), new THREE.MeshPhysicalMaterial({ color: 0x8fd0ff, transparent: true, opacity: 0.55, roughness: 0.1 })); water.position.set(0, 1.15, 0); c.add(water);
     var tube = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.34, 14, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.3, roughness: 0.05, side: THREE.DoubleSide })); tube.position.set(-0.205, 0.72, 0.08); c.add(tube); for (var k = 0; k < 6; k++) c.cyl(0.03, 0.025, 0.05, colorMat(0xffffff, 0.6), -0.205, 0.59 + k * 0.045, 0.08, 12); c.box(0.02, 0.3, 0.05, grey, -0.18, 0.72, 0.08, { cast: false });
     c.hit(0.5, 1.5, 0.5, 0, 0.75, 0, { kind: 'cooler' }); c.solid(-0.2, 0.2, -0.2, 0.2); } });
-  defProp('bench', { label: 'workbench', x: ROOM.x - 0.6, z: 1.0, rot: 3, build: function (c) {
+  growDefProp('bench', { label: 'workbench', x: ROOM.x - 0.6, z: 1.0, rot: 3, build: function (c) {
     // bench runs along local x, the working side faces +z (into the room after rot 3); tools on the back rail
     c.box(2.4, 0.06, 0.8, MAT.wood, 0, 0.9, 0, { solid: true }); c.box(2.4, 0.85, 0.7, MAT.darkwood, 0, 0.45, 0, { cast: false }); c.box(2.4, 0.03, 0.03, MAT.chrome, 0, 0.93, 0.4, { cast: false });
     drawer(c, 0.5, 0.2, 0.02, -0.9, 0.7, 0.34); drawer(c, 0.5, 0.2, 0.02, -0.3, 0.7, 0.34); c.box(0.9, 0.5, 0.02, MAT.wood, 0.6, 0.45, 0.34, { cast: false }); c.box(0.12, 0.018, 0.02, MAT.chrome, 0.6, 0.55, 0.36, { cast: false });
@@ -212,7 +212,7 @@
     c.box(0.2, 0.03, 0.14, MAT.plastic, 0.9, 0.945, 0.15); for (var t = 0; t < 8; t++) c.cyl(0.006, 0.006, 0.03, colorMat(0xd8c8a0, 0.8), 0.83 + (t % 4) * 0.045, 0.975, 0.12 + Math.floor(t / 4) * 0.06, 5);   // tip tray
     c.placard(['PROCESSING', 'grind · bag · roll'], 0.6, 0.2, -0.95, 1.1, 0.2, { titleColor: '#ffc857' }); c.dynGroup();
   }, after: function () { syncShelf(); } });
-  defProp('trash', { label: 'bin', x: ROOM.x - 0.6, z: -1.4, build: function (c) {
+  growDefProp('trash', { label: 'bin', x: ROOM.x - 0.6, z: -1.4, build: function (c) {
     // a brushed steel pedal bin: a black foot ring, a band round the rim, a domed lid on a hinge at the back, a pedal at the front
     c.cyl(0.17, 0.155, 0.5, MAT.steel, 0, 0.26, 0, 28); c.cyl(0.162, 0.168, 0.03, MAT.soft, 0, 0.015, 0, 28); c.cyl(0.176, 0.176, 0.025, MAT.chrome, 0, 0.5, 0, 28); c.box(0.09, 0.012, 0.07, MAT.soft, 0, 0.02, 0.2, { cast: false }); c.box(0.02, 0.012, 0.08, MAT.chrome, 0, 0.03, 0.15, { cast: false, sharp: true });
     var lidG = new THREE.Group(); lidG.position.set(0, 0.515, -0.17); c.add(lidG);   /* hinged at the back edge so E can lift it */ var lidTop = new THREE.Mesh(new THREE.SphereGeometry(0.182, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2), MAT.steel); lidTop.scale.y = 0.28; lidTop.position.z = 0.17; lidTop.castShadow = true; lidG.add(lidTop); var knob = new THREE.Mesh(roundCylGeo(0.18, 0.18, 0.012, 28), MAT.chrome); knob.position.set(0, -0.004, 0.17); lidG.add(knob); var hinge = new THREE.Mesh(roundCylGeo(0.012, 0.012, 0.1, 10), MAT.soft); hinge.rotation.z = Math.PI / 2; lidG.add(hinge);
@@ -225,8 +225,8 @@
     for (var l = 0; l < 4; l++) c.box(s / 4 - 0.008, 0.018, s, pine, x - s / 2 + s / 8 + l * s / 4, y + hgt + 0.004, z, { cast: false });
     [-1, 1].forEach(function (d) { var h = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 14, Math.PI), MAT.rope); h.position.set(x + d * (s / 2 + 0.004), y + hgt * 0.62, z); h.rotation.set(0, Math.PI / 2, Math.PI); c.add(h); });
   }
-  defProp('crates', { label: 'crates', x: 5.3, z: -1.4, build: function (c) { crateBuild(c, -0.3, 0, 0); crateBuild(c, -0.3, 0.5, 0, 0.5); crateBuild(c, 0.3, 0, 0.05); c.solid(-0.6, 0.6, -0.3, 0.35); c.sign(['FRAGILE'], 0.3, 0.1, 0.3, 0.35, 0.33, 0, { size: 30, bg: '#f0e0c0', color: '#c9302c', titleColor: '#c9302c', line: 'rgba(0,0,0,0)' }); } });
-  defProp('cureShelf', { label: 'curing shelf', x: 6.5, z: -ROOM.z + 0.35, rot: 0, build: function (c) {
+  growDefProp('crates', { label: 'crates', x: 5.3, z: -1.4, build: function (c) { crateBuild(c, -0.3, 0, 0); crateBuild(c, -0.3, 0.5, 0, 0.5); crateBuild(c, 0.3, 0, 0.05); c.solid(-0.6, 0.6, -0.3, 0.35); c.sign(['FRAGILE'], 0.3, 0.1, 0.3, 0.35, 0.33, 0, { size: 30, bg: '#f0e0c0', color: '#c9302c', titleColor: '#c9302c', line: 'rgba(0,0,0,0)' }); } });
+  growDefProp('cureShelf', { label: 'curing shelf', x: 6.5, z: -ROOM.z + 0.35, rot: 0, build: function (c) {
     for (var i = 0; i < 4; i++) { c.box(3.0, 0.04, 0.4, MAT.wood, 0, 0.5 + i * 0.55, 0); c.box(3.0, 0.04, 0.02, MAT.darkwood, 0, 0.5 + i * 0.55, 0.2, { cast: false }); }
     c.box(0.06, 2.3, 0.4, MAT.darkwood, -1.5, 1.15, 0); c.box(0.06, 2.3, 0.4, MAT.darkwood, 1.5, 1.15, 0); c.box(0.06, 2.3, 0.4, MAT.darkwood, 0, 1.15, 0); c.box(3.0, 2.3, 0.02, colorMat(0x2a1c10, 0.8), 0, 1.15, -0.19, { cast: false }); c.solid(-1.5, 1.5, -0.2, 0.25);
     c.hit(3.0, 2.3, 0.5, 0, 1.15, 0, { kind: 'shelf', label: 'Curing shelf', prompt: 'Curing jars' });
@@ -234,7 +234,7 @@
     var hyg = c.box(0.14, 0.09, 0.02, MAT.white, -1.3, 2.0, 0.2); c.sign(['62% RH'], 0.1, 0.05, -1.3, 2.0, 0.212, 0, { size: 28, bg: '#101410', titleColor: '#6fdc8c', line: 'rgba(0,0,0,0)' });
     c.sign(['CURING SHELF', 'jars gain quality while they sit'], 1.4, 0.4, 0, 2.55, 0.05, 0, { titleColor: '#6fdc8c' }); c.dynGroup();
   }, after: function () { syncShelf(); } });
-  defProp('dryRack', { label: 'drying line', x: 6.25, z: -5.2, rot: 0, build: function (c) {
+  growDefProp('dryRack', { label: 'drying line', x: 6.25, z: -5.2, rot: 0, build: function (c) {
     var hw = 3.25, ly = 2.1;
     [-hw, hw].forEach(function (px) { c.box(0.08, ly + 0.1, 0.08, MAT.wood, px, (ly + 0.1) / 2, 0); c.box(0.7, 0.06, 0.12, MAT.wood, px, 0.03, 0); c.box(0.12, 0.06, 0.7, MAT.wood, px, 0.03, 0); var b1 = c.box(0.06, 0.9, 0.06, MAT.wood, px, 0.55, 0.28); b1.rotation.x = 0.55; var b2 = c.box(0.06, 0.9, 0.06, MAT.wood, px, 0.55, -0.28); b2.rotation.x = -0.55; c.box(0.1, 0.1, 0.1, MAT.plastic, px, ly, 0); c.solid(px - 0.36, px + 0.36, -0.36, 0.36); });
     var bar = new THREE.Mesh(roundCylGeo(0.03, 0.03, hw * 2, 12), MAT.wood); bar.rotation.z = Math.PI / 2; bar.position.set(0, ly, 0); bar.castShadow = true; c.add(bar);
@@ -245,9 +245,9 @@
     var fanG = new THREE.Group(); fanG.position.set(-hw + 0.1, 1.4, 0.1); fanG.rotation.y = 0.8; c.add(fanG); var fb = new THREE.Mesh(roundCylGeo(0.1, 0.1, 0.06, 16), MAT.plastic); fb.rotation.x = Math.PI / 2; fanG.add(fb); var cage = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.008, 6, 24), MAT.chrome); cage.position.z = 0.05; fanG.add(cage); var blades = new THREE.Group(); blades.position.z = 0.04; fanG.add(blades); for (var b = 0; b < 3; b++) { var blm = new THREE.Mesh(bevelGeo(0.05, 0.14, 0.004), colorMat(0xe0e0e0, 0.5)); blm.position.y = 0.08; var hold = new THREE.Group(); hold.rotation.z = b * Math.PI * 2 / 3; hold.add(blm); blades.add(hold); } c.box(0.06, 0.1, 0.08, MAT.plastic, -hw + 0.06, 1.3, 0.02); world.clipFan = blades;
     c.sign(['DRYING LINE', 'hang fresh harvests here · ~45 s'], 1.4, 0.4, 0, ly + 0.35, 0, 0, { titleColor: '#6fdc8c' }); c.dynGroup();
   }, after: function () { syncShelf(); } });
-  defProp('dryTable', { label: 'scale table', x: 1.2, z: -3.2, rot: 0, build: function (c) { c.box(0.9, 0.05, 0.6, MAT.wood, 0, 0.78, 0, { solid: true }); legs4(c, 0.9, 0.6, 0.76, MAT.metal); c.box(0.3, 0.03, 0.3, MAT.metal, 0, 0.82, 0); c.box(0.12, 0.025, 0.08, MAT.black, 0, 0.85, 0.15); c.box(0.08, 0.002, 0.03, MAT.screen, 0, 0.864, 0.15, { cast: false }); c.box(0.2, 0.01, 0.28, MAT.white, -0.3, 0.81, 0.05, { cast: false }); c.cyl(0.005, 0.005, 0.12, colorMat(0x2a4a8a, 0.4), -0.25, 0.815, 0.1, 6).rotation.set(Math.PI / 2, 0, 0.5); c.cyl(0.06, 0.06, 0.14, MAT.jar, 0.3, 0.88, -0.15, 12); c.cyl(0.062, 0.062, 0.015, MAT.jarLid, 0.3, 0.955, -0.15, 12); c.box(0.16, 0.1, 0.16, colorMat(0xe8e8ee, 0.6), 0.32, 0.86, 0.15); } });
-  defProp('jarBoxes', { label: 'jar boxes', x: 10.6, z: -8.2, build: function (c) { var bxM = colorMat(0xc8a97a, 1); [[0.3, 0, 0], [0.3, 0, 0.42], [-0.3, 0, 0]].forEach(function (b) { c.box(0.5, 0.4, 0.5, bxM, b[0], 0.2 + b[2], b[1], { solid: b[2] === 0 }); c.box(0.52, 0.03, 0.52, colorMat(0xb08c5a, 1), b[0], 0.4 + b[2], b[1], { cast: false }); c.box(0.5, 0.06, 0.02, colorMat(0xb08c5a, 1), b[0], 0.2 + b[2], b[1] + 0.25, { cast: false }); c.sign(['JARS ×12'], 0.3, 0.08, b[0], 0.15 + b[2], b[1] + 0.26, 0, { size: 24, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,.3)' }); }); } });
-  defProp('hose', { label: 'hose reel + watering can', x: -ROOM.x + 0.55, z: -3.0, rot: 1, build: function (c) {
+  growDefProp('dryTable', { label: 'scale table', x: 1.2, z: -3.2, rot: 0, build: function (c) { c.box(0.9, 0.05, 0.6, MAT.wood, 0, 0.78, 0, { solid: true }); legs4(c, 0.9, 0.6, 0.76, MAT.metal); c.box(0.3, 0.03, 0.3, MAT.metal, 0, 0.82, 0); c.box(0.12, 0.025, 0.08, MAT.black, 0, 0.85, 0.15); c.box(0.08, 0.002, 0.03, MAT.screen, 0, 0.864, 0.15, { cast: false }); c.box(0.2, 0.01, 0.28, MAT.white, -0.3, 0.81, 0.05, { cast: false }); c.cyl(0.005, 0.005, 0.12, colorMat(0x2a4a8a, 0.4), -0.25, 0.815, 0.1, 6).rotation.set(Math.PI / 2, 0, 0.5); c.cyl(0.06, 0.06, 0.14, MAT.jar, 0.3, 0.88, -0.15, 12); c.cyl(0.062, 0.062, 0.015, MAT.jarLid, 0.3, 0.955, -0.15, 12); c.box(0.16, 0.1, 0.16, colorMat(0xe8e8ee, 0.6), 0.32, 0.86, 0.15); } });
+  growDefProp('jarBoxes', { label: 'jar boxes', x: 10.6, z: -8.2, build: function (c) { var bxM = colorMat(0xc8a97a, 1); [[0.3, 0, 0], [0.3, 0, 0.42], [-0.3, 0, 0]].forEach(function (b) { c.box(0.5, 0.4, 0.5, bxM, b[0], 0.2 + b[2], b[1], { solid: b[2] === 0 }); c.box(0.52, 0.03, 0.52, colorMat(0xb08c5a, 1), b[0], 0.4 + b[2], b[1], { cast: false }); c.box(0.5, 0.06, 0.02, colorMat(0xb08c5a, 1), b[0], 0.2 + b[2], b[1] + 0.25, { cast: false }); c.sign(['JARS ×12'], 0.3, 0.08, b[0], 0.15 + b[2], b[1] + 0.26, 0, { size: 24, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,.3)' }); }); } });
+  growDefProp('hose', { label: 'hose reel + watering can', x: -ROOM.x + 0.55, z: -3.0, rot: 1, build: function (c) {
     c.box(0.5, 0.06, 0.5, MAT.metal, -0.15, 0.03, 0); c.box(0.06, 1.8, 0.06, MAT.metal, -0.15, 0.9, 0); c.box(0.2, 0.06, 0.06, MAT.metal, -0.15, 1.1, -0.15);
     var reel = c.cyl(0.28, 0.28, 0.14, colorMat(0x2f7a34, 0.6), -0.15, 1.1, 0.08); reel.rotation.x = Math.PI / 2; for (var r = 0; r < 5; r++) { var loop = new THREE.Mesh(new THREE.TorusGeometry(0.2 + r * 0.015, 0.012, 6, 24), colorMat(0x3a8f40, 0.7)); loop.position.set(-0.15, 1.1, 0.08 + (r - 2) * 0.03); c.add(loop); }
     var hub = c.cyl(0.16, 0.16, 0.18, MAT.metal, -0.15, 1.1, 0.08); hub.rotation.x = Math.PI / 2; var crank = c.box(0.03, 0.14, 0.03, MAT.black, -0.06, 1.17, 0.19); var knob = c.cyl(0.015, 0.015, 0.08, MAT.plastic, -0.06, 1.24, 0.23, 8); knob.rotation.x = Math.PI / 2;
@@ -260,7 +260,7 @@
     c.hit(0.5, 0.55, 0.5, 0.35, 0.27, 0.1, { kind: 'water', label: 'Watering can', prompt: 'Water a plant' }); c.solid(-0.4, 0.15, -0.3, 0.3);
     c.sign(['WATER', 'grab the can · E on a plant'], 0.6, 0.2, -0.15, 1.68, 0.1, 0, { titleColor: '#6fc3ff' });
   } });
-  defProp('fan', { label: 'floor fan', x: -2.0, z: -7.9, rot: 0, build: function (c) {
+  growDefProp('fan', { label: 'floor fan', x: -2.0, z: -7.9, rot: 0, build: function (c) {
     var fbase = new THREE.Mesh(roundCylGeo(0.2, 0.22, 0.04, 20), MAT.black); fbase.position.y = 0.02; c.add(fbase); c.box(0.06, 0.03, 0.06, colorMat(0x8a8f96, 0.5), 0.1, 0.05, 0.1, { cast: false });
     var fpole = new THREE.Mesh(roundCylGeo(0.02, 0.02, 0.9, 10), MAT.chrome); fpole.position.y = 0.47; c.add(fpole); c.cyl(0.03, 0.03, 0.05, MAT.plastic, 0, 0.5, 0, 10);
     world.fanHead = new THREE.Group(); world.fanHead.position.y = 0.95; c.add(world.fanHead);
@@ -272,15 +272,15 @@
     for (var b = 0; b < 3; b++) { var bl = new THREE.Mesh(bevelGeo(0.08, 0.19, 0.005), colorMat(0xdddddd, 0.5)); bl.position.y = 0.1; bl.rotation.y = 0.3; var holder = new THREE.Group(); holder.rotation.z = b * Math.PI * 2 / 3; holder.add(bl); world.fanBlades.add(holder); }
     c.solid(-0.22, 0.22, -0.22, 0.22);
   }, after: function (c, P) { world.fanBaseYaw = Math.atan2(TENT_ORIGIN.x - P.x, TENT_ORIGIN.z - P.z) - P.rot * Math.PI / 2; } });
-  defProp('soilSacks', { label: 'soil sacks', x: -11.3, z: -5.2, build: function (c) { var sackM = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x5a3a22, roughness: 1 }); [[0, 0, 0, 0.1], [0, 0, 0.3, -0.2], [0.55, 0, 0, 0.3]].forEach(function (b) { var s = c.box(0.5, 0.28, 0.35, sackM, b[0], 0.14 + b[2], b[1], { solid: b[2] === 0, r: 0.09 }); s.rotation.y = b[3]; c.sign(['POTTING SOIL', '25 L'], 0.3, 0.12, b[0], 0.14 + b[2], b[1] + 0.176, b[3], { size: 26, bg: '#e8dcc0', color: '#3a2a1a', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }); }); } });
-  defProp('bucket', { label: 'bucket', x: -11.2, z: -3.9, build: function (c) { c.cyl(0.16, 0.13, 0.3, colorMat(0x2f7a34, 0.6), 0, 0.15, 0); c.cyl(0.165, 0.165, 0.02, colorMat(0x255f2a, 0.6), 0, 0.3, 0); var hd = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.008, 6, 20, Math.PI), MAT.chrome); hd.position.y = 0.3; hd.rotation.z = 0; c.add(hd); c.cyl(0.14, 0.14, 0.01, new THREE.MeshPhysicalMaterial({ color: 0x6fb0e0, transparent: true, opacity: 0.6 }), 0, 0.25, 0, 20); c.solid(-0.2, 0.2, -0.2, 0.2); } });
-  defProp('potShelf', { label: 'pot shelf', x: -9.5, z: -ROOM.z + 0.3, rot: 0, build: function (c) { [0.4, 1.0, 1.6].forEach(function (y) { c.box(1.2, 0.03, 0.3, MAT.wood, 0, y, 0); c.box(1.2, 0.03, 0.02, MAT.darkwood, 0, y, 0.15, { cast: false }); }); [-0.55, 0.55].forEach(function (x) { c.box(0.04, 1.7, 0.3, MAT.metal, x, 0.85, 0); }); for (var p = 0; p < 3; p++) { for (var st = 0; st < 3; st++) { c.cyl(0.12 - st * 0.01, 0.09, 0.14, MAT.pot, -0.4 + p * 0.4, 1.69 + st * 0.03, 0, 16); } c.cyl(0.12, 0.09, 0.16, MAT.pot, -0.4 + p * 0.4, 1.1, 0, 16); c.cyl(0.125, 0.125, 0.02, MAT.pot, -0.4 + p * 0.4, 1.18, 0, 16); } c.box(0.3, 0.2, 0.2, colorMat(0xe8e8ee, 0.6), -0.3, 0.52, 0); c.cyl(0.08, 0.08, 0.2, MAT.jar, 0.3, 0.52, 0, 12); c.sign(['POTS', 'spares'], 0.4, 0.12, 0, 1.85, 0.02, 0, { titleColor: '#6fdc8c' }); c.solid(-0.6, 0.6, -0.15, 0.15); } });
-  defProp('tent', { label: 'grow tent', x: -6.6, z: -6.1, rot: 0, build: function (c, P) { TENT_ORIGIN.x = P.x; TENT_ORIGIN.z = P.z; buildTent(); if (world.tentGroup) world.tentGroup.traverse(function (o) { if (o.isMesh) o.userData.propId = 'tent'; }); }, after: function () { if (propInst.fan) { var f = propInst.fan; world.fanBaseYaw = Math.atan2(TENT_ORIGIN.x - f.P.x, TENT_ORIGIN.z - f.P.z) - f.P.rot * Math.PI / 2; } } });
+  growDefProp('soilSacks', { label: 'soil sacks', x: -11.3, z: -5.2, build: function (c) { var sackM = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x5a3a22, roughness: 1 }); [[0, 0, 0, 0.1], [0, 0, 0.3, -0.2], [0.55, 0, 0, 0.3]].forEach(function (b) { var s = c.box(0.5, 0.28, 0.35, sackM, b[0], 0.14 + b[2], b[1], { solid: b[2] === 0, r: 0.09 }); s.rotation.y = b[3]; c.sign(['POTTING SOIL', '25 L'], 0.3, 0.12, b[0], 0.14 + b[2], b[1] + 0.176, b[3], { size: 26, bg: '#e8dcc0', color: '#3a2a1a', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }); }); } });
+  growDefProp('bucket', { label: 'bucket', x: -11.2, z: -3.9, build: function (c) { c.cyl(0.16, 0.13, 0.3, colorMat(0x2f7a34, 0.6), 0, 0.15, 0); c.cyl(0.165, 0.165, 0.02, colorMat(0x255f2a, 0.6), 0, 0.3, 0); var hd = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.008, 6, 20, Math.PI), MAT.chrome); hd.position.y = 0.3; hd.rotation.z = 0; c.add(hd); c.cyl(0.14, 0.14, 0.01, new THREE.MeshPhysicalMaterial({ color: 0x6fb0e0, transparent: true, opacity: 0.6 }), 0, 0.25, 0, 20); c.solid(-0.2, 0.2, -0.2, 0.2); } });
+  growDefProp('potShelf', { label: 'pot shelf', x: -9.5, z: -ROOM.z + 0.3, rot: 0, build: function (c) { [0.4, 1.0, 1.6].forEach(function (y) { c.box(1.2, 0.03, 0.3, MAT.wood, 0, y, 0); c.box(1.2, 0.03, 0.02, MAT.darkwood, 0, y, 0.15, { cast: false }); }); [-0.55, 0.55].forEach(function (x) { c.box(0.04, 1.7, 0.3, MAT.metal, x, 0.85, 0); }); for (var p = 0; p < 3; p++) { for (var st = 0; st < 3; st++) { c.cyl(0.12 - st * 0.01, 0.09, 0.14, MAT.pot, -0.4 + p * 0.4, 1.69 + st * 0.03, 0, 16); } c.cyl(0.12, 0.09, 0.16, MAT.pot, -0.4 + p * 0.4, 1.1, 0, 16); c.cyl(0.125, 0.125, 0.02, MAT.pot, -0.4 + p * 0.4, 1.18, 0, 16); } c.box(0.3, 0.2, 0.2, colorMat(0xe8e8ee, 0.6), -0.3, 0.52, 0); c.cyl(0.08, 0.08, 0.2, MAT.jar, 0.3, 0.52, 0, 12); c.sign(['POTS', 'spares'], 0.4, 0.12, 0, 1.85, 0.02, 0, { titleColor: '#6fdc8c' }); c.solid(-0.6, 0.6, -0.15, 0.15); } });
+  growDefProp('tent', { label: 'grow tent', x: -6.6, z: -6.1, rot: 0, build: function (c, P) { TENT_ORIGIN.x = P.x; TENT_ORIGIN.z = P.z; buildTent(); if (world.tentGroup) world.tentGroup.traverse(function (o) { if (o.isMesh) o.userData.propId = 'tent'; }); }, after: function () { if (propInst.fan) { var f = propInst.fan; world.fanBaseYaw = Math.atan2(TENT_ORIGIN.x - f.P.x, TENT_ORIGIN.z - f.P.z) - f.P.rot * Math.PI / 2; } } });
   PROPS.tent.noBlob = true;   /* the tent builds into its own group and lays its own floor */
   function lobbyBench(c) { for (var s = -0.7; s <= 0.7; s += 0.14) c.box(0.12, 0.05, 0.45, MAT.wood, s, 0.55, 0); c.box(1.6, 0.05, 0.45, MAT.none, 0, 0.55, 0, { solid: true, cast: false }); for (var b = 0; b < 3; b++) c.box(1.6, 0.09, 0.03, MAT.wood, 0, 0.72 + b * 0.12, -0.2 - b * 0.02); [-0.65, 0.65].forEach(function (x) { c.box(0.05, 0.55, 0.45, colorMat(0x2a2d33, 0.4, 0.6), x, 0.275, 0); c.box(0.05, 0.5, 0.05, colorMat(0x2a2d33, 0.4, 0.6), x, 0.8, -0.2); }); }
-  defProp('lobbyBenchL', { label: 'lobby bench', x: -8.5, z: 8.2, rot: 2, build: lobbyBench });
-  defProp('lobbyBenchR', { label: 'lobby bench', x: 8.5, z: 8.2, rot: 2, build: lobbyBench });
-  defProp('magTable', { label: 'magazine table', x: -6.6, z: 7.6, build: function (c) { c.cyl(0.32, 0.32, 0.03, MAT.wood, 0, 0.45, 0, 24); c.cyl(0.03, 0.03, 0.44, MAT.chrome, 0, 0.22, 0, 10); c.cyl(0.2, 0.22, 0.02, MAT.chrome, 0, 0.01, 0, 24); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: textTex(['HIGH', 'times'], 150, 110, { size: 34, bg: '#6fdc8c', color: '#062010', titleColor: '#062010', line: 'rgba(0,0,0,0)' }) }), -0.05, 0.47, 0, { cast: false }); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: textTex(['GROW', 'weekly'], 150, 110, { size: 34, bg: '#ffc857', color: '#332200', titleColor: '#332200', line: 'rgba(0,0,0,0)' }) }), 0.1, 0.48, -0.05, { cast: false }).rotation.y = 0.3; c.solid(-0.33, 0.33, -0.33, 0.33); } });
+  growDefProp('lobbyBenchL', { label: 'lobby bench', x: -8.5, z: 8.2, rot: 2, build: lobbyBench });
+  growDefProp('lobbyBenchR', { label: 'lobby bench', x: 8.5, z: 8.2, rot: 2, build: lobbyBench });
+  growDefProp('magTable', { label: 'magazine table', x: -6.6, z: 7.6, build: function (c) { c.cyl(0.32, 0.32, 0.03, MAT.wood, 0, 0.45, 0, 24); c.cyl(0.03, 0.03, 0.44, MAT.chrome, 0, 0.22, 0, 10); c.cyl(0.2, 0.22, 0.02, MAT.chrome, 0, 0.01, 0, 24); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: signTex(['HIGH', 'times'], 150, 110, { size: 34, bg: '#6fdc8c', color: '#062010', titleColor: '#062010', line: 'rgba(0,0,0,0)' }) }), -0.05, 0.47, 0, { cast: false }); c.box(0.3, 0.01, 0.22, new THREE.MeshBasicMaterial({ map: signTex(['GROW', 'weekly'], 150, 110, { size: 34, bg: '#ffc857', color: '#332200', titleColor: '#332200', line: 'rgba(0,0,0,0)' }) }), 0.1, 0.48, -0.05, { cast: false }).rotation.y = 0.3; c.solid(-0.33, 0.33, -0.33, 0.33); } });
   var ROPE_COLORS = { red: 0xc94a3a, navy: 0x2a3a6a, black: 0x1a1a1c, gold: 0xc9a44a, green: 0x2e7d4f }, ROPE_POSTS = { chrome: [0xd8dde2, 0.25, 0.95], brass: [0xb8913a, 0.35, 0.85], black: [0x1a1a1c, 0.4, 0.6] }, ROPE_LENS = [1.2, 1.8, 2.4, 3.0];
   function ropeStyle(id) { if (!S.ropes) S.ropes = {}; var st = S.ropes[id] || {}; return { color: ROPE_COLORS[st.color] ? st.color : 'red', len: ROPE_LENS.indexOf(st.len) >= 0 ? st.len : 1.8, posts: ROPE_POSTS[st.posts] ? st.posts : 'chrome', kind: st.kind === 'belt' ? 'belt' : 'rope', open: !!st.open }; }
   function ropeBuild(c) {   // two posts and a velvet rope (or a retractable belt) clipped between them, along local x; unhooked, it hangs down the far post
@@ -296,7 +296,7 @@
   var ropeGates = {}, ropeSegList = [];   // per rope: how far unhooked it is (open 0..1, passable from 0.8) and who wants it
   function ropeGate(id) { return ropeGates[id] || (ropeGates[id] = { open: 0, clip: false, want: false, waitT: 0, idleT: 0, pivot: null, len: 1.8 }); }
   function ropeSegs() {   // every standing rope on the ground floor, as the line between its posts; x1 is the far post it hangs from, x2 the clip end
-    return unitIds('queueRope').filter(function (u) { var P = propPlacement(u); return propInst[u] && !P.hidden && !P.floor; }).map(function (u) { var P = propPlacement(u), hx = ropeStyle(u).len / 2, a = P.rot * Math.PI / 2, cx = Math.cos(a) * hx, cz = -Math.sin(a) * hx; return { id: u, x1: P.x - cx, z1: P.z - cz, x2: P.x + cx, z2: P.z + cz }; });
+    return unitIds('queueRope').filter(function (u) { var P = growPropPlacement(u); return propInst[u] && !P.hidden && !P.floor; }).map(function (u) { var P = growPropPlacement(u), hx = ropeStyle(u).len / 2, a = P.rot * Math.PI / 2, cx = Math.cos(a) * hx, cz = -Math.sin(a) * hx; return { id: u, x1: P.x - cx, z1: P.z - cz, x2: P.x + cx, z2: P.z + cz }; });
   }
   function segCross(ax, az, bx, bz, cx, cz, dx, dz) { function o(px, pz, qx, qz, rx, rz) { return (qx - px) * (rz - pz) - (qz - pz) * (rx - px); } return ((o(cx, cz, dx, dz, ax, az) > 0) !== (o(cx, cz, dx, dz, bx, bz) > 0)) && ((o(ax, az, bx, bz, cx, cz) > 0) !== (o(ax, az, bx, bz, dx, dz) > 0)); }
   function segDist(px, pz, s) { var vx = s.x2 - s.x1, vz = s.z2 - s.z1, L = vx * vx + vz * vz, t = L ? clamp(((px - s.x1) * vx + (pz - s.z1) * vz) / L, 0, 1) : 0; return Math.hypot(px - (s.x1 + vx * t), pz - (s.z1 + vz * t)); }
@@ -335,7 +335,7 @@
     var j = guard.rope;
     if (j.phase === 'go') { if (guard.walking) return false; j.phase = 'reach'; j.t = 0; }
     j.t += dt; var face = Math.atan2(s.x2 - guard.h.position.x, s.z2 - guard.h.position.z), diff = face - guard.h.rotation.y; while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2; guard.h.rotation.y += diff * Math.min(1, dt * 8);
-    animateHuman(guard.h, dt, 'idle', 0, null); P.rArm.rotation.x = lerp(P.rArm.rotation.x, -1.15, 0.2);
+    animatePerson(guard.h, dt, 'idle', 0, null); P.rArm.rotation.x = lerp(P.rArm.rotation.x, -1.15, 0.2);
     if (j.phase === 'reach' && j.t > 0.45) { j.phase = 'hold'; G.clip = true; G.idleT = 0; if (Math.random() < 0.35) guard.say(pick(['In you go.', 'Go on through.', 'Mind the rope.', 'After you.']), '#e8f1ea', 1500); }
     if (j.phase === 'hold' && !G.clip) j.phase = 'rehook';
     if (j.phase === 'rehook' && G.open <= 0.02) { guard.rope = null; P.rArm.rotation.x = 0; if (!j.walked) guard.h.rotation.y = j.rot0; return false; }
@@ -350,39 +350,39 @@
     return [{ x: p.x, z: Math.min(p.z, 6.6) }, { x: EXIT_X, z: 6.6 }, { x: EXIT_X, z: 8.45 }].concat(door);   // anywhere else in the lobby: out onto the walkway first
   }
   function ropeMenu(id) {
-    var st = ropeStyle(id), P = propPlacement(id), lines = [];
+    var st = ropeStyle(id), P = growPropPlacement(id), lines = [];
     function cyc(list, v) { return list[(list.indexOf(v) + 1) % list.length]; }
-    function set(k, v) { return function () { st[k] = v; S.ropes[id] = st; buildProp(id); world.dirty = true; save(); ropeMenu(id); }; }
+    function set(k, v) { return function () { st[k] = v; S.ropes[id] = st; growBuildProp(id); world.dirty = true; save(); ropeMenu(id); }; }
     lines.push({ label: st.open ? '🔓 <b>Unhooked</b>: people walk straight through <small>click to hook it, and the guard lets people through</small>' : '🔒 <b>Hooked</b>: the guard unhooks it for people <small>click to leave it unhooked; it stays unhooked while he is sent home</small>', act: set('open', !st.open) });
     lines.push({ label: '🎨 Colour: <b>' + st.color + '</b> <small>click for ' + cyc(Object.keys(ROPE_COLORS), st.color) + '</small>', act: set('color', cyc(Object.keys(ROPE_COLORS), st.color)) });
     lines.push({ label: '📏 Length: <b>' + st.len + ' m</b> <small>click for ' + cyc(ROPE_LENS, st.len) + ' m</small>', act: set('len', cyc(ROPE_LENS, st.len)) });
     lines.push({ label: '🪢 Style: <b>' + (st.kind === 'belt' ? 'retractable belt' : 'velvet rope') + '</b> <small>click for ' + (st.kind === 'belt' ? 'velvet rope' : 'retractable belt') + '</small>', act: set('kind', st.kind === 'belt' ? 'rope' : 'belt') });
     lines.push({ label: '✨ Posts: <b>' + st.posts + '</b> <small>click for ' + cyc(Object.keys(ROPE_POSTS), st.posts) + '</small>', act: set('posts', cyc(Object.keys(ROPE_POSTS), st.posts)) });
-    lines.push({ label: '↻ Turn it a quarter <small>F2 and R do the same</small>', act: function () { if (!S.layout) S.layout = {}; S.layout[id] = Object.assign({}, S.layout[id] || {}, { x: P.x, z: P.z, rot: (P.rot + 1) % 4 }); buildProp(id); world.dirty = true; save(); ropeMenu(id); } });
-    lines.push({ label: '✋ Move it <small>opens edit mode: look at it and press E to pick it up</small>', act: function () { if (!edit.on) editToggle(); } });
-    lines.push({ label: '➕ Put up another beside it <small>' + (unitIds('queueRope').some(function (u) { return propPlacement(u).hidden; }) ? 'free: one you took down' : unitCount('queueRope') >= PROPS.queueRope.multi.max ? 'you have the most there is room for' : money(machCost('queueRope', unitCount('queueRope') + 1))) + '</small>', act: function () { ropeAdd(id); } });
-    lines.push({ label: '🗑️ Take it down <small>it goes in the back; put it up again from another rope line or the office PC</small>', act: function () { if (!S.layout) S.layout = {}; S.layout[id] = Object.assign({}, S.layout[id] || {}, { x: P.x, z: P.z, rot: P.rot, hidden: true }); buildProp(id); world.dirty = true; save(); toast('🪢 Rope line taken down', ''); } });
+    lines.push({ label: '↻ Turn it a quarter <small>F2 and R do the same</small>', act: function () { if (!S.layout) S.layout = {}; S.layout[id] = Object.assign({}, S.layout[id] || {}, { x: P.x, z: P.z, rot: (P.rot + 1) % 4 }); growBuildProp(id); world.dirty = true; save(); ropeMenu(id); } });
+    lines.push({ label: '✋ Move it <small>opens edit mode: look at it and press E to pick it up</small>', act: function () { if (!edit.on) growEditToggle(); } });
+    lines.push({ label: '➕ Put up another beside it <small>' + (unitIds('queueRope').some(function (u) { return growPropPlacement(u).hidden; }) ? 'free: one you took down' : unitCount('queueRope') >= PROPS.queueRope.multi.max ? 'you have the most there is room for' : money(machCost('queueRope', unitCount('queueRope') + 1))) + '</small>', act: function () { ropeAdd(id); } });
+    lines.push({ label: '🗑️ Take it down <small>it goes in the back; put it up again from another rope line or the office PC</small>', act: function () { if (!S.layout) S.layout = {}; S.layout[id] = Object.assign({}, S.layout[id] || {}, { x: P.x, z: P.z, rot: P.rot, hidden: true }); growBuildProp(id); world.dirty = true; save(); toast('🪢 Rope line taken down', ''); } });
     ctxOpen('🪢 Rope line', 'change how it looks, move it, add to it or take it down', lines);
   }
   function ropeAdd(id) {   // the next one lands a step in front of this one, same style and angle: line them up with F2
-    var P = propPlacement(id), fr = [[0, 1], [1, 0], [0, -1], [-1, 0]][((P.rot % 4) + 4) % 4];
-    var nid = unitIds('queueRope').filter(function (u) { return propPlacement(u).hidden; })[0];
+    var P = growPropPlacement(id), fr = [[0, 1], [1, 0], [0, -1], [-1, 0]][((P.rot % 4) + 4) % 4];
+    var nid = unitIds('queueRope').filter(function (u) { return growPropPlacement(u).hidden; })[0];
     if (!nid) { var have = unitCount('queueRope'); buyUnit('queueRope'); if (unitCount('queueRope') === have) return; nid = 'queueRope#' + unitCount('queueRope'); }
     var sty = ropeStyle(id); if (!S.layout) S.layout = {}; S.layout[nid] = { x: P.x + fr[0] * 0.9, z: P.z + fr[1] * 0.9, rot: P.rot }; S.ropes[nid] = sty;
-    buildProp(nid); world.dirty = true; save(); toast('🪢 Another rope line is up. F2 lines it up.', 'good');
+    growBuildProp(nid); world.dirty = true; save(); toast('🪢 Another rope line is up. F2 lines it up.', 'good');
   }
   function ropeUp() {   /* from the office PC: the last one taken down goes back where it stood */
-    var nid = unitIds('queueRope').filter(function (u) { return propPlacement(u).hidden; }).pop(); if (!nid) return;
-    S.layout[nid] = Object.assign({}, S.layout[nid], { hidden: false }); buildProp(nid); world.dirty = true; save(); toast('🪢 Rope line back up where it stood', 'good');
+    var nid = unitIds('queueRope').filter(function (u) { return growPropPlacement(u).hidden; }).pop(); if (!nid) return;
+    S.layout[nid] = Object.assign({}, S.layout[nid], { hidden: false }); growBuildProp(nid); world.dirty = true; save(); toast('🪢 Rope line back up where it stood', 'good');
   }
-  defProp('queueRope', { label: 'rope line', x: 0.35, z: 7.45, rot: 0, multi: { max: 8, price: 40, gap: 2.2, ico: '🪢', name: 'Rope line' }, build: ropeBuild });   // across the way in, between the ID check and the queue: the guard at his post unhooks it for whoever he lets through
-  defProp('lobbyPlant', { label: 'lobby plant', x: -10.5, z: 5.0, build: function (c) {
+  growDefProp('queueRope', { label: 'rope line', x: 0.35, z: 7.45, rot: 0, multi: { max: 8, price: 40, gap: 2.2, ico: '🪢', name: 'Rope line' }, build: ropeBuild });   // across the way in, between the ID check and the queue: the guard at his post unhooks it for whoever he lets through
+  growDefProp('lobbyPlant', { label: 'lobby plant', x: -10.5, z: 5.0, build: function (c) {
     // a rubber plant in a tall charcoal planter: a woody stem, glossy leaves climbing it in a spiral
     c.cyl(0.26, 0.2, 0.5, colorMat(0x2a2d33, 0.35, 0.1), 0, 0.26, 0, 32); c.cyl(0.275, 0.262, 0.04, colorMat(0x1f2226, 0.35, 0.1), 0, 0.5, 0, 32); c.cyl(0.21, 0.21, 0.025, MAT.soft, 0, 0.0125, 0, 28); c.cyl(0.24, 0.24, 0.02, MAT.soil, 0, 0.51, 0, 24);
     c.cyl(0.014, 0.024, 1.1, MAT.bark, 0, 1.05, 0, 10); c.cyl(0.01, 0.014, 0.5, MAT.bark, 0.05, 1.5, 0.02, 8).rotation.z = -0.22; c.cyl(0.01, 0.014, 0.45, MAT.bark, -0.05, 1.35, -0.03, 8).rotation.z = 0.3;
     for (var i = 0; i < 18; i++) { var a = i * 2.399, y = 0.75 + i * 0.058; leafAt(BIGLEAF_GEO, MAT.bigleaf, Math.cos(a) * 0.03, y, Math.sin(a) * 0.03, Math.PI / 2 - a, 0.7 + (i % 4) * 0.12 - i * 0.02, 0.85 + (i % 3) * 0.12, c.group); }
     c.solid(-0.3, 0.3, -0.3, 0.3); } });
-  defProp('lobbyCoffee', { label: 'lobby coffee machine', x: ROOM.x - 0.4, z: 8.1, rot: 3, multi: { max: 4, price: 600, gap: 0.95, ico: '☕', lic: 'catering', upg: 'lobby', name: 'Coffee machine' }, build: function (c) {
+  growDefProp('lobbyCoffee', { label: 'lobby coffee machine', x: ROOM.x - 0.4, z: 8.1, rot: 3, multi: { max: 4, price: 600, gap: 0.95, ico: '☕', lic: 'catering', upg: 'lobby', name: 'Coffee machine' }, build: function (c) {
     if (!S.upgrades.lobby) return;   // stand + machine appear with the upgrade
     c.box(0.6, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(0.66, 0.04, 0.56, MAT.counterTop, 0, 0.92, 0, { cast: false });
     // a bean-to-cup machine: the upper half overhangs a brew bay, the cup stands on a grille under two nozzles, a lit screen and
@@ -396,7 +396,7 @@
     c.box(0.34, 0.034, 0.17, body, 0, 0.957, 0.075, { r: 0.008 }); for (var gs = 0; gs < 7; gs++) c.box(0.27, 0.004, 0.012, chrome, 0, 0.976, 0.015 + gs * 0.02, { cast: false, sharp: true });   /* the drip tray and its grille */
     c.box(0.33, 0.24, 0.008, fascia, 0, 1.265, 0.151, { cast: false, r: 0.006 }); c.box(0.36, 0.012, 0.006, chrome, 0, 1.135, 0.152, { cast: false });
     c.box(0.215, 0.13, 0.008, MAT.gloss, -0.04, 1.29, 0.157, { cast: false, r: 0.006 });
-    var cscr = new THREE.Mesh(new THREE.PlaneGeometry(0.195, 0.11), new THREE.MeshBasicMaterial({ map: textTex(['COFFEE', 'espresso · latte · tea'], 312, 176, { size: 44, bg: '#0a1410', color: '#9fd8b4', titleColor: '#f0b94d', line: 'rgba(0,0,0,0)' }), toneMapped: false })); cscr.position.set(-0.04, 1.29, 0.1615); c.add(cscr);
+    var cscr = new THREE.Mesh(new THREE.PlaneGeometry(0.195, 0.11), new THREE.MeshBasicMaterial({ map: signTex(['COFFEE', 'espresso · latte · tea'], 312, 176, { size: 44, bg: '#0a1410', color: '#9fd8b4', titleColor: '#f0b94d', line: 'rgba(0,0,0,0)' }), toneMapped: false })); cscr.position.set(-0.04, 1.29, 0.1615); c.add(cscr);
     [[1.335, 0x6fdc8c], [1.29, 0xf0b94d], [1.245, 0xe8eef4]].forEach(function (k) { var bt = c.cyl(0.015, 0.015, 0.012, colorMat(k[1], 0.3), 0.125, k[0], 0.157, 14); bt.rotation.x = Math.PI / 2; });
     c.lit(0x6fdc8c, 0.012, 0.012, 0.125, 1.2, 0.1565); c.box(0.12, 0.014, 0.004, chrome, -0.04, 1.2, 0.156, { cast: false });
     c.cyl(0.108, 0.112, 0.02, body, 0, 1.408, -0.04, 24);                                                                                                         /* the collar the hopper sits in */
@@ -414,7 +414,7 @@
     var cupHit = c.hit(0.24, 0.2, 0.22, 0, 1.02, 0.12, { kind: 'coffeeCup' }); cupHit.userData.coffCupHit = true;   /* parked out of the world while there is no cup, so it never steals the machine's own prompt */
     c.sign(['COFFEE', 'help yourself · $2 a cup'], 0.5, 0.16, 0, 1.8, -0.244, 0, { titleColor: '#ffc857' });
   }, after: function (c, P, inst, id) { syncCoffee(id); } });
-  defProp('vending', { label: 'vending machine', x: ROOM.x - 0.5, z: 6.8, rot: 3, multi: { max: 4, price: 900, gap: 1.15, ico: '🥤', lic: 'catering' }, build: function (c, P) {
+  growDefProp('vending', { label: 'vending machine', x: ROOM.x - 0.5, z: 6.8, rot: 3, multi: { max: 4, price: 900, gap: 1.15, ico: '🥤', lic: 'catering' }, build: function (c, P) {
     var SKIN = [[0x8f1f1a, '#ffc857'], [0x14507a, '#8fd0ff'], [0x1d6b45, '#b6f2c9'], [0x2b2f36, '#e8eef4']];   /* a row of identical red machines would read as a copy-paste, so every unit gets its own livery */
     var sk = SKIN[(((P && P.unit) || 1) - 1) % SKIN.length];
     var shell = colorMat(sk[0], 0.45, 0.25), dark = colorMat(0x1a1d21, 0.6), steel = colorMat(0x9aa0a6, 0.35, 0.7), inner = colorMat(0x23272c, 0.8);
@@ -464,7 +464,7 @@
 
     // the panel
     c.box(0.2, 0.14, 0.02, MAT.screen, 0.315, 1.6, 0.362, { cast: false });
-    var disp = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.12), new THREE.MeshBasicMaterial({ map: textTex(['READY'], 200, 130, { size: 48, bg: '#08120c', color: '#6fdc8c', titleColor: '#6fdc8c', line: 'rgba(0,0,0,0)' }), transparent: true }));
+    var disp = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.12), new THREE.MeshBasicMaterial({ map: signTex(['READY'], 200, 130, { size: 48, bg: '#08120c', color: '#6fdc8c', titleColor: '#6fdc8c', line: 'rgba(0,0,0,0)' }), transparent: true }));
     disp.position.set(0.315, 1.6, 0.3735); disp.castShadow = false; c.add(disp); disp.userData.vendDisp = true;
     for (var bq = 0; bq < 6; bq++) {
       var bx2 = 0.265 + (bq % 2) * 0.1, by2 = 1.4 - Math.floor(bq / 2) * 0.12;
@@ -475,7 +475,7 @@
     c.hit(0.95, 1.95, 0.75, 0, 0.97, 0, { kind: 'vending' });
     c.light(new THREE.PointLight(0xbfe8ff, 0.5, 2.6), -0.13, 1.5, 0.2);
   }, after: function (c, P, inst, id) { syncVending(id); } });
-  defProp('menuScreen', { label: 'menu screen', x: 4.0, z: 4 + WALL_T / 2 + 0.05, rot: 0, build: function (c) {
+  growDefProp('menuScreen', { label: 'menu screen', x: 4.0, z: 4 + WALL_T / 2 + 0.05, rot: 0, build: function (c) {
     // the menu board over the lobby: a lit panel in the same housing as every other screen in the shop
     var mg = new THREE.Group(); mg.position.set(0, 2.05, 0.03); c.add(mg); screenShell(mg, 1.3, 0.72, { bezel: 0.03, depth: 0.04 });
     var cv = document.createElement('canvas'); cv.width = 1040; cv.height = 576; var x2 = cv.getContext('2d'); scrBg(x2, 1040, 576, DESK_OK);
@@ -485,7 +485,7 @@
     var scr = litPlane(cv, 1.3, 0.72); scr.position.z = 0.0005; mg.add(scr); var gl = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.72), MAT.screenGlass); gl.position.z = 0.0016; mg.add(gl); c.light(new THREE.PointLight(0x6fdc8c, 0.25, 3), 0, 2.0, 0.4);
   } });
   // display shelf for packed goods in the processing room: one cell per strain, bags left and joints right
-  defProp('goodsShelf', { label: 'goods shelf', x: 6.5, z: 3.55, rot: 2, build: function (c) {
+  growDefProp('goodsShelf', { label: 'goods shelf', x: 6.5, z: 3.55, rot: 2, build: function (c) {
     var wood = MAT.darkwood, w = goodsWidth(), d = 0.42, cols = goodsCols();
     c.box(w, 0.05, d, wood, 0, 0.16, 0, { solid: true }); [0.74, 1.3, 1.86].forEach(function (y) { c.box(w, 0.035, d, wood, 0, y, 0); });
     c.box(w, 2.0, 0.03, colorMat(0x2b2119, 0.9), 0, 1.0, -d / 2 + 0.015, { cast: false });   // back panel
@@ -505,7 +505,7 @@
     function spot(col, inten, dist, x, y, z) { var l = new THREE.PointLight(col, inten, dist); l.position.set(x, y, z); return l; }
   }, after: function () { syncGoods(); } });   // refill after any rebuild: boot order, layout edits, resets
   // storage racking in the back annex: deliveries stack here by item until you carry a crate to where it goes
-  defProp('stockCabinet', { label: 'stock cabinet', x: 7.55, z: -11.9, rot: 3, build: function (c) {
+  growDefProp('stockCabinet', { label: 'stock cabinet', x: 7.55, z: -11.9, rot: 3, build: function (c) {
     // a steel security cabinet: two doors with pressed panels and louvres, bar handles, three hinges a side, a keypad lock, a plinth
     var steel = colorMat(0x505761, 0.42, 0.65), doorM = colorMat(0x5b626c, 0.38, 0.65), dark = colorMat(0x2a2d33, 0.5, 0.5);
     c.box(1.2, 1.94, 0.55, steel, 0, 1.03, 0, { solid: true }); c.box(1.24, 0.04, 0.59, dark, 0, 2.02, 0); c.box(1.16, 0.06, 0.51, dark, 0, 0.03, 0);
@@ -516,7 +516,7 @@
     c.hit(1.3, 2.0, 0.8, 0, 1.0, 0.1, { kind: 'stock' });
   } });
   // pallet racking: blue frames, orange beams, wire decks, four levels of six bays, a label plate on the beam under every bay
-  defProp('storeRack', { label: 'storage racking', x: 0.5, z: -10.85, rot: 1, build: function (c) {
+  growDefProp('storeRack', { label: 'storage racking', x: 0.5, z: -10.85, rot: 1, build: function (c) {
     var frameM = colorMat(0x2a5aa8, 0.45, 0.5), beamM = colorMat(0xe07a1f, 0.45, 0.4), deckM = colorMat(0x9aa0a6, 0.4, 0.8);
     [-1.5, 0, 1.5].forEach(function (x) { [-0.26, 0.26].forEach(function (z) { c.box(0.06, 2.3, 0.06, frameM, x, 1.15, z); }); for (var b = 0; b < 5; b++) c.box(0.03, 0.03, 0.5, frameM, x, 0.25 + b * 0.45, 0); });   /* uprights with their cross braces */
     RACK.y.forEach(function (y) { [-0.27, 0.27].forEach(function (z) { c.box(3.06, 0.07, 0.04, beamM, 0, y - 0.035, z); }); c.box(2.96, 0.015, 0.5, deckM, 0, y + 0.005, 0); });
@@ -524,7 +524,7 @@
     c.sign(['STORAGE', 'deliveries land here · E takes a crate · E with a crate racks it'], 1.9, 0.32, 0, 2.5, 0.02, 0, { titleColor: '#ffc857' }); c.dynGroup();
   }, after: function () { syncStorage(); } });
   // office vault: cash you carry in goes in here; the bank courier collects from your pocket
-  defProp('bagLine', { label: 'trim & bag line', x: 4.5, z: 2.9, rot: 1, build: function (c) {
+  growDefProp('bagLine', { label: 'trim & bag line', x: 4.5, z: 2.9, rot: 1, build: function (c) {
     // a bench-top line: a hopper over a trimming drum, a short belt on rollers, a control box with a stop button, a chute into the bag holder
     var st = MAT.steel, dk = MAT.gunmetal, belt = colorMat(0x16181b, 0.85);
     c.box(1.2, 0.06, 0.6, st, 0, 0.87, 0, { solid: true }); c.box(1.14, 0.5, 0.54, dk, 0, 0.6, 0, { cast: false }); [[-0.55, -0.25], [0.55, -0.25], [-0.55, 0.25], [0.55, 0.25]].forEach(function (l) { c.box(0.05, 0.84, 0.05, st, l[0], 0.42, l[1]); c.cyl(0.035, 0.04, 0.02, MAT.soft, l[0], 0.01, l[1], 12); }); c.box(1.1, 0.03, 0.5, st, 0, 0.2, 0, { cast: false });
@@ -535,14 +535,14 @@
     var ch = c.box(0.2, 0.012, 0.3, st, 0.66, 0.84, 0, { sharp: true }); ch.rotation.z = -0.55; c.box(0.2, 0.25, 0.04, MAT.white, 0.72, 0.62, 0.1, { cast: false });
     c.sign(['TRIM & BAG'], 0.6, 0.12, 0, 0.6, 0.272, 0, { size: 26, titleColor: '#6fdc8c', bg: '#101410' }); c.hit(1.3, 1.8, 0.8, 0, 0.9, 0.05, { kind: 'bagLine' });
   } });
-  defProp('vipTable', { label: 'lounge table + armchairs', floor: 1, x: 7.4, z: -1.6, rot: 0, build: function (c) {
+  growDefProp('vipTable', { label: 'lounge table + armchairs', floor: 1, x: 7.4, z: -1.6, rot: 0, build: function (c) {
     var velvet = colorMat(0x5a1f3a, 0.95), brass = colorMat(0xc9a24a, 0.35, 0.8);
     c.cyl(0.45, 0.45, 0.05, MAT.darkwood, 0, 0.62, 0, 20); c.cyl(0.05, 0.05, 0.6, brass, 0, 0.3, 0, 10); c.cyl(0.28, 0.3, 0.04, brass, 0, 0.02, 0, 16); c.cyl(0.07, 0.05, 0.03, MAT.jar, 0.1, 0.66, 0.05, 12); c.cyl(0.015, 0.015, 0.2, colorMat(0xfff3c8, 0.4), -0.12, 0.75, -0.08, 8);
     [-0.95, 0.95].forEach(function (x) { c.box(0.7, 0.35, 0.7, velvet, x, 0.28, 0); c.box(0.14, 0.75, 0.7, velvet, x + (x > 0 ? 0.3 : -0.3), 0.6, 0); c.box(0.7, 0.3, 0.12, velvet, x, 0.58, -0.32); c.box(0.7, 0.3, 0.12, velvet, x, 0.58, 0.32); [[-0.3, -0.3], [0.3, -0.3], [-0.3, 0.3], [0.3, 0.3]].forEach(function (l) { c.box(0.05, 0.12, 0.05, brass, x + l[0], 0.06, l[1]); }); });
     c.solid(-1.3, 1.3, -0.4, 0.4);
   } });
   // the way down to the RF Smoking works, and the shuttered cabinet the packs are sold from
-  defProp('cellarHatch', { label: 'basement hatch', x: 3.3, z: -0.4, rot: 3, build: function (c) {
+  growDefProp('cellarHatch', { label: 'basement hatch', x: 3.3, z: -0.4, rot: 3, build: function (c) {
     var st = colorMat(0x8d949c, 0.35, 0.8), dk = colorMat(0x2b2f35, 0.5, 0.6);
     c.box(1.3, 0.04, 1.3, dk, 0, 0.02, 0, { cast: false }); c.box(1.1, 0.012, 1.1, MAT.black, 0, 0.042, 0, { cast: false });
     var lid = c.box(1.2, 0.05, 1.2, st, 0, 0.64, -0.6); lid.rotation.x = -Math.PI / 2 + 0.06;   // the lid stands open flat against the wall, the ladder comes up in front of it
@@ -550,7 +550,7 @@
     c.sign(['RF SMOKING ↓', 'basement works'], 0.9, 0.26, 0, 1.45, -0.6, 0, { size: 26, bg: '#14100c', titleColor: '#e8c27a', color: '#b9a88a', line: 'rgba(232,194,122,.5)' }); c.box(0.04, 1.5, 0.04, dk, 0, 0.75, -0.63);
     c.solid(-0.65, 0.65, -0.8, -0.55); c.hit(1.3, 1.5, 1.3, 0, 0.75, 0, { kind: 'cellarDown' });
   } });
-  defProp('cigCabinet', { label: 'cigarette cabinet', x: 2.5, z: 3.68, rot: 2, build: function (c) {
+  growDefProp('cigCabinet', { label: 'cigarette cabinet', x: 2.5, z: 3.68, rot: 2, build: function (c) {
     var m = colorMat(0x2b2f35, 0.5, 0.5), inner = colorMat(0xe9e4d8, 0.8), st = colorMat(0xa7adb4, 0.35, 0.8), dk = colorMat(0x5b6168, 0.4, 0.7);
     c.box(1.2, 2.0, 0.05, m, 0, 1.0, -0.175); c.box(0.05, 2.0, 0.4, m, -0.6, 1.0, 0); c.box(0.05, 2.0, 0.4, m, 0.6, 1.0, 0); c.box(1.2, 0.06, 0.4, m, 0, 1.97, 0); c.box(1.2, 0.42, 0.4, m, 0, 0.21, 0); c.box(1.1, 1.5, 0.01, inner, 0, 1.17, -0.145, { cast: false });
     [0.57, 0.92, 1.27, 1.62].forEach(function (y) { c.box(1.1, 0.025, 0.3, m, 0, y - 0.013, 0, { cast: false }); }); c.box(1.2, 0.14, 0.1, m, 0, 1.9, 0.22); c.box(0.03, 1.5, 0.03, st, -0.565, 1.15, 0.2, { cast: false }); c.box(0.03, 1.5, 0.03, st, 0.565, 1.15, 0.2, { cast: false });
@@ -559,7 +559,7 @@
     c.solid(-0.6, 0.6, -0.2, 0.2); c.hit(1.25, 2.0, 0.5, 0, 1.0, 0.03, { kind: 'cigCab' });
   }, after: function () { syncCigCab(); } });
   // steel weapon locker on the staff side of the counter: buy, take and restock what you fight back with
-  defProp('gunLocker', { label: 'weapon locker', x: -2.6, z: 3.68, rot: 2, build: function (c) {
+  growDefProp('gunLocker', { label: 'weapon locker', x: -2.6, z: 3.68, rot: 2, build: function (c) {
     // a gun cabinet: heavy gauge steel, two doors with louvres and recessed pulls, a hasp and padlock, hazard tape along the plinth
     var m = colorMat(0x3b4048, 0.42, 0.75), m2 = colorMat(0x454b54, 0.38, 0.75);
     c.box(0.8, 1.44, 0.36, m, 0, 0.78, 0, { solid: true }); c.box(0.78, 0.06, 0.34, MAT.soft, 0, 0.03, 0, { cast: false }); c.box(0.84, 0.03, 0.4, m, 0, 1.515, 0);
@@ -569,7 +569,7 @@
     c.sign(['WEAPONS', 'staff only'], 0.5, 0.16, 0, 1.62, -0.17, 0, { size: 26, titleColor: '#ff6b6b', bg: '#101410' });
     c.hit(0.85, 1.5, 0.46, 0, 0.75, 0, { kind: 'locker' });
   } });
-  defProp('vault', { label: 'vault', x: -ROOM.x + 0.45, z: 2.4, rot: 1, build: function (c) {
+  growDefProp('vault', { label: 'vault', x: -ROOM.x + 0.45, z: 2.4, rot: 1, build: function (c) {
     // a safe worth the name: a body on four feet, a door proud of its frame on two barrel hinges, a five-spoke wheel, a combination dial, a brass plate
     var m = colorMat(0x2a2d33, 0.42, 0.7), m2 = colorMat(0x353940, 0.36, 0.75);
     c.box(0.7, 0.9, 0.7, m, 0, 0.5, 0, { solid: true, r: 0.02 }); [[-0.28, -0.28], [0.28, -0.28], [-0.28, 0.28], [0.28, 0.28]].forEach(function (f) { c.cyl(0.04, 0.045, 0.05, MAT.soft, f[0], 0.025, f[1], 14); });
@@ -583,14 +583,14 @@
     c.hit(0.8, 1.0, 0.8, 0, 0.5, 0, { kind: 'vault' });
   } });
   // coin-op arcade cabinet in the lobby: customers drop a dollar in, you empty the coin box
-  defProp('arcade', { label: 'arcade cabinet', x: -ROOM.x + 0.45, z: 6.4, rot: 1, multi: { max: 4, price: 750, gap: 1.0, ico: '🕹️', lic: 'amusement' }, build: function (c) {
+  growDefProp('arcade', { label: 'arcade cabinet', x: -ROOM.x + 0.45, z: 6.4, rot: 1, multi: { max: 4, price: 750, gap: 1.0, ico: '🕹️', lic: 'amusement' }, build: function (c) {
     // an upright cabinet with the proper silhouette: two side panels cut to the classic profile, a lit marquee, a screen leaning
     // back behind its bezel, a sloped control deck with a stick and six buttons, a coin door with two slots
     var body = colorMat(0x15171b, 0.45, 0.1), trim = colorMat(0x6fdc8c, 0.4, 0, { emissive: new THREE.Color(0x2f8a4a), emissiveIntensity: 0.6 });
     var sh = new THREE.Shape(); [[-0.35, 0], [0.35, 0], [0.35, 0.92], [0.5, 1.0], [0.5, 1.12], [0.3, 1.18], [0.24, 1.6], [0.4, 1.66], [0.4, 1.86], [-0.35, 1.86]].forEach(function (p, i) { if (i) sh.lineTo(p[0], p[1]); else sh.moveTo(p[0], p[1]); }); sh.closePath();
     [-0.34, 0.34].forEach(function (x) { var side = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.004, bevelSegments: 1 }), body); side.rotation.y = -Math.PI / 2; side.position.set(x + 0.015, 0, 0); side.castShadow = true; c.add(side); var edge = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.006, bevelEnabled: false }), trim); edge.rotation.y = -Math.PI / 2; edge.scale.set(1.012, 1.006, 1); edge.position.set(x + (x < 0 ? -0.013 : 0.019), -0.004, 0.004); c.add(edge); });
     c.box(0.65, 1.84, 0.04, body, 0, 0.93, -0.33); c.box(0.65, 0.92, 0.04, body, 0, 0.46, 0.33); c.box(0.65, 0.04, 0.72, body, 0, 1.85, 0.02); c.box(0.65, 0.06, 0.66, MAT.soft, 0, 0.03, 0, { cast: false }); c.solid(-0.37, 0.37, -0.36, 0.5);
-    c.lit(0xe8fff0, 0.62, 0.18, 0, 1.76, 0.402); var marquee = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.17), new THREE.MeshBasicMaterial({ map: textTex(['GROW RUSH'], 300, 85, { size: 46, bold: true, bg: '#0d2a18', titleColor: '#6fdc8c', line: 'rgba(111,220,140,.8)' }), toneMapped: false })); marquee.position.set(0, 1.76, 0.404); c.add(marquee);
+    c.lit(0xe8fff0, 0.62, 0.18, 0, 1.76, 0.402); var marquee = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.17), new THREE.MeshBasicMaterial({ map: signTex(['GROW RUSH'], 300, 85, { size: 46, bold: true, bg: '#0d2a18', titleColor: '#6fdc8c', line: 'rgba(111,220,140,.8)' }), toneMapped: false })); marquee.position.set(0, 1.76, 0.404); c.add(marquee);
     var sg = new THREE.Group(); sg.position.set(0, 1.39, 0.255); sg.rotation.x = -0.14; c.add(sg); screenShell(sg, 0.52, 0.39, { bezel: 0.04, depth: 0.03, rimMat: body, led: 0 });
     var gv = document.createElement('canvas'); gv.width = 416; gv.height = 312; var gx = gv.getContext('2d'); gx.fillStyle = '#06130c'; gx.fillRect(0, 0, 416, 312); gx.fillStyle = '#0d2a18'; for (var gy = 0; gy < 312; gy += 26) gx.fillRect(0, gy, 416, 1); gx.fillStyle = '#6fdc8c'; gx.font = '700 40px ' + SCR_MONO; gx.textAlign = 'center'; gx.fillText('GROW RUSH', 208, 64); gx.font = '20px ' + SCR_MONO; gx.fillStyle = '#f0b94d'; gx.fillText('HI 042000', 208, 96);
     [[60, 230, '#6fdc8c'], [130, 200, '#6fdc8c'], [200, 240, '#f0b94d'], [270, 190, '#6fdc8c'], [340, 225, '#ff6b5e']].forEach(function (p) { gx.fillStyle = '#5a3a22'; gx.fillRect(p[0] - 14, p[1] + 24, 28, 22); gx.fillStyle = p[2]; for (var lf = 0; lf < 5; lf++) gx.fillRect(p[0] - 3 + (lf - 2) * 9, p[1] - Math.abs(lf - 2) * -8, 6, 26); });
@@ -603,7 +603,7 @@
     c.light(new THREE.PointLight(0x6fdc8c, 0.4, 3), 0, 1.4, 0.7);
     c.hit(0.8, 2.0, 0.9, 0, 1.0, 0.1, { kind: 'arcade' });
   } });
-  defProp('procShelf', { label: 'storage shelf', x: 8.5, z: -1.55, rot: 0, build: function (c) {
+  growDefProp('procShelf', { label: 'storage shelf', x: 8.5, z: -1.55, rot: 0, build: function (c) {
     var shelfM = colorMat(0x8a8f96, 0.35, 0.8); for (var s = 0; s < 4; s++) c.box(1.6, 0.03, 0.45, shelfM, 0, 0.3 + s * 0.5, 0);
     [[-0.78, -0.2], [0.78, -0.2], [-0.78, 0.2], [0.78, 0.2]].forEach(function (p) { c.box(0.035, 1.9, 0.035, shelfM, p[0], 0.95, p[1]); });
     c.box(0.5, 0.3, 0.35, colorMat(0xc8a97a, 1), -0.45, 0.47, 0); c.box(0.4, 0.25, 0.3, colorMat(0xe8e8ee, 0.7), 0.35, 0.44, 0); c.sign(['BAGGIES'], 0.3, 0.08, 0.35, 0.44, 0.152, 0, { size: 26, bg: '#f3e9cf', color: '#222', titleColor: '#222', line: 'rgba(0,0,0,.3)' });
@@ -611,16 +611,16 @@
     c.box(0.6, 0.2, 0.3, colorMat(0x3a5a3a, 0.9), -0.4, 1.42, 0); c.box(0.3, 0.14, 0.2, colorMat(0xf5e6c8, 0.8), 0.3, 1.39, 0); c.box(0.5, 0.08, 0.3, MAT.white, 0.4, 1.86, 0); c.cyl(0.09, 0.09, 0.2, colorMat(0x2b6fb3, 0.4), -0.5, 1.92, 0, 14);
     c.solid(-0.8, 0.8, -0.25, 0.25);
   } });
-  defProp('hallClockTable', { label: 'side table', x: -3.5, z: 1.6, rot: 1, build: function (c) { c.box(0.5, 0.04, 0.5, MAT.wood, 0, 0.7, 0, { solid: true }); legs4(c, 0.5, 0.5, 0.68, MAT.darkwood, 0.05, 0.04); c.box(0.44, 0.03, 0.44, MAT.wood, 0, 0.25, 0, { cast: false }); c.cyl(0.06, 0.05, 0.16, colorMat(0xf5f5f0, 0.5), -0.1, 0.8, 0, 14); for (var i = 0; i < 5; i++) { var fl = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), colorMat([0xff6b9d, 0xffd166, 0x9ad0ff, 0xff8c42, 0xf2f2f2][i], 0.8)); fl.position.set(-0.1 + Math.cos(i * 1.3) * 0.05, 0.95 + (i % 2) * 0.04, Math.sin(i * 1.3) * 0.05); c.add(fl); var st = c.cyl(0.004, 0.004, 0.14, MAT.stem, -0.1 + Math.cos(i * 1.3) * 0.03, 0.88, Math.sin(i * 1.3) * 0.03, 5); } c.box(0.14, 0.2, 0.03, MAT.darkwood, 0.14, 0.82, -0.05); c.box(0.11, 0.16, 0.005, new THREE.MeshBasicMaterial({ map: textTex(['📷', 'the crew'], 110, 160, { size: 30, bg: '#f0ead8', color: '#333', titleColor: '#333', line: 'rgba(0,0,0,0)' }) }), 0.14, 0.82, -0.032, { cast: false }); } });
-  defProp('floorLamp', { label: 'floor lamp', x: -1.2, z: -1.6, rot: 0, build: function (c) {
+  growDefProp('hallClockTable', { label: 'side table', x: -3.5, z: 1.6, rot: 1, build: function (c) { c.box(0.5, 0.04, 0.5, MAT.wood, 0, 0.7, 0, { solid: true }); legs4(c, 0.5, 0.5, 0.68, MAT.darkwood, 0.05, 0.04); c.box(0.44, 0.03, 0.44, MAT.wood, 0, 0.25, 0, { cast: false }); c.cyl(0.06, 0.05, 0.16, colorMat(0xf5f5f0, 0.5), -0.1, 0.8, 0, 14); for (var i = 0; i < 5; i++) { var fl = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), colorMat([0xff6b9d, 0xffd166, 0x9ad0ff, 0xff8c42, 0xf2f2f2][i], 0.8)); fl.position.set(-0.1 + Math.cos(i * 1.3) * 0.05, 0.95 + (i % 2) * 0.04, Math.sin(i * 1.3) * 0.05); c.add(fl); var st = c.cyl(0.004, 0.004, 0.14, MAT.stem, -0.1 + Math.cos(i * 1.3) * 0.03, 0.88, Math.sin(i * 1.3) * 0.03, 5); } c.box(0.14, 0.2, 0.03, MAT.darkwood, 0.14, 0.82, -0.05); c.box(0.11, 0.16, 0.005, new THREE.MeshBasicMaterial({ map: signTex(['📷', 'the crew'], 110, 160, { size: 30, bg: '#f0ead8', color: '#333', titleColor: '#333', line: 'rgba(0,0,0,0)' }) }), 0.14, 0.82, -0.032, { cast: false }); } });
+  growDefProp('floorLamp', { label: 'floor lamp', x: -1.2, z: -1.6, rot: 0, build: function (c) {
     // a drum-shade floor lamp: a stone foot, a brass stem with a collar, a linen shade with a diffuser under it
     c.cyl(0.17, 0.18, 0.04, colorMat(0x2a2c2f, 0.3, 0.05), 0, 0.02, 0, 32); c.cyl(0.012, 0.012, 1.56, MAT.brass, 0, 0.82, 0, 12); c.cyl(0.024, 0.024, 0.05, MAT.brass, 0, 0.07, 0, 14); c.cyl(0.02, 0.02, 0.04, MAT.brass, 0, 1.5, 0, 14);
     var shM = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0xf3ead2, side: THREE.DoubleSide, emissive: 0xffe0a0, emissiveIntensity: 0.55, roughness: 0.95 }); var sh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.3, 32, 1, true), shM); sh.position.y = 1.7; c.add(sh);
-    [1.85, 1.55].forEach(function (y, i) { var rg = new THREE.Mesh(new THREE.TorusGeometry(i ? 0.22 : 0.2, 0.005, 6, 32), MAT.brass); rg.rotation.x = Math.PI / 2; rg.position.y = y; c.add(rg); }); c.cyl(0.19, 0.19, 0.006, new THREE.MeshBasicMaterial({ color: 0xfff1cf, toneMapped: false }), 0, 1.57, 0, 24); c.cyl(0.035, 0.035, 0.1, glowMat(0xffe9b0, 1.6), 0, 1.68, 0, 12);
+    [1.85, 1.55].forEach(function (y, i) { var rg = new THREE.Mesh(new THREE.TorusGeometry(i ? 0.22 : 0.2, 0.005, 6, 32), MAT.brass); rg.rotation.x = Math.PI / 2; rg.position.y = y; c.add(rg); }); c.cyl(0.19, 0.19, 0.006, new THREE.MeshBasicMaterial({ color: 0xfff1cf, toneMapped: false }), 0, 1.57, 0, 24); c.cyl(0.035, 0.035, 0.1, emitMat(0xffe9b0, 1.6), 0, 1.68, 0, 12);
     c.light(new THREE.PointLight(0xffe0a0, 0.45, 5), 0, 1.6, 0); c.solid(-0.2, 0.2, -0.2, 0.2); } });
-  defProp('guardBoard', { label: 'notice board', x: 5.0, z: ROOM.z - 0.13, rot: 2, build: function (c) { c.box(1.0, 0.7, 0.03, colorMat(0x8a6a4a, 0.9), 0, 1.7, 0); c.box(1.04, 0.74, 0.02, MAT.darkwood, 0, 1.7, -0.01, { cast: false }); [['NO ID', 'NO ENTRY', '#fff', '#c9302c'], ['LOST', 'grey cat, answers to Kush', '#333', '#f0ead8'], ['BAND', 'friday · the dry room', '#062010', '#6fdc8c'], ['WANTED', 'trimmers · ask inside', '#332200', '#ffc857']].forEach(function (n, i) { var x = -0.32 + (i % 2) * 0.36, y = 1.86 - Math.floor(i / 2) * 0.32; var note = c.sign([n[0], n[1]], 0.3, 0.24, x, y, 0.02, 0, { size: 22, bg: n[3], color: n[2], titleColor: n[2], line: 'rgba(0,0,0,.2)' }); note.rotation.z = (i % 2 ? -0.06 : 0.05); var pin = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), colorMat([0xc94a3a, 0x3a7fd6, 0xffd166, 0x3aa36a][i], 0.4)); pin.position.set(x, y + 0.1, 0.03); c.add(pin); }); } });
+  growDefProp('guardBoard', { label: 'notice board', x: 5.0, z: ROOM.z - 0.13, rot: 2, build: function (c) { c.box(1.0, 0.7, 0.03, colorMat(0x8a6a4a, 0.9), 0, 1.7, 0); c.box(1.04, 0.74, 0.02, MAT.darkwood, 0, 1.7, -0.01, { cast: false }); [['NO ID', 'NO ENTRY', '#fff', '#c9302c'], ['LOST', 'grey cat, answers to Kush', '#333', '#f0ead8'], ['BAND', 'friday · the dry room', '#062010', '#6fdc8c'], ['WANTED', 'trimmers · ask inside', '#332200', '#ffc857']].forEach(function (n, i) { var x = -0.32 + (i % 2) * 0.36, y = 1.86 - Math.floor(i / 2) * 0.32; var note = c.sign([n[0], n[1]], 0.3, 0.24, x, y, 0.02, 0, { size: 22, bg: n[3], color: n[2], titleColor: n[2], line: 'rgba(0,0,0,.2)' }); note.rotation.z = (i % 2 ? -0.06 : 0.05); var pin = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), colorMat([0xc94a3a, 0x3a7fd6, 0xffd166, 0x3aa36a][i], 0.4)); pin.position.set(x, y + 0.1, 0.03); c.add(pin); }); } });
   // upstairs
-  defProp('dining', { label: 'dining set', floor: 1, x: -4, z: -5.6, rot: 0, build: function (c) {
+  growDefProp('dining', { label: 'dining set', floor: 1, x: -4, z: -5.6, rot: 0, build: function (c) {
     c.box(1.6, 0.05, 0.9, MAT.wood, 0, 0.75, 0, { solid: true }); c.box(1.5, 0.04, 0.8, MAT.darkwood, 0, 0.72, 0, { cast: false }); legs4(c, 1.6, 0.9, 0.72, MAT.darkwood, 0.1, 0.06);
     chair(c, -0.5, -0.8, 0, fabricMat(0x3a5a3a), MAT.darkwood); chair(c, 0.5, -0.8, 0, fabricMat(0x3a5a3a), MAT.darkwood); chair(c, -0.5, 0.8, Math.PI, fabricMat(0x3a5a3a), MAT.darkwood); chair(c, 0.5, 0.8, Math.PI, fabricMat(0x3a5a3a), MAT.darkwood);
     c.hit(1.8, 0.8, 1.1, 0, 0.7, 0, { kind: 'eatspot', label: 'dining table' });
@@ -628,7 +628,7 @@
     var vase = new THREE.Mesh(roundCylGeo(0.05, 0.035, 0.18, 12), MAT.jar); vase.position.set(0, 0.87, 0); c.add(vase); for (var f = 0; f < 4; f++) { c.cyl(0.004, 0.004, 0.2, MAT.stem, Math.cos(f * 1.6) * 0.02, 1.02, Math.sin(f * 1.6) * 0.02, 5); var fl = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), colorMat([0xff6b9d, 0xffd166, 0xf2f2f2, 0xff8c42][f], 0.8)); fl.position.set(Math.cos(f * 1.6) * 0.04, 1.12, Math.sin(f * 1.6) * 0.04); c.add(fl); }
     c.box(0.24, 0.005, 0.24, colorMat(0xe0c25a, 1), -0.35, 0.78, 0, { cast: false }); c.box(0.24, 0.005, 0.24, colorMat(0xe0c25a, 1), 0.35, 0.78, 0, { cast: false });
   } });
-  defProp('couchUp', { label: 'couch + coffee table', floor: 1, x: DIVX - 3.7, z: 0.5, rot: 1, build: function (c) {
+  growDefProp('couchUp', { label: 'couch + coffee table', floor: 1, x: DIVX - 3.7, z: 0.5, rot: 1, build: function (c) {
     // built along local x with the back at -z; rot 1 turns the back to the wall side (-x) so it faces the TV on the right wall
     var seatM = fabricMat(0x3b4a5c), pipeM = fabricMat(0x2a3542);
     sofaBuild(c, 2.4, seatM, pipeM);
@@ -637,11 +637,11 @@
     c.hit(2.5, 1.2, 1.2, 0, 0.6, 0, { kind: 'couch', seat: 'couchUp' });
     coffeeTableBuild(c, 0, 1.3, 1.2, 0.7);
     c.box(0.16, 0.16, 0.12, MAT.black, 0.3, 0.52, 1.3); c.box(0.14, 0.02, 0.1, MAT.plastic, 0.3, 0.6, 1.3, { cast: false }); var mug = new THREE.Mesh(roundCylGeo(0.04, 0.035, 0.09, 12), colorMat(0x6fdc8c, 0.5)); mug.position.set(-0.3, 0.49, 1.2); c.add(mug); c.box(0.18, 0.02, 0.12, MAT.black, -0.1, 0.45, 1.4, { cast: false }); for (var b = 0; b < 12; b++) c.box(0.012, 0.005, 0.012, colorMat(0x8a8f96), -0.16 + (b % 6) * 0.024, 0.462, 1.38 + Math.floor(b / 6) * 0.03, { cast: false });   // remote
-    c.box(0.24, 0.02, 0.3, colorMat(0xe8e8ee, 0.7), 0.35, 0.45, 1.15, { cast: false }); c.box(0.2, 0.01, 0.26, new THREE.MeshBasicMaterial({ map: textTex(['grow', 'notes'], 100, 130, { size: 26, bg: '#f0ead8', color: '#333', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }) }), 0.35, 0.462, 1.15, { cast: false });
+    c.box(0.24, 0.02, 0.3, colorMat(0xe8e8ee, 0.7), 0.35, 0.45, 1.15, { cast: false }); c.box(0.2, 0.01, 0.26, new THREE.MeshBasicMaterial({ map: signTex(['grow', 'notes'], 100, 130, { size: 26, bg: '#f0ead8', color: '#333', titleColor: '#1a6a2a', line: 'rgba(0,0,0,0)' }) }), 0.35, 0.462, 1.15, { cast: false });
     c.box(4.5, 0.02, 3.6, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x5a3a2a, roughness: 1 }), 0, 0.01, 1.4, { cast: false }); c.box(4.2, 0.005, 3.3, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x7a4a34, roughness: 1 }), 0, 0.022, 1.4, { cast: false });
     c.box(0.03, 1.7, 0.03, MAT.chrome, -1.6, 0.85, -0.2); c.cyl(0.14, 0.16, 0.02, MAT.black, -1.6, 0.01, -0.2, 18); var lshade = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 0.32, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0xf1e7c8, side: THREE.DoubleSide, emissive: 0xffe0a0, emissiveIntensity: 0.4 })); lshade.position.set(-1.6, 1.8, -0.2); c.add(lshade); c.light(new THREE.PointLight(0xffe0a0, 0.4, 5), -1.6, 1.7, -0.2);
-  }, after: function (c, P) { var v = propWorld('couchUp', 0, 0.1); world.couchSeat = { x: v.x, z: v.z, yaw: -Math.PI / 2 + P.rot * Math.PI / 2 - Math.PI / 2 }; } });
-  defProp('bed', { label: 'bed', floor: 1, x: -8.5, z: 6.9, rot: 0, build: function (c) {
+  }, after: function (c, P) { var v = growPropWorld('couchUp', 0, 0.1); world.couchSeat = { x: v.x, z: v.z, yaw: -Math.PI / 2 + P.rot * Math.PI / 2 - Math.PI / 2 }; } });
+  growDefProp('bed', { label: 'bed', floor: 1, x: -8.5, z: 6.9, rot: 0, build: function (c) {
     c.box(1.6, 0.4, 2.1, MAT.darkwood, 0, 0.2, 0, { solid: true }); c.box(1.5, 0.22, 2.0, fabricMat(0xe8e8ee), 0, 0.51, 0); c.box(1.52, 0.02, 2.02, colorMat(0xd0d0d8, 0.9), 0, 0.51, 0, { cast: false });
     var duvet = c.box(1.54, 0.18, 1.25, fabricMat(0x3a6a4a), 0, 0.68, 0.38); c.box(1.54, 0.04, 0.2, fabricMat(0x2f5a3c), 0, 0.78, -0.2, { cast: false });
     [-0.38, 0.38].forEach(function (x) { c.box(0.62, 0.14, 0.42, fabricMat(0xffffff), x, 0.69, -0.78).rotation.y = x < 0 ? 0.05 : -0.05; });
@@ -651,17 +651,17 @@
     c.box(0.1, 0.16, 0.06, MAT.black, 0.95, 0.63, -0.8); c.box(0.08, 0.05, 0.005, MAT.screen, 0.95, 0.66, -0.768, { cast: false }); c.box(0.12, 0.18, 0.03, colorMat(0x8a2a2a, 0.8), 1.25, 0.64, -0.95).rotation.z = 0.1;
     c.hit(1.8, 1.0, 2.3, 0, 0.5, 0, { kind: 'bed' });
     c.box(1.2, 0.02, 0.6, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x6a5a4a, roughness: 1 }), 0, 0.01, 1.4, { cast: false });
-  }, after: function (c, P) { var v = propWorld('bed', 0, 0.3); world.bedSpot = { x: v.x, z: v.z, yaw: Math.PI + P.rot * Math.PI / 2 }; } });
-  defProp('upBooks', { label: 'bookshelf', floor: 1, x: 4.0, z: -8.6, rot: 0, build: function (c) { bookshelfBuild(c, 1.6, 2.0, 4); } });
-  defProp('windowSeat', { label: 'window seat', floor: 1, x: -2.0, z: ROOM.z - 0.5, rot: 0, build: function (c) { c.box(6.0, 0.45, 0.6, MAT.wood, 0, 0.225, 0, { solid: true }); c.box(6.0, 0.08, 0.6, fabricMat(0x3a5a3a), 0, 0.49, 0); for (var k = 0; k < 4; k++) { var cu = c.box(0.5, 0.14, 0.5, fabricMat([0xe0c25a, 0x6fdc8c, 0xd64a9a, 0x3ad0ff][k]), -2.2 + k * 1.4, 0.6, 0); cu.rotation.y = (k % 2 ? 0.2 : -0.15); } c.box(0.4, 0.03, 0.28, colorMat(0x8a2a2a, 0.8), 1.2, 0.545, 0.1, { cast: false }); } });
-  defProp('upPlant1', { label: 'plant', floor: 1, x: -8.5, z: -8.3, build: function (c) { c.fern(0, 0, 1.2); } });
-  defProp('upPlant2', { label: 'plant', floor: 1, x: 11.2, z: -8.3, build: function (c) { c.fern(0, 0, 1.2); } });
-  defProp('upPlant3', { label: 'plant', floor: 1, x: 11.2, z: 5.0, build: function (c) { c.fern(0, 0, 1.2); } });
-  defProp('upRug', { label: 'rug', floor: 1, x: -4, z: 0.5, rot: 0, build: function (c) { c.box(3.6, 0.02, 2.6, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x4a3b5c, roughness: 1 }), 0, 0.01, 0, { cast: false }); c.box(3.2, 0.005, 2.2, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x6a4f7a, roughness: 1 }), 0, 0.022, 0, { cast: false }); } });
-  defProp('upDresser', { label: 'dresser', floor: 1, x: -11.4, z: 4.5, rot: 1, build: function (c) { c.box(1.2, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(1.24, 0.04, 0.54, MAT.wood, 0, 0.92, 0, { cast: false }); for (var r = 0; r < 3; r++) for (var q = 0; q < 2; q++) drawer(c, 0.52, 0.22, 0.02, -0.29 + q * 0.58, 0.2 + r * 0.27, 0.24); c.box(0.5, 0.6, 0.03, MAT.darkwood, 0.2, 1.3, -0.2); c.box(0.44, 0.54, 0.005, new THREE.MeshPhysicalMaterial({ color: 0xdfe8f0, roughness: 0.05, metalness: 0.9 }), 0.2, 1.3, -0.18, { cast: false }); c.cyl(0.05, 0.04, 0.12, MAT.jar, -0.4, 1.0, 0, 12); c.box(0.2, 0.25, 0.02, colorMat(0x8a2a2a, 0.8), -0.35, 1.06, -0.15).rotation.z = 0.1; } });
+  }, after: function (c, P) { var v = growPropWorld('bed', 0, 0.3); world.bedSpot = { x: v.x, z: v.z, yaw: Math.PI + P.rot * Math.PI / 2 }; } });
+  growDefProp('upBooks', { label: 'bookshelf', floor: 1, x: 4.0, z: -8.6, rot: 0, build: function (c) { bookshelfBuild(c, 1.6, 2.0, 4); } });
+  growDefProp('windowSeat', { label: 'window seat', floor: 1, x: -2.0, z: ROOM.z - 0.5, rot: 0, build: function (c) { c.box(6.0, 0.45, 0.6, MAT.wood, 0, 0.225, 0, { solid: true }); c.box(6.0, 0.08, 0.6, fabricMat(0x3a5a3a), 0, 0.49, 0); for (var k = 0; k < 4; k++) { var cu = c.box(0.5, 0.14, 0.5, fabricMat([0xe0c25a, 0x6fdc8c, 0xd64a9a, 0x3ad0ff][k]), -2.2 + k * 1.4, 0.6, 0); cu.rotation.y = (k % 2 ? 0.2 : -0.15); } c.box(0.4, 0.03, 0.28, colorMat(0x8a2a2a, 0.8), 1.2, 0.545, 0.1, { cast: false }); } });
+  growDefProp('upPlant1', { label: 'plant', floor: 1, x: -8.5, z: -8.3, build: function (c) { c.fern(0, 0, 1.2); } });
+  growDefProp('upPlant2', { label: 'plant', floor: 1, x: 11.2, z: -8.3, build: function (c) { c.fern(0, 0, 1.2); } });
+  growDefProp('upPlant3', { label: 'plant', floor: 1, x: 11.2, z: 5.0, build: function (c) { c.fern(0, 0, 1.2); } });
+  growDefProp('upRug', { label: 'rug', floor: 1, x: -4, z: 0.5, rot: 0, build: function (c) { c.box(3.6, 0.02, 2.6, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x4a3b5c, roughness: 1 }), 0, 0.01, 0, { cast: false }); c.box(3.2, 0.005, 2.2, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x6a4f7a, roughness: 1 }), 0, 0.022, 0, { cast: false }); } });
+  growDefProp('upDresser', { label: 'dresser', floor: 1, x: -11.4, z: 4.5, rot: 1, build: function (c) { c.box(1.2, 0.9, 0.5, MAT.darkwood, 0, 0.45, 0, { solid: true }); c.box(1.24, 0.04, 0.54, MAT.wood, 0, 0.92, 0, { cast: false }); for (var r = 0; r < 3; r++) for (var q = 0; q < 2; q++) drawer(c, 0.52, 0.22, 0.02, -0.29 + q * 0.58, 0.2 + r * 0.27, 0.24); c.box(0.5, 0.6, 0.03, MAT.darkwood, 0.2, 1.3, -0.2); c.box(0.44, 0.54, 0.005, new THREE.MeshPhysicalMaterial({ color: 0xdfe8f0, roughness: 0.05, metalness: 0.9 }), 0.2, 1.3, -0.18, { cast: false }); c.cyl(0.05, 0.04, 0.12, MAT.jar, -0.4, 1.0, 0, 12); c.box(0.2, 0.25, 0.02, colorMat(0x8a2a2a, 0.8), -0.35, 1.06, -0.15).rotation.z = 0.1; } });
   // ---- the second pass: what each of these was still missing ----
   function propExtra(id, fn) { var d = PROPS[id], b = d.build; d.build = function (c, P) { b(c, P); fn(c, P); }; }
-  function warmStrip(c, w, x, y, z) { return c.box(w, 0.012, 0.02, glowMat(0xffe2b0, 1.2), x, y, z, { cast: false, sharp: true }); }
+  function warmStrip(c, w, x, y, z) { return c.box(w, 0.012, 0.02, emitMat(0xffe2b0, 1.2), x, y, z, { cast: false, sharp: true }); }
   propExtra('tabletDock', function (c) {
     [-0.232, 0.232].forEach(function (x) { c.box(0.018, 0.9, 0.31, MAT.alu, x, 0.47, 0.02, { cast: false }); });
     c.lit(0x6fdc8c, 0.4, 0.006, 0, 0.9, 0.173); c.lit(0x6fdc8c, 0.4, 0.006, 0, 0.12, 0.173);
@@ -766,7 +766,7 @@
   function bookshelfExtra(w, h) { return function (c) {
     c.box(w + 0.1, 0.05, 0.38, MAT.darkwood, 0, h + 0.025, 0.02, { r: 0.012 }); c.box(w + 0.05, 0.035, 0.35, MAT.darkwood, 0, h - 0.015, 0.012, { cast: false }); c.box(w + 0.04, 0.1, 0.02, MAT.darkwood, 0, 0.05, 0.16, { cast: false });
     [-1, 1].forEach(function (sd) { c.box(0.07, h - 0.1, 0.012, MAT.darkwood, sd * (w / 2 - 0.03), h / 2, 0.156, { cast: false }); });
-    c.box(w - 0.14, 0.012, 0.02, glowMat(0xffe2b0, 1.0), 0, h - 0.075, 0.12, { cast: false, sharp: true });
+    c.box(w - 0.14, 0.012, 0.02, emitMat(0xffe2b0, 1.0), 0, h - 0.075, 0.12, { cast: false, sharp: true });
     c.cyl(0.05, 0.04, 0.07, MAT.ceramic, -w / 2 + 0.2, h + 0.085, 0.02, 16); for (var i = 0; i < 7; i++) leafAt(LEAF_GEO_SM, MAT.bigleaf, -w / 2 + 0.2, h + 0.12, 0.02, i * 0.9, 0.5 + (i % 3) * 0.2, 0.26, c.group);
     c.box(0.2, 0.03, 0.14, colorMat(0x8a2a2a, 0.8), w / 2 - 0.25, h + 0.065, 0.02).rotation.y = 0.3; c.box(0.18, 0.025, 0.13, colorMat(0x2f6b9a, 0.8), w / 2 - 0.25, h + 0.093, 0.02).rotation.y = -0.1;
   }; }
@@ -781,7 +781,7 @@
   });
   propExtra('vending', function (c) {
     var dark = colorMat(0x1a1d21, 0.6);
-    c.box(0.012, 1.3, 0.02, glowMat(0xeaf6ff, 1.3), -0.405, 1.12, 0.27, { cast: false, sharp: true });
+    c.box(0.012, 1.3, 0.02, emitMat(0xeaf6ff, 1.3), -0.405, 1.12, 0.27, { cast: false, sharp: true });
     c.box(0.012, 1.78, 0.012, MAT.chrome, 0.19, 1.03, 0.362, { cast: false }); c.box(0.99, 0.02, 0.02, MAT.chrome, 0, 1.935, 0.37, { cast: false });
     c.box(0.11, 0.15, 0.03, MAT.gloss, 0.315, 0.74, 0.368, { cast: false, r: 0.008 }); c.lit(0x39a0ff, 0.07, 0.05, 0.315, 0.765, 0.3845); c.lit(0x6fdc8c, 0.07, 0.008, 0.315, 0.69, 0.3845);
     for (var v = 0; v < 8; v++) { c.box(0.004, 0.014, 0.34, dark, 0.477, 0.3 + v * 0.045, 0, { cast: false, sharp: true }); c.box(0.004, 0.014, 0.34, dark, -0.477, 0.3 + v * 0.045, 0, { cast: false, sharp: true }); }

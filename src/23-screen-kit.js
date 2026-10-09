@@ -2,7 +2,7 @@
   // ══ Interactive screens (2026-09-24): one touch layer for every in-world screen, the till tablet, the security desk screen, the office PC, the phone, the delivery tablet and the quick wheel ══
   var TOUCH = { list: [] };
   var SCR_MONO = '"Cascadia Mono",Consolas,monospace', SCR_EMOJI = '"Segoe UI Emoji","Segoe UI Symbol","Apple Color Emoji",sans-serif';
-  function touchScreen(o) {
+  function touchPanel(o) {
     var sc = { id: o.id, kind: o.kind, w: o.w, h: o.h, zones: [], cur: null, hot: null, hotZone: null, tapAt: 0, tapX: 0, tapY: 0, drawAt: 0, live: o.live || 0, draw: o.draw, tap: o.tap, wheel: o.wheel || null, canvas: document.createElement('canvas') };
     sc.scale = o.scale || 1; sc.canvas.width = Math.round(o.w * sc.scale); sc.canvas.height = Math.round(o.h * sc.scale); sc.tex = new THREE.CanvasTexture(sc.canvas);   /* scale > 1 draws the same layout onto more pixels, so the text reads bigger on the same plane */ sc.tex.encoding = THREE.sRGBEncoding; sc.tex.anisotropy = 8;
     sc.mesh = new THREE.Mesh(new THREE.PlaneGeometry(o.pw, o.ph), new THREE.MeshBasicMaterial({ map: sc.tex, toneMapped: false }));   /* a lit panel shows the colours it was drawn in: the scene's exposure is for things the lamps light */

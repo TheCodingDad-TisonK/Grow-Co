@@ -3,7 +3,7 @@
   // Every prop builds itself in LOCAL coordinates (origin on the floor, +z = front). Its placement
   // {x, z, rot (quarter turns), floor} comes from S.layout[id] or the default; edit mode rewrites it.
   var PROPS = {}; var PROP_ORDER = []; var propInst = {};
-  function defProp(id, def) { PROPS[id] = def; PROP_ORDER.push(id); }
+  function growDefProp(id, def) { PROPS[id] = def; PROP_ORDER.push(id); }
   // A prop marked `multi` can be owned more than once. Extra units are ordinary props under a
   // derived id (vending#2), so placement, edit mode, obstacles and the save file all work already.
   // Stock stays shop-wide (one storeroom behind however many machines), but each machine keeps its own coin box.
@@ -16,7 +16,7 @@
   function unitSpot(base, n) {   // extra units walk out along whichever wall the first one stands against, taking the first clear place either side
     var d = PROPS[base], alongZ = (d.rot === 1 || d.rot === 3), half = d.multi.gap * 0.42, lvl = d.floor || 0;
     var taken = (world.obstacles || []).filter(function (o) { return o.tag === 'prop' && unitBase(o.prop || '') !== base && (o.floorLevel || 0) === lvl; });   /* the walls are obstacles as well, and sliding along one must not count as hitting it */
-    var sibs = PROP_ORDER.filter(function (id) { return unitBase(id) === base && PROPS[id]; }).map(propPlacement);
+    var sibs = PROP_ORDER.filter(function (id) { return unitBase(id) === base && PROPS[id]; }).map(growPropPlacement);
     for (var k = 1; k <= 12; k++) {
       for (var side = 0; side < 2; side++) {
         var step = d.multi.gap * k * (side ? -1 : 1);
@@ -56,14 +56,14 @@
     var nid = base + '#' + (have + 1);
     if (!S.layout) S.layout = {};
     S.layout[nid] = Object.assign({}, S.layout[nid] || {}, { x: PROPS[nid].x, z: PROPS[nid].z });   /* pin where it landed: the spot is picked against the room as it stands now, and at load time nothing is built yet */
-    buildProp(nid);
+    growBuildProp(nid);
     sfx('vault'); toast(d.multi.ico + ' ' + d.label + ' ' + (have + 1) + ' installed. Press F2 to move it.', 'rare');
     logEvent(d.multi.ico + ' Installed ' + d.label + ' ' + (have + 1), 'rare');
     world.dirty = true; save();
   }
   var PROP_DLC = { cellarHatch: ['tobacco', 'lab'], cigCabinet: ['tobacco', 'lab'], tabletDock: ['tobacco'] };   /* built only while one of these DLC is on: the lab's door is in the basement and its stock sells from the cabinet */
   function dlcProp(id) { var need = PROP_DLC[unitBase(id)]; return !need || need.some(dlcOn); }
-  function propPlacement(id) {
+  function growPropPlacement(id) {
     var d = PROPS[id]; var o = (S.layout && S.layout[id]) || {}; var base = unitBase(id);
     var owned = base === id || unitIds(base).indexOf(id) >= 0;   /* a unit you sold or reset away keeps its prop record but builds nothing */
     return { x: typeof o.x === 'number' ? o.x : d.x, z: typeof o.z === 'number' ? o.z : d.z, rot: typeof o.rot === 'number' ? o.rot : (d.rot || 0), floor: d.floor || 0, unit: d.unit || 1, hidden: !!o.hidden || !owned || !dlcProp(id) };
@@ -71,14 +71,14 @@
   function propGone(id) { var i = propInst[id]; return !!(i && i.P && i.P.hidden); }   /* removed in build mode (Del), or a machine you don't own */
   function inGoneProp(o) { for (var p = o; p; p = p.parent) { var id = p.userData && p.userData.propId; if (id && propInst[id]) return propGone(id); } return false; }
   function hiddenProps() { return PROP_ORDER.filter(function (id) { return S.layout && S.layout[id] && S.layout[id].hidden; }); }
-  function propCtx(g, id, floorLevel) {
+  function growPropCtx(g, id, floorLevel) {
     var obs = [];
     var ctx = {
       box: function (w, h, d, mat, x, y, z, opts) { opts = opts || {}; var m = new THREE.Mesh(opts.sharp || bevelSkip(mat) ? new THREE.BoxGeometry(w, h, d) : bevelGeo(w, h, d, opts.r), mat); m.position.set(x, y, z); m.castShadow = opts.cast !== false; m.receiveShadow = opts.receive !== false; g.add(m); if (opts.solid) obs.push({ x1: x - w / 2, x2: x + w / 2, z1: z - d / 2, z2: z + d / 2 }); return m; },
       cyl: function (rt, rb, h, mat, x, y, z, seg) { var m = new THREE.Mesh(roundCylGeo(rt, rb, h, seg || 18), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; g.add(m); return m; },
       add: function (m) { g.add(m); return m; },
       hit: function (w, h, d, x, y, z, data) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), MAT.none); m.position.set(x, y, z); g.add(m); if (data) data.propId = id;   /* the prompt has to know WHICH machine it is looking at, not just what kind */ interactable(m, data); m.userData.propId = id; return m; },
-      sign: function (lines, w, h, x, y, z, rotY, opts) { opts = opts || {}; var tex = textTex(lines, Math.round(w * 320), Math.round(h * 320), Object.assign({ size: Math.round(h * 48) }, opts)); var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true })); m.position.set(x, y, z); m.rotation.y = rotY || 0; g.add(m); if (opts.bg === undefined && h >= 0.15) signBack(m, w, h); return m; },
+      sign: function (lines, w, h, x, y, z, rotY, opts) { opts = opts || {}; var tex = signTex(lines, Math.round(w * 320), Math.round(h * 320), Object.assign({ size: Math.round(h * 48) }, opts)); var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true })); m.position.set(x, y, z); m.rotation.y = rotY || 0; g.add(m); if (opts.bg === undefined && h >= 0.15) signBack(m, w, h); return m; },
       placard: function (lines, w, h, x, y, z, opts) {   /* a counter sign: a weighted foot, two slim posts, the plate between them */
         var by = y - h / 2 - 0.245; ctx.box(Math.min(w * 0.7, 0.34), 0.014, 0.09, MAT.gunmetal, x, by + 0.007, z - 0.01, { cast: false });
         [-1, 1].forEach(function (sd) { var st = new THREE.Mesh(roundCylGeo(0.006, 0.006, 0.25 + h * 0.5, 8), MAT.chrome); st.position.set(x + sd * Math.min(w * 0.3, 0.14), by + (0.25 + h * 0.5) / 2, z - 0.012); g.add(st); });
@@ -95,24 +95,24 @@
     ctx.dynGroup = function () { if (!ctx.dyn) { ctx.dyn = new THREE.Group(); ctx.dyn.userData.dyn = true; g.add(ctx.dyn); } return ctx.dyn; };   /* what a sync() refills is never baked */
     return ctx;
   }
-  function rotAABB(o, rot) { var r = ((rot % 4) + 4) % 4; if (r === 0) return o; if (r === 1) return { x1: o.z1, x2: o.z2, z1: -o.x2, z2: -o.x1 }; if (r === 2) return { x1: -o.x2, x2: -o.x1, z1: -o.z2, z2: -o.z1 }; return { x1: -o.z2, x2: -o.z1, z1: o.x1, z2: o.x2 }; }
-  function buildProp(id) {
+  function growRotAABB(o, rot) { var r = ((rot % 4) + 4) % 4; if (r === 0) return o; if (r === 1) return { x1: o.z1, x2: o.z2, z1: -o.x2, z2: -o.x1 }; if (r === 2) return { x1: -o.x2, x2: -o.x1, z1: -o.z2, z2: -o.z1 }; return { x1: -o.z2, x2: -o.z1, z1: o.x1, z2: o.x2 }; }
+  function growBuildProp(id) {
     var def = PROPS[id]; var old = propInst[id];
-    if (old) { world.group.remove(old.g); disposeTree(old.g); world.interact = world.interact.filter(function (m) { return m.userData.propId !== id; }); world.obstacles = world.obstacles.filter(function (o) { return o.prop !== id; }); if (old.lights) old.lights.forEach(function (l) { scene.remove(l); }); }
-    var P = propPlacement(id); var g = new THREE.Group(); g.position.set(P.x, P.floor === 1 ? UP.y : 0, P.z); g.rotation.y = P.rot * Math.PI / 2; g.userData.propId = id; world.group.add(g);
-    var ctx = propCtx(g, id, P.floor); var inst = { g: g, def: def, P: P, ctx: ctx, lights: [] }; propInst[id] = inst;
+    if (old) { world.group.remove(old.g); dropTree(old.g); world.interact = world.interact.filter(function (m) { return m.userData.propId !== id; }); world.obstacles = world.obstacles.filter(function (o) { return o.prop !== id; }); if (old.lights) old.lights.forEach(function (l) { scene.remove(l); }); }
+    var P = growPropPlacement(id); var g = new THREE.Group(); g.position.set(P.x, P.floor === 1 ? UP.y : 0, P.z); g.rotation.y = P.rot * Math.PI / 2; g.userData.propId = id; world.group.add(g);
+    var ctx = growPropCtx(g, id, P.floor); var inst = { g: g, def: def, P: P, ctx: ctx, lights: [] }; propInst[id] = inst;
     ctx.light = function (l, x, y, z) { l.position.set(x, y, z); g.add(l); inst.lights.push(l); return l; };
     if (!P.hidden) def.build(ctx, P);   // removed in build mode: the prop exists but builds nothing until restored
     g.visible = !P.hidden;   /* and whatever a sync later puts in its group (piles on a shelf, cans in a machine) stays out of sight with it */
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = id; });
-    ctx.obstacles.forEach(function (o) { var r = rotAABB(o, P.rot); world.obstacles.push({ x1: P.x + Math.min(r.x1, r.x2), x2: P.x + Math.max(r.x1, r.x2), z1: P.z + Math.min(r.z1, r.z2), z2: P.z + Math.max(r.z1, r.z2), tag: 'prop', prop: id, floorLevel: P.floor }); });
+    ctx.obstacles.forEach(function (o) { var r = growRotAABB(o, P.rot); world.obstacles.push({ x1: P.x + Math.min(r.x1, r.x2), x2: P.x + Math.max(r.x1, r.x2), z1: P.z + Math.min(r.z1, r.z2), z2: P.z + Math.max(r.z1, r.z2), tag: 'prop', prop: id, floorLevel: P.floor }); });
     if (def.after && !P.hidden) def.after(ctx, P, inst, id);   /* a removed shelf is not refilled */
-    if (!P.hidden && !def.noBlob) groundBlob(g);
+    if (!P.hidden && !def.noBlob) fitBlob(g);
   }
-  function buildAllProps() { PROP_ORDER.forEach(buildProp); defightSoon(); }
-  function propWorld(id, lx, lz) { var inst = propInst[id]; inst.g.updateMatrixWorld(true); var v = new THREE.Vector3(lx, 0, lz); inst.g.localToWorld(v); return v; }   // fresh matrix: props are queried right after they are built, before any render
+  function buildAllProps() { PROP_ORDER.forEach(growBuildProp); defightSoon(); }
+  function growPropWorld(id, lx, lz) { var inst = propInst[id]; inst.g.updateMatrixWorld(true); var v = new THREE.Vector3(lx, 0, lz); inst.g.localToWorld(v); return v; }   // fresh matrix: props are queried right after they are built, before any render
   function propFront(id, off) {   // the spot a person stands on to use a prop, off metres out from its front (local +z), facing it
-    var P = propPlacement(id), r = ((P.rot % 4) + 4) % 4, dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r];
+    var P = growPropPlacement(id), r = ((P.rot % 4) + 4) % 4, dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r];
     return { x: P.x + dx * off, z: P.z + dz * off, yaw: Math.atan2(-dx, -dz) };
   }
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.29.0: Grow Co. runs on Co Engine
+
+Nothing changes for the player: the same shop, the same saves, the same controls. Underneath, the game now runs on [Co Engine](https://github.com/TheCodingDad-TisonK/Co-Engine), the engine shared with Depot Co. and Garage Co.
+
+- **What is the engine's now:** the renderer, the scene and the camera, the sun and the sky bounce, the geometry kit (boxes, cylinders, sprites, the eased edges), the save slot and the settings, the sound synth, the log and the toasts, the frame loop, and the dev link (Ctrl+Shift+D links the game to the Co Engine editor or the dev console).
+- **What stays the shop's:** everything that makes it Grow Co.: the sim, the plants, the customers, the crew, the city, the car, the basement, the DLC, its own player and build mode, people, route grid, day and night, screens and doors. Where the shop's kit and the engine's differ, the shop's keeps its behaviour under a name of its own.
+- The whole test suite, 92 tests, passes on the engine build.
+- `npm install` fetches the engine at the tag `package.json` pins; the build, the lint gate, the static server and the version stamp are the engine's tools.
+
 ## v1.28.4: two ways to support the game
 
 - **Support on Patreon and Support via PayPal on the main menu.** Two buttons above the Discord and site row; each opens its page in your browser. Nothing else changed.

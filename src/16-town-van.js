@@ -18,7 +18,7 @@
       buy('💥 16 shells <small>' + (A.shotgun ? (A.shells || 0) + ' left' : 'you own no shotgun') + '</small>', 60, !!A.shotgun, function () { A.shells = (A.shells || 0) + 16; toast('💥 16 shells', 'good'); });
       buy('🪖 180 bullets <small>' + (A.ak ? (A.bullets || 0) + ' left' : 'you own no AK') + '</small>', 110, !!A.ak, function () { A.bullets = (A.bullets || 0) + 180; toast('🪖 180 bullets', 'good'); });
       buy('🎯 20 cartridges <small>' + (A.rifle ? (A.cartridges || 0) + ' left' : 'you own no rifle') + '</small>', 90, !!A.rifle, function () { A.cartridges = (A.cartridges || 0) + 20; toast('🎯 20 cartridges', 'good'); });
-      buy('🌶️ Pepper spray refill <small>' + (A.pepper ? (A.spray || 0) + ' bursts left' : 'you own no can') + '</small>', 18, !!A.pepper, function () { A.spray = 6; toast('🌶️ Fresh can', 'good'); });
+      buy('🌶️ Pepper spray refill <small>' + (A.pepper ? (A.spray || 0) + ' sparks left' : 'you own no can') + '</small>', 18, !!A.pepper, function () { A.spray = 6; toast('🌶️ Fresh can', 'good'); });
       ctxOpen('🔫 Iron & Oak Arms', 'bank ' + money(S.bank) + (hasLic('firearm') ? ' · licence checked' : ' · no firearms licence on file: guns are sold at your own locker once you hold one'), lines); return;
     }
     if (poi === 'rival') {
@@ -43,7 +43,7 @@
   var VAN_KINDS = ['joints', 'bags', 'cookies'], VAN_RACK_CAP = 3;
   function vanRack() { var v = vehState('van'); if (!v.rack) v.rack = {}; VAN_KINDS.forEach(function (k) { if (!v.rack[k]) v.rack[k] = { n: 0, qSum: 0, thcSum: 0 }; }); if (typeof v.sales !== 'number') v.sales = 0; return v.rack; }
   function syncVanRack() {   /* what is on the rack, drawn: joints lying in a row, bags standing, cookies stacked */
-    var V = drive.vehicles && drive.vehicles.van, rg = V && V.g.userData.rackG; if (!rg) return; while (rg.children.length) { var ch = rg.children.pop(); disposeTree(ch); }
+    var V = drive.vehicles && drive.vehicles.van, rg = V && V.g.userData.rackG; if (!rg) return; while (rg.children.length) { var ch = rg.children.pop(); dropTree(ch); }
     var rk = vanRack();
     VAN_KINDS.forEach(function (k, ki) { var z = (ki - 1) * 0.55; for (var i = 0; i < rk[k].n; i++) { var m; if (k === 'joints') { m = new THREE.Mesh(roundCylGeo(0.008, 0.007, 0.11, 8), colorMat(0xf5f0e0, 0.9)); m.rotation.z = Math.PI / 2; m.position.set(0.08, 0.03, z - 0.12 + i * 0.12); } else if (k === 'bags') { m = new THREE.Mesh(bevelGeo(0.09, 0.12, 0.03), colorMat(0xd8dfc8, 0.7, 0, { transparent: true, opacity: 0.85 })); m.position.set(0.08, 0.06, z - 0.12 + i * 0.12); } else { m = new THREE.Mesh(roundCylGeo(0.045, 0.045, 0.012, 14), colorMat(0xb98a4a, 0.9)); m.position.set(0.08, 0.02 + i * 0.014, z); } rg.add(m); } });
   }
@@ -90,7 +90,7 @@
       var w = vanSide(2.2, 0.85), a = Math.random() * 6.283, tries = 0, sx, sz;
       do { sx = w.x + Math.cos(a) * randf(9, 14); sz = w.z + Math.sin(a) * randf(9, 14); a += 0.9; tries++; } while (carBlocked(sx, sz, 0.5) && tries < 8);
       if (tries < 8) {
-        var hm = makeHuman({ skin: pick(SKINS), hair: pick(HAIRS), shirt: pick(SHIRTS), pants: pick(PANTS), hat: pick([null, 'cap', 'beanie']), longSleeve: Math.random() < 0.5 }); hm.position.set(sx, 0, sz); world.group.add(hm);
+        var hm = makePerson({ skin: pick(SKINS), hair: pick(HAIRS), shirt: pick(SHIRTS), pants: pick(PANTS), hat: pick([null, 'cap', 'beanie']), longSleeve: Math.random() < 0.5 }); hm.position.set(sx, 0, sz); world.group.add(hm);
         var hb = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.9, 0.7), MAT.none); hb.position.y = 0.95; hm.add(hb); var id = vanShop.nextId++; interactable(hb, { kind: 'vanBuyer', buyer: id });
         var rk0 = vanRack(), stocked = VAN_KINDS.filter(function (k) { return rk0[k].n > 0; });
         vanShop.buyers.push({ id: id, h: hm, hb: hb, kind: stocked.length ? pick(stocked) : pick(VAN_KINDS), want: randi(1, 3), waitT: 45, leaving: false, arrived: false, dir: null });
@@ -101,13 +101,13 @@
       if (!open && !b.leaving) vanBuyerLeave(b);
       if (b.leaving) {
         if (!b.dir) { var dx = g.position.x - w2.x, dz = g.position.z - w2.z, L = Math.hypot(dx, dz) || 1; b.dir = { x: dx / L, z: dz / L }; b.goneT = 9; }
-        g.position.x += b.dir.x * 1.3 * dt; g.position.z += b.dir.z * 1.3 * dt; g.rotation.y = Math.atan2(b.dir.x, b.dir.z); animateHuman(g, dt, 'walk', 1.3, null); b.goneT -= dt;
-        if (b.goneT <= 0) { world.group.remove(g); disposeTree(g); var ii = world.interact.indexOf(b.hb); if (ii >= 0) world.interact.splice(ii, 1); vanShop.buyers.splice(i, 1); }
+        g.position.x += b.dir.x * 1.3 * dt; g.position.z += b.dir.z * 1.3 * dt; g.rotation.y = Math.atan2(b.dir.x, b.dir.z); animatePerson(g, dt, 'walk', 1.3, null); b.goneT -= dt;
+        if (b.goneT <= 0) { world.group.remove(g); dropTree(g); var ii = world.interact.indexOf(b.hb); if (ii >= 0) world.interact.splice(ii, 1); vanShop.buyers.splice(i, 1); }
         continue;
       }
       var ddx = w2.x - g.position.x, ddz = w2.z - g.position.z, d = Math.hypot(ddx, ddz);
-      if (d > 0.4) { g.position.x += ddx / d * 1.3 * dt; g.position.z += ddz / d * 1.3 * dt; g.rotation.y = Math.atan2(ddx, ddz); animateHuman(g, dt, 'walk', 1.3, null); }
-      else { if (!b.arrived) { var fh = w2.h !== undefined ? w2.h : 0; g.rotation.y = Math.atan2(-Math.cos(fh), Math.sin(fh)); } b.arrived = true; animateHuman(g, dt, 'idle', 0, player.pos); b.waitT -= dt; if (b.waitT <= 0) { vanBuyerLeave(b); toast('🚶 "Too slow, mate." A buyer walked off.', ''); } }
+      if (d > 0.4) { g.position.x += ddx / d * 1.3 * dt; g.position.z += ddz / d * 1.3 * dt; g.rotation.y = Math.atan2(ddx, ddz); animatePerson(g, dt, 'walk', 1.3, null); }
+      else { if (!b.arrived) { var fh = w2.h !== undefined ? w2.h : 0; g.rotation.y = Math.atan2(-Math.cos(fh), Math.sin(fh)); } b.arrived = true; animatePerson(g, dt, 'idle', 0, player.pos); b.waitT -= dt; if (b.waitT <= 0) { vanBuyerLeave(b); toast('🚶 "Too slow, mate." A buyer walked off.', ''); } }
     }
   }
   function vanSell(b) {

@@ -6,10 +6,10 @@
     var g = new THREE.Group(); g.position.set(x, y0, z); world.group.add(g); var leaf = new THREE.Mesh(bevelGeo(alongX ? 1.22 : 0.06, 2.28, alongX ? 0.06 : 1.22), MAT.darkwood); leaf.position.y = 1.14; leaf.castShadow = true; g.add(leaf);
     [-1, 1].forEach(function (s) { var hd = new THREE.Mesh(bevelGeo(alongX ? 0.04 : 0.03, 0.3, alongX ? 0.03 : 0.04), MAT.chrome); hd.position.set(alongX ? -0.48 : s * 0.045, 1.05, alongX ? s * 0.045 : -0.48); g.add(hd); var pane = new THREE.Mesh(bevelGeo(alongX ? 0.7 : 0.012, 0.9, alongX ? 0.012 : 0.7), MAT.glass); pane.position.set(alongX ? 0 : s * 0.032, 1.6, alongX ? s * 0.032 : 0); g.add(pane); });
     var hitM = new THREE.Mesh(new THREE.BoxGeometry(alongX ? 1.3 : 0.7, 2.3, alongX ? 0.7 : 1.3), MAT.none); hitM.position.set(x, y0 + 1.15, z); world.group.add(hitM); interactable(hitM, { kind: 'door', id: id });
-    var led = new THREE.Mesh(bevelGeo(alongX ? 0.05 : 0.075, 0.05, alongX ? 0.075 : 0.05), glowMat(0x39d353, 1.2)); led.position.set(alongX ? -0.48 : 0, 1.3, alongX ? 0 : -0.48); g.add(led);
-    var saved = S && S.doors && typeof S.doors[id] === 'boolean' ? S.doors[id] : defOpen; var lk = !!(S && S.doorLocks && S.doorLocks[id]); if (lk) saved = false; var d = { id: id, g: g, x: x, z: z, alongX: alongX, floor: floorLevel, label: (DOOR_NAMES[id] || label).toLowerCase(), name: DOOR_NAMES[id] || label, open: saved, locked: lk, led: led, t: saved ? 1 : 0, auto: 0 }; doorLed(d); DOORS.push(d); doorById[id] = d; doorObstacle(d); doorPose(d); return d;
+    var led = new THREE.Mesh(bevelGeo(alongX ? 0.05 : 0.075, 0.05, alongX ? 0.075 : 0.05), emitMat(0x39d353, 1.2)); led.position.set(alongX ? -0.48 : 0, 1.3, alongX ? 0 : -0.48); g.add(led);
+    var saved = S && S.doors && typeof S.doors[id] === 'boolean' ? S.doors[id] : defOpen; var lk = !!(S && S.doorLocks && S.doorLocks[id]); if (lk) saved = false; var d = { id: id, g: g, x: x, z: z, alongX: alongX, floor: floorLevel, label: (DOOR_NAMES[id] || label).toLowerCase(), name: DOOR_NAMES[id] || label, open: saved, locked: lk, led: led, t: saved ? 1 : 0, auto: 0 }; doorLed(d); DOORS.push(d); doorById[id] = d; doorObstacle(d); slideDoorPose(d); return d;
   }
-  function doorPose(d) { var off = d.t * 1.2; d.g.position.x = d.x + (d.alongX ? off : 0); d.g.position.z = d.z + (d.alongX ? 0 : off); }
+  function slideDoorPose(d) { var off = d.t * 1.2; d.g.position.x = d.x + (d.alongX ? off : 0); d.g.position.z = d.z + (d.alongX ? 0 : off); }
   function doorObstacle(d) { world.obstacles = world.obstacles.filter(function (o) { return o.doorId !== d.id; }); if (!d.open) world.obstacles.push({ x1: d.x - (d.alongX ? 0.62 : 0.12), x2: d.x + (d.alongX ? 0.62 : 0.12), z1: d.z - (d.alongX ? 0.12 : 0.62), z2: d.z + (d.alongX ? 0.12 : 0.62), tag: 'door', doorId: d.id, floorLevel: d.floor }); }
   function doorLed(d) { var c = d.locked ? 0xff3030 : 0x39d353; d.led.material.color.setHex(c); d.led.material.emissive.setHex(c); }
   function setDoor(id, open, locked) { var d = doorById[id]; if (!d) return; if (locked !== undefined) { d.locked = locked; d.relock = false; } else if (!open && d.relock) { d.locked = true; d.relock = false; } if (d.locked) open = false; d.open = open; d.auto = 0; d.autoT = 0; if (!S.doors) S.doors = {}; if (!S.doorLocks) S.doorLocks = {}; S.doors[id] = d.open; S.doorLocks[id] = d.locked; doorObstacle(d); doorLed(d); }
@@ -48,7 +48,7 @@
       }
       var want = d.open ? 1 : 0;
       if (Math.abs(d.t - want) < 0.002) return;
-      d.t = lerp(d.t, want, 1 - Math.pow(0.006, dt)); if (Math.abs(d.t - want) < 0.004) d.t = want; doorPose(d);
+      d.t = lerp(d.t, want, 1 - Math.pow(0.006, dt)); if (Math.abs(d.t - want) < 0.004) d.t = want; slideDoorPose(d);
     });  }
   // three places can be shut and locked: the goods shelf, the cigarette cabinet and the weapon locker.
   var LOCKABLE = { goodsShelf: { name: 'goods shelf', shutter: 'goods' }, cigCabinet: { name: 'cigarette cabinet', shutter: 'cigs' }, gunLocker: { name: 'weapon locker', shutter: null } };
@@ -75,7 +75,7 @@
     if (!d.locked && player.floor === d.floor && Math.abs(player.pos.x - d.x) < 1.1 && Math.abs(player.pos.z - d.z) < 1.1) { toast('Step out of the doorway first', ''); return; }
     setDoor(id, d.open, !d.locked); sfx(d.locked ? 'click' : 'curtain'); toast(d.locked ? '🔒 Locked the ' + d.label : '🔓 Unlocked the ' + d.label, d.locked ? '' : 'good'); save();
   }
-  function doorPrompt(d) { if (d.kind !== 'door') return ''; var o = doorById[d.id]; if (!o) return ''; var k = hasKeys(); if (o.locked) return '🔒 ' + o.name + ' <small>' + (k ? 'Shift+E unlocks it' : 'locked · the keyring hangs in the office') + '</small>'; return (o.open ? 'Slide the ' + o.label + ' shut' : 'Slide the ' + o.label + ' open') + (k ? ' <small>Shift+E locks it</small>' : ''); }
+  function slideDoorPrompt(d) { if (d.kind !== 'door') return ''; var o = doorById[d.id]; if (!o) return ''; var k = hasKeys(); if (o.locked) return '🔒 ' + o.name + ' <small>' + (k ? 'Shift+E unlocks it' : 'locked · the keyring hangs in the office') + '</small>'; return (o.open ? 'Slide the ' + o.label + ' shut' : 'Slide the ' + o.label + ' open') + (k ? ' <small>Shift+E locks it</small>' : ''); }
   // ── Fixtures: wall-hung things (every sign, the desk screen, the staff roster) that F2 edit mode can carry. Unlike furniture they move in 3D and snap flat onto whatever surface you look at ──
   var FIXTURES = [], fxById = {}, fxSignCount = {}, fxRay = new THREE.Raycaster(), fxTick = 0; fxRay.layers.enable(TOWN_LAYER);
   // opts.table: it stands on a flat top instead of hanging on a wall. Its origin is its base (opts.baseY, or the lowest

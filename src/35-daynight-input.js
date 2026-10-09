@@ -28,12 +28,13 @@
 
   // ── Input ─────────────────────────────────────────────────────────
   document.addEventListener('keydown', function (e) {
+    if (e.code === 'KeyD' && e.ctrlKey && e.shiftKey) { devLinkToggle(); e.preventDefault(); return; }   // the Co Engine editor link
     if (!ui.started) return;
     if (ui.taskOpen) { if (e.code === 'Escape') { taskCancel(); } else if (e.code === 'Space' && !e.repeat) taskPress(true); e.preventDefault(); return; }   // Space is the only task key: E, clicks and every other key are swallowed while a task runs
     if (sec.view.on && !ui.blocked()) { if (e.code === 'Escape' || e.code === 'KeyE') camExit(); else if (/^Digit[1-6]$/.test(e.code)) camShow(+e.code.charAt(5) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') camShow(sec.view.idx + 1); else if (e.code === 'ArrowLeft' || e.code === 'KeyA') camShow(sec.view.idx - 1); e.preventDefault(); return; }
     if (e.code === 'Escape' && postPick >= 0) { postPick = -1; toast('📍 Cancelled', ''); e.preventDefault(); return; }
     if (e.code === 'F8') { devOpen(); e.preventDefault(); return; }
-    if (e.code === 'Escape') { if (!ui.blocked() && runHooks(hooks.keydown, e)) { e.preventDefault(); return; } if (photo.on) { photoOff(); } else if (ui.devOpen) { devClose(); } else if (ui.pcOpen) { pcClose(); } else if (ui.deviceOpen) { deviceClose(); } else if (ui.wheelOpen) { wheelClose(); } else if (ui.ctxOpen) { ctxClose(); } else if (ui.panelOpen) { ui.closePanel(); } else if (ui.menuOpen) { closeMenu(); } else { openMenu(); } e.preventDefault(); return; }
+    if (e.code === 'Escape') { if (!ui.blocked() && runHookList(hooks.keydown, e)) { e.preventDefault(); return; } if (photo.on) { photoOff(); } else if (ui.devOpen) { devClose(); } else if (ui.pcOpen) { pcClose(); } else if (ui.deviceOpen) { deviceClose(); } else if (ui.wheelOpen) { wheelClose(); } else if (ui.ctxOpen) { ctxClose(); } else if (ui.panelOpen) { ui.closePanel(); } else if (ui.menuOpen) { pauseClose(); } else { pauseOpen(); } e.preventDefault(); return; }
     if (ui.ctxOpen) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') { ctxClose(); e.preventDefault(); } return; }
     if (ui.pcOpen || ui.deviceOpen || ui.wheelOpen) {   /* the PC desktop, a device or the wheel is up: only its own keys work */
       if (ui.deviceOpen && ((e.code === 'KeyF' && dev.kind === 'phone') || e.code === 'KeyJ')) { deviceClose(); e.preventDefault(); }
@@ -44,7 +45,7 @@
     }
     if (ui.panelOpen || ui.menuOpen) { if (e.code === 'KeyI' && ui.panelKind === 'inventory') { ui.closePanel(); e.preventDefault(); } return; }
     player.keys[e.code] = true;
-    if (runHooks(hooks.keydown, e)) { e.preventDefault(); return; }
+    if (runHookList(hooks.keydown, e)) { e.preventDefault(); return; }
     if (e.code === 'Space' && !e.repeat && !drive.on && !sit.on && !player.air && !(player.downT > 0) && player.locked && !ui.blocked()) { player.air = true; player.jumpV = player.crouch ? 2.6 : 4.0; e.preventDefault(); return; }   // jump; a crouched hop is smaller
     if (drive.on && !e.repeat) {   /* at the wheel the letter keys belong to the car */
       if (e.code === 'KeyE') { var ja = jobAtCar(), jn = xs().jobs.length; if (ja >= 0) jobHandOver(ja); if (ja < 0 || xs().jobs.length === jn) exitCar(); e.preventDefault(); return; }   /* pulled up at a drop: E hands it over, and only gets you out once the drop is done */
@@ -57,9 +58,9 @@
       if (e.code === 'KeyJ') { jobsPanel(); e.preventDefault(); return; }
       if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }
     }
-    if (e.code === 'F2') { editToggle(); e.preventDefault(); return; }
-    if (e.code === 'F12' || e.code === 'F9') { screenshot(); e.preventDefault(); return; }
-    if (edit.on) { if (e.code === 'KeyE') { if (edit.grabbed || edit.grabbedFx) editDrop(); else editGrab(); } else if (e.code === 'KeyR') editRotate(); else if (e.code === 'Backspace') editReset(); if (e.code === 'KeyE' || e.code === 'KeyR' || e.code === 'Backspace') { e.preventDefault(); return; } }
+    if (e.code === 'F2') { growEditToggle(); e.preventDefault(); return; }
+    if (e.code === 'F12' || e.code === 'F9') { growScreenshot(); e.preventDefault(); return; }
+    if (edit.on) { if (e.code === 'KeyE') { if (edit.grabbed || edit.grabbedFx) growEditDrop(); else growEditGrab(); } else if (e.code === 'KeyR') growEditRotate(); else if (e.code === 'Backspace') growEditReset(); if (e.code === 'KeyE' || e.code === 'KeyR' || e.code === 'Backspace') { e.preventDefault(); return; } }
     if (/^Digit[1-6]$/.test(e.code)) { selectSlot(+e.code.charAt(5) - 1); sfx('click'); e.preventDefault(); return; }
     if (e.code === 'KeyM') { toggleCityMap(); e.preventDefault(); return; }
     if (e.code === 'KeyJ') { jobsPanel(); e.preventDefault(); return; }
@@ -75,22 +76,20 @@
   document.addEventListener('wheel', function (e) { if (!player.locked || ui.blocked() || edit.on || sec.view.on) return; if (window.RFGROW && window.RFGROW.creative && window.RFGROW.creative.state.on) return; if (drive.on) { drive.dist = clamp(drive.dist + (e.deltaY > 0 ? 0.7 : -0.7), 3.2, 12); drive.look.t = 1.4; return; } if (focus && focus.data.kind === 'deskboard') { deskWheel(e.deltaY > 0 ? 1 : -1); return; } var tsc = focus && touchFor(focus.data.kind); if (tsc) { if (tsc.wheel) { tsc.wheel(e.deltaY > 0 ? 1 : -1); tDraw(tsc); sfx('click'); } return; }   /* the wheel pulls the chase camera in and out at the wheel */ selectSlot(S.slot + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
   document.addEventListener('keyup', function (e) { player.keys[e.code] = false; if (ui.taskOpen && e.code === 'Space') taskPress(false); });
   window.addEventListener('blur', function () { player.keys = {}; });
-  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mousemove', growMouseMove);
   canvas.addEventListener('mousedown', function (e) {
     if (!ui.started || ui.taskOpen) return;   // a task ignores canvas clicks so a stray click can't re-lock the pointer mid-grind
     if (ui.blocked()) { if (e.button === 2) closeTopUi(); return; }   /* something is open: a click on the scene must never re-lock the pointer underneath it, and right-click closes it */
     if (e.button === 2 && cityMap.on) { toggleCityMap(); return; }
-    if (!player.locked) { lockPointer(); if (e.button !== 0 || drive.on) return; }   /* the click that takes the pointer back also does its job on whatever the crosshair is on: the first click after a menu or panel used to be swallowed */
-    if (runHooks(hooks.mousedown, e)) return;
+    if (!player.locked) { grabPointer(); if (e.button !== 0 || drive.on) return; }   /* the click that takes the pointer back also does its job on whatever the crosshair is on: the first click after a menu or panel used to be swallowed */
+    if (runHookList(hooks.mousedown, e)) return;
     if (e.button === 2) { var hs = held(); if (hs && hs.kind === 'rifle' && !drive.on && !edit.on) scope.on = true; return; }
-    if (e.button === 0) { if (drive.on) return; var hb3 = held(); if (hb3 && hb3.kind === 'bat' && !edit.on) { swingBat(); return; } if (hb3 && WEAPONS[hb3.kind] && !edit.on) { trigger.down = true; fireWeapon(); return; } if (edit.on) { if (edit.grabbed || edit.grabbedFx) editDrop(); else editGrab(); } else interact(); }
+    if (e.button === 0) { if (drive.on) return; var hb3 = held(); if (hb3 && hb3.kind === 'bat' && !edit.on) { swingBat(); return; } if (hb3 && WEAPONS[hb3.kind] && !edit.on) { trigger.down = true; fireWeapon(); return; } if (edit.on) { if (edit.grabbed || edit.grabbedFx) growEditDrop(); else growEditGrab(); } else interact(); }
   });
   var lastUiClose = 0;
   function closeTopUi() { if (now() - lastUiClose < 300) return; if (ui.devOpen) { lastUiClose = now(); devClose(); } else if (ui.ctxOpen) { lastUiClose = now(); ctxClose(); } else if (ui.panelOpen) { lastUiClose = now(); ui.closePanel(); } else if (ui.wheelOpen) { lastUiClose = now(); wheelClose(); } else if (ui.deviceOpen) { lastUiClose = now(); deviceClose(); } else if (ui.pcOpen) { lastUiClose = now(); pcClose(); } }   /* one right-click closes one layer: the mousedown and the contextmenu event of the same click must not each close something */
   document.addEventListener('contextmenu', function (e) { e.preventDefault(); closeTopUi(); });
   document.addEventListener('mouseup', function (e) { if (e.button === 2) scope.on = false; if (e.button === 0) trigger.down = false; });
-  document.addEventListener('pointerlockchange', function () { player.locked = document.pointerLockElement === canvas; if (!player.locked) player.keys = {}; if (!player.locked && ui.started && !ui.blocked()) { /* user pressed Esc in lock: browser exits lock; a hook may claim it (creative cancels a carried piece), else open the menu */ if (!runHooks(hooks.unlock)) openMenu(); } });
+  document.addEventListener('pointerlockchange', function () { player.locked = document.pointerLockElement === canvas; if (!player.locked) player.keys = {}; if (!player.locked && ui.started && !ui.blocked()) { /* user pressed Esc in lock: browser exits lock; a hook may claim it (creative cancels a carried piece), else open the menu */ if (!runHookList(hooks.unlock)) pauseOpen(); } });
   document.addEventListener('pointerlockerror', function () { lockRetry(); });
-  window.addEventListener('resize', resize);
-  function resize() { var w = window.innerWidth, h = window.innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 

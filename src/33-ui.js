@@ -7,7 +7,7 @@
       this.panelKind = kind; this.panelTab = tab || (kind === 'laptop' ? 'shop' : kind === 'inventory' ? 'inv' : null);
       this.panelOpen = true; $('g3-panel').hidden = false; document.exitPointerLock(); this.render(); sfx(kind === 'laptop' ? 'type' : 'panel');
     },
-    closePanel: function () { this.panelOpen = false; $('g3-panel').hidden = true; if (!this.menuOpen) lockPointer(); sfx('close'); },
+    closePanel: function () { this.panelOpen = false; $('g3-panel').hidden = true; if (!this.menuOpen) grabPointer(); sfx('close'); },
     refreshOpen: function () { if (this.panelOpen) this.render(); if (pc.open) pcRender(); if (dev.open) deviceRender(); if (this.ctxOpen && this.ctxBtns) { /* ctx closes on action; nothing */ } },
     render: function () {
       var kind = this.panelKind, tab = this.panelTab; var title = '', tabs = [], body = '';
@@ -18,11 +18,7 @@
       else if (kind === 'stock') { title = '🗄️ Stock cabinet'; body = paneStock(); }
       else if (kind === 'bench') { title = '✂️ Workbench'; body = paneProcess(); }
       else if (kind === 'register') { title = '💵 Till'; body = paneRegister(); }
-//#if desk
-      else if (kind === 'desk') { title = '🖥️ Live desk'; body = paneDesk(); }
-//#else
       else if (kind === 'desk') { title = '📊 Shop dashboard'; body = paneDesk(); }
-//#endif
       else if (kind === 'controls') { title = '🏪 Control box'; body = paneControls(); }
       else if (kind === 'miniFront') { title = '🏪 Front panel'; body = paneMiniCtl('front'); }
       else if (kind === 'miniOffice') { title = '🗄️ Office panel'; body = paneMiniCtl('office'); }

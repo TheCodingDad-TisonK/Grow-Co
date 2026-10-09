@@ -6,7 +6,7 @@
 npm install        # once
 npm start          # run the desktop app from source
 npm run serve      # play in a browser, http://127.0.0.1:8420/
-npm run build      # join src/ into game/grow3d.js (and the desk copy, when .desk-path is set)
+npm run build      # join the engine's parts and src/ into game/grow3d.js
 npm run check      # the built file matches src/, the version stamp, the lint gate, syntax
 npm test           # the test suite, against the real game in a hidden window
 npm run balance    # regenerate docs/Balance.md from the numbers in src/

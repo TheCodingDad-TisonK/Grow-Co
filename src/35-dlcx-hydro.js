@@ -27,11 +27,11 @@
     ctxOpen('💧 Nutrient tank', 'One tank feeds the whole rack. The pH creeps up as the plants drink, and they eat the feed.', lines);
   }
   function hydroSync() {   // what stands in the channels, rebuilt from the save
-    var W = world.hydro; if (!W || !W.dyn || !W.dyn.parent) return; clearKids(W.dyn); W.figs = [];
+    var W = world.hydro; if (!W || !W.dyn || !W.dyn.parent) return; dropKids(W.dyn); W.figs = [];
     hydroState().sites.forEach(function (p, i) { if (!p) return; var f = plantFigure(strainById(p.strain)), s = hydroSitePos(i); f.position.set(s.x, s.y + 0.04, s.z); f.userData.set(p.progress, 0.62); f.userData.site = i; W.dyn.add(f); W.figs.push(f); });
   }
   PROP_DLC.hydroBay = ['hydrobay'];
-  defProp('hydroBay', { label: 'hydroponics bay', x: ROOM.x - 0.55, z: -5.9, rot: 3, build: function (c) {
+  growDefProp('hydroBay', { label: 'hydroponics bay', x: ROOM.x - 0.55, z: -5.9, rot: 3, build: function (c) {
     var H = hydroState(); world.hydro = null; if (!H.owned) { notFitted(c, 2.5, 0.7, ['HYDROPONICS BAY', 'E to fit it · ' + money(HYDRO.price)], 'hydroTank'); return; }
     // a rack on castors: two tiers of white channels with net pots, a light bar over each tier, the tank and pump underneath, a controller on the end
     var white = colorMat(0xf2f4f5, 0.35, 0.02), pipe = colorMat(0x2f6fb0, 0.4, 0.1);
@@ -58,7 +58,7 @@
       var st = strainById(p.strain); return p.progress >= 1 ? (h ? 'Free your hands to harvest ' + st.name : 'Harvest ' + st.name + ' <small>ready · quality ' + Math.round(p.quality) + '</small>') : st.name + ' <small>' + Math.round(p.progress * 100) + '% · quality ' + Math.round(p.quality) + (hydroOk(H) ? '' : ' · ⚠ ' + hydroWhy(H)) + '</small>';
     },
     interact: function (d, h) {
-      var H = hydroState(); if (!H.owned) { ctxOpen('💧 Hydroponics bay', 'Eight sites on a rack, fed from one tank. Plants grow nearly twice as fast with no soil and no pots, as long as you keep the tank right.', [{ label: 'Fit it · ' + money(HYDRO.price) + ' <small>from the bank</small>', act: function () { if (payBank(HYDRO.price, 'The hydroponics bay')) { H.owned = true; buildProp('hydroBay'); toast('💧 The hydroponics bay is in. Bring seeds to its sites.', 'good'); logEvent('💧 Fitted a hydroponics bay in the dry room', 'good'); } } }]); return; }
+      var H = hydroState(); if (!H.owned) { ctxOpen('💧 Hydroponics bay', 'Eight sites on a rack, fed from one tank. Plants grow nearly twice as fast with no soil and no pots, as long as you keep the tank right.', [{ label: 'Fit it · ' + money(HYDRO.price) + ' <small>from the bank</small>', act: function () { if (payBank(HYDRO.price, 'The hydroponics bay')) { H.owned = true; growBuildProp('hydroBay'); toast('💧 The hydroponics bay is in. Bring seeds to its sites.', 'good'); logEvent('💧 Fitted a hydroponics bay in the dry room', 'good'); } } }]); return; }
       if (d.kind === 'hydroTank') { hydroTankMenu(); return; }
       var p = H.sites[d.i]; if (!p) { if (h && h.kind === 'seed') hydroPlant(d.i); else toast('Bring a seed from the supply rack', ''); return; }
       if (p.progress >= 1) { hydroHarvest(d.i); return; }

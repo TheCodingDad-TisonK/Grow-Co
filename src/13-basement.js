@@ -16,14 +16,14 @@
   function tobLicensed() { if (!dlcOn('tobacco')) { dlcOff('tobacco'); return false; } if (hasLic('tobacco')) return true; toast('🪪 You need the tobacco manufacturing licence to run the line. It\'s under Licences on the office PC.', 'bad'); return false; }
   function tobFade(fn) { if (!tobUI.fade) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:50'; document.body.appendChild(d); tobUI.fade = d; } tobUI.fade.style.opacity = '1'; setTimeout(function () { fn(); setTimeout(function () { tobUI.fade.style.opacity = '0'; }, 120); }, 230); }
   function goBasement() { if (sit.on) standUp(); tobFade(function () { player.floor = -1; player.pos.set(6.4, BASE.y + 1.65, -1.4); player.vel.set(0, 0, 0); player.yaw = Math.PI / 2; player.pitch = 0; sfx('step', 'concrete'); toast('🏭 RF Smoking: the basement works', ''); }); }
-  function leaveBasement() { tobFade(function () { var v = propInst.cellarHatch ? propWorld('cellarHatch', 0, 1.0) : { x: 2.9, z: 1.6 }; player.floor = 0; player.pos.set(v.x, 1.65, v.z); player.vel.set(0, 0, 0); sfx('step', 'planks'); }); }
+  function leaveBasement() { tobFade(function () { var v = propInst.cellarHatch ? growPropWorld('cellarHatch', 0, 1.0) : { x: 2.9, z: 1.6 }; player.floor = 0; player.pos.set(v.x, 1.65, v.z); player.vel.set(0, 0, 0); sfx('step', 'planks'); }); }
   function buildBasement() {
     var B = BASE, Y = B.y, H = B.h, steel = colorMat(0x8d949c, 0.35, 0.8), dark = colorMat(0x2b2f35, 0.5, 0.6), yel = colorMat(0xf2c21a, 0.6), belt = colorMat(0x16181b, 0.9), grn = colorMat(0x2e6b4a, 0.5, 0.3), blu = colorMat(0x2f5f8a, 0.5, 0.3), conc = colorMat(0x70757b, 0.95), wood = MAT.wood;
     function bb(w, h, d, m, x, y, z, o) { o = o || {}; o.floorLevel = -1; return box(w, h, d, m, x, Y + y, z, o); }
     function bc(rt, rb, h, m, x, y, z, seg) { return cyl(rt, rb, h, m, x, Y + y, z, null, seg); }
     function hit(w, h, d, x, y, z, data) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), MAT.none); m.position.set(x, Y + y, z); world.group.add(m); interactable(m, data); return m; }
-    function sign(key, w, h, x, y, z, rotY, lines, opts) { opts = Object.assign({ size: w < 1 ? 40 : 24, bg: '#0b1a12', titleColor: '#6fdc8c', color: '#c9e8d0', line: 'rgba(111,220,140,.5)' }, opts || {}); var res = opts.res || (w < 1 ? 620 : 300); var pw = Math.round(w * res), ph = Math.round(h * res); var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: textTex(lines, pw, ph, opts) })); m.position.set(x, Y + y, z); m.rotation.y = rotY || 0; world.group.add(m); fixtureSign(m, lines); if (key) tobUI.signs[key] = { mesh: m, w: pw, h: ph, opts: opts, txt: lines.join('|') }; return m; }
-    function beacon(key, x, y, z) { bc(0.05, 0.05, 0.05, dark, x, y, z, 12); var m = bc(0.045, 0.045, 0.1, glowMat(0xff8a1c, 0.1), x, y + 0.075, z, 12); tobUI.beacons[key] = m; return m; }
+    function sign(key, w, h, x, y, z, rotY, lines, opts) { opts = Object.assign({ size: w < 1 ? 40 : 24, bg: '#0b1a12', titleColor: '#6fdc8c', color: '#c9e8d0', line: 'rgba(111,220,140,.5)' }, opts || {}); var res = opts.res || (w < 1 ? 620 : 300); var pw = Math.round(w * res), ph = Math.round(h * res); var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: signTex(lines, pw, ph, opts) })); m.position.set(x, Y + y, z); m.rotation.y = rotY || 0; world.group.add(m); fixtureSign(m, lines); if (key) tobUI.signs[key] = { mesh: m, w: pw, h: ph, opts: opts, txt: lines.join('|') }; return m; }
+    function beacon(key, x, y, z) { bc(0.05, 0.05, 0.05, dark, x, y, z, 12); var m = bc(0.045, 0.045, 0.1, emitMat(0xff8a1c, 0.1), x, y + 0.075, z, 12); tobUI.beacons[key] = m; return m; }
     function spinner(g, axis, speed, key) { tobUI.spin.push({ g: g, axis: axis, speed: speed, key: key }); }
     // shell: slab, walls, ceiling that also shades the room from the sun, hazard lines, drain
     floorPlane(MAT.floor, B.x1, B.x2, B.z1, B.z2, 2.4, Y + 0.001);
@@ -51,7 +51,7 @@
       var bx = -7.4 + b * 2.6, bz = -6.2;
       bb(2.3, 0.08, 1.0, steel, bx, 0.55, bz); bb(2.2, 0.22, 0.9, dark, bx, 0.7, bz); bb(2.1, 0.02, 0.8, colorMat(0x3a2a1c, 1), bx, 0.815, bz, { cast: false });
       [[-1.1, -0.45], [1.1, -0.45], [-1.1, 0.45], [1.1, 0.45]].forEach(function (p) { bb(0.05, 2.3, 0.05, steel, bx + p[0], 1.15, bz + p[1]); });
-      bb(2.2, 0.06, 0.16, dark, bx, 2.3, bz, { cast: false }); bb(2.1, 0.02, 0.12, glowMat(0xd64bff, 1.6), bx, 2.26, bz, { cast: false });
+      bb(2.2, 0.06, 0.16, dark, bx, 2.3, bz, { cast: false }); bb(2.1, 0.02, 0.12, emitMat(0xd64bff, 1.6), bx, 2.26, bz, { cast: false });
       bb(0.3, 0.4, 0.25, blu, bx - 0.9, 0.25, bz + 0.2); var hp = bc(0.02, 0.02, 0.5, blu, bx - 0.9, 0.62, bz + 0.2, 8);   // nutrient tank and feed line
       world.obstacles.push({ x1: bx - 1.15, x2: bx + 1.15, z1: bz - 0.5, z2: bz + 0.5, tag: 'bay', floorLevel: -1 });
       var pg = new THREE.Group(); pg.position.set(bx, Y + 0.82, bz); world.group.add(pg);
@@ -62,7 +62,7 @@
     bb(12.6, 0.06, 0.5, belt, -1.9, 2.62, -5.35, { cast: false }); bb(12.6, 0.14, 0.04, steel, -1.9, 2.66, -5.11, { cast: false }); bb(12.6, 0.14, 0.04, steel, -1.9, 2.66, -5.59, { cast: false }); [-7.5, -3.5, 0.5].forEach(function (hx) { bb(0.04, 0.55, 0.04, steel, hx, 2.92, -5.35, { cast: false }); });
     // 2 ─ the flue-curing kiln: insulated box, door with a sight glass that glows while it fires, flue into the ceiling, extraction fan
     bb(2.6, 2.3, 2.0, colorMat(0x9aa0a6, 0.6, 0.5), 5.8, 1.15, -5.4, { solid: true, tag: 'kiln' }); bb(1.3, 1.9, 0.08, dark, 5.5, 1.0, -4.37); bb(0.06, 0.5, 0.06, steel, 6.05, 1.0, -4.3); [0.35, 1.65].forEach(function (hy) { bb(0.1, 0.16, 0.06, steel, 4.9, hy, -4.33); });
-    tobUI.kilnGlow = bb(0.5, 0.3, 0.02, glowMat(0xff6a1a, 0.05), 5.5, 1.45, -4.32, { cast: false }); bc(0.22, 0.22, 1.0, steel, 6.5, 2.75, -5.6, 14); bb(0.9, 0.5, 0.5, steel, 4.7, 2.5, -5.35, { cast: false });   // chute off the leaf conveyor
+    tobUI.kilnGlow = bb(0.5, 0.3, 0.02, emitMat(0xff6a1a, 0.05), 5.5, 1.45, -4.32, { cast: false }); bc(0.22, 0.22, 1.0, steel, 6.5, 2.75, -5.6, 14); bb(0.9, 0.5, 0.5, steel, 4.7, 2.5, -5.35, { cast: false });   // chute off the leaf conveyor
     bb(0.55, 0.75, 0.1, dark, 6.75, 1.4, -4.36); sign('kiln', 0.48, 0.5, 6.75, 1.5, -4.3, 0, ['KILN', 'off']); beacon('kiln', 6.75, 1.82, -4.38); hit(2.7, 2.3, 0.5, 5.8, 1.15, -4.2, { kind: 'tobKiln' });
     var fanG = new THREE.Group(); fanG.position.set(7.9, Y + 2.4, B.z1 + 0.06); world.group.add(fanG); for (var fb = 0; fb < 4; fb++) { var blade = new THREE.Mesh(bevelGeo(0.34, 0.1, 0.01), steel); blade.position.set(Math.cos(fb * Math.PI / 2) * 0.17, Math.sin(fb * Math.PI / 2) * 0.17, 0); blade.rotation.z = fb * Math.PI / 2; fanG.add(blade); } spinner(fanG, 'z', 9, 'kiln'); var ring = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.03, 8, 24), dark); ring.position.copy(fanG.position); world.group.add(ring);
     bb(0.4, 0.4, 5.0, steel, 4.6, 2.75, -1.9, { cast: false });   // cured leaf duct, kiln to shredder
@@ -86,7 +86,7 @@
     world.obstacles.push({ x1: -7.75, x2: -5.45, z1: 2.2, z2: 2.9, tag: 'frack', floorLevel: -1 }); tobUI.rackG = new THREE.Group(); tobUI.rackG.position.set(-6.6, Y, 2.55); world.group.add(tobUI.rackG);
     sign('rack', 1.2, 0.34, -6.6, 2.3, 2.25, Math.PI, ['FINISHED GOODS', 'nothing packed yet'], { size: 22 }); hit(2.3, 2.1, 0.8, -6.6, 1.05, 2.45, { kind: 'tobRack' });
     // the electrical cabinet, drums and a hand truck so the room reads as a working floor
-    bb(0.9, 1.9, 0.4, colorMat(0x5f666e, 0.5, 0.6), -8.75, 0.95, -4.6, { solid: true }); bb(0.02, 0.3, 0.2, yel, -8.29, 1.5, -4.6, { cast: false }); [-0.3, 0.3].forEach(function (dz) { bb(0.02, 0.06, 0.06, glowMat(0x39d353, 1.4), -8.29, 1.1, -4.6 + dz, { cast: false }); });
+    bb(0.9, 1.9, 0.4, colorMat(0x5f666e, 0.5, 0.6), -8.75, 0.95, -4.6, { solid: true }); bb(0.02, 0.3, 0.2, yel, -8.29, 1.5, -4.6, { cast: false }); [-0.3, 0.3].forEach(function (dz) { bb(0.02, 0.06, 0.06, emitMat(0x39d353, 1.4), -8.29, 1.1, -4.6 + dz, { cast: false }); });
     [[7.9, -2.6], [8.3, -3.4]].forEach(function (p) { var dr = bc(0.3, 0.3, 0.9, blu, p[0], 0.45, p[1], 16); world.obstacles.push({ x1: p[0] - 0.3, x2: p[0] + 0.3, z1: p[1] - 0.3, z2: p[1] + 0.3, tag: 'drum', floorLevel: -1 }); });
     (function worksDetail() {   /* every machine gets what it would have: guards, gauges, motors, feet, pipework, a control panel */
       var gm = MAT.gunmetal, ss = MAT.steel, copper = colorMat(0xb87333, 0.3, 1);
@@ -121,10 +121,10 @@
   }
   function glassM2() { return new THREE.MeshPhysicalMaterial({ color: 0xdff0ff, transparent: true, opacity: 0.35, roughness: 0.05 }); }
   function syncTobRack() {
-    var g = tobUI.rackG; if (!g) return; clearKids(g); var T = tob();
+    var g = tobUI.rackG; if (!g) return; dropKids(g); var T = tob();
     CIG_KEYS.forEach(function (k, i) { var K = CIG_SKUS[k]; var cartons = Math.min(8, Math.ceil(T.packs[k] / TOB.carton)); for (var c = 0; c < cartons; c++) { var w = K.size === 20 ? 0.3 : 0.24; var m = new THREE.Mesh(bevelGeo(w, 0.1, 0.4), colorMat(K.col, 0.6)); m.position.set(-0.75 + (c % 4) * 0.5, [0.37, 0.92, 1.47, 2.02][i] + Math.floor(c / 4) * 0.105, 0); g.add(m); var band = new THREE.Mesh(bevelGeo(w + 0.004, 0.03, 0.404), colorMat(K.top, 0.6)); band.position.copy(m.position); band.position.y += 0.03; g.add(band); } });
   }
-  function setTobSign(key, lines) { var s = tobUI.signs[key]; if (!s) return; var txt = lines.join('|'); if (s.txt === txt) return; s.txt = txt; var ob = s.mesh.material.map; s.mesh.material.map = textTex(lines, s.w, s.h, s.opts); s.mesh.material.needsUpdate = true; if (ob) ob.dispose(); }
+  function setTobSign(key, lines) { var s = tobUI.signs[key]; if (!s) return; var txt = lines.join('|'); if (s.txt === txt) return; s.txt = txt; var ob = s.mesh.material.map; s.mesh.material.map = signTex(lines, s.w, s.h, s.opts); s.mesh.material.needsUpdate = true; if (ob) ob.dispose(); }
   function packerReady(T) { var P = T.packer; return T.sticks[P.type] >= P.size && T.mat >= (P.size === 20 ? 2 : 1); }
   function updateTobacco(dt) {
     var T = tob();
@@ -194,7 +194,7 @@
     ctxOpen('🚬 Cigarette cabinet', 'packs stay behind the shutter; you hand them to the customer', lines);
   }
   function syncCigCab() {
-    var inst = propInst.cigCabinet; if (!inst) return; var g = inst.ctx.dynGroup(); var keep = g.userData.shutter; clearKids(g); if (keep) g.add(keep);
+    var inst = propInst.cigCabinet; if (!inst) return; var g = inst.ctx.dynGroup(); var keep = g.userData.shutter; dropKids(g); if (keep) g.add(keep);
     Object.keys(CIG_SKUS).forEach(function (k, i) { var K = CIG_SKUS[k], n = Math.min(i < 4 ? 5 : K.shape === 'cigar' ? 2 : 3, cigStock(k)), big = K.size === 20; for (var p = 0; p < n; p++) { var w = big ? 0.075 : 0.06, hh = big ? 0.11 : 0.09; var m = productCigPack(K, big ? 1.3 : 1.25); m.position.set((i < 4 ? -0.47 : i < 8 ? -0.03 : 0.25) + p * (K.shape === 'cigar' ? 0.11 : 0.082), [1.62, 1.27, 0.92, 0.57][i % 4] + (K.shape ? 0.05 : hh / 2), 0.06);   /* three columns: what the packer makes, what the lab makes, and the cigars and the honey */ m.traverse(function (o) { if (o.isMesh) o.castShadow = false; }); g.add(m); } });   /* the cabinet shows the same pack you hand over */
     g.traverse(function (o) { if (o.isMesh) o.userData.propId = 'cigCabinet'; });
   }

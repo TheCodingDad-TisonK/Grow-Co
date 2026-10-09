@@ -12,7 +12,7 @@
   }
   function photoOff() {
     if (!photo.on) return; photo.on = false; ui.photoOn = false; document.body.classList.remove('g3-photo'); camera.fov = photo.fov; camera.updateProjectionMatrix();
-    camera.position.set(player.pos.x, player.pos.y, player.pos.z); camera.rotation.set(player.pitch, player.yaw, 0); if (!ui.blocked()) lockPointer(); toast('📷 Back in your own head', '');
+    camera.position.set(player.pos.x, player.pos.y, player.pos.z); camera.rotation.set(player.pitch, player.yaw, 0); if (!ui.blocked()) grabPointer(); toast('📷 Back in your own head', '');
   }
   function updatePhoto(dt) {
     if (!photo.on) return; var k = player.keys, sp = (k.ShiftLeft || k.ShiftRight ? 9 : 3) * dt, f = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0), s = (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0), u = (k.Space ? 1 : 0) - (k.ControlLeft || k.ControlRight ? 1 : 0);

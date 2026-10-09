@@ -14,7 +14,7 @@
     var G = new THREE.Group(), glass = new THREE.MeshPhysicalMaterial({ color: 0xe0a028, transparent: true, opacity: 0.9, roughness: 0.12 });
     var body = new THREE.Mesh(roundCylGeo(0.024 * s, 0.022 * s, 0.06 * s, 16), glass); body.castShadow = true; G.add(body);
     var lid = new THREE.Mesh(roundCylGeo(0.025 * s, 0.025 * s, 0.012 * s, 16), MAT.brass); lid.position.y = 0.036 * s; G.add(lid);
-    var lab = new THREE.Mesh(new THREE.CylinderGeometry(0.0245 * s, 0.0245 * s, 0.028 * s, 16, 1, true, -0.9, 1.8), new THREE.MeshBasicMaterial({ map: textTex(['HONEY', 'from the roof'], 180, 90, { size: 30, bg: '#fff3c8', color: '#5a3a0a', titleColor: '#5a3a0a', line: 'rgba(0,0,0,0)' }) })); G.add(lab);
+    var lab = new THREE.Mesh(new THREE.CylinderGeometry(0.0245 * s, 0.0245 * s, 0.028 * s, 16, 1, true, -0.9, 1.8), new THREE.MeshBasicMaterial({ map: signTex(['HONEY', 'from the roof'], 180, 90, { size: 30, bg: '#fff3c8', color: '#5a3a0a', titleColor: '#5a3a0a', line: 'rgba(0,0,0,0)' }) })); G.add(lab);
     return G;
   }
   function roofExtrasSync() {   // what is bought stands on the roof; what is not is out of the way, hit boxes and all
@@ -33,7 +33,7 @@
     var dp = cyl(0.04, 0.04, 1.6, MAT.alu, -0.34, 2.25, 0.42, B, 12); var el = cyl(0.04, 0.04, 0.34, MAT.alu, -0.17, 1.47, 0.42, B, 12); el.rotation.z = Math.PI / 2; var lk = cyl(0.022, 0.022, 0.5, pipe, 0, 0.62, 0, B, 8); lk.rotation.x = Math.PI / 2;
     cyl(0.02, 0.02, 0.1, MAT.brass, 0.34, 0.6, -0.42, B, 10).rotation.z = Math.PI / 2; b(B, 0.03, 0.06, 0.012, colorMat(0xd0201a, 0.4), 0.4, 0.66, -0.42, { cast: false });
     b(B, 0.12, 0.1, 0.5, MAT.gunmetal, 0.5, 0.2, 0, { r: 0.01 }); for (var i = 0; i < 6; i++) { var ln = cyl(0.008, 0.008, 0.5, pipe, 0.75, 0.04, -0.2 + i * 0.08, B, 6); ln.rotation.z = Math.PI / 2; }
-    b(B, 0.05, 0.9, 0.02, MAT.gloss, 0.335, 0.95, 0.42, { cast: false }); roofx.level = b(B, 0.03, 0.8, 0.012, glowMat(0x7cc4ff, 1.1), 0.35, 0.95, 0.42, { cast: false, sharp: true });
+    b(B, 0.05, 0.9, 0.02, MAT.gloss, 0.335, 0.95, 0.42, { cast: false }); roofx.level = b(B, 0.03, 0.8, 0.012, emitMat(0x7cc4ff, 1.1), 0.35, 0.95, 0.42, { cast: false, sharp: true });
     roofx.scr = readout(0.3, 0.18, '#7cc4ff'); roofx.scr.position.set(0.47, 1.35, 0); roofx.scr.rotation.y = Math.PI / 2; B.add(roofx.scr); b(B, 0.03, 0.24, 0.36, MAT.gloss, 0.45, 1.35, 0, { r: 0.008, cast: false }); b(B, 0.03, 0.9, 0.03, MAT.gunmetal, 0.45, 0.8, 0.1, { cast: false });
     // two hives: a stand, a brood box, two supers and a pitched lid; an entrance board on the front
     [-0.7, 0.7].forEach(function (x, n) {
@@ -42,7 +42,7 @@
       var lid = b(H, 0.62, 0.05, 0.62, MAT.alu, x, 1.01, 0, { r: 0.01 }); b(H, 0.5, 0.012, 0.12, timber, x, 0.35, 0.32, { cast: false }).rotation.x = 0.2; b(H, 0.18, 0.02, 0.01, MAT.black, x, 0.375, 0.252, { cast: false, sharp: true });
     });
     for (var k = 0; k < 14; k++) { var bee = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 5), colorMat(k % 2 ? 0x1a1a1a : 0xe0a028, 0.6)); H.add(bee); roofx.bees.push({ m: bee, hive: k % 2 ? 0.7 : -0.7, r: 0.35 + (k % 5) * 0.12, sp: 1.6 + (k % 4) * 0.5, ph: k * 1.7, h: 0.5 + (k % 3) * 0.25 }); }
-    var sg = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.26), new THREE.MeshBasicMaterial({ map: textTex(['BEES AT WORK', 'move slowly'], 288, 84, { titleColor: '#f0b94d' }), transparent: true })); sg.position.set(0, 1.45, -0.45); H.add(sg); signBack(sg, 0.9, 0.26); b(H, 0.04, 1.3, 0.04, timber, 0, 0.65, -0.47);
+    var sg = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.26), new THREE.MeshBasicMaterial({ map: signTex(['BEES AT WORK', 'move slowly'], 288, 84, { titleColor: '#f0b94d' }), transparent: true })); sg.position.set(0, 1.45, -0.45); H.add(sg); signBack(sg, 0.9, 0.26); b(H, 0.04, 1.3, 0.04, timber, 0, 0.65, -0.47);
     [[ROOFX.bx, 0.8, ROOFX.bz, 1.3, 1.7, 2.0, 'roofBarrel'], [ROOFX.hx, 0.6, ROOFX.hz, 2.2, 1.3, 0.9, 'roofHive']].forEach(function (h) { var m = new THREE.Mesh(new THREE.BoxGeometry(h[3], h[4], h[5]), MAT.none); m.position.set(h[0], RY + h[1], h[2]); m.userData.homeY = RY + h[1]; world.group.add(m); interactable(m, { kind: h[6] }); roofx.hits.push(m); });
     [['b', ROOFX.bx - 0.5, ROOFX.bx + 0.6, ROOFX.bz - 0.9, ROOFX.bz + 0.9], ['h', ROOFX.hx - 1.05, ROOFX.hx + 1.05, ROOFX.hz - 0.4, ROOFX.hz + 0.4]].forEach(function (o) { var ob = { x1: o[1], x2: o[2], z1: o[3], z2: o[4], tag: 'roofkit', floorLevel: 2 }; world.obstacles.push(ob); roofx.obs.push({ kind: o[0], ob: ob, x1: o[1], x2: o[2] }); });
     roofExtrasSync();
@@ -54,7 +54,7 @@
   dlcDefine({ id: 'greenhouse', name: DLC_NAME.greenhouse, kinds: ['roofBarrel', 'roofHive'],
     prompt: function (d) {
       var R = roofxState(); if (d.kind === 'roofBarrel') return 'Rain barrels <small>' + Math.round(R.water) + '% full · ' + (R.water > 1 ? 'the beds are watered' : 'empty: the beds wait for rain') + '</small>';
-      return 'Beehives <small>' + R.honey + ' jar' + (R.honey === 1 ? '' : 's') + ' of honey to take' + (season() === 'Winter' ? ' · the bees sit the winter out' : '') + '</small>';
+      return 'Beehives <small>' + R.honey + ' jar' + (R.honey === 1 ? '' : 's') + ' of honey to take' + (seasonLabel() === 'Winter' ? ' · the bees sit the winter out' : '') + '</small>';
     },
     interact: function (d) {
       var R = roofxState();
@@ -66,7 +66,7 @@
       if (!dlcOwns('greenhouse', 'barrels')) return; var R = roofxState(), wet = /rain|storm/.test(xs().weather.kind);
       if (wet) R.water = Math.min(100, R.water + ROOFX.fill * dt); else { var n = xs().roof.filter(function (b) { return b.stage === 'grow'; }).length; R.water = Math.max(0, R.water - ROOFX.drain * n * dt); }
     },
-    newDay: function (offline) { if (!dlcOwns('greenhouse', 'hives') || season() === 'Winter') return; var R = roofxState(); if (R.honey < ROOFX.jars) { R.honey++; if (!offline && R.honey === ROOFX.jars) toast('🐝 The hives are full of honey', ''); } },
+    newDay: function (offline) { if (!dlcOwns('greenhouse', 'hives') || seasonLabel() === 'Winter') return; var R = roofxState(); if (R.honey < ROOFX.jars) { R.honey++; if (!offline && R.honey === ROOFX.jars) toast('🐝 The hives are full of honey', ''); } },
     update: function (dt) {
       if (player.floor !== 2 || !roofx.barrels) return; roofx.t += dt; var R = roofxState();
       if (roofx.hives.visible) roofx.bees.forEach(function (b) { var a = roofx.t * b.sp + b.ph; b.m.position.set(b.hive + Math.cos(a) * b.r, b.h + Math.sin(a * 1.7) * 0.18 + 0.2, 0.3 + Math.sin(a) * b.r * 0.8); });

@@ -1,32 +1,7 @@
 //@ the log, toasts and the generated sound effects
   // ── Log / toast / sound ───────────────────────────────────────────
-  function logEvent(msg, kind) {
-    S.log.unshift({ t: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), msg: msg, kind: kind || '' });
-    if (S.log.length > 60) S.log.pop();
-    feedPush(msg, kind);
-  }
-  function feedPush(msg, kind) {
-    var feed = $('h-feed'); if (!feed) return;
-    var d = document.createElement('div'); d.className = kind || '';
-    d.innerHTML = '<span class="t">' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</span>' + msg;
-    feed.appendChild(d);
-    while (feed.children.length > 6) feed.removeChild(feed.firstChild);
-    setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 14000);
-  }
-  function toast(msg, kind) {
-    var box = $('h-toasts'); if (!box) return;
-    var d = document.createElement('div'); d.className = kind || ''; d.innerHTML = msg; box.appendChild(d);
-    while (box.children.length > 3) box.removeChild(box.firstChild);
-    setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 2400);
-    if (kind === 'bad') sfx('bad'); else if (kind === 'rare') sfx('rare'); else sfx('ok');
-  }
-  var AC = null, sfxBus = null, hum = null;
-  function audio() { if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); sfxBus = AC.createGain(); sfxBus.gain.value = 0.9; sfxBus.connect(AC.destination); } if (AC.state === 'suspended') AC.resume(); return AC; }
-  // small synth helpers: everything is generated, no audio files
-  function sTone(type, f0, t, dur, gain, opts) { opts = opts || {}; var o = AC.createOscillator(), gn = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); if (opts.f1) o.frequency.exponentialRampToValueAtTime(opts.f1, t + dur); gn.gain.setValueAtTime(0.0001, t); gn.gain.linearRampToValueAtTime(gain, t + (opts.attack || 0.008)); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur); var dest = sfxBus; if (opts.lp) { var f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = opts.lp; gn.connect(f); f.connect(dest); } else gn.connect(dest); o.connect(gn); o.start(t); o.stop(t + dur + 0.05); }
-  function sNoise(t, dur, gain, opts) { opts = opts || {}; var len = Math.floor(AC.sampleRate * dur); var buf = AC.createBuffer(1, len, AC.sampleRate); var d = buf.getChannelData(0); for (var i = 0; i < len; i++) { var env = opts.shape === 'swell' ? Math.sin(i / len * Math.PI) : opts.shape === 'flat' ? 1 : (1 - i / len); d[i] = (Math.random() * 2 - 1) * env; } var src = AC.createBufferSource(); src.buffer = buf; var f = AC.createBiquadFilter(); f.type = opts.type || 'highpass'; f.frequency.value = opts.freq || 4000; if (opts.q) f.Q.value = opts.q; var gn = AC.createGain(); gn.gain.setValueAtTime(gain, t); if (opts.fade) gn.gain.exponentialRampToValueAtTime(0.0001, t + dur); src.connect(f); f.connect(gn); gn.connect(sfxBus); src.start(t); }
-  function sThud(t, f, gain, dur) { sTone('sine', f, t, dur || 0.12, gain, { f1: f * 0.5 }); sNoise(t, 0.05, gain * 0.5, { type: 'lowpass', freq: 600 }); }
-  function sBeep(t, f, dur, gain) { sTone('square', f, t, dur || 0.08, gain || 0.05, { lp: 3000 }); }
+  // the log, the feed, the toasts and the synth are the engine's (Co Engine 30-sound); the shop's voices replace its table below
+  var hum = null;
   var SFX = {
     gunshot: function (t) { sNoise(t, 0.2, 0.5, { type: 'lowpass', freq: 2400, fade: true }); sTone('square', 150, t, 0.12, 0.22, { f1: 50 }); },
     ak: function (t) { sNoise(t, 0.11, 0.45, { type: 'lowpass', freq: 2900, fade: true }); sTone('square', 175, t, 0.06, 0.18, { f1: 60 }); },
@@ -85,10 +60,6 @@
     alarm:   function (t) { for (var i = 0; i < 4; i++) { sTone('square', 880, t + i * 0.3, 0.14, 0.03, { lp: 2500 }); sTone('square', 660, t + i * 0.3 + 0.15, 0.14, 0.03, { lp: 2500 }); } },
     levelup: function (t) { [523, 659, 784, 1047, 1319].forEach(function (f, i) { sTone('sine', f, t + i * 0.08, 0.35, 0.06); }); sNoise(t + 0.4, 0.4, 0.04, { freq: 6000, fade: true }); }
   };
-  function sfx(kind, opt) {
-    if (!SET.sound) return;
-    try { audio(); var fn = SFX[kind] || SFX.click; fn(AC.currentTime, opt); } catch (e) {}
-  }
   // one continuous hum for the dehumidifiers, fading with distance to the nearest running unit
   function humUpdate(level) { if (!SET.sound) { if (hum) hum.g.gain.value = 0; return; } if (level <= 0.001 && !hum) return; try { audio(); if (!hum) { var o1 = AC.createOscillator(), o2 = AC.createOscillator(), gn = AC.createGain(), f = AC.createBiquadFilter(); o1.type = 'sawtooth'; o1.frequency.value = 58; o2.type = 'sine'; o2.frequency.value = 116; f.type = 'lowpass'; f.frequency.value = 260; gn.gain.value = 0; o1.connect(f); o2.connect(f); f.connect(gn); gn.connect(sfxBus); o1.start(); o2.start(); hum = { g: gn }; } hum.g.gain.setTargetAtTime(level * 0.06, AC.currentTime, 0.2); } catch (e) {}
   }
@@ -100,7 +71,7 @@
       logEvent('Level up. You\'re now level ' + S.level, 'rare');
       toast('🎉 Level ' + S.level, 'rare');
       STRAINS.filter(function (s) { return s.lvl === S.level; }).forEach(function (s) { logEvent('Unlocked strain: ' + s.name, 'rare'); });
-      burst(player.pos.x, 1.2, player.pos.z, 0xffd766, 40, 'up');
+      spark(player.pos.x, 1.2, player.pos.z, 0xffd766, 40, 'up');
     }
   }
   // -- Prices ---------------------------------------------------------

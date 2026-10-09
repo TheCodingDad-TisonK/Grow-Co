@@ -1,32 +1,40 @@
 {
   "name": "rf-grow-co",
   "productName": "Grow Co",
-  "version": "1.28.4",
+  "version": "1.29.0",
   "description": "Standalone hobby game, NOT a Farming Simulator product. First-person shop simulator: grow, cure, pack and sell, run a basement cigarette works, fight off robbers, and drive around a small open town.",
   "main": "main.js",
   "author": "TheCodingDad-TisonK",
   "license": "MIT",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheCodingDad-TisonK/Grow-Co.git"
+  },
+  "homepage": "https://github.com/TheCodingDad-TisonK/Grow-Co",
   "scripts": {
     "start": "electron .",
-    "serve": "node tools/serve.js",
-    "check": "node tools/build-game.js --check && node tools/sync-version.js && node tools/lint-gate.js && node --check game/grow3d.js && node --check game/grow3d-creative.js && node --check game/menu.js && node --check game/guide.js && node --check game/report.js && node --check game/workshop.js && node --check main.js",
+    "serve": "node node_modules/co-engine/tools/serve.js",
+    "check": "node node_modules/co-engine/tools/build-game.js --check && node node_modules/co-engine/tools/sync-version.js && node node_modules/co-engine/tools/lint-gate.js game && node node_modules/co-engine/tools/check-syntax.js",
     "icon": "electron tools/render-brand.js",
     "dist": "npm run check && npm run icon && node tools/verify-icon.js && electron-packager . \"Grow Co\" --platform=win32 --arch=x64 --out=dist --overwrite --icon=build/icon.ico --app-copyright=\"TheCodingDad-TisonK\" --ignore=\"^/dist\" --ignore=\"^/docs\" --ignore=\"^/gallery\" --ignore=\"^/tools\" --ignore=\"^/src\" --ignore=\"^/tests\" --ignore=\"^/build\" --ignore=\"^/\\.github\" --ignore=\"^/\\.git\" --prune=true",
     "zip": "node tools/zip-dist.js",
     "installer": "npm run check && npm run icon && node tools/verify-icon.js && electron-builder --win nsis --x64 --publish never",
     "guide": "node tools/guide-to-md.js",
-    "version": "node tools/sync-version.js",
+    "version": "node node_modules/co-engine/tools/sync-version.js",
     "brand": "electron tools/render-brand.js",
-    "build": "node tools/build-game.js",
-    "test": "node tools/build-game.js --check && electron tools/test/run.js",
+    "build": "node node_modules/co-engine/tools/build-game.js && node node_modules/co-engine/tools/sync-version.js",
+    "test": "node node_modules/co-engine/tools/build-game.js --check && electron tools/test/run.js",
     "balance": "node tools/balance/report.js > docs/Balance.md"
+  },
+  "dependencies": {
+    "co-engine": "github:TheCodingDad-TisonK/Co-Engine#v0.1.4"
   },
   "devDependencies": {
     "@electron/packager": "^18.3.6",
     "electron": "^33.2.1",
-    "png-to-ico": "^2.1.8",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "png-to-ico": "^2.1.8"
   },
   "build": {
     "appId": "com.thecodingdad.rfgrowco",
@@ -39,7 +47,9 @@
     "files": [
       "main.js",
       "game/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/co-engine/{editor,template,docs,vendor,tests,engine,tools}/**",
+      "!node_modules/co-engine/*.md"
     ],
     "win": {
       "target": [
@@ -61,10 +71,5 @@
       "runAfterFinish": true,
       "artifactName": "Grow-Co-Setup-${version}.exe"
     }
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/TheCodingDad-TisonK/Grow-Co.git"
-  },
-  "homepage": "https://github.com/TheCodingDad-TisonK/Grow-Co"
+  }
 }

@@ -2,9 +2,9 @@
   // ── Decoration ─────────────────────────────────────────────────────
   function buildDecor() {
     box(2.6, 0.02, 2.0, new THREE.MeshStandardMaterial({ color: 0x3f4a3a, roughness: 1 }), -8.5, 0.01, 1.0, { cast: false });
-    var neon = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.5), new THREE.MeshBasicMaterial({ map: textTex(['OPEN'], 384, 160, { size: 96, bold: true, titleColor: '#ff4d6d', bg: 'rgba(0,0,0,0)', line: 'rgba(0,0,0,0)' }), transparent: true })); neon.position.set(-3.5, 2.5, ROOM.z - 0.03); neon.rotation.y = Math.PI; world.group.add(neon); neonSign.open = neon;
+    var neon = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.5), new THREE.MeshBasicMaterial({ map: signTex(['OPEN'], 384, 160, { size: 96, bold: true, titleColor: '#ff4d6d', bg: 'rgba(0,0,0,0)', line: 'rgba(0,0,0,0)' }), transparent: true })); neon.position.set(-3.5, 2.5, ROOM.z - 0.03); neon.rotation.y = Math.PI; world.group.add(neon); neonSign.open = neon;
     var neonL = new THREE.PointLight(0xff4d6d, 0.5, 4); neonL.position.set(-3.5, 2.4, ROOM.z - 0.4); scene.add(neonL); neonSign.light = neonL;
-    var mat = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.8), new THREE.MeshStandardMaterial({ map: textTex(['WELCOME'], 448, 256, { size: 70, bold: true, bg: '#3a2a1e', color: '#e8dcc0', titleColor: '#e8dcc0', line: 'rgba(0,0,0,0)' }), roughness: 1 })); mat.rotation.x = -Math.PI / 2; mat.position.set(0, 0.03, 8.3); world.group.add(mat);
+    var mat = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.8), new THREE.MeshStandardMaterial({ map: signTex(['WELCOME'], 448, 256, { size: 70, bold: true, bg: '#3a2a1e', color: '#e8dcc0', titleColor: '#e8dcc0', line: 'rgba(0,0,0,0)' }), roughness: 1 })); mat.rotation.x = -Math.PI / 2; mat.position.set(0, 0.03, 8.3); world.group.add(mat);
     signPlane(['NO PHOTOS', 'be cool · respect the crew'], 1.0, 0.36, 5.5, 2.4, 4.12, 0, { titleColor: '#ff6b6b' });
   }
 
@@ -51,7 +51,7 @@
     var c = curtains.service; if (!c) return;
     if (!breakNoteMesh) {
       var g = new THREE.Group();
-      var paper = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.31), new THREE.MeshBasicMaterial({ map: textTex(['BACK IN 5 MINUTES', 'on a short break', 'please wait in line'], 440, 310, { size: 40, bold: true, bg: '#fbf8ef', color: '#3a3f46', titleColor: '#b5121b', line: 'rgba(0,0,0,0.25)' }) }));
+      var paper = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.31), new THREE.MeshBasicMaterial({ map: signTex(['BACK IN 5 MINUTES', 'on a short break', 'please wait in line'], 440, 310, { size: 40, bold: true, bg: '#fbf8ef', color: '#3a3f46', titleColor: '#b5121b', line: 'rgba(0,0,0,0.25)' }) }));
       g.add(paper);
       [-0.16, 0.16].forEach(function (x) { var tape = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.03), colorMat(0xe9e2c8, 0.8)); tape.position.set(x, 0.15, 0.002); tape.rotation.z = x < 0 ? 0.35 : -0.35; g.add(tape); });
       g.position.set(c.w / 2, 0.08, 0.075); g.rotation.z = -0.03; c.g.add(g); breakNoteMesh = g;
@@ -88,11 +88,11 @@
     // staff door: hinged at x = 9.4 in the staff wall, swings into the lobby
     var g = new THREE.Group(); g.position.set(9.4, 0, 4); world.group.add(g); staffDoor.g = g;
     var leaf = new THREE.Mesh(bevelGeo(1.16, 2.24, 0.06), MAT.darkwood); leaf.position.set(0.6, 1.12, 0); leaf.castShadow = true; g.add(leaf);
-    var plate = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.22), new THREE.MeshBasicMaterial({ map: textTex(['STAFF ONLY'], 350, 110, { size: 52, bold: true, bg: '#c94a3a', color: '#fff', titleColor: '#fff', line: 'rgba(0,0,0,0)' }) })); plate.position.set(0.6, 1.6, 0.035); g.add(plate);
+    var plate = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.22), new THREE.MeshBasicMaterial({ map: signTex(['STAFF ONLY'], 350, 110, { size: 52, bold: true, bg: '#c94a3a', color: '#fff', titleColor: '#fff', line: 'rgba(0,0,0,0)' }) })); plate.position.set(0.6, 1.6, 0.035); g.add(plate);
     var plate2 = plate.clone(); plate2.position.z = -0.035; plate2.rotation.y = Math.PI; g.add(plate2);
     [0.04, -0.04].forEach(function (dz) { var knob = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), MAT.metal); knob.position.set(1.05, 1.0, dz * 1.5); g.add(knob); });
     var hit = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.3, 0.3), MAT.none); hit.position.set(0.6, 1.15, 0); g.add(hit); interactable(hit, { kind: 'staffdoor' });
-    staffDoor.leds = []; [0.036, -0.036].forEach(function (dz) { var led = new THREE.Mesh(bevelGeo(0.075, 0.05, 0.01), glowMat(0x39d353, 1.2)); led.position.set(1.02, 1.3, dz); g.add(led); staffDoor.leds.push(led); }); staffDoorLeds();   /* red locked, green not, like the sliding doors */
+    staffDoor.leds = []; [0.036, -0.036].forEach(function (dz) { var led = new THREE.Mesh(bevelGeo(0.075, 0.05, 0.01), emitMat(0x39d353, 1.2)); led.position.set(1.02, 1.3, dz); g.add(led); staffDoor.leds.push(led); }); staffDoorLeds();   /* red locked, green not, like the sliding doors */
     staffDoor.obstacle = { x1: 9.4, x2: 10.6, z1: 3.85, z2: 4.15, tag: 'staffdoor' }; staffDoor.t = shop().staffDoor ? 1 : 0; syncStaffDoorObstacle();
     // the shop control cabinet on the security room's right wall (F2 carries it): open the doors, and inside hangs a tablet with a bank of switches, levers, a radio knob and small displays under it
     var bx = SEC.x2 - 0.365, by = 1.15, bz = -10.75; var cg = new THREE.Group();   /* the group's origin is the cabinet FRONT: its depth runs back to the wall at SEC.x2 */ cg.position.set(bx, by, bz); cg.rotation.y = -Math.PI / 2; world.group.add(cg); world.ctl = { g: cg, doorT: 0, doorOpen: false, doors: [], levers: {}, leds: {}, roomLeds: {}, lastTick: 0 };
@@ -106,12 +106,12 @@
     cm(bevelGeo(0.06, 0.06, 0.4), darkM, -0.25, 1.0, -0.15); cm(bevelGeo(0.06, 0.06, 0.4), darkM, 0.25, 1.0, -0.15);   // top rail
     [[-0.7, 1], [0.7, -1]].forEach(function (d) {   // two doors hinged on the outer edges; the free edge swings out into the room
       var hg = new THREE.Group(); hg.position.set(d[0], 0, 0); cg.add(hg); var leaf = cm(bevelGeo(0.69, 2.0, 0.04), panelM, 0.35 * d[1], 0, 0.02, hg); cm(bevelGeo(0.55, 1.7, 0.005), darkM, 0.35 * d[1], 0, 0.043, hg);
-      cm(roundCylGeo(0.012, 0.012, 0.16, 8), MAT.chrome, 0.64 * d[1], 0, 0.06, hg); var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.08), new THREE.MeshBasicMaterial({ map: textTex([d[1] > 0 ? 'SHOP' : 'CONTROLS'], 300, 60, { size: 40, bold: true, bg: 'rgba(0,0,0,0)', color: '#e8e8ec', titleColor: '#ffc857', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(0.35 * d[1], 0.75, 0.046); hg.add(lbl);
+      cm(roundCylGeo(0.012, 0.012, 0.16, 8), MAT.chrome, 0.64 * d[1], 0, 0.06, hg); var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.08), new THREE.MeshBasicMaterial({ map: signTex([d[1] > 0 ? 'SHOP' : 'CONTROLS'], 300, 60, { size: 40, bold: true, bg: 'rgba(0,0,0,0)', color: '#e8e8ec', titleColor: '#ffc857', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(0.35 * d[1], 0.75, 0.046); hg.add(lbl);
       var dh = new THREE.Mesh(new THREE.BoxGeometry(0.69, 2.0, 0.08), MAT.none); dh.position.set(0.35 * d[1], 0, 0.03); hg.add(dh); interactable(dh, { kind: 'ctlDoor' });
       world.ctl.doors.push({ g: hg, dir: d[1] });
     });
     // the tablet hangs from the top rail on two straps
-    var tsc = touchScreen({ id: 'ctl', kind: 'ctlTablet', w: 1120, h: 700, pw: 0.9, ph: 0.5625, draw: drawCtlTablet, tap: ctlTap, wheel: function (dir) { world.ctl.page = ((world.ctl.page + dir) % CTL_PAGES.length + CTL_PAGES.length) % CTL_PAGES.length; }, live: 1000 });
+    var tsc = touchPanel({ id: 'ctl', kind: 'ctlTablet', w: 1120, h: 700, pw: 0.9, ph: 0.5625, draw: drawCtlTablet, tap: ctlTap, wheel: function (dir) { world.ctl.page = ((world.ctl.page + dir) % CTL_PAGES.length + CTL_PAGES.length) % CTL_PAGES.length; }, live: 1000 });
     var tg = new THREE.Group(); tg.position.set(0, 0.6, -0.27); cg.add(tg); world.ctl.tablet = tg;
     screenShell(tg, 0.9, 0.5625, { bezel: 0.03, depth: 0.022 }); tsc.mesh.position.z = 0.0005; tg.add(tsc.mesh);
     [-0.3, 0.3].forEach(function (x) { cm(bevelGeo(0.04, 0.12, 0.01), darkM, x, 0.36, -0.01, tg); });
@@ -123,7 +123,7 @@
     [['open', -0.5, 'OPEN'], ['lights', -0.25, 'LIGHTS'], ['staffDoor', 0, 'DOOR'], ['roller', 0.25, 'ROLLER'], ['gate', 0.5, 'GATE']].forEach(function (r) {
       var y = 0.0, z = -0.295;
       cm(bevelGeo(0.09, 0.15, 0.01), MAT.black, r[1], y, z); var rocker = cm(bevelGeo(0.07, 0.12, 0.03), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 }), r[1], y, z + 0.015); world.ctl.rockers[r[0]] = rocker;
-      var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.03), new THREE.MeshBasicMaterial({ map: textTex([r[2]], 160, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(r[1], y - 0.11, z + 0.001); cg.add(lbl);
+      var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.03), new THREE.MeshBasicMaterial({ map: signTex([r[2]], 160, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(r[1], y - 0.11, z + 0.001); cg.add(lbl);
       var led = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 2 }), r[1] + 0.055, y + 0.09, z + 0.002); world.ctl.rockers[r[0] + 'Led'] = led;
       var sh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.08), MAT.none); sh.position.set(r[1], y, z + 0.02); cg.add(sh); interactable(sh, { kind: 'ctlSwitch', id: r[0] });
     });
@@ -133,7 +133,7 @@
     var sc3 = document.createElement('canvas'); sc3.width = 256; sc3.height = 128; world.ctl.canvas2 = sc3; world.ctl.tex2 = new THREE.CanvasTexture(sc3); world.ctl.tex2.encoding = THREE.sRGBEncoding;
     var screen2 = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.2), new THREE.MeshBasicMaterial({ map: world.ctl.tex2, toneMapped: false })); screen2.position.set(0.05, -0.3, -0.294); cg.add(screen2); cm(bevelGeo(0.44, 0.24, 0.01), MAT.gloss, 0.05, -0.3, -0.3);
     var screenGlow = new THREE.PointLight(0x6fdc8c, 0.15, 1.2); screenGlow.position.set(0, -0.2, 0.2); cg.add(screenGlow);
-    var dialArc = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.05), new THREE.MeshBasicMaterial({ map: textTex(['OFF · LOFI · DUB · NEON · JAZZ'], 300, 50, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); dialArc.position.set(0.5, -0.19, -0.294); cg.add(dialArc);
+    var dialArc = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.05), new THREE.MeshBasicMaterial({ map: signTex(['OFF · LOFI · DUB · NEON · JAZZ'], 300, 50, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); dialArc.position.set(0.5, -0.19, -0.294); cg.add(dialArc);
     var knob = cm(roundCylGeo(0.04, 0.045, 0.03, 20), darkM, 0.5, -0.32, -0.28); knob.rotation.x = Math.PI / 2; world.ctl.knob = knob;
     var pointer = new THREE.Mesh(bevelGeo(0.006, 0.035, 0.006), new THREE.MeshStandardMaterial({ color: 0xffc857, emissive: 0xffc857, emissiveIntensity: 0.6 })); pointer.position.set(0, 0.012, 0.025); knob.add(pointer); world.ctl.pointer = pointer;
     var radioLed = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0x3ad0ff, emissive: 0x3ad0ff, emissiveIntensity: 2 }), 0.58, -0.25, -0.293); world.ctl.radioLed = radioLed;
@@ -141,15 +141,15 @@
     // levers: dehumidifier targets, markup and volume, plus the red alarm button
     [['grow', -0.5, 'DRY GROW', 'ctlLever'], ['dry', -0.27, 'DRY ROOM', 'ctlLever'], ['markup', -0.04, 'MARKUP', 'ctlMarkup'], ['volume', 0.19, 'VOLUME', 'ctlVol']].forEach(function (l) {
       var y = -0.62, z = -0.295; cm(bevelGeo(0.03, 0.2, 0.01), MAT.black, l[1], y, z); var lg = new THREE.Group(); lg.position.set(l[1], y, z); cg.add(lg); cm(roundCylGeo(0.008, 0.008, 0.14, 8), MAT.chrome, 0, 0.07, 0.03, lg).rotation.x = 0; var knobL = cm(new THREE.SphereGeometry(0.02, 10, 8), new THREE.MeshStandardMaterial({ color: 0xc94a3a, roughness: 0.4 }), 0, 0.14, 0.03, lg); world.ctl.levers[l[0]] = lg;
-      var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.03), new THREE.MeshBasicMaterial({ map: textTex([l[2]], 200, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(l[1], y - 0.14, z + 0.001); cg.add(lbl);
+      var lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.03), new THREE.MeshBasicMaterial({ map: signTex([l[2]], 200, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(l[1], y - 0.14, z + 0.001); cg.add(lbl);
       var lh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.3, 0.1), MAT.none); lh.position.set(l[1], y, z + 0.03); cg.add(lh); interactable(lh, { kind: l[3], id: l[0] });
     });
     cm(roundCylGeo(0.05, 0.055, 0.02, 20), MAT.black, 0.5, -0.62, -0.29).rotation.x = Math.PI / 2; var pb = cm(roundCylGeo(0.038, 0.04, 0.035, 20), new THREE.MeshStandardMaterial({ color: 0xd0201a, roughness: 0.35 }), 0.5, -0.62, -0.27); pb.rotation.x = Math.PI / 2; world.ctl.panicBtn = pb;
-    var pl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.03), new THREE.MeshBasicMaterial({ map: textTex(['SILENT ALARM'], 200, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); pl.position.set(0.5, -0.76, -0.294); cg.add(pl);
+    var pl = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.03), new THREE.MeshBasicMaterial({ map: signTex(['SILENT ALARM'], 200, 30, { size: 22, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); pl.position.set(0.5, -0.76, -0.294); cg.add(pl);
     var ph = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.1), MAT.none); ph.position.set(0.5, -0.62, -0.26); cg.add(ph); interactable(ph, { kind: 'ctlPanic' });
     // a row of room lights: a LED and a button each
     var rooms = Object.keys(ROOM_NAMES), rw = 1.2 / rooms.length;
-    rooms.forEach(function (rm, i) { var x = -0.6 + rw * (i + 0.5), y = -0.86, z = -0.295; var led = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xffe08a, emissiveIntensity: 2 }), x, y + 0.05, z + 0.002); world.ctl.roomLeds[rm] = led; cm(roundCylGeo(0.018, 0.02, 0.015, 12), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 }), x, y, z + 0.005).rotation.x = Math.PI / 2; var lbl = new THREE.Mesh(new THREE.PlaneGeometry(rw - 0.01, 0.026), new THREE.MeshBasicMaterial({ map: textTex([ROOM_NAMES[rm].toUpperCase().replace(' & ', '/')], 200, 30, { size: 20, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(x, y - 0.05, z + 0.001); cg.add(lbl); var rh = new THREE.Mesh(new THREE.BoxGeometry(rw - 0.01, 0.13, 0.08), MAT.none); rh.position.set(x, y - 0.01, z + 0.02); cg.add(rh); interactable(rh, { kind: 'ctlRoom', id: rm }); });
+    rooms.forEach(function (rm, i) { var x = -0.6 + rw * (i + 0.5), y = -0.86, z = -0.295; var led = cm(new THREE.SphereGeometry(0.009, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xffe08a, emissiveIntensity: 2 }), x, y + 0.05, z + 0.002); world.ctl.roomLeds[rm] = led; cm(roundCylGeo(0.018, 0.02, 0.015, 12), new THREE.MeshStandardMaterial({ color: 0xe8e8ec, roughness: 0.4 }), x, y, z + 0.005).rotation.x = Math.PI / 2; var lbl = new THREE.Mesh(new THREE.PlaneGeometry(rw - 0.01, 0.026), new THREE.MeshBasicMaterial({ map: signTex([ROOM_NAMES[rm].toUpperCase().replace(' & ', '/')], 200, 30, { size: 20, bg: 'rgba(0,0,0,0)', color: '#1a1d21', titleColor: '#1a1d21', line: 'rgba(0,0,0,0)' }), transparent: true })); lbl.position.set(x, y - 0.05, z + 0.001); cg.add(lbl); var rh = new THREE.Mesh(new THREE.BoxGeometry(rw - 0.01, 0.13, 0.08), MAT.none); rh.position.set(x, y - 0.01, z + 0.02); cg.add(rh); interactable(rh, { kind: 'ctlRoom', id: rm }); });
     var conduit = cm(roundCylGeo(0.02, 0.02, 0.9, 8), panelM, 0.6, 1.4, -0.3);
     world.obstacles.push({ x1: bx - 0.08, x2: SEC.x2, z1: bz - 0.74, z2: bz + 0.74, tag: 'ctlBox' });
     var ctlSign = signPlane(['SHOP CONTROLS', 'E on the doors opens the cabinet'], 0.9, 0.3, SEC.x2 - 0.02, 2.45, bz, -Math.PI / 2, { titleColor: '#ffc857' }); fixtureAdd('ctlBox', 'control cabinet', [cg, ctlSign], -Math.PI / 2);
@@ -169,7 +169,7 @@
       [['OPEN', -0.072, -0.03], ['LIGHTS', 0.072, -0.03], ['DOOR', -0.072, -0.125], ['ALARM', 0.072, -0.125]].forEach(function (k, ki) {
         var key = new THREE.Mesh(bevelGeo(0.128, 0.078, 0.014, 0.005), MAT.soft); key.position.set(k[1], k[2], 0.038); key.castShadow = false; g.add(key);
         var bar = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.007), new THREE.MeshBasicMaterial({ color: ki === 3 ? 0xff5050 : 0x6fdc8c, toneMapped: false })); bar.position.set(k[1], k[2] + 0.024, 0.0455); g.add(bar); keys.push(bar);
-        var kl = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.026), new THREE.MeshBasicMaterial({ map: textTex([k[0]], 200, 52, { size: 30, bold: true, bg: 'rgba(0,0,0,0)', color: '#cfd6da', titleColor: '#cfd6da', line: 'rgba(0,0,0,0)' }), transparent: true })); kl.position.set(k[1], k[2] - 0.01, 0.0455); g.add(kl);
+        var kl = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.026), new THREE.MeshBasicMaterial({ map: signTex([k[0]], 200, 52, { size: 30, bold: true, bg: 'rgba(0,0,0,0)', color: '#cfd6da', titleColor: '#cfd6da', line: 'rgba(0,0,0,0)' }), transparent: true })); kl.position.set(k[1], k[2] - 0.01, 0.0455); g.add(kl);
       });
       var strip = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.008), new THREE.MeshBasicMaterial({ color: p.col, toneMapped: false })); strip.position.set(0, -0.205, 0.0356); g.add(strip);
       [[-0.158, 0.228], [0.158, 0.228], [-0.158, -0.228], [0.158, -0.228]].forEach(function (s) { var sw = new THREE.Mesh(roundCylGeo(0.006, 0.006, 0.004, 10), MAT.chrome); sw.rotation.x = Math.PI / 2; sw.position.set(s[0], s[1], 0.0265); g.add(sw); });
@@ -184,7 +184,7 @@
     world.speakers = [[0, 2.9, -1.7], [0, 2.9, 4.4], [-6.5, 2.9, -8.6]];
     world.speakers.forEach(function (sp) { box(0.3, 0.42, 0.24, MAT.black, sp[0], sp[1], sp[2]); var cone = new THREE.Mesh(roundCylGeo(0.1, 0.06, 0.03, 16), new THREE.MeshStandardMaterial({ color: 0x555a60 })); cone.rotation.x = Math.PI / 2; cone.position.set(sp[0], sp[1] - 0.05, sp[2] + (sp[2] > 4 ? 0.13 : 0.13)); world.group.add(cone); });
     // CLOSED sign twin for the neon
-    neonSign.closed = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.5), new THREE.MeshBasicMaterial({ map: textTex(['CLOSED'], 384, 160, { size: 84, bold: true, titleColor: '#ff4d6d', bg: 'rgba(0,0,0,0)', line: 'rgba(0,0,0,0)' }), transparent: true })); neonSign.closed.position.set(-3.5, 2.5, ROOM.z - 0.03); neonSign.closed.rotation.y = Math.PI; world.group.add(neonSign.closed);
+    neonSign.closed = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.5), new THREE.MeshBasicMaterial({ map: signTex(['CLOSED'], 384, 160, { size: 84, bold: true, titleColor: '#ff4d6d', bg: 'rgba(0,0,0,0)', line: 'rgba(0,0,0,0)' }), transparent: true })); neonSign.closed.position.set(-3.5, 2.5, ROOM.z - 0.03); neonSign.closed.rotation.y = Math.PI; world.group.add(neonSign.closed);
     applyShopState();
   }
   function syncStaffDoorObstacle() { world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'staffdoor'; }); if (!shop().staffDoor) world.obstacles.push(staffDoor.obstacle); }
@@ -315,7 +315,7 @@
   function roomOf(x, z, y) { if (y !== undefined && y < -1) return 'basement'; if (y !== undefined && y > UP.y - 0.5) return 'up'; if (z < -ROOM.z) return x >= 8 ? 'security' : 'annex'; if (z > 4) return 'lobby'; if (z < -2) return x < -1 ? 'grow' : 'dry'; return x < -4 ? 'office' : x < 4 ? 'hall' : 'proc'; }
   function roomLit(room) { return shop().rooms[room] !== false; }
   function toggleRoomLight(room) { var r = shop().rooms; r[room] = r[room] === false; applyShopState(); sfx('click'); toast('💡 ' + ROOM_NAMES[room] + ' lights ' + (r[room] === false ? 'off' : 'on'), ''); save(); ui.refreshOpen(); }
-  function lightSwitch(x, y, z, rotY, room) { var g2 = new THREE.Group(); g2.position.set(x, y, z); g2.rotation.y = rotY; world.group.add(g2); var plate = new THREE.Mesh(bevelGeo(0.12, 0.16, 0.012), colorMat(0xf2f2ee, 0.5)); g2.add(plate); var rocker = new THREE.Mesh(bevelGeo(0.07, 0.1, 0.014), colorMat(0xe8e8e4, 0.5)); rocker.position.z = 0.012; g2.add(rocker); var led = new THREE.Mesh(bevelGeo(0.02, 0.01, 0.005), glowMat(0x6fdc8c, 1.5)); led.position.set(0, -0.065, 0.014); g2.add(led); var hit = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.35, 0.2), MAT.none); g2.add(hit); interactable(hit, { kind: 'switch', room: room }); (world.switches = world.switches || []).push({ room: room, rocker: rocker, led: led }); }
+  function lightSwitch(x, y, z, rotY, room) { var g2 = new THREE.Group(); g2.position.set(x, y, z); g2.rotation.y = rotY; world.group.add(g2); var plate = new THREE.Mesh(bevelGeo(0.12, 0.16, 0.012), colorMat(0xf2f2ee, 0.5)); g2.add(plate); var rocker = new THREE.Mesh(bevelGeo(0.07, 0.1, 0.014), colorMat(0xe8e8e4, 0.5)); rocker.position.z = 0.012; g2.add(rocker); var led = new THREE.Mesh(bevelGeo(0.02, 0.01, 0.005), emitMat(0x6fdc8c, 1.5)); led.position.set(0, -0.065, 0.014); g2.add(led); var hit = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.35, 0.2), MAT.none); g2.add(hit); interactable(hit, { kind: 'switch', room: room }); (world.switches = world.switches || []).push({ room: room, rocker: rocker, led: led }); }
   function buildSwitches() {
     lightSwitch(-2.2, 1.35, 3.89, Math.PI, 'hall'); lightSwitch(7.89, 1.35, -9.7, -Math.PI / 2, 'annex'); lightSwitch(-ROOM.x + 0.11, UP.y + 1.35, -2.0, Math.PI / 2, 'up');
   }

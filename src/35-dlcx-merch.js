@@ -44,7 +44,7 @@
   var TEE_GEO = teeGeo(), MERCH_COLS = [0x15171b, 0xf3eee0, 0x2f6b4a, 0x6fdc8c, 0x7a2f3a];
   function merchMark(w) { var m = new THREE.Mesh(new THREE.PlaneGeometry(w, w), new THREE.MeshBasicMaterial({ map: emojiTex('🌿', 96, '#0f1a15'), transparent: true })); return m; }
   function merchSync() {
-    var W = world.merch; if (!W || !W.dyn || !W.dyn.parent) return; clearKids(W.dyn); var M = merchState(), g = W.dyn;
+    var W = world.merch; if (!W || !W.dyn || !W.dyn.parent) return; dropKids(W.dyn); var M = merchState(), g = W.dyn;
     function add(geo, mat, x, y, z, ry) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.y = ry || 0; m.castShadow = true; g.add(m); return m; }
     [1, -1].forEach(function (face) {
       var ry = face > 0 ? 0 : Math.PI, z0 = face * 0.06;
@@ -56,7 +56,7 @@
     });
   }
   PROP_DLC.merchStand = ['merch'];
-  defProp('merchStand', { label: 'merch stand', x: -8.6, z: 6.2, rot: 0, build: function (c) {
+  growDefProp('merchStand', { label: 'merch stand', x: -8.6, z: 6.2, rot: 0, build: function (c) {
     var M = merchState(); world.merch = null; if (!M.owned) { notFitted(c, 1.8, 0.7, ['MERCH STAND', 'E to fit it · ' + money(MERCH.price)], 'merchStand'); return; }
     // a two-sided gondola: a slatted panel on a weighted base, a rail of shirts on each face, a shelf of caps above, mugs and totes below
     c.box(1.7, 0.1, 0.62, MAT.gunmetal, 0, 0.05, 0, { solid: true, r: 0.012 }); c.box(1.6, 1.9, 0.05, MAT.darkwood, 0, 1.05, 0); for (var s = 0; s < 15; s++) [1, -1].forEach(function (f) { c.box(1.58, 0.012, 0.004, MAT.black, 0, 0.2 + s * 0.12, f * 0.027, { cast: false, sharp: true }); });
@@ -68,7 +68,7 @@
   }, after: function () { merchSync(); } });
   dlcDefine({ id: 'merch', name: 'Merch & Brand', kinds: ['merchStand'],
     prompt: function () { var M = merchState(); if (!M.owned) return 'Merch stand <small>E fits it for ' + money(MERCH.price) + '</small>'; var n = MERCH.items.reduce(function (a, it) { return a + M.stock[it.id]; }, 0); return 'Merch stand <small>' + (n ? n + ' things on it' : 'empty: order stock') + ' · brand level ' + merchLevel() + '</small>'; },
-    interact: function () { var M = merchState(); if (!M.owned) { ctxOpen('👕 Merch stand', 'A stand of T-shirts, caps, mugs and tote bags with the shop\'s mark on them. People buy while they wait, and the name gets about.', [{ label: 'Fit it · ' + money(MERCH.price) + ' <small>from the bank</small>', act: function () { if (payBank(MERCH.price, 'The merch stand')) { M.owned = true; buildProp('merchStand'); toast('👕 The merch stand is in the lobby. Order stock at it, or on the office PC.', 'good'); logEvent('👕 Put a merch stand in the lobby', 'good'); } } }]); return; } ui.openPanel('merch'); },
+    interact: function () { var M = merchState(); if (!M.owned) { ctxOpen('👕 Merch stand', 'A stand of T-shirts, caps, mugs and tote bags with the shop\'s mark on them. People buy while they wait, and the name gets about.', [{ label: 'Fit it · ' + money(MERCH.price) + ' <small>from the bank</small>', act: function () { if (payBank(MERCH.price, 'The merch stand')) { M.owned = true; growBuildProp('merchStand'); toast('👕 The merch stand is in the lobby. Order stock at it, or on the office PC.', 'good'); logEvent('👕 Put a merch stand in the lobby', 'good'); } } }]); return; } ui.openPanel('merch'); },
     tick: function (dt, offline) {
       var M = merchState(); if (!M.owned) return;
       for (var i = M.orders.length - 1; i >= 0; i--) { var o = M.orders[i]; o.t -= dt; if (o.t <= 0) { M.orders.splice(i, 1); M.stock[o.id] = Math.min(40, M.stock[o.id] + MERCH.lot); if (!offline) { toast(merchItem(o.id).ico + ' The ' + merchItem(o.id).name.toLowerCase() + 's are on the merch stand', 'good'); merchSync(); } } }

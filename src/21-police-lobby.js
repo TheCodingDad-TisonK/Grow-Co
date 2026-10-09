@@ -11,18 +11,18 @@
     // the blue stripe and the light bar, so it reads as a police car and not a white hatchback
     var stripe = colorMat(0x1b4f9c, 0.5);
     [-1.02, 1.02].forEach(function (sx) { var b = new THREE.Mesh(bevelGeo(0.06, 0.34, 2.9), stripe); b.position.set(sx, 0.72, 0.1); b.castShadow = false; g.add(b); });
-    var pword = textTex(['POLICE'], 512, 96, { size: 64, bold: true, bg: '#1b4f9c', color: '#ffffff', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' });
+    var pword = signTex(['POLICE'], 512, 96, { size: 64, bold: true, bg: '#1b4f9c', color: '#ffffff', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' });
     [-1, 1].forEach(function (s) { var pl = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.3), new THREE.MeshBasicMaterial({ map: pword })); pl.position.set(s * 1.056, 0.72, 0.1); pl.rotation.y = s * Math.PI / 2; g.add(pl); });   /* lettered down both flanks */
     var barG = new THREE.Group(); barG.position.set(0, 1.44, -0.15); g.add(barG); police.bar = barG;
     barG.add(new THREE.Mesh(bevelGeo(1.1, 0.07, 0.22), colorMat(0x22262b, 0.6)));
     police.lamp = [-1, 1].map(function (sx, i) {
-      var m = new THREE.Mesh(bevelGeo(0.42, 0.13, 0.24), glowMat(i ? 0x2f6bff : 0xff2f3a, 1.6));
+      var m = new THREE.Mesh(bevelGeo(0.42, 0.13, 0.24), emitMat(i ? 0x2f6bff : 0xff2f3a, 1.6));
       m.position.set(sx * 0.3, 0.06, 0); m.castShadow = false; barG.add(m);
       var l = new THREE.PointLight(i ? 0x2f6bff : 0xff2f3a, 0, 14); l.position.set(sx * 0.3, 0.3, 0); barG.add(l);
       return { m: m, l: l };
     });
     police.cops = [0, 1].map(function (i) {
-      var h = makeHuman({ skin: pick(SKINS), hair: pick(HAIRS), hairStyle: 'short', shirt: 0x1f2a44, pants: 0x1a2136, shoes: 0x111111, belt: 0x111111, longSleeve: true, mood: 'neutral' }); dressCop(h);
+      var h = makePerson({ skin: pick(SKINS), hair: pick(HAIRS), hairStyle: 'short', shirt: 0x1f2a44, pants: 0x1a2136, shoes: 0x111111, belt: 0x111111, longSleeve: true, mood: 'neutral' }); dressCop(h);
       var cg = new THREE.Group(); cg.add(h); cg.visible = false; world.group.add(cg);
       return { g: cg, h: h, path: [], side: i ? 1 : -1 };
     });
@@ -32,7 +32,7 @@
     var P = h.userData.parts, T = P.torso, H = P.head, blk = colorMat(0x111214, 0.55), gold = colorMat(0xd9b44a, 0.35, 0.8);
     function part(geo, mat, x, y, z, parent, rx) { var m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (rx) m.rotation.x = rx; m.castShadow = true; parent.add(m); return m; }
     part(bevelGeo(0.47, 0.5, 0.29), colorMat(0x17191d, 0.85), 0, 0.37, 0, T);
-    var wm = new THREE.MeshBasicMaterial({ map: textTex(['POLICE'], 256, 72, { size: 50, bold: true, bg: 'rgba(0,0,0,0)', color: '#ffffff', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true });
+    var wm = new THREE.MeshBasicMaterial({ map: signTex(['POLICE'], 256, 72, { size: 50, bold: true, bg: 'rgba(0,0,0,0)', color: '#ffffff', titleColor: '#ffffff', line: 'rgba(0,0,0,0)' }), transparent: true });
     var back = part(new THREE.PlaneGeometry(0.4, 0.11), wm, 0, 0.47, -0.148, T); back.rotation.y = Math.PI; back.castShadow = false;
     part(new THREE.PlaneGeometry(0.25, 0.07), wm, 0.085, 0.53, 0.148, T).castShadow = false;
     part(new THREE.CircleGeometry(0.028, 14), gold, -0.11, 0.53, 0.149, T).castShadow = false;
@@ -89,7 +89,7 @@
     }
     if (P === 'out') {
       var walking = false;
-      police.cops.forEach(function (c) { if (c.path.length) { walking = true; if (walkAlong(c.g, c.path, 2.6, dt)) c.path = []; animateHuman(c.h, dt, 'walk', 2.6, null); } else animateHuman(c.h, dt, 'idle', 0, null); });
+      police.cops.forEach(function (c) { if (c.path.length) { walking = true; if (walkMesh(c.g, c.path, 2.6, dt)) c.path = []; animatePerson(c.h, dt, 'walk', 2.6, null); } else animatePerson(c.h, dt, 'idle', 0, null); });
       if (!walking) {
         var tg = copTargets();
         if (!tg.length) { policeDone('🚓 The officers took a statement and left', false); return; }
@@ -100,7 +100,7 @@
     }
     if (P === 'close') {
       var still = false;
-      police.cops.forEach(function (c) { if (c.path.length) { still = true; if (walkAlong(c.g, c.path, 2.9, dt)) c.path = []; animateHuman(c.h, dt, 'walk', 2.9, null); } else animateHuman(c.h, dt, 'idle', 0, null); });
+      police.cops.forEach(function (c) { if (c.path.length) { still = true; if (walkMesh(c.g, c.path, 2.9, dt)) c.path = []; animatePerson(c.h, dt, 'walk', 2.9, null); } else animatePerson(c.h, dt, 'idle', 0, null); });
       var tg2 = copTargets();
       if (!tg2.length) { policeDone('🚓 Whoever it was had already gone', false); return; }
       if (!still || police.t > 9) {
@@ -110,7 +110,7 @@
       return;
     }
     if (P === 'cuff') {
-      police.cops.forEach(function (c) { animateHuman(c.h, dt, 'idle', 0, police.took[0] ? police.took[0].g.position : null); });
+      police.cops.forEach(function (c) { animatePerson(c.h, dt, 'idle', 0, police.took[0] ? police.took[0].g.position : null); });
       if (police.t > 2.2) {
         var back = { x: COP_KERB.x, z: COP_KERB.z + 1.2 };
         police.cops.forEach(function (c) { c.path = routeTo(c.g.position, back.x + c.side * 1.4, back.z, true); });
@@ -123,7 +123,7 @@
     }
     if (P === 'walkout') {
       var moving = false;
-      police.cops.forEach(function (c) { if (c.path.length) { moving = true; if (walkAlong(c.g, c.path, 2.2, dt)) c.path = []; animateHuman(c.h, dt, 'walk', 2.2, null); } else animateHuman(c.h, dt, 'idle', 0, null); });
+      police.cops.forEach(function (c) { if (c.path.length) { moving = true; if (walkMesh(c.g, c.path, 2.2, dt)) c.path = []; animatePerson(c.h, dt, 'walk', 2.2, null); } else animatePerson(c.h, dt, 'idle', 0, null); });
       police.took.forEach(function (r) { if (r.path && r.path.length) moving = true; });
       if (!moving || police.t > 22) {
         police.took.forEach(function (r) { r.state = 'away'; if (r.g) r.g.visible = false; if (r.bubble) r.bubble.visible = false; standBack(r.h); world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; }); });
@@ -169,23 +169,23 @@
     var g2 = r.g, P = r.h.userData.parts;
     if (r.delay > 0) { r.delay -= dt; g2.visible = false; return; }
     g2.visible = true;
-    if (r.pre === 'walk') { if (walkAlong(g2, r.path, 1.4, dt)) r.pre = 'hold'; animateHuman(r.h, dt, 'walk', 1.4, null); return; }
-    if (r.pre === 'hold') { if (!guardOnDuty()) robberInside(r); else if (!doorCheckBusy()) { r.pre = 'tocheck'; r.path = [{ x: LINE_CHECK.x, z: LINE_CHECK.z }]; } animateHuman(r.h, dt, 'idle', 0, null); return; }
-    if (r.pre === 'tocheck') { if (walkAlong(g2, r.path, 1.4, dt)) { if (guardOnDuty()) { r.pre = 'check'; r.t = 0; g2.rotation.y = Math.PI / 2; guard.startCheck(g2); } else robberInside(r); } animateHuman(r.h, dt, 'walk', 1.4, null); return; }
-    if (r.pre === 'check') { r.t += dt; animateHuman(r.h, dt, 'idle', 0, guard.h ? guard.h.position : null); P.lArm.rotation.x = -1.1; P.lArm.rotation.z = 0.2; if (r.t > 2.6) { P.lArm.rotation.z = 0; if (fakeIdCaught()) heistAbort('id'); else robberInside(r); } return; }
+    if (r.pre === 'walk') { if (walkMesh(g2, r.path, 1.4, dt)) r.pre = 'hold'; animatePerson(r.h, dt, 'walk', 1.4, null); return; }
+    if (r.pre === 'hold') { if (!guardOnDuty()) robberInside(r); else if (!doorCheckBusy()) { r.pre = 'tocheck'; r.path = [{ x: LINE_CHECK.x, z: LINE_CHECK.z }]; } animatePerson(r.h, dt, 'idle', 0, null); return; }
+    if (r.pre === 'tocheck') { if (walkMesh(g2, r.path, 1.4, dt)) { if (guardOnDuty()) { r.pre = 'check'; r.t = 0; g2.rotation.y = Math.PI / 2; guard.startCheck(g2); } else robberInside(r); } animatePerson(r.h, dt, 'walk', 1.4, null); return; }
+    if (r.pre === 'check') { r.t += dt; animatePerson(r.h, dt, 'idle', 0, guard.h ? guard.h.position : null); P.lArm.rotation.x = -1.1; P.lArm.rotation.z = 0.2; if (r.t > 2.6) { P.lArm.rotation.z = 0; if (fakeIdCaught()) heistAbort('id'); else robberInside(r); } return; }
     r.t += dt; var glance = r.t % 7 < 1.3 ? REG_POS : null;
     if (r.pre === 'browse') {
-      if (!r.arrived) { if (walkAlong(g2, r.path, 1.3, dt)) { r.arrived = true; r.t = 0; if (r === robber && S.staff && S.staff.guardTask === 'patrol' && Math.random() < guardOdds('patrol')) { heistAbort('guard'); return; } } animateHuman(r.h, dt, 'walk', 1.3, null); return; }
-      turnTo(r, r.faceYaw, dt); animateHuman(r.h, dt, 'idle', 0, glance); if (r.t > r.caseT) maskUp(r); return;
+      if (!r.arrived) { if (walkMesh(g2, r.path, 1.3, dt)) { r.arrived = true; r.t = 0; if (r === robber && S.staff && S.staff.guardTask === 'patrol' && Math.random() < guardOdds('patrol')) { heistAbort('guard'); return; } } animatePerson(r.h, dt, 'walk', 1.3, null); return; }
+      turnTo(r, r.faceYaw, dt); animatePerson(r.h, dt, 'idle', 0, glance); if (r.t > r.caseT) maskUp(r); return;
     }
     if (r.pre === 'queue') {
-      if (r.slot >= 0 && r.path.length) { walkAlong(g2, r.path, 1.4, dt); animateHuman(r.h, dt, 'walk', 1.4, null); }
-      else { turnTo(r, r.slot === 0 ? Math.PI : Math.PI / 2, dt); animateHuman(r.h, dt, 'idle', 0, glance || (r.slot === 0 ? player.pos : null)); }
+      if (r.slot >= 0 && r.path.length) { walkMesh(g2, r.path, 1.4, dt); animatePerson(r.h, dt, 'walk', 1.4, null); }
+      else { turnTo(r, r.slot === 0 ? Math.PI : Math.PI / 2, dt); animatePerson(r.h, dt, 'idle', 0, glance || (r.slot === 0 ? player.pos : null)); }
       if (r.slot === 0 && !r.path.length && windowFree()) { r.pre = 'stepup'; r.path = [{ x: 0, z: 5.25 }]; }   /* his turn: he walks up like a customer */
       else if (r.t > r.caseT) maskUp(r);
       return;
     }
-    if (r.pre === 'stepup') { if (walkAlong(g2, r.path, 1.4, dt)) maskUp(r); else animateHuman(r.h, dt, 'walk', 1.4, null); }
+    if (r.pre === 'stepup') { if (walkMesh(g2, r.path, 1.4, dt)) maskUp(r); else animatePerson(r.h, dt, 'walk', 1.4, null); }
   }
   function updateRobber(r, dt) {
     var g2 = r.g, K = ROB_KINDS[r.kind], P = r.h.userData.parts;
@@ -193,23 +193,23 @@
     function aim() { if (!r.gun) return; P.rArm.rotation.x = -1.4; P.rArm.rotation.z = -0.05; P.rArm.userData.elbow.rotation.x = -0.08; }
     if (r.state === 'case') { robberCase(r, dt); return; }
     if (r.state === 'in') {
-      if (walkAlong(g2, r.path, K.speed, dt)) { r.t = 0; if (r.kind === 'snatch') { r.state = 'grab'; robberSay(r, '…', '#ffc857'); } else { r.state = 'demand'; robberSay(r, r.weapon === 'knife' ? 'The till. Now.' : 'Empty the till or I shoot.', '#ff6b6b'); sfx('alarm'); toast('🚨 Robbery. He wants the till, at the window.', 'bad'); hud(); } }
-      animateHuman(r.h, dt, 'walk', K.speed, null); aim(); return;
+      if (walkMesh(g2, r.path, K.speed, dt)) { r.t = 0; if (r.kind === 'snatch') { r.state = 'grab'; robberSay(r, '…', '#ffc857'); } else { r.state = 'demand'; robberSay(r, r.weapon === 'knife' ? 'The till. Now.' : 'Empty the till or I shoot.', '#ff6b6b'); sfx('alarm'); toast('🚨 Robbery. He wants the till, at the window.', 'bad'); hud(); } }
+      animatePerson(r.h, dt, 'walk', K.speed, null); aim(); return;
     }
     if (r.state === 'grab') {   // the snatch: one reach over the counter, then legs
-      r.t += dt; easeYaw(g2, Math.PI, 0.15); animateHuman(r.h, dt, 'wait', 0, null); P.rArm.rotation.x = -1.5; P.torso.rotation.x = 0.35;
+      r.t += dt; easeYawMesh(g2, Math.PI, 0.15); animatePerson(r.h, dt, 'wait', 0, null); P.rArm.rotation.x = -1.5; P.torso.rotation.x = 0.35;
       if (r.t > 1.6) { P.torso.rotation.x = 0; var tips = Math.floor(S.tips), fist = Math.floor(S.till * 0.4); S.tips -= tips; S.till -= fist; r.grabbed = tips + fist; S.stats.robbed = (S.stats.robbed || 0) + r.grabbed; var left = 3; ['rgrinder', 'lighter', 'rpaper'].forEach(function (k) { var n = Math.min(left, S.display[k] || 0); if (n > 0) { S.display[k] -= n; r.disp[k] = n; left -= n; } }); syncDisplay(); S.rep = Math.max(0, S.rep - 2); robberSay(r, 'Cheers for that.', '#ff6b6b'); sfx('bad'); toast('💸 He grabbed the tip jar and a fistful from the till (' + money(r.grabbed) + '). Stop him before the door.', 'bad'); logEvent('💸 A snatch thief grabbed ' + money(r.grabbed) + ' and whatever was on the counter display (rep -2)', 'bad'); robberFlee(r); hud(); }
       return;
     }
     if (r.state === 'demand') {
-      r.t += dt; if (r.alertT <= 0) easeYaw(g2, Math.PI, 0.1); r.h.userData.impatient = true; animateHuman(r.h, dt, 'wait', 0, player.pos); aim(); armedReact(r, dt); if (r.state !== 'demand') return;
+      r.t += dt; if (r.alertT <= 0) easeYawMesh(g2, Math.PI, 0.1); r.h.userData.impatient = true; animatePerson(r.h, dt, 'wait', 0, player.pos); aim(); armedReact(r, dt); if (r.state !== 'demand') return;
       if (r.t > 4 && !r.guardRolled) { r.guardRolled = true; var chance = guardOdds('stop', r.kind); if (Math.random() < chance) { guard.say(guardArmed() ? 'Drop it. On the floor.' : 'Got him. Out you go.', '#6fdc8c', 3000); robberSay(r, 'Okay, okay.', '#ffc857'); S.rep += 2; logEvent('🛡️ The guard stopped the robbery (rep +2)', 'good'); toast('🛡️ The guard threw the robber out', 'good'); robbers.forEach(function (x) { if (x.state !== 'away' && x.state !== 'out' && x.state !== 'down') { returnLoot(x); robberFlee(x); } }); return; } else guard.say(r.weapon === 'knife' ? 'He\'s got a knife.' : 'He\'s got a gun. I\'m not paid enough for this.', '#ffc857', 2500); }
-      if (!r.escal && r.t > K.demandT * 0.55) { r.escal = true; S.rep = Math.max(0, S.rep - 2); if (r.weapon === 'knife') robberSay(r, 'The till, or I cut you.', '#ff6b6b'); else { sfx(r.weapon === 'shotgun' ? 'shotgun' : 'gunshot'); burst(g2.position.x, 2.6, g2.position.z, 0xdddddd, 14, 'out'); robberSay(r, 'Next one\'s for you.', '#ff6b6b'); } toast('🚨 ' + (r.weapon === 'knife' ? 'He\'s losing patience' : 'He fired into the ceiling, and the lobby is terrified') + ' (rep -2)', 'bad'); }
+      if (!r.escal && r.t > K.demandT * 0.55) { r.escal = true; S.rep = Math.max(0, S.rep - 2); if (r.weapon === 'knife') robberSay(r, 'The till, or I cut you.', '#ff6b6b'); else { sfx(r.weapon === 'shotgun' ? 'shotgun' : 'gunshot'); spark(g2.position.x, 2.6, g2.position.z, 0xdddddd, 14, 'out'); robberSay(r, 'Next one\'s for you.', '#ff6b6b'); } toast('🚨 ' + (r.weapon === 'knife' ? 'He\'s losing patience' : 'He fired into the ceiling, and the lobby is terrified') + ' (rep -2)', 'bad'); }
       if (r.t > K.demandT) { if (r.weapon && r.weapon !== 'knife' && player.downT <= 0 && Math.hypot(player.pos.x - g2.position.x, player.pos.z - g2.position.z) < 9 && sightLine(g2)) robberShoot(r, 0.15); if (r.state === 'demand') takeTill(r, false); }
       return;
     }
     if (r.state === 'force') {   // shoulder, boot, crowbar: whatever is quickest
-      r.t += dt; animateHuman(r.h, dt, 'idle', 0, null);
+      r.t += dt; animatePerson(r.h, dt, 'idle', 0, null);
       P.rArm.rotation.x = -1.2 + Math.sin(r.t * 11) * 0.7; P.torso.rotation.x = 0.2 + Math.sin(r.t * 11) * 0.12;
       if (r.t > 0.45 && !r.forceHit) { r.forceHit = 1; sfx('hit'); }
       if (r.t > r.forceFor) {
@@ -223,23 +223,23 @@
     }
     if (r.state === 'raid') {
       if (robberForce(r, g2)) return;
-      if (walkAlong(g2, r.path, K.speed + 0.4, dt)) { r.state = 'loot'; r.t = 0; robberSay(r, r.raid === 'vault' ? 'Come on. Open.' : 'Jackpot.', '#ffc857'); }
-      animateHuman(r.h, dt, 'walk', K.speed + 0.4, null); aim(); armedReact(r, dt); return;
+      if (walkMesh(g2, r.path, K.speed + 0.4, dt)) { r.state = 'loot'; r.t = 0; robberSay(r, r.raid === 'vault' ? 'Come on. Open.' : 'Jackpot.', '#ffc857'); }
+      animatePerson(r.h, dt, 'walk', K.speed + 0.4, null); aim(); armedReact(r, dt); return;
     }
     if (r.state === 'loot') {
-      r.t += dt; animateHuman(r.h, dt, 'idle', 0, null); P.torso.rotation.x = 0.45; P.rArm.rotation.x = -1.0 + Math.sin(r.t * 9) * 0.3; P.lArm.rotation.x = -1.0 + Math.cos(r.t * 9) * 0.3; armedReact(r, dt); if (r.state !== 'loot') return;
+      r.t += dt; animatePerson(r.h, dt, 'idle', 0, null); P.torso.rotation.x = 0.45; P.rArm.rotation.x = -1.0 + Math.sin(r.t * 9) * 0.3; P.lArm.rotation.x = -1.0 + Math.cos(r.t * 9) * 0.3; armedReact(r, dt); if (r.state !== 'loot') return;
       if (r.t > (r.raid === 'vault' ? 7 : 6)) { P.torso.rotation.x = 0; finishLoot(r, false); robberFlee(r); }
       return;
     }
     if (r.state === 'flee') {
       if (robberForce(r, g2)) return;
-      if (walkAlong(g2, r.path, r.masked ? 3.3 : 1.6, dt)) { if (r.masked && (r.grabbed > 0 || r.goods.length || Object.keys(r.disp).length)) startGetaway(r); else if (r.grabbed > 0 || r.goods.length || Object.keys(r.disp).length) logEvent('💨 The ' + (r.kind === 'crew' ? 'gang' : K.label) + ' got away with ' + (r.grabbed > 0 ? money(r.grabbed) : 'your goods') + (r.goods.length && r.grabbed > 0 ? ' and a bag of your goods' : ''), 'bad'); r.state = 'away'; g2.visible = false; r.bubble.visible = false; world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; }); }
-      animateHuman(r.h, dt, 'walk', r.masked ? 3.3 : 1.6, null); return;
+      if (walkMesh(g2, r.path, r.masked ? 3.3 : 1.6, dt)) { if (r.masked && (r.grabbed > 0 || r.goods.length || Object.keys(r.disp).length)) startGetaway(r); else if (r.grabbed > 0 || r.goods.length || Object.keys(r.disp).length) logEvent('💨 The ' + (r.kind === 'crew' ? 'gang' : K.label) + ' got away with ' + (r.grabbed > 0 ? money(r.grabbed) : 'your goods') + (r.goods.length && r.grabbed > 0 ? ' and a bag of your goods' : ''), 'bad'); r.state = 'away'; g2.visible = false; r.bubble.visible = false; world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; }); }
+      animatePerson(r.h, dt, 'walk', r.masked ? 3.3 : 1.6, null); return;
     }
     if (r.state === 'cuffed') {   // hands up, and he walks out to the car on his own legs
       r.t += dt;
-      if (r.path && r.path.length) { walkAlong(g2, r.path, 1.5, dt); animateHuman(r.h, dt, 'walk', 1.5, null); }
-      else animateHuman(r.h, dt, 'idle', 0, null);
+      if (r.path && r.path.length) { walkMesh(g2, r.path, 1.5, dt); animatePerson(r.h, dt, 'walk', 1.5, null); }
+      else animatePerson(r.h, dt, 'idle', 0, null);
       P.lArm.rotation.x = -2.5; P.rArm.rotation.x = -2.5;
       return;
     }
@@ -265,7 +265,7 @@
   function updateFight(dt) {
     if (!fight && loungers.length >= 2 && Math.random() < dt / 150) startFight();
     if (!fight) return; fight.t += dt;
-    [fight.a, fight.b].forEach(function (l, i) { var o = i ? fight.a : fight.b; if (l.state !== 'fight') return; turnTo(l, Math.atan2(o.g.position.x - l.g.position.x, o.g.position.z - l.g.position.z), dt); animateHuman(l.h, dt, 'idle', 0, null); var P = l.h.userData.parts; P.rArm.rotation.x = -1.0 + Math.sin(fight.t * 11 + i) * 0.5; P.lArm.rotation.x = -0.9 + Math.cos(fight.t * 9 + i) * 0.5; P.rArm.userData.elbow.rotation.x = -1.2; P.lArm.userData.elbow.rotation.x = -1.2; P.torso.rotation.x = 0.15 + Math.sin(fight.t * 11 + i) * 0.08; });
+    [fight.a, fight.b].forEach(function (l, i) { var o = i ? fight.a : fight.b; if (l.state !== 'fight') return; turnTo(l, Math.atan2(o.g.position.x - l.g.position.x, o.g.position.z - l.g.position.z), dt); animatePerson(l.h, dt, 'idle', 0, null); var P = l.h.userData.parts; P.rArm.rotation.x = -1.0 + Math.sin(fight.t * 11 + i) * 0.5; P.lArm.rotation.x = -0.9 + Math.cos(fight.t * 9 + i) * 0.5; P.rArm.userData.elbow.rotation.x = -1.2; P.lArm.userData.elbow.rotation.x = -1.2; P.torso.rotation.x = 0.15 + Math.sin(fight.t * 11 + i) * 0.08; });
     var gpat = S.staff && S.staff.guardTask === 'patrol'; if (fight.t > (gpat ? 2.5 : 5) && !fight.guardRolled) { fight.guardRolled = true; if (gpat || Math.random() < 0.55) { endFight('guard'); return; } }
     if (fight.t > 12) endFight('timeout');
   }
@@ -282,9 +282,9 @@
     fridge: { prop: 'fridge',      off: 0.8,  dur: 4,   act: 1.5 }
   };
   function lobbyFridges() {   // drinks fridges a customer can walk up to: stood in the lobby, with something cold in them
-    return builtUnits('fridge').filter(function (u) { var P = propPlacement(u); return !P.floor && roomOf(P.x, P.z) === 'lobby' && (machState(u).fridge || 0) > 0; });
+    return builtUnits('fridge').filter(function (u) { var P = growPropPlacement(u); return !P.floor && roomOf(P.x, P.z) === 'lobby' && (machState(u).fridge || 0) > 0; });
   }
-  function builtUnits(base) { return unitIds(base).filter(function (u) { return propInst[u] && !propPlacement(u).hidden; }); }
+  function builtUnits(base) { return unitIds(base).filter(function (u) { return propInst[u] && !growPropPlacement(u).hidden; }); }
   function lobbyStop(kind, unit) {
     var t = LOBBY_STOPS[kind], open = unit ? [unit] : builtUnits(t.prop); if (!open.length) return null;
     var u = pick(open), f = propFront(u, t.off);
@@ -295,19 +295,19 @@
     return free.length ? pick(free) : null;
   }
   function loungerSay(l, text, color, ms) {
-    var ob = l.bubble.material.map; l.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); l.bubble.material.needsUpdate = true; if (ob) ob.dispose(); l.bubble.visible = true;
+    var ob = l.bubble.material.map; l.bubble.material.map = signTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); l.bubble.material.needsUpdate = true; if (ob) ob.dispose(); l.bubble.visible = true;
     clearTimeout(l.sayT); l.sayT = setTimeout(function () { l.bubble.visible = false; }, ms || 2400);
   }
   // everything in the lobby is reached along a corridor at z 6.6 (clear of the posts and the guard), then straight to the spot
   function lobbyPath(from, to) { var p = []; if (Math.abs(from.z - 6.6) > 0.1) p.push({ x: from.x, z: 6.6 }); if (Math.abs(from.x - to.x) > 0.1) p.push({ x: to.x, z: 6.6 }); p.push({ x: to.x, z: to.z }); return p; }
   // what a paid-up customer feels like doing before leaving
-  function unitRoll(n, p) { for (var i = 0; i < Math.min(3, n); i++) if (Math.random() < p) return true; return false; }   // one roll per machine standing, up to three: a second machine catches people the first one missed
+  function machineRoll(n, p) { for (var i = 0; i < Math.min(3, n); i++) if (Math.random() < p) return true; return false; }   // one roll per machine standing, up to three: a second machine catches people the first one missed
   function planFor(c) {
     var plan = [];
-    if (hasLic('catering')) { var vus = builtUnits('vending').filter(function (u) { return vendKeys(u).length; }); if (unitRoll(vus.length, 0.35)) plan.push({ kind: 'vend', unit: pick(vus) }); }   /* only a machine with something on its racks draws anyone */
-    if (hasLic('catering') && S.upgrades.lobby) { var cus = builtUnits('lobbyCoffee').filter(coffReady); if (unitRoll(cus.length, 0.4)) plan.push({ kind: 'coffee', unit: pick(cus) }); }
-    if (hasLic('catering')) { var frs = lobbyFridges(); if (unitRoll(frs.length, 0.3)) plan.push({ kind: 'fridge', unit: pick(frs) }); }   /* a cold can from a fridge stood out in the lobby */
-    if (hasLic('amusement') && unitRoll(builtUnits('arcade').length, 0.25)) plan.push({ kind: 'arcade' });
+    if (hasLic('catering')) { var vus = builtUnits('vending').filter(function (u) { return vendKeys(u).length; }); if (machineRoll(vus.length, 0.35)) plan.push({ kind: 'vend', unit: pick(vus) }); }   /* only a machine with something on its racks draws anyone */
+    if (hasLic('catering') && S.upgrades.lobby) { var cus = builtUnits('lobbyCoffee').filter(coffReady); if (machineRoll(cus.length, 0.4)) plan.push({ kind: 'coffee', unit: pick(cus) }); }
+    if (hasLic('catering')) { var frs = lobbyFridges(); if (machineRoll(frs.length, 0.3)) plan.push({ kind: 'fridge', unit: pick(frs) }); }   /* a cold can from a fridge stood out in the lobby */
+    if (hasLic('amusement') && machineRoll(builtUnits('arcade').length, 0.25)) plan.push({ kind: 'arcade' });
     if (hasLic('lounge') && c.want === 'joints' && Math.random() < 0.4) { var seat = freeLoungeSeat(); if (seat) plan.push({ kind: 'bench', seat: seat }); }
     return plan;
   }
@@ -319,13 +319,13 @@
     world.interact = world.interact.filter(function (m) { return !m.userData.npc; });
     npc.g.remove(h); npc.human = null; npc.state = 'away'; npc.g.visible = false; npc.bubble.visible = false;
     var g = new THREE.Group(); g.position.set(wp.x, 0, wp.z); g.rotation.y = npc.g.rotation.y; g.add(h); world.group.add(g); g.userData.gated = true;
-    var bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, g); bubble.visible = false;
+    var bubble = sprite(signTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, g); bubble.visible = false;
     var lid = 'L' + now() + randi(0, 999); var lhb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); lhb.position.y = 1.25; lhb.userData.lounger = lid; h.add(lhb); interactable(lhb, { kind: 'lounger', lid: lid });
     // a joint in the right hand, hidden until they sit down: paper, ember and a point light that flares on each drag
     var el = h.userData.parts.rArm.userData.elbow;
     var joint = new THREE.Group(); joint.position.set(0, -0.36, 0.06); joint.rotation.x = Math.PI / 2; joint.visible = false; el.add(joint);
     joint.add(new THREE.Mesh(roundCylGeo(0.008, 0.006, 0.13, 6), colorMat(0xf5f0e0, 0.9)));
-    var ember = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 6), glowMat(0xff6a1a, 2.0)); ember.position.y = 0.065; joint.add(ember);
+    var ember = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 6), emitMat(0xff6a1a, 2.0)); ember.position.y = 0.065; joint.add(ember);
     var glow = new THREE.PointLight(0xff7a2a, 0, 0.7); glow.position.y = 0.065; joint.add(glow);
     var benchStep = plan.filter(function (s) { return s.kind === 'bench'; })[0];
     var l = { id: lid, g: g, h: h, who: who, bubble: bubble, joint: joint, glow: glow, plan: plan, step: -1, state: 'walk', next: 'leave', t: 0, path: [],
@@ -342,7 +342,7 @@
       if (!jid) { l.seat = null; loungerSay(l, 'No joints left? Another time, then.', '#ffc857', 2400); logEvent('🪑 ' + l.who + ' wanted a joint for the lounge, but the goods shelf had none', ''); nextStep(l); return; }
       var jd = lotDraw('joints', jid, 1), jp = Math.max(1, Math.round(jointPrice(jd.q, jd.thc))); S.till += jp; bookSale(jp); S.stats.sold++; syncGoods();
       logEvent('🪑 ' + l.who + ' bought a ' + strainById(jid).name + ' joint to smoke in the lounge (' + money(jp) + ' in the till)', '');
-      l.sp = propWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
+      l.sp = growPropWorld(st.seat.prop, st.seat.lx, -0.05); l.yaw = propInst[st.seat.prop].g.rotation.y; l.path = lobbyPath(from, { x: l.sp.x, z: l.sp.z - 0.45 }); l.state = 'walk'; l.next = 'sit'; }
     else { var s = lobbyStop(st.kind, st.unit); if (!s) { l.state = 'leave'; return; } l.path = lobbyPath(from, s); l.state = 'walk'; l.next = 'use'; l.useKind = st.kind; l.useUnit = s.unit; l.useYaw = s.yaw; l.useDur = s.dur; l.useAct = s.act; l.acted = false; }
   }
   // the machine does its thing: you get paid, they get something to hold
@@ -370,7 +370,7 @@
       var can = new THREE.Mesh(roundCylGeo(0.03, 0.03, 0.11, 10), colorMat(pick([0xffd166, 0x3ad0ff, 0x6fdc8c, 0xff8c42]), 0.4, 0.3)); can.position.set(0, -0.37, 0.03); le.add(can);
       var vwhat = pickDrink ? 'a drink' : vk === 'snack' ? 'a snack' : 'something from the ' + itemName(vk).toLowerCase();
       toast('🥤 ' + l.who + ' got ' + vwhat + ' from the machine (+$2 in the box)', ''); logEvent('🥤 ' + l.who + ' bought ' + vwhat + ' from the vending machine (+$2)', '');
-      if (propInst.vending) burst(ROOM.x - 1.0, 0.5, 6.8, 0xffffff, 6, 'up');
+      if (propInst.vending) spark(ROOM.x - 1.0, 0.5, 6.8, 0xffffff, 6, 'up');
     } else {
       var cu = l.useUnit || 'lobbyCoffee', cst = machStock(cu);
       if (!coffReady(cu)) { loungerSay(l, 'No coffee?', '#ff6b6b'); logEvent('☕ ' + l.who + ' found the coffee machine empty', 'bad'); return; }
@@ -380,7 +380,7 @@
       var lid = new THREE.Mesh(roundCylGeo(0.037, 0.037, 0.012, 10), colorMat(0x3a2a1a, 0.6)); lid.position.y = 0.05; cup.add(lid);
       loungerSay(l, pick(['Ahh, coffee.', 'Cheers.', 'Needed that.']), '#e8f1ea');
       toast('☕ ' + l.who + ' bought a coffee (+$3 in the box)', ''); logEvent('☕ ' + l.who + ' bought a coffee in the lobby (+$3)', '');
-      if (propInst.lobbyCoffee) burst(ROOM.x - 0.9, 1.1, 8.1, 0xcfd8dc, 8, 'smoke');
+      if (propInst.lobbyCoffee) spark(ROOM.x - 0.9, 1.1, 8.1, 0xcfd8dc, 8, 'smoke');
     }
   }
   // seated pose, k = 0 standing .. 1 fully seated; the right hand goes to the mouth while dragging
@@ -400,9 +400,9 @@
   function updateLoungers(dt) {
     for (var i = loungers.length - 1; i >= 0; i--) {
       var l = loungers[i], P = l.h.userData.parts, speed = l.h.userData.spec.hunch ? 0.9 : 1.4;
-      if (l.state === 'walk') { if (walkAlong(l.g, l.path, speed, dt)) { l.state = l.next; l.t = 0; } animateHuman(l.h, dt, 'walk', speed, null); }
+      if (l.state === 'walk') { if (walkMesh(l.g, l.path, speed, dt)) { l.state = l.next; l.t = 0; } animatePerson(l.h, dt, 'walk', speed, null); }
       else if (l.state === 'use') {
-        l.t += dt; turnTo(l, l.useYaw, dt); animateHuman(l.h, dt, 'idle', 0, null);
+        l.t += dt; turnTo(l, l.useYaw, dt); animatePerson(l.h, dt, 'idle', 0, null);
         var pressing = l.t < l.useAct + 0.5;   // right arm up at the buttons, then back down once it has paid out
         P.rArm.rotation.x = lerp(P.rArm.rotation.x, pressing ? -1.15 : -0.1, 0.15); P.rArm.userData.elbow.rotation.x = lerp(P.rArm.userData.elbow.rotation.x, pressing ? -0.5 : -0.25, 0.15);
         if (!l.acted && l.t > l.useAct) { l.acted = true; lobbyServe(l); }
@@ -419,7 +419,7 @@
         l.dragT -= dt; if (l.dragT <= 0 && !l.drag) { l.drag = 1.6; l.dragT = randf(3, 6); }
         if (l.drag > 0) {
           l.drag -= dt;
-          if (l.drag <= 0.7 && !l.puffed) { l.puffed = true; _mouth.set(0, 0.18, 0.22); P.head.localToWorld(_mouth); burst(_mouth.x, _mouth.y, _mouth.z, 0xc9d1cc, 10, 'smoke'); l.h.userData.setMood('sleepy'); }
+          if (l.drag <= 0.7 && !l.puffed) { l.puffed = true; _mouth.set(0, 0.18, 0.22); P.head.localToWorld(_mouth); spark(_mouth.x, _mouth.y, _mouth.z, 0xc9d1cc, 10, 'smoke'); l.h.userData.setMood('sleepy'); }
           if (l.drag <= 0) { l.drag = 0; l.puffed = false; l.h.userData.setMood('happy'); }
         }
         l.glow.intensity = l.drag > 0.7 ? 0.5 + Math.sin(world.time * 30) * 0.15 : 0.08;
@@ -430,10 +430,10 @@
         l.t += dt; var k2 = 1 - clamp(l.t / 0.7, 0, 1); l.g.position.y = -0.22 * k2; poseSeated(l, k2);
         if (k2 <= 0) { l.g.position.y = 0; l.glow.intensity = 0; l.joint.visible = false; l.seat = null; l.h.userData.setMood(CAST[l.who] && CAST[l.who].mood || 'neutral'); nextStep(l); }
       }
-      else if (l.state === 'leave') { if (walkAlong(l.g, l.path, speed * 1.05, dt)) { world.group.remove(l.g); disposeTree(l.g); clearTimeout(l.sayT); world.interact = world.interact.filter(function (m) { return m.userData.lounger !== l.id; }); loungers.splice(i, 1); continue; } animateHuman(l.h, dt, 'walk', speed, null); }
+      else if (l.state === 'leave') { if (walkMesh(l.g, l.path, speed * 1.05, dt)) { world.group.remove(l.g); dropTree(l.g); clearTimeout(l.sayT); world.interact = world.interact.filter(function (m) { return m.userData.lounger !== l.id; }); loungers.splice(i, 1); continue; } animatePerson(l.h, dt, 'walk', speed, null); }
       else if (l.state === 'fight') { /* driven by updateFight */ }
       else if (l.state === 'down') { l.t += dt; if (l.t > 4) { standBack(l.h); l.plan = []; l.step = -1; l.state = 'leave'; nextStep(l); loungerSay(l, 'You\'re mad, you are.', '#ff6b6b'); } }
-      else if (l.state === 'out') { l.t += dt; if (l.t > 5) { world.group.remove(l.g); disposeTree(l.g); clearTimeout(l.sayT); world.interact = world.interact.filter(function (m) { return m.userData.lounger !== l.id; }); loungers.splice(i, 1); continue; } }
+      else if (l.state === 'out') { l.t += dt; if (l.t > 5) { world.group.remove(l.g); dropTree(l.g); clearTimeout(l.sayT); world.interact = world.interact.filter(function (m) { return m.userData.lounger !== l.id; }); loungers.splice(i, 1); continue; } }
     }
   }
 

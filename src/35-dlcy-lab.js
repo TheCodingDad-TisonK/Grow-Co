@@ -54,7 +54,7 @@
     ctxOpen('🧪 Extraction lab', 'the grade follows the bud: A from quality 80, B from 60, C from 40', lines);
   }
   hooks.boot.push(function () {   // the technician stands at the rig while one is hired
-    var h = makeHuman({ shirt: 0xf2f4f5, pants: 0x2b3340, coat: 0xf2f4f5, glasses: true, longSleeve: true, hair: 0x3a2a1c, mood: 'happy' }); h.position.set(19.2, -200, -3.4); h.rotation.y = Math.PI * 0.85; world.group.add(h);
+    var h = makePerson({ shirt: 0xf2f4f5, pants: 0x2b3340, coat: 0xf2f4f5, glasses: true, longSleeve: true, hair: 0x3a2a1c, mood: 'happy' }); h.position.set(19.2, -200, -3.4); h.rotation.y = Math.PI * 0.85; world.group.add(h);
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.9, 0.9), MAT.none); hb.position.y = 0.95; h.add(hb); interactable(hb, { kind: 'labTech' }); labUI.tech = h;
   });
   dlcDefine({ id: 'lab', name: DLC_NAME.lab, kinds: ['labTech'],
@@ -64,5 +64,5 @@
       labUI.t += dt; if (labUI.t < 5) return; labUI.t = 0; var X = xs(); if (!X.staff.labtech || labState().job || !powerOn()) return;
       var p = labTechPick(); if (p && labStart(p.strain, p.sku, true)) logEvent('🥼 The technician started ' + labState().job.n + ' × ' + cigLabel(p.sku, labState().job.q) + ' from ' + strainById(p.strain).name, '');
     },
-    update: function (dt) { var h = labUI.tech; if (!h) return; var on = !!xs().staff.labtech; h.position.y = on ? BASE.y : -200; if (on && player.floor === -1 && player.pos.x > 12 && player.pos.x < 26) animateHuman(h, dt, 'idle', 0, player.pos); }
+    update: function (dt) { var h = labUI.tech; if (!h) return; var on = !!xs().staff.labtech; h.position.y = on ? BASE.y : -200; if (on && player.floor === -1 && player.pos.x > 12 && player.pos.x < 26) animatePerson(h, dt, 'idle', 0, player.pos); }
   });

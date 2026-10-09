@@ -18,7 +18,7 @@
   };
   // what you can fight back with: the bat is free, the rest comes out of the weapon locker by the counter
   var WEAPONS = {
-    pepper:  { ico: '🌶️', name: 'pepper spray', price: 60,   range: 3.2, dot: 0.8,   cd: 900,  sfx: 'spray',   lethal: false, d: 'short range, six bursts a can' },
+    pepper:  { ico: '🌶️', name: 'pepper spray', price: 60,   range: 3.2, dot: 0.8,   cd: 900,  sfx: 'spray',   lethal: false, d: 'short range, six sparks a can' },
     taser:   { ico: '⚡', name: 'taser',         price: 350,  range: 5.5, dot: 0.9,   cd: 3500, sfx: 'zap',     lethal: false, lvl: 3, d: 'drops almost anyone, slow to recharge' },
     pistol:  { ico: '🔫', name: '9mm pistol',    price: 900,  range: 16,  dot: 0.965, cd: 380,  sfx: 'gunshot', lethal: true, lic: true, ammo: 'rounds', d: 'comes with 16 rounds' },
     shotgun: { ico: '💥', name: 'pump shotgun',  price: 1600, range: 8,   dot: 0.88,  cd: 1100, sfx: 'shotgun', lethal: true, lic: true, ammo: 'shells', d: 'comes with 8 shells' },
@@ -29,7 +29,7 @@
   var robber = mkRobber(0), mate = mkRobber(1), robbers = [robber, mate];
   var heist = { on: false, kind: 'knife', policeT: 0, masked: false, aborted: false, t: 0 };
   var REG_POS = new THREE.Vector3(0, 1.4, 3.5);
-  function robberSay(r, t, col) { var ob = r.bubble.material.map; r.bubble.material.map = textTex([t], 512, 160, { size: 44, titleColor: col || '#ff6b6b' }); r.bubble.material.needsUpdate = true; if (ob) ob.dispose(); r.bubble.visible = true; r.sayT = 3.5; }
+  function robberSay(r, t, col) { var ob = r.bubble.material.map; r.bubble.material.map = signTex([t], 512, 160, { size: 44, titleColor: col || '#ff6b6b' }); r.bubble.material.needsUpdate = true; if (ob) ob.dispose(); r.bubble.visible = true; r.sayT = 3.5; }
   function robTier() { return clamp(Math.floor((S.level - 1) / 2) + ((S.stats.heists || 0) >= 4 ? 1 : 0), 0, 3); }   // trouble grows with the shop: snatchers first, crews once word gets round there is money here
   function pickRobKind() { var w = [[70, 30, 0, 0], [35, 45, 20, 0], [15, 35, 35, 15], [5, 20, 45, 30]][robTier()]; var roll = Math.random() * 100, acc = 0, ks = ['snatch', 'knife', 'gun', 'crew']; for (var i = 0; i < 4; i++) { acc += w[i]; if (roll < acc) return ks[i]; } return 'knife'; }
   function robWeaponMesh(kind) {   // built along the forearm (local -y) so a raised arm points it at you
@@ -41,9 +41,9 @@
     g.position.set(0.02, -0.3, 0.05); return g;
   }
   function buildRobber(r, kind, weapon, role) {
-    if (!r.g) { r.g = new THREE.Group(); world.group.add(r.g); r.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, r.g); }
-    if (r.h) { r.g.remove(r.h); disposeTree(r.h); } world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; });
-    r.h = makeHuman(strangerLook(role === 'bagman', true)); r.g.add(r.h); r.g.userData.gated = true;   /* dressed like anyone off the street: the balaclava stays in a pocket until he makes his move */
+    if (!r.g) { r.g = new THREE.Group(); world.group.add(r.g); r.bubble = sprite(signTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, r.g); }
+    if (r.h) { r.g.remove(r.h); dropTree(r.h); } world.interact = world.interact.filter(function (m) { return m.userData.robberId !== r.id; });
+    r.h = makePerson(strangerLook(role === 'bagman', true)); r.g.add(r.h); r.g.userData.gated = true;   /* dressed like anyone off the street: the balaclava stays in a pocket until he makes his move */
     var P = r.h.userData.parts; r.mask = new THREE.Group(); var hood = new THREE.Mesh(new THREE.SphereGeometry(0.195, 14, 12), colorMat(0x0c0c0e, 0.95)); hood.position.set(0, 0.24, 0); r.mask.add(hood); var slit = new THREE.Mesh(bevelGeo(0.2, 0.04, 0.03), colorMat(0xd9a57e, 0.8)); slit.position.set(0, 0.27, 0.185); r.mask.add(slit); r.mask.visible = false; P.head.add(r.mask);
     r.gun = weapon ? robWeaponMesh(weapon) : null; if (r.gun) { r.gun.visible = false; P.rArm.userData.elbow.add(r.gun); }
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; hb.userData.robberId = r.id; r.h.add(hb); interactable(hb, { kind: 'robber', rid: r.id });
@@ -66,7 +66,7 @@
   function maskUp(r) {
     if (r.masked || r.state !== 'case') return; r.delay = 0; r.g.visible = true; r.slot = -1; r.masked = true; r.g.userData.gated = false; r.mask.visible = true; if (r.gun) r.gun.visible = true; r.h.userData.setMood('angry'); r.t = 0;
     if (!heist.masked) { heist.masked = true; sfx('alarm'); var K = ROB_KINDS[r.kind]; toast('🚨 ' + (r.kind === 'crew' ? 'They pulled masks down, and one has a shotgun' : r.kind === 'gun' ? 'He pulled a mask down, and he has a gun' : r.kind === 'knife' ? 'He pulled a mask down, and he has a knife' : 'He pulled his hood up and he\'s heading for the tip jar'), 'bad'); logEvent('🚨 ' + (r.kind === 'crew' ? 'A gang' : 'A ' + K.label) + ' just made a move in the lobby', 'bad'); guard.say('Hey. Stop right there.', '#ff6b6b', 3000); lineFlee(); if (S.customer && !S.customer.stage && npc.state !== 'down' && npc.state !== 'out') { logEvent('🏃 ' + S.customer.who + ' ran for the door, and the order went with them', 'bad'); S.customer = null; npcLeave('sad', 'I\'m out of here.', '#ff6b6b'); } }   // whoever was being served clears the line of fire
-    if (r.role === 'bagman') { var tgt = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: 6.5, z: 2.7 }; r.path = routeTo(r.g.position, tgt.x, tgt.z); r.state = 'raid'; r.raid = 'goods'; }
+    if (r.role === 'bagman') { var tgt = propInst.goodsShelf ? growPropWorld('goodsShelf', 0, 0.85) : { x: 6.5, z: 2.7 }; r.path = routeTo(r.g.position, tgt.x, tgt.z); r.state = 'raid'; r.raid = 'goods'; }
     else { r.path = routeTo(r.g.position, 0, 5.25); r.state = 'in'; if (mate.state === 'case') maskUp(mate); }
   }
   function heistAbort(how) {
@@ -81,7 +81,7 @@
   function takeTill(r, complied) {
     var got = Math.floor(S.till + S.tips); S.till = 0; S.tips = 0; r.grabbed += got; S.stats.robbed = (S.stats.robbed || 0) + got; S.rep = Math.max(0, S.rep - (complied ? 2 : 5)); sfx('bad');
     logEvent('💸 ' + (complied ? 'You handed over ' : 'The robber cleaned out ') + money(got) + ' from the till and tip jar (rep -' + (complied ? 2 : 5) + ')', 'bad'); toast('💸 ' + money(got) + ' gone from the till', 'bad');
-    if (r.kind === 'gun' && S.vault >= 50 && propInst.vault) { var v = propWorld('vault', 0, 1.0); robberSay(r, 'Now the vault.', '#ff6b6b'); r.path = routeTo(r.g.position, v.x, v.z, true); r.state = 'raid'; r.raid = 'vault'; r.t = 0; toast('🚨 He\'s coming round through the staff door, and he wants the vault', 'bad'); logEvent('🚨 The robber is heading into the back for the vault', 'bad'); }
+    if (r.kind === 'gun' && S.vault >= 50 && propInst.vault) { var v = growPropWorld('vault', 0, 1.0); robberSay(r, 'Now the vault.', '#ff6b6b'); r.path = routeTo(r.g.position, v.x, v.z, true); r.state = 'raid'; r.raid = 'vault'; r.t = 0; toast('🚨 He\'s coming round through the staff door, and he wants the vault', 'bad'); logEvent('🚨 The robber is heading into the back for the vault', 'bad'); }
     else { robberFlee(r); if (r === robber && (mate.state === 'raid' || mate.state === 'loot')) { finishLoot(mate, true); robberFlee(mate); } }
     hud();
   }
@@ -108,7 +108,7 @@
     return true;
   }
   function robberShoot(r, bonus) {
-    sfx(r.weapon === 'shotgun' ? 'shotgun' : 'gunshot'); burst(r.g.position.x, 1.4, r.g.position.z, 0xffc36b, 8, 'out');
+    sfx(r.weapon === 'shotgun' ? 'shotgun' : 'gunshot'); spark(r.g.position.x, 1.4, r.g.position.z, 0xffc36b, 8, 'out');
     var d = Math.hypot(player.pos.x - r.g.position.x, player.pos.z - r.g.position.z); var p = (r.weapon === 'shotgun' ? (d < 6 ? 0.75 : 0.3) : 0.5) + (bonus || 0);
     if (Math.random() < p) hurtPlayer(r.weapon, r); else toast('💥 A shot goes past your head', 'bad');
   }
@@ -162,10 +162,10 @@
     if (W.ammo && (A[W.ammo] || 0) <= 0) { sfx('click'); swing.cd = now() + 400; toast('Click. Out of ' + W.ammo + '. Buy more at the weapon locker.', 'bad'); return; }
     if (h.kind === 'pepper') A.spray--; if (W.ammo) A[W.ammo]--;
     swing.cd = now() + W.cd; swing.t = 0.35; sfx(W.sfx); if (W.lethal) world.muzzleT = 0.09; if (W.auto) { player.pitch = Math.min(player.pitch + 0.012, 1.3); player.yaw += (Math.random() - 0.5) * 0.01; }   /* full auto climbs: pull it back down */
-    var fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw); if (!W.lethal) burst(player.pos.x + fx * 1.2, player.pos.y - 0.25, player.pos.z + fz * 1.2, h.kind === 'pepper' ? 0xff8a3c : 0x7fd4ff, 14, 'out');
+    var fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw); if (!W.lethal) spark(player.pos.x + fx * 1.2, player.pos.y - 0.25, player.pos.z + fz * 1.2, h.kind === 'pepper' ? 0xff8a3c : 0x7fd4ff, 14, 'out');
     var t = facingTargets(W.range, W.dot).filter(function (c) { return sightLine(c.ref.g); })[0]; hud(); save();
     if (!t) { if (W.lethal) warningShot(); return; }
-    burst(t.ref.g.position.x, 1.3, t.ref.g.position.z, W.lethal ? 0xb01010 : 0xffffff, 12, 'out');
+    spark(t.ref.g.position.x, 1.3, t.ref.g.position.z, W.lethal ? 0xb01010 : 0xffffff, 12, 'out');
     if (t.what === 'robber') { if (W.lethal) shootRobber(t.ref); else strikeRobber(t.ref, h.kind); } else if (W.lethal) shotBystander(t); else hitNpc(t.what, t.ref);
   }
   var trigger = { down: false };   // the left button held, for full-auto weapons
@@ -183,7 +183,7 @@
     if (!scope.el) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .12s;z-index:4;background:radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0, rgba(0,0,0,0) 34vmin, rgba(0,0,0,.94) 35vmin)'; d.innerHTML = '<div style="position:absolute;left:50%;top:15vmin;bottom:15vmin;width:1px;background:rgba(0,0,0,.85)"></div><div style="position:absolute;top:50%;left:calc(50% - 35vmin);right:calc(50% - 35vmin);height:1px;background:rgba(0,0,0,.85)"></div>'; document.body.appendChild(d); scope.el = d; }
     var vis = scope.k > 0.7 ? '1' : '0'; if (scope.el.style.opacity !== vis) scope.el.style.opacity = vis;
   }
-  function weaponLabel(kind) { var W = WEAPONS[kind], A = S.armory; return W.ico + ' ' + W.name.charAt(0).toUpperCase() + W.name.slice(1) + ' · ' + (kind === 'pepper' ? (A.spray || 0) + ' bursts' : W.ammo ? (A[W.ammo] || 0) + ' ' + W.ammo : 'charged') + ' · click to ' + (W.lethal ? 'fire' : 'use') + (kind === 'rifle' ? ' · hold right-click to aim' : kind === 'ak' ? ' · hold to keep firing' : ''); }
+  function weaponLabel(kind) { var W = WEAPONS[kind], A = S.armory; return W.ico + ' ' + W.name.charAt(0).toUpperCase() + W.name.slice(1) + ' · ' + (kind === 'pepper' ? (A.spray || 0) + ' sparks' : W.ammo ? (A[W.ammo] || 0) + ' ' + W.ammo : 'charged') + ' · click to ' + (W.lethal ? 'fire' : 'use') + (kind === 'rifle' ? ' · hold right-click to aim' : kind === 'ak' ? ' · hold to keep firing' : ''); }
   function lockerMenu() {
     var A = S.armory, lines = [];
     Object.keys(WEAPONS).forEach(function (k) {
@@ -193,7 +193,7 @@
       else lines.push({ label: W.ico + ' Take the ' + W.name, act: function () { if (k !== 'pepper' && k !== 'taser' && !hasLic('firearm')) { toast('Your firearms licence is gone, so the guns stay locked', 'bad'); return; } take({ kind: k }); } });
     });
     function ammoLine(ico, what, key, n, price) { lines.push({ label: ico + ' Buy ' + n + ' ' + what + ' · ' + money(price) + ' <small>' + (A[key] || 0) + ' left</small>', cls: S.bank < price ? 'muted' : '', act: S.bank < price ? null : function () { S.bank -= price; A[key] = (key === 'spray' ? 0 : (A[key] || 0)) + n; sfx('cash'); toast(ico + ' ' + n + ' ' + what, 'good'); save(); } }); }
-    if (A.pepper) ammoLine('🌶️', 'bursts (new can)', 'spray', 6, 25); if (A.pistol) ammoLine('🔫', 'rounds', 'rounds', 16, 40); if (A.shotgun) ammoLine('💥', 'shells', 'shells', 8, 40); if (A.rifle) ammoLine('🎯', 'cartridges', 'cartridges', 10, 55); if (A.ak) ammoLine('🪖', 'bullets', 'bullets', 90, 70);
+    if (A.pepper) ammoLine('🌶️', 'sparks (new can)', 'spray', 6, 25); if (A.pistol) ammoLine('🔫', 'rounds', 'rounds', 16, 40); if (A.shotgun) ammoLine('💥', 'shells', 'shells', 8, 40); if (A.rifle) ammoLine('🎯', 'cartridges', 'cartridges', 10, 55); if (A.ak) ammoLine('🪖', 'bullets', 'bullets', 90, 70);
     ctxOpen('🧰 Weapon locker', 'bank ' + money(S.bank) + (hasLic('firearm') ? ' · firearms licence on file' : ' · guns need the firearms licence'), lines);
   }
   function robberOf(d) { return robbers[d.rid] || robber; }

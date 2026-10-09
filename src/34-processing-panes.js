@@ -44,13 +44,13 @@
     else if (task.kind === 'trim') { score = task.hits / task.need; note = task.hits + ' of ' + task.need + ' leaves trimmed'; }
     else note = 'ground fine';
     task.result = { score: score, note: note, value: task.v, prog: task.prog }; task.on = false; ui.taskOpen = false; cancelAnimationFrame(task.loop); if (task.el) task.el.hidden = true; sfx(score >= 1 ? 'ok' : score >= 0.5 ? 'click' : 'bad');
-    var cb = task.done; task.done = null; if (cb) cb(task.result); lockPointer(); afterAction();
+    var cb = task.done; task.done = null; if (cb) cb(task.result); grabPointer(); afterAction();
   }
-  function taskCancel() { if (!task.on) return; task.on = false; ui.taskOpen = false; cancelAnimationFrame(task.loop); if (task.el) task.el.hidden = true; task.done = null; toast('Stopped', ''); lockPointer(); }
+  function taskCancel() { if (!task.on) return; task.on = false; ui.taskOpen = false; cancelAnimationFrame(task.loop); if (task.el) task.el.hidden = true; task.done = null; toast('Stopped', ''); grabPointer(); }
   // run several tasks one after another, collecting each result, then hand the list to the finish callback
   function taskChain(list, finish) { var results = []; (function next() { if (!list.length) { finish(results); return; } var it = list.shift(); taskStart(it.kind, it.sub, function (r) { results.push(r); next(); }); })(); }
   var lockRetryT = 0;
-  function lockPointer(retry) { if (!ui.started) return; try { var r = canvas.requestPointerLock(); if (r && r.catch) r.catch(function () { lockRetry(); }); } catch (e) { lockRetry(); } }
+  function grabPointer(retry) { if (!ui.started) return; try { var r = canvas.requestPointerLock(); if (r && r.catch) r.catch(function () { lockRetry(); }); } catch (e) { lockRetry(); } }
   function lockRetry() {   /* Chromium refuses a lock asked for within about a second of an Esc that released it; ask once more after the cool-down, unless something opened meanwhile */
     var t = now(); if (t - lockRetryT < 1500) return; lockRetryT = t; setTimeout(function () { if (ui.started && !player.locked && !ui.blocked() && !ui.menuOpen) { try { canvas.requestPointerLock(); } catch (e) {} } }, 1200);
   }
@@ -96,7 +96,7 @@
         (locked ? ' · needs the ' + locked : full ? ' · the shop is full' : '') + (base === 'fridge' ? ' · one stood in the lobby sells cold drinks to customers at $2 a can, with the catering permit' : '') + '</span></span>' +
         (full || locked ? '<span class="g3-tier">' + (full ? 'max' : '🔒') + '</span>' : '<button class="g3-btn primary" data-act="buyUnit" data-id="' + base + '">' + money(machCost(base, have + 1)) + '</button>') + '</div>';
     });
-    var rDown = unitIds('queueRope').filter(function (u) { return propPlacement(u).hidden; }).length; if (rDown) h += '<div class="g3-row"><span class="ico">🪢</span><span class="meta"><span class="n">Rope lines taken down</span><span class="own">' + rDown + ' in the back, free to put up again where they stood</span></span><button class="g3-btn" data-act="ropeUp">Put one back up</button></div>';
+    var rDown = unitIds('queueRope').filter(function (u) { return growPropPlacement(u).hidden; }).length; if (rDown) h += '<div class="g3-row"><span class="ico">🪢</span><span class="meta"><span class="n">Rope lines taken down</span><span class="own">' + rDown + ' in the back, free to put up again where they stood</span></span><button class="g3-btn" data-act="ropeUp">Put one back up</button></div>';
     h += '</div><div class="g3-box"><h3>📈 Business</h3><div class="g3-chips">' + chip('market', S.market.toFixed(2) + '×') + chip('rep', Math.floor(S.rep)) + chip('price mult', '×' + repMult().toFixed(2)) + chip('level', S.level) + '</div><div class="desc">Rep adds up to 10% to a price and brings people through the door. Connoisseurs (🎩) pay 2.2× for quality 70+.</div>' + paneStatsInner() + '</div></div>';
     return h;
   }
@@ -221,7 +221,7 @@
   // panel clicks
   function panelClick(e) {
     var b = e.target.closest('[data-act]'); if (!b) return; var act = b.getAttribute('data-act'); var id = b.getAttribute('data-id'); sfx('click');
-    if (runHooks(hooks.panelClick, act, b)) { afterAction(); return; }
+    if (runHookList(hooks.panelClick, act, b)) { afterAction(); return; }
     if (act === 'starter') { if (S.bank < starterCost()) { toast('The starter bundle is ' + money(starterCost()) + ', and the bank\'s short', 'bad'); return; } actions.buy('soil'); actions.buySeed('sunflower'); actions.buy('nutrients'); }
     else if (act === 'stockTake') { var sp = id.split('|'); stockTake(sp[0], sp[1], +sp[2]); }
     else if (act === 'stockToShelf') { var sp2 = id.split('|'); stockToShelf(sp2[0], sp2[1]); toast('Out on the shelf', ''); sfx('putdown'); }
@@ -273,8 +273,8 @@
   $('g3-panel-close').addEventListener('click', function () { ui.closePanel(); });
 
   // screenshots: the scene as it is, without the HUD. The desktop app files them under Pictures\Grow Co, a browser downloads them.
-  function screenshot() {
-    var url; try { renderer.render(scene, camera); url = canvas.toDataURL('image/png'); } catch (e) { toast('⚠ Could not take a screenshot', 'bad'); return; }
+  function growScreenshot() {
+    var url; try { renderer.render(scene, camera); url = canvas.toDataURL('image/png'); } catch (e) { toast('⚠ Could not take a growScreenshot', 'bad'); return; }
     var d = new Date(), p2 = function (n) { return (n < 10 ? '0' : '') + n; };
     var name = 'growco-day' + (S.day || 1) + '-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '-' + p2(d.getHours()) + p2(d.getMinutes()) + p2(d.getSeconds()) + '.png';
     var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 1000);
@@ -301,22 +301,22 @@
   // every bought machine, moved piece of furniture, extra rope and creative build standing in the old shop.
   var pageReload = function () { location.reload(); };
   function resetShop() {
-    saveBlocked = true;   /* the running shop must not autosave the old one back over it on the way out */
-    try { localStorage.setItem(SAVE, JSON.stringify(fresh())); sessionStorage.setItem('rfgc-skip-splash', '1'); sessionStorage.setItem('rfgc-autoplay', '1'); } catch (e) { saveBlocked = false; toast('⚠ Could not reset the save', 'bad'); return; }
-    closeMenu(); toast('⟲ Starting a fresh shop…', ''); setTimeout(function () { pageReload(); }, 250);
+    wiped = true;   /* the running shop must not autosave the old one back over it on the way out */
+    try { localStorage.setItem(SAVE, JSON.stringify(fresh())); sessionStorage.setItem('rfgc-skip-splash', '1'); sessionStorage.setItem('rfgc-autoplay', '1'); } catch (e) { wiped = false; toast('⚠ Could not reset the save', 'bad'); return; }
+    pauseClose(); toast('⟲ Starting a fresh shop…', ''); setTimeout(function () { pageReload(); }, 250);
   }
   function saveImportApply() {
-    if (!pendingImport) return; saveBlocked = true;   /* the running shop must not autosave over the file between here and the reload */
-    try { localStorage.setItem(SAVE, pendingImport); sessionStorage.setItem('rfgc-skip-splash', '1'); sessionStorage.setItem('rfgc-autoplay', '1'); } catch (e) { saveBlocked = false; toast('⚠ Could not store the save', 'bad'); return; }
+    if (!pendingImport) return; wiped = true;   /* the running shop must not autosave over the file between here and the reload */
+    try { localStorage.setItem(SAVE, pendingImport); sessionStorage.setItem('rfgc-skip-splash', '1'); sessionStorage.setItem('rfgc-autoplay', '1'); } catch (e) { wiped = false; toast('⚠ Could not store the save', 'bad'); return; }
     toast('📂 Loading the save…', ''); setTimeout(function () { location.reload(); }, 250);
   }
   // pause menu
-  function openMenu() { if (!ui.menuOpen) sfx('panel'); ui.menuOpen = true; $('g3-menu').hidden = false; $('g3-menu-body').hidden = true; var devB = document.querySelector('#g3-menu [data-menu="dev"]'); if (devB) devB.hidden = true;   /* the cheats have their own console on F8 now */ document.exitPointerLock(); }   /* Dev tools are a DLC: no button unless it's switched on */
-  function closeMenu() { if (ui.menuOpen) sfx('close'); ui.menuOpen = false; $('g3-menu').hidden = true; if (!ui.panelOpen) lockPointer(); }
+  function pauseOpen() { if (!ui.menuOpen) sfx('panel'); ui.menuOpen = true; $('g3-menu').hidden = false; $('g3-menu-body').hidden = true; var devB = document.querySelector('#g3-menu [data-menu="dev"]'); if (devB) devB.hidden = true;   /* the cheats have their own console on F8 now */ document.exitPointerLock(); }   /* Dev tools are a DLC: no button unless it's switched on */
+  function pauseClose() { if (ui.menuOpen) sfx('close'); ui.menuOpen = false; $('g3-menu').hidden = true; if (!ui.panelOpen) grabPointer(); }
   $('g3-menu').addEventListener('click', function (e) {
     var b = e.target.closest('[data-menu]'); if (!b) return; var m = b.getAttribute('data-menu'); var body = $('g3-menu-body'); sfx('click');
-    if (m === 'resume') closeMenu();
-    else if (m === 'settings') { body.hidden = false; body.innerHTML = settingsHtml(); }
+    if (m === 'resume') pauseClose();
+    else if (m === 'settings') { body.hidden = false; body.innerHTML = growSettingsHtml(); }
     else if (m === 'guide') { body.hidden = false; body.innerHTML = guideHtml(); }
     else if (m === 'intro') { body.hidden = false; body.innerHTML = introMenuHtml(); }
     else if (m === 'stats') { body.hidden = false; body.innerHTML = '<h4>Lifetime</h4>' + paneStatsInner(); }
@@ -324,19 +324,11 @@
     else if (m === 'save-export') saveExport();
     else if (m === 'save-import') { var fi2 = $('g3-save-file'); if (fi2) fi2.click(); }
     else if (m === 'save-import-yes') saveImportApply();
-//#if desk
-    else if (m === 'reset') { if (confirm('Reset Grow Co.? All progress is lost: money, stock, licences, bought machines, furniture and everything you built (both the 3D and desk versions share this save).')) resetShop(); }
-//#else
     else if (m === 'reset') { if (confirm('Reset Grow Co.? All progress is lost: money, stock, licences, bought machines, furniture and everything you built.')) resetShop(); }
-//#endif
-    else if (m === 'edit') { closeMenu(); if (!edit.on) editToggle(); }
+    else if (m === 'edit') { pauseClose(); if (!edit.on) growEditToggle(); }
     else if (m === 'dev') { body.hidden = false; body.innerHTML = dlcOn('dev') ? devHtml() : dlcNote('dev'); }
-    else if (m === 'creative') { closeMenu(); if (!edit.on) editToggle(); }   /* one build mode now; the old button name still opens it */
-//#if desk
-    else if (m === 'quit') { saveNow(); window.close(); setTimeout(function () { toast('Close this tab to return to the desk', ''); }, 200); }
-//#else
+    else if (m === 'creative') { pauseClose(); if (!edit.on) growEditToggle(); }   /* one build mode now; the old button name still opens it */
     else if (m === 'quit') { saveNow(); window.close(); setTimeout(function () { toast('Your game is saved. You can close the window.', ''); }, 200); }
-//#endif
   });
   var DEV = [
     ['money', '💵 +$1,000 bank'], ['pocket', '👛 +$500 pocket'], ['till', '🧾 Till +$120 · tips +$20 · machines +$30'], ['stash', '🌿 +20 g cured of every strain you can grow'], ['goods', '🛍️ +5 bags, joints, cookies of every strain you can grow'],
@@ -385,10 +377,10 @@
     }
     ui.devOpen = true; devCon.el.hidden = false; $('g3-devcon-body').innerHTML = devConHtml(); document.exitPointerLock(); sfx('panel'); return true;
   }
-  function devClose() { if (!ui.devOpen) return; ui.devOpen = false; if (devCon.el) devCon.el.hidden = true; if (!ui.blocked()) lockPointer(); sfx('close'); }
+  function devClose() { if (!ui.devOpen) return; ui.devOpen = false; if (devCon.el) devCon.el.hidden = true; if (!ui.blocked()) grabPointer(); sfx('close'); }
   function devAction(id) {
     if (!dlcOn('dev')) { dlcOff('dev'); return; }
-    var tp = function (x, z) { if (ui.menuOpen) closeMenu(); standUp(); player.pos.set(x, 1.65, z); player.floor = 0; toast('📍 Teleported', ''); };
+    var tp = function (x, z) { if (ui.menuOpen) pauseClose(); standUp(); player.pos.set(x, 1.65, z); player.floor = 0; toast('📍 Teleported', ''); };
     switch (id) {
       case 'dlcUpgAll': DLC_UPG_ORDER.forEach(function (d) { if (dlcOn(d)) DLC_UPG[d].list.forEach(function (u) { if (!dlcOwns(d, u.id)) dlcUpgGive(d, u.id); }); }); break;
       case 'photo': if (photoOn()) toast('📷 Photo mode. W A S D fly, Space and Ctrl go up and down, Shift is faster, the wheel zooms. F8 or Esc ends it.', ''); return;
@@ -400,20 +392,20 @@
       case 'machines': unitIds('vending').forEach(function (u) { var v = machStock(u); v.drink = 24; v.snack = 24; }); unitIds('lobbyCoffee').forEach(function (u) { var c = machStock(u); c.cup = 80; c.beans = 80; }); S.display.lighter = 20; S.display.rpaper = 10; S.display.rgrinder = 5; unitIds('fridge').forEach(function (u) { machState(u).fridge = 16; }); break;   /* the fridge holds its own cans rather than drawing on the shop's, so it needs filling by name */
       case 'plants': S.plants = []; S.potSoil = {}; var DS = devStrains(); for (var i = 0; i < slots(); i++) { var st2 = DS[i % DS.length]; S.potSoil[i] = true; S.plants.push({ id: 'p' + now() + i, strain: st2.id, progress: 1, quality: 75, thirst: 0.1, fed: true, hazard: null, slot: i }); } S.supplies.pot = Math.max(S.supplies.pot || 0, slots()); break;
       case 'batches': devStrains().slice(0, 5).forEach(function (st, i) { S.batches.push({ id: 'b' + now() + i, grams: 18, quality: 70, baseQ: 70, thc: st.thc, startedAt: now(), cured: i >= 3, dry: i >= 3 ? 1 : 0.2, strain: st.id }); }); break;
-      case 'customer': case 'premium': closeMenu(); if (!customerArrives(id === 'premium')) toast('The line is full (' + LINE_MAX + ' waiting)', ''); break;
-      case 'robbery': case 'robSnatch': case 'robKnife': case 'robGun': case 'robCrew': closeMenu(); S.till = Math.max(S.till, 40); startRobbery({ robSnatch: 'snatch', robKnife: 'knife', robGun: 'gun', robCrew: 'crew' }[id]); break; case 'basement': closeMenu(); goBasement(); break; case 'vip': closeMenu(); S.lic.premium = true; shop().open = true; if (!startVip()) toast('A lounge guest is already here', ''); break; case 'roof': closeMenu(); expInteract({ kind: 'roofUp' }, null); break; case 'heat': addHeat(40); break; case 'blackout': xs().blackoutUntil = now() + 60000; break; case 'delivery': closeMenu(); S.pkg.joints.n = Math.max(S.pkg.joints.n, 2); jobSpawn('phone'); break;
-      case 'round': closeMenu(); S.lic.tobacco = true; jobSpawn('tablet'); jobSpawn('tablet'); break; case 'toCar': closeMenu(); standUp(); player.floor = 0; player.pos.set(drive.g.position.x - 2.4, 1.65, drive.g.position.z); break; case 'tobFill': S.lic.tobacco = true; var TF = tob(); TF.leaf = 8; TF.cured = 2; TF.cut = 1; TF.sticks.normal = 400; TF.sticks.light = 400; TF.mat = 200; CIG_KEYS.forEach(function (k) { TF.packs[k] = 30; S.cigStock[k] = cigStock(k) + 10; }); syncTobRack(); syncCigCab(); break; case 'arm': S.lic.firearm = true; S.upgrades.panic = true; S.armory = { pepper: true, taser: true, pistol: true, shotgun: true, rifle: true, ak: true, spray: 6, rounds: 64, shells: 32, cartridges: 30, bullets: 270 }; break; case 'fight': closeMenu(); startFight(); if (!fight) toast('Need two visitors in the lobby first', 'bad'); break;
-      case 'van': if (S.order) { S.deliveries.push({ items: S.order.items, due: now() }); S.order = null; } else if (!S.deliveries.length) S.deliveries.push({ items: { drink: 12, cup: 50, lighter: 20 }, due: now() }); else S.deliveries[0].due = now(); closeMenu(); break;
-      case 'courier': if (!S.courier) S.courier = { amount: 100, state: 'called', at: now() }; else S.courier.at = now(); S.courierBanUntil = 0; closeMenu(); break;
+      case 'customer': case 'premium': pauseClose(); if (!customerArrives(id === 'premium')) toast('The line is full (' + LINE_MAX + ' waiting)', ''); break;
+      case 'robbery': case 'robSnatch': case 'robKnife': case 'robGun': case 'robCrew': pauseClose(); S.till = Math.max(S.till, 40); startRobbery({ robSnatch: 'snatch', robKnife: 'knife', robGun: 'gun', robCrew: 'crew' }[id]); break; case 'basement': pauseClose(); goBasement(); break; case 'vip': pauseClose(); S.lic.premium = true; shop().open = true; if (!startVip()) toast('A lounge guest is already here', ''); break; case 'roof': pauseClose(); expInteract({ kind: 'roofUp' }, null); break; case 'heat': addHeat(40); break; case 'blackout': xs().blackoutUntil = now() + 60000; break; case 'delivery': pauseClose(); S.pkg.joints.n = Math.max(S.pkg.joints.n, 2); jobSpawn('phone'); break;
+      case 'round': pauseClose(); S.lic.tobacco = true; jobSpawn('tablet'); jobSpawn('tablet'); break; case 'toCar': pauseClose(); standUp(); player.floor = 0; player.pos.set(drive.g.position.x - 2.4, 1.65, drive.g.position.z); break; case 'tobFill': S.lic.tobacco = true; var TF = tob(); TF.leaf = 8; TF.cured = 2; TF.cut = 1; TF.sticks.normal = 400; TF.sticks.light = 400; TF.mat = 200; CIG_KEYS.forEach(function (k) { TF.packs[k] = 30; S.cigStock[k] = cigStock(k) + 10; }); syncTobRack(); syncCigCab(); break; case 'arm': S.lic.firearm = true; S.upgrades.panic = true; S.armory = { pepper: true, taser: true, pistol: true, shotgun: true, rifle: true, ak: true, spray: 6, rounds: 64, shells: 32, cartridges: 30, bullets: 270 }; break; case 'fight': pauseClose(); startFight(); if (!fight) toast('Need two visitors in the lobby first', 'bad'); break;
+      case 'van': if (S.order) { S.deliveries.push({ items: S.order.items, due: now() }); S.order = null; } else if (!S.deliveries.length) S.deliveries.push({ items: { drink: 12, cup: 50, lighter: 20 }, due: now() }); else S.deliveries[0].due = now(); pauseClose(); break;
+      case 'courier': if (!S.courier) S.courier = { amount: 100, state: 'called', at: now() }; else S.courier.at = now(); S.courierBanUntil = 0; pauseClose(); break;
       case 'dust': spawnDust(6); break; case 'clean': S.dust = []; world.dustDirty = true; break;
       case 'morning': S.clock = 6; break; case 'noon': S.clock = 12; break; case 'evening': S.clock = 19; break; case 'night': S.clock = 23; break; case 'day': S.clock = 23.999; break;
       case 'level': gainXp(9999); break; case 'rep': S.rep += 25; break;
-      case 'upgrades': UPGRADES.forEach(function (u) { S.upgrades[u.id] = true; }); S.light = LIGHTS[LIGHTS.length - 1].id; S.tent = TENTS.length - 1; if (!propInst.lobbyCoffee || !propInst.lobbyCoffee.g.children.length) buildProp('lobbyCoffee'); break;
+      case 'upgrades': UPGRADES.forEach(function (u) { S.upgrades[u.id] = true; }); S.light = LIGHTS[LIGHTS.length - 1].id; S.tent = TENTS.length - 1; if (!propInst.lobbyCoffee || !propInst.lobbyCoffee.g.children.length) growBuildProp('lobbyCoffee'); break;
       case 'licences': if (!S.lic) S.lic = {}; LICENCES.forEach(function (L) { S.lic[L.id] = true; }); break;
       case 'clear': S.noCustomersUntil = 0; S.courierBanUntil = 0; clearHeist(); if (fight) endFight('guard'); if (S.courier) S.courier = null; break;
       case 'empty': S.hotbar = [null, null, null, null, null, null]; break; case 'humid': S.rh.grow = 80; S.rh.dry = 80; break;
-      case 'dlcFit': breedState().owned = true; hydroState().owned = true; merchState().owned = true; farmState().leased = true; ['breedBench', 'hydroBay', 'merchStand', 'trophyCase'].forEach(function (p) { if (propInst[p]) buildProp(p); }); farmSync(); break;
-      case 'dlcRipe': if (breedState().job) breedState().job.t = BREED.ms / 1000; hydroState().sites.forEach(function (p) { if (p) p.progress = 1; }); farmState().rows.forEach(function (r) { if (r) r.progress = 1; }); farmState().barn.forEach(function (l) { l.t = FARM.dryS; }); if (propInst.breedBench) buildProp('breedBench'); farmSync(); break;
+      case 'dlcFit': breedState().owned = true; hydroState().owned = true; merchState().owned = true; farmState().leased = true; ['breedBench', 'hydroBay', 'merchStand', 'trophyCase'].forEach(function (p) { if (propInst[p]) growBuildProp(p); }); farmSync(); break;
+      case 'dlcRipe': if (breedState().job) breedState().job.t = BREED.ms / 1000; hydroState().sites.forEach(function (p) { if (p) p.progress = 1; }); farmState().rows.forEach(function (r) { if (r) r.progress = 1; }); farmState().barn.forEach(function (l) { l.t = FARM.dryS; }); if (propInst.breedBench) growBuildProp('breedBench'); farmSync(); break;
       case 'cupNow': cupJudge(); break;
       case 'merchFill': MERCH.items.forEach(function (it) { merchState().stock[it.id] = 20; }); merchSync(); break;
       case 'tp_farm': tp(FARM.gateX, FARM.z2 + 3); return;
@@ -422,7 +414,7 @@
     world.dirty = true; rebuildDynamic(); syncRack(); syncDust(); syncMachines(); hud(); save(); applyShopState(); updateDayNight(); sfx('rare'); toast('🛠 ' + (DEV.filter(function (d) { return d[0] === id; })[0] || [id, id])[1], 'good');
   }
   $('g3-menu-body').addEventListener('click', function (e) { var ia = e.target.closest('[data-act]'); if (ia) { var act = ia.getAttribute('data-act'); if (act === 'introSkip') introSkip(); else if (act === 'introRestart') introRestart(); else return; $('g3-menu-body').innerHTML = introMenuHtml(); return; } var b = e.target.closest('[data-dev]'); if (!b) return; devAction(b.getAttribute('data-dev')); });   /* the pause menu carries its own actions as well as the dev buttons */
-  function settingsHtml() {
+  function growSettingsHtml() {
     return '<h4>Settings</h4><div id="g3-settings">' +
       slider('Field of view', 'fov', 60, 110, 1, SET.fov, '°') +
       slider('Mouse sensitivity', 'sens', 0.3, 2.5, 0.1, SET.sens, '×') +
@@ -433,30 +425,22 @@
       select('Graphics quality', 'quality', [['high', 'High (shadows, full res)'], ['medium', 'Medium (soft shadows off)'], ['low', 'Low (no shadows, half res)']], SET.quality) +
       select('Time of day', 'dayNight', [['cycle', 'Day/night cycle'], ['clock', 'Follow the real clock'], ['day', 'Always day'], ['evening', 'Golden hour'], ['night', 'Always night']], SET.dayNight) +
       select('Day length', 'dayLength', [['10', '10 real minutes'], ['20', '20 real minutes'], ['40', '40 real minutes'], ['60', '1 real hour']], SET.dayLength) +
-//#if desk
-      '</div><p style="margin-top:8px">Settings also live on the desk tab, and apply live.</p>';
-//#else
       '</div><p style="margin-top:8px">Settings apply live and are remembered.</p>';
-//#endif
   }
   function slider(label, key, min, max, step, val, unit) { return '<div class="g3-slider"><label>' + label + '</label><input type="range" data-set="' + key + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '"><small>' + val + unit + '</small></div>'; }
   function check(label, key, val) { return '<div class="g3-slider"><label>' + label + '</label><input type="checkbox" data-set="' + key + '"' + (val ? ' checked' : '') + '></div>'; }
   function select(label, key, opts, val) { return '<div class="g3-slider"><label>' + label + '</label><select data-set="' + key + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === val ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>'; }
-  function panelInput(e) { var el = e.target; if (runHooks(hooks.panelInput, el)) return; if (el.getAttribute('data-ctl') === 'volume') { shop().volume = parseFloat(el.value); var sm = el.parentNode.querySelector('small'); if (sm) sm.textContent = Math.round(shop().volume * 100) + '%'; save(); } if (el.getAttribute('data-ctl') === 'markup') { shop().markup = parseFloat(el.value); var sm2 = el.parentNode.querySelector('small'); if (sm2) sm2.textContent = Math.round(shop().markup * 100) + '%'; save(); } }
+  function panelInput(e) { var el = e.target; if (runHookList(hooks.panelInput, el)) return; if (el.getAttribute('data-ctl') === 'volume') { shop().volume = parseFloat(el.value); var sm = el.parentNode.querySelector('small'); if (sm) sm.textContent = Math.round(shop().volume * 100) + '%'; save(); } if (el.getAttribute('data-ctl') === 'markup') { shop().markup = parseFloat(el.value); var sm2 = el.parentNode.querySelector('small'); if (sm2) sm2.textContent = Math.round(shop().markup * 100) + '%'; save(); } }
   $('g3-panel-body').addEventListener('input', panelInput);
   function settingsInput(e) {
     var el = e.target; var key = el.getAttribute('data-set'); if (!key) return;
     var v = el.type === 'checkbox' ? el.checked : el.type === 'range' ? parseFloat(el.value) : el.value;
-    SET[key] = v; saveSettings(); applySettings();
+    SET[key] = v; saveSettings(); growApplySettings();
     var sm = el.parentNode.querySelector('small'); if (sm) sm.textContent = v + (key === 'fov' ? '°' : '×');
   }
   $('g3-menu-body').addEventListener('input', settingsInput);
   function guideHtml() {
-//#if desk
-    if (window.RF_GUIDE) return window.RF_GUIDE.map(function (c) { return '<h4>' + c.icon + ' ' + c.title + '</h4>' + c.html; }).join('');   /* the shared 13-chapter guide, same text as the main menu */
-//#else
     if (window.RF_GUIDE) return window.RF_GUIDE.map(function (c) { return '<h4>' + c.icon + ' ' + c.title + '</h4>' + c.html; }).join('');   /* standalone: the full guide, same text as the main menu */
-//#endif
     return '<h4>Your hands do the work</h4><p>Everything is carried. <b>E</b> picks a thing up, or uses what you\'re holding on what you look at. <b>G</b> puts it back. One thing at a time.</p>' +
       '<h4>The loop</h4><p>The <b>office PC</b> in the office: order soil and baggies under Supplies, a seed in the Seed bank, and a grinder. Orders land on the <b>supply rack</b> next to it, or as crates in the back room. Take a bag of soil to the <b>tent</b>, fill a pot, fetch a seed and plant it. Grab the <b>watering can</b> by the tent when a plant says it\'s thirsty, feed it <b>nutrients</b> once for quality, and <b>spray</b> pests or mould fast.</p>' +
       '<h4>Harvest</h4><p>A plant that\'s ready glows. Harvest it with empty hands, carry the bunch to the <b>drying line</b> in the dry room and hang it. Dry batches go to the <b>curing shelf</b> in jars and keep gaining quality. Take a jar to the <b>workbench</b>, empty it into your stash, then bag, roll or bake there. Finished goods go on the <b>goods shelf</b>.</p>' +
@@ -467,17 +451,17 @@
       '<h4>Keys</h4><p><b>WASD</b> move · <b>Shift</b> run · <b>Space</b> jump · <b>Ctrl</b> crouch · <b>E</b> or click: pick up, use, talk · <b>Shift+E</b> the second action · <b>Ctrl+E</b> sends a crew member home · <b>G</b> put back · <b>I</b> inventory · <b>Tab</b> quick wheel · <b>F</b> phone · <b>Esc</b> pause</p>';
   }
   var appliedQuality = null;   /* the quality the materials were last compiled for */
-  function applySettings() {
+  function growApplySettings() {
     camera.fov = SET.fov; camera.updateProjectionMatrix();
     var q = SET.quality; renderer.shadowMap.enabled = q !== 'low'; renderer.shadowMap.type = q === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     var ms = q === 'high' ? 2048 : 1024; if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
-    renderer.shadowMap.needsUpdate = true; lightBudget.point = q === 'high' ? 12 : q === 'medium' ? 8 : 5;
+    renderer.shadowMap.needsUpdate = true; lightBudget.n = q === 'high' ? 12 : q === 'medium' ? 8 : 5;
     renderer.setPixelRatio(q === 'low' ? Math.min(window.devicePixelRatio, 1) * 0.66 : q === 'medium' ? Math.min(window.devicePixelRatio, 1.25) : Math.min(window.devicePixelRatio, 2));
     if (q !== appliedQuality) { appliedQuality = q; scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; }); }   /* recompiling every shader is only needed when the shadow type changes with quality, never for FOV, sensitivity or HUD scale */
     $('h-fps').hidden = !SET.fps;
     document.documentElement.style.fontSize = (SET.hudScale || 1) * 100 + '%';
   }
-  window.addEventListener('storage', function (e) { if (e.key === SETTINGS_KEY) { loadSettings(); applySettings(); } });
+  window.addEventListener('storage', function (e) { if (e.key === SETTINGS_KEY) { loadSettings(); growApplySettings(); } });
 
   // HUD
   var lastHudKey = '';

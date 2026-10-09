@@ -80,7 +80,7 @@ The main menu has a guide of 21 chapters, including an "I am stuck" chapter. The
 ```
 game/                 the whole game: static files, playable from any web server
   index.html          page, HUD and overlays
-  grow3d.js           the simulation and the world (one file, one closure), built from src/
+  grow3d.js           the simulation and the world (one file, one closure), built from the engine's parts and src/
   grow3d-creative.js  the build catalogue and your own builds, part of build mode (F2), through RFGROW.hooks
   guide.js            the player guide (main menu, pause menu and wiki share it)
   workshop.js         the Workshop: DLC switches, content packs and imported models
@@ -88,19 +88,18 @@ game/                 the whole game: static files, playable from any web server
   version.js          generated from package.json by npm run check
   menu.js, menu.css   splash screen and main menu
   vendor/three/       three.js r128 (MIT)
-src/                  the parts game/grow3d.js is joined from, one system each; edit these
+src/                  the shop's parts, one system each; edit these. Co Engine's parts (node_modules/co-engine/engine) come first in the build
 tests/                the test suite, run against the real game in a hidden window
 main.js               Electron shell
 tools/
-  build-game.js       joins src/ into game/grow3d.js (npm run build)
   test/               the test runner and its fake clock
   balance/            the balance model and the report behind docs/Balance.md
-                      plus the static server, icon builder, guide exporter, release zip
+                      plus the icon builder, guide exporter, release zip (the build, the lint gate, the static server and the version stamp are the engine's tools)
 docs/                 the wiki source; pushed to the GitHub wiki by a workflow
 gallery/              screenshots, with their own README
 ```
 
-Working on the code: edit a part in `src/`, then `npm run build` and `npm test`. The [Architecture](docs/Architecture.md) page explains the parts, the tests and the balance model.
+Working on the code: edit a part in `src/`, then `npm run build` and `npm test`. Since 1.29.0 the game runs on [Co Engine](https://github.com/TheCodingDad-TisonK/Co-Engine), the engine shared with Depot Co. and Garage Co.; `npm install` fetches it at the tag `package.json` pins. The [Architecture](docs/Architecture.md) page explains the parts, the tests and the balance model.
 
 ## Documentation
 

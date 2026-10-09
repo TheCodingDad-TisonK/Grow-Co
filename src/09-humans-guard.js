@@ -5,7 +5,7 @@
   var SHIRTS = [0x4a7fbf, 0xd64a9a, 0x3aa36a, 0xe0c25a, 0xc94a3a, 0x7a5aa8, 0xf2f2f2, 0x2a2a2a, 0xff8c42];
   var PANTS = [0x2a3a5a, 0x333333, 0x6a5a4a, 0x8a8a8a, 0x3a5a3a];
   var faceCache = {};
-  function faceTex(mood, glasses, spec, blink) {
+  function personFace(mood, glasses, spec, blink) {
     spec = spec || {}; var key = mood + (glasses ? 'g' : '') + (spec.lipstick ? 'l' : '') + (spec.freckles ? 'f' : '') + (spec.eyeColor || '') + (blink ? 'b' : ''); if (faceCache[key]) return faceCache[key];
     var c = document.createElement('canvas'); c.width = c.height = 256; var ctx = c.getContext('2d'); ctx.clearRect(0, 0, 256, 256);
     var eyeY = 112, iris = spec.eyeColor || '#3a5a8a', closed = blink || mood === 'sleepy', squint = mood === 'happy' ? 12 : mood === 'angry' ? 12.5 : 15;
@@ -63,7 +63,7 @@
   HUMAN_GEO.sideL = new THREE.SphereGeometry(0.17, 12, 8, Math.PI * 1.88, Math.PI * 0.24, Math.PI * 0.4, Math.PI * 0.22); HUMAN_GEO.sideL.scale(1.075, 1.205, 1.03);
   HUMAN_GEO.sideR = new THREE.SphereGeometry(0.17, 12, 8, Math.PI * 0.88, Math.PI * 0.24, Math.PI * 0.4, Math.PI * 0.22); HUMAN_GEO.sideR.scale(1.075, 1.205, 1.03);
   HUMAN_GEO.nape = new THREE.SphereGeometry(0.17, 16, 8, Math.PI * 1.2, Math.PI * 0.6, Math.PI * 0.4, Math.PI * 0.3); HUMAN_GEO.nape.scale(1.075, 1.205, 1.03);
-  function makeHuman(spec) {
+  function makePerson(spec) {
     spec = spec || {};
     var skin = new THREE.MeshStandardMaterial({ color: spec.skin || pick(SKINS), roughness: 0.75 });
     var shirt = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: spec.shirt || pick(SHIRTS), roughness: 0.9 });
@@ -95,7 +95,7 @@
     if (!spec.coat) { mesh(bevelGeo(0.12, 0.05, 0.03), shirt, 0, 0.62, 0.13, P.torso); for (var b = 0; b < 4; b++) mesh(roundCylGeo(0.008, 0.008, 0.006, 8), new THREE.MeshStandardMaterial({ color: 0xf2f2f2 }), 0, 0.2 + b * 0.11, 0.125, P.torso).rotation.x = Math.PI / 2; mesh(bevelGeo(0.1, 0.1, 0.005), new THREE.MeshStandardMaterial({ map: TEX.fabric, color: shirt.color.clone().multiplyScalar(0.85), roughness: 0.9 }), -0.11, 0.48, 0.125, P.torso); }
     if (spec.coat) { var coatM = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: spec.coat, roughness: 0.9 }); var coat = mesh(HUMAN_GEO.coat, coatM, 0, 0.33, -0.02, P.torso); [-1, 1].forEach(function (s) { var lapel = mesh(bevelGeo(0.09, 0.28, 0.015), coatM, s * 0.09, 0.5, 0.135, P.torso); lapel.rotation.z = s * 0.35; }); mesh(bevelGeo(0.06, 0.34, 0.02), shirt, 0, 0.42, 0.13, P.torso); }
     if (spec.skirt) { mesh(HUMAN_GEO.skirt, new THREE.MeshStandardMaterial({ map: TEX.fabric, color: spec.skirt, roughness: 0.9 }), 0, -0.14, 0, P.torso); }
-    if (spec.logo) { var lg = mesh(new THREE.PlaneGeometry(0.16, 0.16), new THREE.MeshBasicMaterial({ map: textTex([spec.logo], 128, 128, { size: 70, bg: 'rgba(0,0,0,0)', line: 'rgba(0,0,0,0)', color: '#fff' }), transparent: true }), 0, 0.42, 0.126, P.torso); lg.castShadow = false; }
+    if (spec.logo) { var lg = mesh(new THREE.PlaneGeometry(0.16, 0.16), new THREE.MeshBasicMaterial({ map: signTex([spec.logo], 128, 128, { size: 70, bg: 'rgba(0,0,0,0)', line: 'rgba(0,0,0,0)', color: '#fff' }), transparent: true }), 0, 0.42, 0.126, P.torso); lg.castShadow = false; }
     // arms: shoulder pivot → upper arm → elbow pivot → forearm → hand with thumb; sleeve depends on longSleeve
     function arm(side) {
       var sh = new THREE.Group(); sh.position.set(side * 0.27, 0.6, 0); P.torso.add(sh);
@@ -127,7 +127,7 @@
     }
     if (spec.beard) { mesh(HUMAN_GEO.beard, hairSide, 0, 0.24, 0, P.head); }
     if (spec.moustache) { mesh(bevelGeo(0.12, 0.025, 0.03), hairM, 0, 0.175, 0.168, P.head); }
-    P.face = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.28), new THREE.MeshBasicMaterial({ map: faceTex(spec.mood || 'neutral', false, spec), transparent: true, depthWrite: false })); P.face.position.set(0, 0.245, 0.17); P.head.add(P.face);
+    P.face = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.28), new THREE.MeshBasicMaterial({ map: personFace(spec.mood || 'neutral', false, spec), transparent: true, depthWrite: false })); P.face.position.set(0, 0.245, 0.17); P.head.add(P.face);
     if (spec.glasses) { var fr = new THREE.MeshStandardMaterial({ color: spec.glassColor || 0x222222, roughness: 0.4, metalness: 0.5 }); [-0.06, 0.06].forEach(function (x) { var ring = mesh(new THREE.TorusGeometry(0.038, 0.006, 6, 16), fr, x, 0.255, 0.178, P.head); var lens = mesh(new THREE.CircleGeometry(0.036, 16), new THREE.MeshPhysicalMaterial({ color: 0xbfe0ff, transparent: true, opacity: 0.25, roughness: 0.05 }), x, 0.255, 0.176, P.head); lens.castShadow = false; }); mesh(bevelGeo(0.03, 0.006, 0.006), fr, 0, 0.26, 0.178, P.head); [-1, 1].forEach(function (s) { var tmp = mesh(bevelGeo(0.006, 0.006, 0.16), fr, s * 0.1, 0.255, 0.085, P.head); }); }
     // hats / accessories
     var capM = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: spec.capColor || 0xc94a3a, roughness: 0.9 });
@@ -141,14 +141,14 @@
     if (spec.backpack) { var bpM = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: spec.backpackColor || 0x2f6b9a, roughness: 0.9 }); mesh(bevelGeo(0.3, 0.4, 0.14), bpM, 0, 0.4, -0.19, P.torso); mesh(bevelGeo(0.2, 0.14, 0.05), bpM, 0, 0.3, -0.28, P.torso); [-0.12, 0.12].forEach(function (x) { mesh(bevelGeo(0.05, 0.4, 0.02), bpM, x, 0.42, 0.13, P.torso); }); }
     var rh = P.rArm.userData.elbow, lh = P.lArm.userData.elbow;
     if (spec.prop === 'cane') { var cane = mesh(roundCylGeo(0.012, 0.012, 0.85, 8), new THREE.MeshStandardMaterial({ color: 0x5a3d22 }), 0, -0.6, 0.05, rh); cane.rotation.x = 0.1; mesh(new THREE.TorusGeometry(0.04, 0.012, 6, 12, Math.PI), new THREE.MeshStandardMaterial({ color: 0x5a3d22 }), 0, -0.2, 0.05, rh).rotation.z = Math.PI; mesh(roundCylGeo(0.02, 0.02, 0.03, 8), MAT.black, 0, -1.02, 0.09, rh); }
-    if (spec.prop === 'board') { var bd2 = mesh(bevelGeo(0.2, 0.025, 0.75), new THREE.MeshStandardMaterial({ color: 0x4a2a6a }), 0.06, -0.3, 0, lh); bd2.rotation.z = 0.15; mesh(new THREE.PlaneGeometry(0.16, 0.5), new THREE.MeshBasicMaterial({ map: textTex(['SK8'], 100, 300, { size: 60, bg: 'rgba(0,0,0,0)', line: 'rgba(0,0,0,0)', color: '#ffd166' }), transparent: true }), 0.075, -0.3, 0, lh).rotation.set(0, Math.PI / 2, -0.15 + Math.PI / 2); [0.25, -0.25].forEach(function (z) { [0.05, -0.05].forEach(function (dx) { mesh(roundCylGeo(0.03, 0.03, 0.03, 10), new THREE.MeshStandardMaterial({ color: 0xffd166 }), 0.09 + dx * 0.3, -0.3 - 0.02, z, lh).rotation.z = Math.PI / 2; }); mesh(bevelGeo(0.04, 0.03, 0.12), MAT.chrome, 0.1, -0.31, z, lh); }); }
+    if (spec.prop === 'board') { var bd2 = mesh(bevelGeo(0.2, 0.025, 0.75), new THREE.MeshStandardMaterial({ color: 0x4a2a6a }), 0.06, -0.3, 0, lh); bd2.rotation.z = 0.15; mesh(new THREE.PlaneGeometry(0.16, 0.5), new THREE.MeshBasicMaterial({ map: signTex(['SK8'], 100, 300, { size: 60, bg: 'rgba(0,0,0,0)', line: 'rgba(0,0,0,0)', color: '#ffd166' }), transparent: true }), 0.075, -0.3, 0, lh).rotation.set(0, Math.PI / 2, -0.15 + Math.PI / 2); [0.25, -0.25].forEach(function (z) { [0.05, -0.05].forEach(function (dx) { mesh(roundCylGeo(0.03, 0.03, 0.03, 10), new THREE.MeshStandardMaterial({ color: 0xffd166 }), 0.09 + dx * 0.3, -0.3 - 0.02, z, lh).rotation.z = Math.PI / 2; }); mesh(bevelGeo(0.04, 0.03, 0.12), MAT.chrome, 0.1, -0.31, z, lh); }); }
     if (spec.prop === 'book') { mesh(bevelGeo(0.16, 0.22, 0.05), new THREE.MeshStandardMaterial({ color: 0x8a2a2a }), 0.02, -0.34, 0.08, lh); mesh(bevelGeo(0.15, 0.2, 0.04), new THREE.MeshStandardMaterial({ color: 0xf0e8d8 }), 0.03, -0.34, 0.085, lh); }
     if (spec.prop === 'bag') { var bagM = new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0x6a4a2a, roughness: 0.9 }); mesh(bevelGeo(0.2, 0.24, 0.1), bagM, 0, -0.5, 0.02, rh); mesh(new THREE.TorusGeometry(0.06, 0.008, 6, 12, Math.PI), bagM, 0, -0.38, 0.02, rh); mesh(bevelGeo(0.18, 0.06, 0.11), new THREE.MeshStandardMaterial({ color: 0x4a3a2a }), 0, -0.41, 0.02, rh); }
     if (spec.prop === 'phone') { mesh(bevelGeo(0.07, 0.13, 0.01), new THREE.MeshStandardMaterial({ color: 0x111111 }), 0, -0.36, 0.05, rh); mesh(new THREE.PlaneGeometry(0.06, 0.11), new THREE.MeshStandardMaterial({ color: 0x223355, emissive: 0x3355aa, emissiveIntensity: 0.9 }), 0, -0.36, 0.056, rh).castShadow = false; }
     if (spec.prop === 'coffee') { mesh(roundCylGeo(0.035, 0.03, 0.12, 12), new THREE.MeshStandardMaterial({ color: 0xf2f2f2 }), 0, -0.36, 0.05, rh); mesh(roundCylGeo(0.037, 0.037, 0.015, 12), new THREE.MeshStandardMaterial({ color: 0x3a2a1a }), 0, -0.3, 0.05, rh); mesh(roundCylGeo(0.037, 0.037, 0.03, 12), new THREE.MeshStandardMaterial({ color: 0xc8a97a }), 0, -0.37, 0.05, rh); }
     if (spec.hunch) P.torso.rotation.x = 0.18;
     g.userData.skinMat = skin; g.userData.glasses = !!spec.glasses;
-    g.userData.setMood = function (mood) { if (P.mood === mood) return; P.mood = mood; P.face.material.map = faceTex(mood, false, spec); P.face.material.needsUpdate = true; P.blinking = false; };
+    g.userData.setMood = function (mood) { if (P.mood === mood) return; P.mood = mood; P.face.material.map = personFace(mood, false, spec); P.face.material.needsUpdate = true; P.blinking = false; };
     g.userData.blinkT = 1 + Math.random() * 4;
     g.userData.phase = Math.random() * 6.28; g.userData.phase0 = g.userData.phase;
     return g;
@@ -157,10 +157,10 @@
   var _tmpV = new THREE.Vector3();
   function humanBlink(g, P, dt) {   // the eyes close for a tenth of a second every few seconds; the mouth keeps the mood it had
     g.userData.blinkT -= dt;
-    if (!P.blinking && g.userData.blinkT <= 0 && P.mood !== 'sleepy') { P.blinking = true; g.userData.blinkT = 0.11; P.face.material.map = faceTex(P.mood, false, g.userData.spec, true); }
-    else if (P.blinking && g.userData.blinkT <= 0) { P.blinking = false; g.userData.blinkT = 2.2 + Math.random() * 4.5; P.face.material.map = faceTex(P.mood, false, g.userData.spec); }
+    if (!P.blinking && g.userData.blinkT <= 0 && P.mood !== 'sleepy') { P.blinking = true; g.userData.blinkT = 0.11; P.face.material.map = personFace(P.mood, false, g.userData.spec, true); }
+    else if (P.blinking && g.userData.blinkT <= 0) { P.blinking = false; g.userData.blinkT = 2.2 + Math.random() * 4.5; P.face.material.map = personFace(P.mood, false, g.userData.spec); }
   }
-  function animateHuman(g, dt, state, speed, lookAt) {
+  function animatePerson(g, dt, state, speed, lookAt) {
     if (state === 'walk' && g.parent && g.parent.userData.ropeHold && now() - g.parent.userData.ropeHold < 200) { state = 'idle'; speed = 0; }   /* held at the rope: stand, don't walk on the spot */
     var P = g.userData.parts; g.userData.phase += dt * (state === 'walk' ? 6.5 * clamp(speed / 1.4, 0.5, 1.6) : 1.2);
     var t = g.userData.phase; var lk = P.lLeg.userData.knee, rk = P.rLeg.userData.knee, le = P.lArm.userData.elbow, re = P.rArm.userData.elbow;
@@ -206,27 +206,27 @@
   // ── Security guard at the door ─────────────────────────────────────
   var guard = { h: null, bubble: null, sayT: 0, state: 'idle', armT: 0 };
   function buildGuard() {
-    guard.h = makeHuman({ skin: 0x8d5524, hair: 0x222222, shirt: 0x1c1c22, pants: 0x1c1c22, hat: 'cap', capColor: 0x1c1c22, beard: true, mood: 'neutral', longSleeve: true, hairStyle: 'short', watch: true, shoes: 0x111111, belt: 0x111111 });
+    guard.h = makePerson({ skin: 0x8d5524, hair: 0x222222, shirt: 0x1c1c22, pants: 0x1c1c22, hat: 'cap', capColor: 0x1c1c22, beard: true, mood: 'neutral', longSleeve: true, hairStyle: 'short', watch: true, shoes: 0x111111, belt: 0x111111 });
     (function () { var T = guard.h.userData.parts.torso; var radio = new THREE.Mesh(bevelGeo(0.05, 0.1, 0.03), MAT.black); radio.position.set(-0.16, 0.5, 0.14); T.add(radio); var ant = new THREE.Mesh(roundCylGeo(0.004, 0.004, 0.08, 6), MAT.black); ant.position.set(-0.17, 0.59, 0.14); T.add(ant); var ep = new THREE.Mesh(roundCylGeo(0.008, 0.008, 0.2, 5), MAT.black); ep.position.set(0.12, 0.66, 0.02); ep.rotation.z = 0.5; T.add(ep); })();
     guard.h.position.set(1.7, 0, 7.3); guard.h.rotation.y = -0.9; world.group.add(guard.h);
-    var badge = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: textTex(['SECURITY'], 160, 60, { size: 30, bg: '#ffc857', color: '#111', line: 'rgba(0,0,0,0)' }) })); badge.position.set(0, 0.5, 0.15); guard.h.userData.parts.torso.add(badge);
+    var badge = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: signTex(['SECURITY'], 160, 60, { size: 30, bg: '#ffc857', color: '#111', line: 'rgba(0,0,0,0)' }) })); badge.position.set(0, 0.5, 0.15); guard.h.userData.parts.torso.add(badge);
     var vest = new THREE.Mesh(bevelGeo(0.46, 0.52, 0.28), new THREE.MeshStandardMaterial({ map: TEX.fabric, color: 0xffd23f, roughness: 0.9 })); vest.position.set(0, 0.36, 0); [0.26, 0.42].forEach(function (y) { var strip = new THREE.Mesh(bevelGeo(0.47, 0.04, 0.29), new THREE.MeshStandardMaterial({ color: 0xc8c8c8, emissive: 0x888888, emissiveIntensity: 0.3 })); strip.position.set(0, y, 0); guard.h.userData.parts.torso.add(strip); }); guard.h.userData.parts.torso.add(vest); badge.position.z = 0.148;
-    guard.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.4, 0.44, 0, 2.25, 0, guard.h); guard.bubble.visible = false;
+    guard.bubble = sprite(signTex(['…'], 512, 160, { size: 44 }), 1.4, 0.44, 0, 2.25, 0, guard.h); guard.bubble.visible = false;
     guard.h.traverse(function (o) { if (o.isMesh && o !== badge) interactable(o, { kind: 'guard' }); });
     world.obstacles.push({ x1: 1.4, x2: 2.0, z1: 7.0, z2: 7.6, tag: 'guard' });
   }
-  guard.say = function (text, color, ms) { if (!guard.bubble) return; var ob = guard.bubble.material.map; guard.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); guard.bubble.material.needsUpdate = true; if (ob) ob.dispose(); guard.bubble.visible = true; clearTimeout(guard.sayT); guard.sayT = setTimeout(function () { if (guard.bubble) guard.bubble.visible = false; }, ms || 2200); };   /* sending security home clears the bubble before this fires */
+  guard.say = function (text, color, ms) { if (!guard.bubble) return; var ob = guard.bubble.material.map; guard.bubble.material.map = signTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); guard.bubble.material.needsUpdate = true; if (ob) ob.dispose(); guard.bubble.visible = true; clearTimeout(guard.sayT); guard.sayT = setTimeout(function () { if (guard.bubble) guard.bubble.visible = false; }, ms || 2200); };   /* sending security home clears the bubble before this fires */
   function updateGuard(dt) {
     if (guardOff() || !guard.h) return;
     if (!guard.h) return;
     var P = guard.h.userData.parts;
-    if (robber.state === 'demand' || robber.state === 'in') { animateHuman(guard.h, dt, 'idle', 0, robber.g.position); P.rArm.rotation.x = -1.4; P.rArm.rotation.z = -0.2; guard.h.userData.setMood('angry'); return; }
+    if (robber.state === 'demand' || robber.state === 'in') { animatePerson(guard.h, dt, 'idle', 0, robber.g.position); P.rArm.rotation.x = -1.4; P.rArm.rotation.z = -0.2; guard.h.userData.setMood('angry'); return; }
     if (updateGuardRope(dt)) return;
     if (updateGuardTasks(dt)) return;
-    if (guard.state === 'check') { guard.armT += dt; P.rArm.rotation.x = lerp(P.rArm.rotation.x, -1.3, 0.15); P.rArm.rotation.z = lerp(P.rArm.rotation.z, -0.3, 0.15); animateHuman(guard.h, dt, 'idle', 0, guard.checkG ? guard.checkG.position : npc.g.visible ? npc.g.position : player.pos); P.rArm.rotation.x = -1.3; P.rArm.rotation.z = -0.3; if (guard.armT > 2.2) { guard.state = 'idle'; guard.h.userData.setMood('happy'); guard.say('You\'re good. Go on through.', '#6fdc8c'); setTimeout(function () { if (guard.h) guard.h.userData.setMood('neutral'); }, 2000); } return; }
+    if (guard.state === 'check') { guard.armT += dt; P.rArm.rotation.x = lerp(P.rArm.rotation.x, -1.3, 0.15); P.rArm.rotation.z = lerp(P.rArm.rotation.z, -0.3, 0.15); animatePerson(guard.h, dt, 'idle', 0, guard.checkG ? guard.checkG.position : npc.g.visible ? npc.g.position : player.pos); P.rArm.rotation.x = -1.3; P.rArm.rotation.z = -0.3; if (guard.armT > 2.2) { guard.state = 'idle'; guard.h.userData.setMood('happy'); guard.say('You\'re good. Go on through.', '#6fdc8c'); setTimeout(function () { if (guard.h) guard.h.userData.setMood('neutral'); }, 2000); } return; }
     // idle: watch whoever is closer, the customer or the player
     var look = player.pos; if (npc.g.visible) { var dn = Math.hypot(npc.g.position.x - guard.h.position.x, npc.g.position.z - guard.h.position.z); var dp = Math.hypot(player.pos.x - guard.h.position.x, player.pos.z - guard.h.position.z); if (dn < dp) look = npc.g.position; }
-    animateHuman(guard.h, dt, 'idle', 0, look);
+    animatePerson(guard.h, dt, 'idle', 0, look);
     // greet the boss when they walk into the lobby
     var near = Math.hypot(player.pos.x - guard.h.position.x, player.pos.z - guard.h.position.z, player.pos.y - 1.65);
     if (near < 2.2 && !guard.greeted) { guard.greeted = true; var gh = gameHour(); guard.say(pick([gh >= 5 && gh < 12 ? 'Morning, boss.' : gh >= 12 && gh < 18 ? 'Afternoon, boss.' : 'Evening, boss.', 'All quiet out here.', guardIdLine()]), '#e8f1ea', 2600); }

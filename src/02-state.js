@@ -1,16 +1,7 @@
-//@ settings, the save state and the per-strain stash
+//@ the save state (its shape, its normalisation, its recovery) and the per-strain stash; the engine keeps the settings and writes the slot
   // ── Settings ──────────────────────────────────────────────────────
-  var DEFAULT_SETTINGS = { quality: 'high', fov: 75, sens: 1.0, invertY: false, sound: true, fps: false, dayNight: 'cycle', dayLength: '20', headBob: true, hudScale: 1.0 };
-  var SET = {};
-  function loadSettings() {
-    SET = {}; for (var k in DEFAULT_SETTINGS) SET[k] = DEFAULT_SETTINGS[k];
-    try { var raw = localStorage.getItem(SETTINGS_KEY); if (raw) { var o = JSON.parse(raw); for (var j in o) if (j in SET) SET[j] = o[j]; if (o.dayLength === undefined && o.dayNight === 'clock') SET.dayNight = 'cycle'; } } catch (e) {}   // settings saved before the cycle existed move onto it once
-    return SET;
-  }
-  function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(SET)); } catch (e) {} }
 
   // ── State ─────────────────────────────────────────────────────────
-  var S;
   var SAVE_V = 2;   /* the save's shape version: when the shape of S changes, bump this and add a step to migrate() */
   function fresh() {
     return {
@@ -44,21 +35,13 @@
   // shop in memory, keeps a copy of the save under SAVE + '-broken' for a bug report, and never writes over the slot
   // for the rest of the session. A failure later in the boot reloads the page once with RECOVER_KEY set, which
   // lands here and takes the same fresh path.
-  var RECOVER_KEY = 'rfgc-recover', bootIssue = '', saveBlocked = false;
+  var RECOVER_KEY = 'rfgc-recover', bootIssue = '', wiped = false;
   var BOOT_FRESH_MSG = 'Your saved game wouldn\'t load, so this is a fresh shop that won\'t be saved. The old save is untouched, and a copy is kept for a bug report (F7).';
   function recoverTag(raw) { return SAVE + ':' + (raw ? raw.length : 0); }   /* a save that has changed since is tried again */
   function keepBrokenSave(raw) { if (!raw) return; try { localStorage.setItem(SAVE + '-broken', raw); } catch (e) {} }
-  function load() {
-    var raw = null, retry = false;
-    try { raw = localStorage.getItem(SAVE); } catch (e) {}
-    try { retry = sessionStorage.getItem(RECOVER_KEY) === recoverTag(raw); } catch (e) {}
-    if (!retry) {
-      try { S = raw ? JSON.parse(raw) : null; if (raw && (!S || typeof S !== 'object')) throw new Error('the save is not an object'); return loadNormalise(); }
-      catch (e) { console.error('Grow Co.: the save in ' + SAVE + ' would not load, starting a fresh shop in memory', e); }
-    }
-    keepBrokenSave(raw); saveBlocked = true; bootIssue = BOOT_FRESH_MSG;
-    S = fresh(); return loadNormalise();
-  }
+  // the engine's loadSave parses the slot and fills the missing top-level keys, then runs this: the shop's normalisation and its
+  // versioned migration on the loaded save (missing.v: a save from before versions)
+  function migrateGrow(s, f, missing) { S = s; if (missing && missing.v) S.v = 1; return loadNormalise(); }
   function loadNormalise() {
     var from = S && typeof S === 'object' && typeof S.v === 'number' ? S.v : 1;   /* read before the defaults below fill in v */
     if (!S || typeof S !== 'object') { S = fresh(); from = SAVE_V; }
@@ -96,12 +79,6 @@
     s.v = SAVE_V;
     return s;
   }
-  var saveT = null;
-  var saveFailed = false;
-  function writeSave() { if (saveBlocked) return; try { localStorage.setItem(SAVE, JSON.stringify(S)); saveFailed = false; } catch (e) { if (!saveFailed) { saveFailed = true; try { toast('⚠ The game could not save: the storage is full or blocked', 'bad'); } catch (e2) {} } } }
-  function save() { if (saveT) return; saveT = setTimeout(function () { saveT = null; writeSave(); }, 300); }
-  function saveNow() { if (saveT) { clearTimeout(saveT); saveT = null; } writeSave(); }   /* the debounce would lose the last change when the window closes */
-  window.addEventListener('pagehide', function () { if (ui.started) saveNow(); }); window.addEventListener('beforeunload', function () { if (ui.started) saveNow(); });
   function slots() { return TENTS[S.tent].slots; }
   function lightObj() { for (var i = 0; i < LIGHTS.length; i++) if (LIGHTS[i].id === S.light) return LIGHTS[i]; return LIGHTS[0]; }
   function lightIdx() { for (var i = 0; i < LIGHTS.length; i++) if (LIGHTS[i].id === S.light) return i; return 0; }

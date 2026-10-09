@@ -44,7 +44,7 @@
     { id: 'sponsor', ico: '🤝', name: 'A sponsor', price: 1500, lvl: 5, d: 'Prize money is half as much again.' },
     { id: 'press', ico: '📰', name: 'Press coverage', price: 900, lvl: 3, d: 'The rep you win at the Cup is doubled.' }]);
   dlcUpgDefine('merch', '👕', [
-    { id: 'hoodie', ico: '🧥', name: 'Hoodies', price: 700, lvl: 3, d: 'A new line on the stand, and the dearest: costs $16, sells for $42.', after: function () { if (propInst.merchStand) buildProp('merchStand'); } },
+    { id: 'hoodie', ico: '🧥', name: 'Hoodies', price: 700, lvl: 3, d: 'A new line on the stand, and the dearest: costs $16, sells for $42.', after: function () { if (propInst.merchStand) growBuildProp('merchStand'); } },
     { id: 'express', ico: '⚡', name: 'Express printing', price: 500, lvl: 2, d: 'A box arrives in 30 s, down from 90.' },
     { id: 'racks', ico: '🗄️', name: 'Bigger stand', price: 650, lvl: 3, d: 'The stand holds 80 of each, up from 40.' }]);
   dlcUpgDefine('farm', '🚜', [

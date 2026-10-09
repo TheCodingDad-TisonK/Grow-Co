@@ -136,7 +136,7 @@
     var hb = held(); var show = !!(hb && hb.kind === 'broom'); if (world.dustRings) { var pulse = 0.35 + Math.abs(Math.sin(now() / 260)) * 0.45; world.dustRings.forEach(function (r) { r.visible = show; }); DUST_RING.opacity = pulse; }
   }
   function syncDust() {
-    world.dustDirty = false; clearKids(dustGroup);
+    world.dustDirty = false; dropKids(dustGroup);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'dust'; });
     dustList().forEach(function (p) { var m = new THREE.Mesh(new THREE.PlaneGeometry(p.s, p.s), DUST_MAT); m.rotation.set(-Math.PI / 2, 0, p.r); m.position.set(p.x, 0.012, p.z); dustGroup.add(m); var ring = new THREE.Mesh(new THREE.RingGeometry(p.s * 0.5, p.s * 0.5 + 0.03, 32), DUST_RING); ring.rotation.x = -Math.PI / 2; ring.position.set(p.x, 0.016, p.z); ring.userData.dustRing = true; ring.visible = false; dustGroup.add(ring); var hit = new THREE.Mesh(new THREE.BoxGeometry(p.s + 0.2, 0.4, p.s + 0.2), MAT.none); hit.position.set(p.x, 0.2, p.z); dustGroup.add(hit); interactable(hit, { kind: 'dust', id: p.id }); hit.userData.dynGroup = 'dust'; });
     world.dustRings = []; dustGroup.children.forEach(function (o) { if (o.userData.dustRing) world.dustRings.push(o); });
@@ -145,7 +145,7 @@
   function sweep(id) {
     var h = held(); if (!h || h.kind !== 'broom') { toast('Grab the broom first (processing room wall)', 'bad'); return; }
     var d = dustList(); var idx = -1; for (var i = 0; i < d.length; i++) if (d[i].id === id) idx = i; if (idx < 0) return;
-    var p = d[idx]; d.splice(idx, 1); world.dustDirty = true; burst(p.x, 0.15, p.z, 0x8a7a66, 22, 'out'); sfx('water');
+    var p = d[idx]; d.splice(idx, 1); world.dustDirty = true; spark(p.x, 0.15, p.z, 0x8a7a66, 22, 'out'); sfx('water');
     S.stats.swept = (S.stats.swept || 0) + 1; if (S.stats.swept % 10 === 0) { S.rep += 1; toast('🧹 Spotless (rep +1)', 'good'); } else toast('🧹 Swept', 'good');
     if (!d.length) logEvent('🧹 Floors are clean', 'good');
   }
@@ -242,11 +242,7 @@
     tv.cam = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 40); tv.cam.position.set(TENT_ORIGIN.x + 3.2, 2.3, TENT_ORIGIN.z + 4.2); tv.cam.lookAt(TENT_ORIGIN.x, 0.8, TENT_ORIGIN.z); scene.add(tv.cam); tv.cam.layers.disable(TOWN_LAYER);
     if (typeof S.tv === 'number') tv.channel = S.tv;
   }
-//#if desk
-  function tvCycle() { tv.channel = (tv.channel + 1) % TV_CHANNELS.length; S.tv = tv.channel; sfx('click'); toast('📺 ' + { off: 'TV off', desk: 'Live desk', growcam: 'Grow cam', news: 'RF House News' }[TV_CHANNELS[tv.channel]], ''); drawTv(); save(); }
-//#else
   function tvCycle() { tv.channel = (tv.channel + 1) % TV_CHANNELS.length; S.tv = tv.channel; sfx('click'); toast('📺 ' + { off: 'TV off', desk: 'Shop dashboard', growcam: 'Grow cam', news: 'RF House News' }[TV_CHANNELS[tv.channel]], ''); drawTv(); save(); }
-//#endif
   function drawTv() {
     if (!tv.mat) return; var ch = TV_CHANNELS[tv.channel];
     if (ch === 'off') { tv.mat.map = null; tv.mat.color.setHex(0x05070a); tv.glow.intensity = 0; }

@@ -33,21 +33,21 @@
     }
     if (truck.state === 'in') { truck.z += dt * 4.5; if (truck.z >= -15.2) { truck.z = -15.2; truck.state = 'unload'; truck.t = 0; rollerSet(true); } truck.g.position.z = truck.z; }
     else if (truck.state === 'unload') {
-      truck.t += dt; if (truck.t > 1.2 && !truck.dropped) { truck.dropped = true; storageAdd(truck.delivery.items); burst(4.5, 0.8, -12.0, 0xd9b36a, 24, 'up'); sfx('cash'); logEvent('📦 Delivered to the back room: ' + orderSummary(truck.delivery.items), 'good'); toast('📦 Delivery in the back room: ' + orderSummary(truck.delivery.items), 'good'); }
+      truck.t += dt; if (truck.t > 1.2 && !truck.dropped) { truck.dropped = true; storageAdd(truck.delivery.items); spark(4.5, 0.8, -12.0, 0xd9b36a, 24, 'up'); sfx('cash'); logEvent('📦 Delivered to the back room: ' + orderSummary(truck.delivery.items), 'good'); toast('📦 Delivery in the back room: ' + orderSummary(truck.delivery.items), 'good'); }
       if (truck.t > 7) { truck.state = 'out'; truck.dropped = false; rollerSet(false); sfx('beep'); sfx('engine'); }
     }
     else if (truck.state === 'out') { truck.z -= dt * 4.0; truck.g.position.z = truck.z; if (truck.z < -32) { truck.state = 'away'; truck.g.visible = false; gateSet(false); } }
   }
   function courierArrive() {
-    if (!courier.g) { courier.g = new THREE.Group(); world.group.add(courier.g); courier.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, courier.g); }
-    if (courier.h) { courier.g.remove(courier.h); disposeTree(courier.h); }
-    courier.h = makeHuman({ skin: 0xe0ac7e, hair: 0x2b1b12, shirt: 0x1f3a5f, pants: 0x1f3a5f, hat: 'cap', capColor: 0x1f3a5f, longSleeve: true, hairStyle: 'short', watch: true, shoes: 0x111111, logo: '🏦', mood: 'neutral' });
+    if (!courier.g) { courier.g = new THREE.Group(); world.group.add(courier.g); courier.bubble = sprite(signTex(['…'], 512, 160, { size: 44 }), 1.5, 0.58, 0, 2.25, 0, courier.g); }
+    if (courier.h) { courier.g.remove(courier.h); dropTree(courier.h); }
+    courier.h = makePerson({ skin: 0xe0ac7e, hair: 0x2b1b12, shirt: 0x1f3a5f, pants: 0x1f3a5f, hat: 'cap', capColor: 0x1f3a5f, longSleeve: true, hairStyle: 'short', watch: true, shoes: 0x111111, logo: '🏦', mood: 'neutral' });
     courier.g.add(courier.h); var el = courier.h.userData.parts.lArm.userData.elbow; var cs = new THREE.Mesh(bevelGeo(0.3, 0.22, 0.1), colorMat(0x1a1c20, 0.5, 0.3)); cs.position.set(0, -0.45, 0.02); el.add(cs);
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; hb.userData.courier = true; courier.h.add(hb); interactable(hb, { kind: 'courier' });
     courier.g.position.set(4.5, 0, -21); courier.g.visible = true; courier.state = 'in'; courier.path = [{ x: 4.5, z: -16 }, { x: 4.5, z: -11.6 }]; gateSet(true); rollerSet(true);
     courier.bubble.visible = false; toast('🏦 The bank courier is at the back gate', ''); logEvent('🏦 Bank courier arrived for a ' + money(S.courier.amount) + ' pickup', '');
   }
-  function courierSay(t, col) { var ob = courier.bubble.material.map; courier.bubble.material.map = textTex([t], 512, 160, { size: 44, titleColor: col || '#e8f1ea' }); courier.bubble.material.needsUpdate = true; if (ob) ob.dispose(); courier.bubble.visible = true; }
+  function courierSay(t, col) { var ob = courier.bubble.material.map; courier.bubble.material.map = signTex([t], 512, 160, { size: 44, titleColor: col || '#e8f1ea' }); courier.bubble.material.needsUpdate = true; if (ob) ob.dispose(); courier.bubble.visible = true; }
   function courierHandOver() {
     var c = S.courier; if (!c || courier.state !== 'wait') return;
     if (S.pocket < c.amount) { toast('The courier wants ' + money(c.amount) + ' and you\'ve ' + money(S.pocket) + ' in your pocket. Get the rest from the vault.', 'bad'); courierSay('I need the full ' + money(c.amount) + ', please.', '#ffc857'); return; }
@@ -58,9 +58,9 @@
   function updateCourier(dt) {
     if (courier.state === 'away' || !courier.h) return;
     var spd = 1.4;
-    if (courier.state === 'in') { if (walkAlong(courier.g, courier.path, spd, dt)) { courier.state = 'wait'; courier.t = 0; courier.g.rotation.y = 0; courierSay('Cash pickup: ' + money(S.courier ? S.courier.amount : 0) + '.', '#ffc857'); if (S.courier) S.courier.state = 'waiting'; } animateHuman(courier.h, dt, 'walk', spd, null); }
-    else if (courier.state === 'wait') { courier.t += dt; animateHuman(courier.h, dt, 'wait', 0, player.pos); if (courier.t > 180) { courierSay('Can\'t wait any longer. Book me again.', '#ff6b6b'); courier.state = 'leave'; courier.path = [{ x: 4.5, z: -16 }, { x: 4.5, z: -21 }]; if (S.courier) S.courier = null; logEvent('🏦 The courier left without a pickup', 'bad'); toast('🏦 The courier gave up waiting and left. Book another under Bank on the office PC.', 'bad'); world.interact = world.interact.filter(function (m) { return !m.userData.courier; }); } }
-    else if (courier.state === 'leave') { if (walkAlong(courier.g, courier.path, spd, dt)) { courier.state = 'away'; courier.g.visible = false; courier.bubble.visible = false; rollerSet(false); gateSet(false); } animateHuman(courier.h, dt, 'walk', spd, null); }
+    if (courier.state === 'in') { if (walkMesh(courier.g, courier.path, spd, dt)) { courier.state = 'wait'; courier.t = 0; courier.g.rotation.y = 0; courierSay('Cash pickup: ' + money(S.courier ? S.courier.amount : 0) + '.', '#ffc857'); if (S.courier) S.courier.state = 'waiting'; } animatePerson(courier.h, dt, 'walk', spd, null); }
+    else if (courier.state === 'wait') { courier.t += dt; animatePerson(courier.h, dt, 'wait', 0, player.pos); if (courier.t > 180) { courierSay('Can\'t wait any longer. Book me again.', '#ff6b6b'); courier.state = 'leave'; courier.path = [{ x: 4.5, z: -16 }, { x: 4.5, z: -21 }]; if (S.courier) S.courier = null; logEvent('🏦 The courier left without a pickup', 'bad'); toast('🏦 The courier gave up waiting and left. Book another under Bank on the office PC.', 'bad'); world.interact = world.interact.filter(function (m) { return !m.userData.courier; }); } }
+    else if (courier.state === 'leave') { if (walkMesh(courier.g, courier.path, spd, dt)) { courier.state = 'away'; courier.g.visible = false; courier.bubble.visible = false; rollerSet(false); gateSet(false); } animatePerson(courier.h, dt, 'walk', spd, null); }
   }
   function callCourier(amount) {
     if (S.courier) { toast('A courier is already booked', 'bad'); return; }
@@ -85,7 +85,7 @@
   function swingBat() {
     if (swing.cd > now() || player.downT > 0) return; swing.cd = now() + 450; swing.t = 0.35; sfx('swing');
     var t = facingTargets()[0]; if (!t) return;
-    sfx('hit'); burst(t.ref.g.position.x, 1.3, t.ref.g.position.z, 0xffffff, 12, 'out'); hitNpc(t.what, t.ref);
+    sfx('hit'); spark(t.ref.g.position.x, 1.3, t.ref.g.position.z, 0xffffff, 12, 'out'); hitNpc(t.what, t.ref);
   }
   function lieDown(h) { h.rotation.x = -Math.PI / 2; h.position.y = 0.28; }
   function standBack(h) { h.rotation.x = 0; h.position.y = 0; }

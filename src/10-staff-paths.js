@@ -6,7 +6,7 @@
   var NAV = { cell: 0.2, x0: -13, z0: -19, w: 0, h: 0, grid: null, raw: null, key: '', pad: 0.2 };   /* grid: locked doors are walls. raw: every door is open, which is how a man with a crowbar sees the place */
   function navKey() { var k = world.obstacles.length, s = 0; for (var i = 0; i < world.obstacles.length; i++) { var o = world.obstacles[i]; if (o.tag === 'guard') continue; s += o.x1 * 3.1 + o.z2 * 1.7; if (o.doorId) { var dk = doorById[o.doorId]; if (dk && dk.locked) s += 91.7 + (staffKey(dk.id) ? 0 : 13.3); } if (o.tag === 'staffdoor' && staffDoorLocked()) s += 57.3 + (staffKey('staff') ? 0 : 11.1); }   /* doors count now, and locking one changes the key, so the grid is rebuilt the moment it matters */
     return k + ':' + s.toFixed(2); }
-  function navBuild() {
+  function gridBuild() {
     var cs = NAV.cell; NAV.w = Math.ceil(26 / cs) + 1; NAV.h = Math.ceil(33 / cs) + 1;
     var grid = new Uint8Array(NAV.w * NAV.h), raw = new Uint8Array(NAV.w * NAV.h), staff = new Uint8Array(NAV.w * NAV.h), pad = NAV.pad;
     world.obstacles.forEach(function (o) {
@@ -24,11 +24,11 @@
   }
   var navG = null;   /* which of the two grids the walk being planned right now is using */
   function navFree(cx, cz) { return cx >= 0 && cz >= 0 && cx < NAV.w && cz < NAV.h && !(navG || NAV.grid)[cz * NAV.w + cx]; }
-  function navFreeAt(x, z) { return navFree(Math.round((x - NAV.x0) / NAV.cell), Math.round((z - NAV.z0) / NAV.cell)); }
+  function gridFreeAt(x, z) { return navFree(Math.round((x - NAV.x0) / NAV.cell), Math.round((z - NAV.z0) / NAV.cell)); }
   function navNearest(cx, cz) { if (navFree(cx, cz)) return [cx, cz]; for (var r = 1; r < 10; r++) for (var dz = -r; dz <= r; dz++) for (var dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dz)) === r && navFree(cx + dx, cz + dz)) return [cx + dx, cz + dz]; return null; }
-  function navLos(a, b) { var d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.ceil(d / 0.1); for (var i = 0; i <= n; i++) { var t = n ? i / n : 0; if (!navFreeAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return false; } return true; }
+  function navLos(a, b) { var d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.ceil(d / 0.1); for (var i = 0; i <= n; i++) { var t = n ? i / n : 0; if (!gridFreeAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return false; } return true; }
   function navPath(from, to, thruDoors) {
-    if (!NAV.grid || navKey() !== NAV.key) navBuild();
+    if (!NAV.grid || navKey() !== NAV.key) gridBuild();
     navG = thruDoors === 'staff' ? NAV.staff : thruDoors ? NAV.raw : NAV.grid;   /* 'staff': locked doors they hold a key for are open to them */
     var W = NAV.w, H = NAV.h, cs = NAV.cell;
     var s = navNearest(Math.round((from.x - NAV.x0) / cs), Math.round((from.z - NAV.z0) / cs)), t = navNearest(Math.round((to.x - NAV.x0) / cs), Math.round((to.z - NAV.z0) / cs));
@@ -117,19 +117,19 @@
     if (!rec || rec.g) return;
     var L = CREW_LOOK[rec.look % CREW_LOOK.length];
     var g = new THREE.Group(); g.position.set(L.at[0], 0, L.at[1]); world.group.add(g); rec.g = g;
-    rec.h = makeHuman({ skin: L.skin, hair: L.hair, hairStyle: L.hairStyle, shirt: L.shirt, pants: 0x2a2d33, shoes: 0x333333, watch: true, logo: '🌿', mood: 'happy' }); g.add(rec.h);
-    var badge = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: textTex(['STAFF'], 160, 60, { size: 30, bg: '#6fdc8c', color: '#062010', line: 'rgba(0,0,0,0)' }) })); badge.position.set(0.1, 0.5, 0.148); rec.h.userData.parts.torso.add(badge);
-    rec.bubble = sprite(textTex(['…'], 512, 160, { size: 44 }), 1.4, 0.44, 0, 2.25, 0, g); rec.bubble.visible = false;
+    rec.h = makePerson({ skin: L.skin, hair: L.hair, hairStyle: L.hairStyle, shirt: L.shirt, pants: 0x2a2d33, shoes: 0x333333, watch: true, logo: '🌿', mood: 'happy' }); g.add(rec.h);
+    var badge = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: signTex(['STAFF'], 160, 60, { size: 30, bg: '#6fdc8c', color: '#062010', line: 'rgba(0,0,0,0)' }) })); badge.position.set(0.1, 0.5, 0.148); rec.h.userData.parts.torso.add(badge);
+    rec.bubble = sprite(signTex(['…'], 512, 160, { size: 44 }), 1.4, 0.44, 0, 2.25, 0, g); rec.bubble.visible = false;
     var hb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), MAT.none); hb.position.y = 1.25; rec.h.add(hb); interactable(hb, { kind: 'worker', idx: rec.idx });
   }
   function removeWorker(rec) {
     rec = rec || worker; carryBack(rec, true); if (!rec.g) return;   /* a crate in their arms goes back into storage; the caller settles the saved record */
     rec.hasBroom = false; rec.broomMesh = null; syncBroom();
-    world.group.remove(rec.g); disposeTree(rec.g);
+    world.group.remove(rec.g); dropTree(rec.g);
     world.interact = world.interact.filter(function (m) { var d = m.userData.interact; return !(d && d.kind === 'worker' && (d.idx || 0) === (rec.idx || 0)); });   /* this one's hit box, not everybody's */
     rec.g = null; rec.h = null; rec.bubble = null; rec.state = 'idle'; rec.job = null; rec.path = [];
   }
-  function workerSay(text, color, ms) { if (!worker || !worker.bubble) return; var ob = worker.bubble.material.map; worker.bubble.material.map = textTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); worker.bubble.material.needsUpdate = true; if (ob) ob.dispose(); worker.bubble.visible = true; clearTimeout(worker.sayT); worker.sayT = setTimeout(function () { if (worker.bubble) worker.bubble.visible = false; }, ms || 2400); }
+  function workerSay(text, color, ms) { if (!worker || !worker.bubble) return; var ob = worker.bubble.material.map; worker.bubble.material.map = signTex([text], 512, 160, { size: 44, titleColor: color || '#e8f1ea' }); worker.bubble.material.needsUpdate = true; if (ob) ob.dispose(); worker.bubble.visible = true; clearTimeout(worker.sayT); worker.sayT = setTimeout(function () { if (worker.bubble) worker.bubble.visible = false; }, ms || 2400); }
   function crewSync() {   // runtime records follow the saved crew: build the new ones, clear out the gone ones
     var list = crewList();
     crew.filter(function (r) { return r.idx >= list.length; }).forEach(function (r) { removeWorker(r); });
@@ -182,7 +182,7 @@
     if (!S.staff) S.staff = {};
     if (off === undefined) off = !S.staff.guardOff;
     S.staff.guardOff = !!off;
-    if (off) { if (guard.h) { world.group.remove(guard.h); disposeTree(guard.h); world.interact = world.interact.filter(function (m) { return !(m.userData.interact && m.userData.interact.kind === 'guard'); }); guard.h = null; guard.bubble = null; } world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); }
+    if (off) { if (guard.h) { world.group.remove(guard.h); dropTree(guard.h); world.interact = world.interact.filter(function (m) { return !(m.userData.interact && m.userData.interact.kind === 'guard'); }); guard.h = null; guard.bubble = null; } world.obstacles = world.obstacles.filter(function (o) { return o.tag !== 'guard'; }); }
     else if (!guard.h) buildGuard();
     sfx(off ? 'door' : 'ok');
     toast(off ? '🏠 The guard has gone home' : '🛡️ The guard is back on the door', off ? '' : 'good');
@@ -194,7 +194,7 @@
   function postStart(i) {
     postPick = i; ctxClose();
     toast('📍 Walk to the spot and press E to post ' + crewName(i) + ' there · Esc to cancel', '');
-    lockPointer();
+    grabPointer();
   }
   function postSet() {
     var i = postPick; postPick = -1; var c = crewList()[i]; if (!c) return;
@@ -260,7 +260,7 @@
   function restockNext() { return Object.keys(S.storage).filter(function (k) { return (S.storage[k] || 0) > 0 && restockDest(k); })[0] || null; }
   function carrySet(rec, c, unsaved) {   // what a crew member has in their arms; kept on their saved record so a reload never loses it
     var saved = !unsaved && crewList()[rec.idx]; if (saved) saved.carry = c ? { item: c.item, n: c.n } : null;
-    if (rec.carryMesh && rec.carryMesh.parent) { rec.carryMesh.parent.remove(rec.carryMesh); disposeTree(rec.carryMesh); }
+    if (rec.carryMesh && rec.carryMesh.parent) { rec.carryMesh.parent.remove(rec.carryMesh); dropTree(rec.carryMesh); }
     rec.carryMesh = null; rec.carry = c || null;
     if (c && rec.h) { var m = crateMesh(c.item, 0.4, 0.26, 0.32); m.position.set(0, 0.3, 0.3); rec.h.userData.parts.torso.add(m); rec.carryMesh = m; }
   }
@@ -308,7 +308,7 @@
   function workerNextJob(task) {
     var g = worker.g; function near(x, z) { return Math.hypot(g.position.x - x, g.position.z - z) < 0.35; }
     if (worker.carry && task !== 'restock') { var bf = rackFront(worker.carry.item); return { x: bf.x, z: bf.z, dur: 1.0, done: function () { carryBack(worker); sfx('putdown'); } }; }   /* given another job mid-errand: the crate goes back up first */
-    if (task === 'serve') { var c = S.customer; if (curtainOpen('service') && c && c.arrived && !c.stage && !c.idPending && npc.state === 'wait' && now() > worker.coolT) {   /* a card still held out is yours to check: the crew waits */ var gp = propInst.goodsShelf ? propWorld('goodsShelf', 0, 0.85) : { x: propPlacement('goodsShelf').x, z: propPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
+    if (task === 'serve') { var c = S.customer; if (curtainOpen('service') && c && c.arrived && !c.stage && !c.idPending && npc.state === 'wait' && now() > worker.coolT) {   /* a card still held out is yours to check: the crew waits */ var gp = propInst.goodsShelf ? growPropWorld('goodsShelf', 0, 0.85) : { x: growPropPlacement('goodsShelf').x, z: growPropPlacement('goodsShelf').z - 0.85 }; return { x: gp.x, z: gp.z, dur: 1.2, done: workerPick }; } /* stands at the shelf's front (local +z) wherever it was moved or rotated */ if (!near(WP.counter.x, WP.counter.z)) return { x: WP.counter.x, z: WP.counter.z, dur: 0, done: function () {} }; return null; }
     if (task === 'restock') { var rj = restockJob(); if (rj) return rj; if (!near(WP.hall.x, WP.hall.z)) return { x: WP.hall.x, z: WP.hall.z, dur: 0, done: function () {} }; return null; }
     if (task !== 'clean' && worker.hasBroom) return { x: ROOM.x - 0.65, z: -0.85, dur: 0.6, done: workerDropBroom };
     if (task === 'clean' && !worker.hasBroom) { if (!dustList().length) return null; return { x: ROOM.x - 0.65, z: -0.85, dur: 0.8, done: workerTakeBroom }; }
@@ -330,9 +330,9 @@
   function updateOneWorker(dt) {
     if (worker.g && worker.path && worker.path.length) { var wlk = npcDoors(worker.g, 0, true); if (wlk && worker.job) { worker.path = []; worker.job = null; worker.state = 'idle'; worker.coolT = now() + 6000; workerSay(crewLine('locked'), '#ffc857', 2600); } }   /* a locked door is the end of that errand, not something to walk through */
     if (!worker.g) buildWorker(); var g = worker.g, spd = 1.5;
-    if (worker.state === 'walk') { if (walkAlong(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animateHuman(worker.h, dt, 'walk', spd, null); carryPose(); return; }
-    if (worker.state === 'work') { worker.t += dt; animateHuman(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.carry) carryPose(); else if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z, 'staff'); worker.state = 'walk'; } } return; }
-    animateHuman(worker.h, dt, 'idle', 0, player.pos); carryPose(); worker.idleT += dt; if (worker.idleT < 0.7) return; worker.idleT = 0;
+    if (worker.state === 'walk') { if (walkMesh(g, worker.path, spd, dt)) { worker.state = 'work'; worker.t = 0; } animatePerson(worker.h, dt, 'walk', spd, null); carryPose(); return; }
+    if (worker.state === 'work') { worker.t += dt; animatePerson(worker.h, dt, 'idle', 0, null); var P = worker.h.userData.parts; if (worker.carry) carryPose(); else if (worker.job && worker.job.dur > 0) { P.rArm.rotation.x = worker.hasBroom ? -0.5 + Math.sin(worker.t * 5) * 0.35 : -0.9 + Math.sin(worker.t * 6) * 0.4; if (worker.hasBroom) P.torso.rotation.x = 0.15; } if (!worker.job || worker.t >= worker.job.dur) { var j = worker.job; worker.job = null; worker.state = 'idle'; worker.idleT = 0; worker.next = null; P.torso.rotation.x = 0; if (j) j.done(); if (worker.next) { worker.job = worker.next; worker.next = null; worker.path = routeTo(g.position, worker.job.x, worker.job.z, 'staff'); worker.state = 'walk'; } } return; }
+    animatePerson(worker.h, dt, 'idle', 0, player.pos); carryPose(); worker.idleT += dt; if (worker.idleT < 0.7) return; worker.idleT = 0;
     var task = (crewList()[worker.idx] || {}).task || 'idle';
     var job = workerNextJob(task);
     if (!job && task !== 'idle') {   /* nothing to do is not the same as broken: say so */
@@ -353,10 +353,10 @@
   function updateGuardTasks(dt) {   // returns true when it handled this frame
     var gt = S.staff && S.staff.guardTask || 'door';
     var wantPost = gt === 'door' || npc.state === 'enter' || npc.state === 'check' || guard.state === 'check' || lineAtDoor();
-    if (guard.walking) { if (walkAlong(guard.h, guard.path, 1.3, dt)) { guard.walking = false; guard.pauseT = 1.6; if (guard.toPost) { guard.h.rotation.y = -0.9; world.obstacles.push({ x1: 1.4, x2: 2.0, z1: 7.0, z2: 7.6, tag: 'guard' }); } var fn = guard.onArrive; guard.onArrive = null; if (fn) fn(); } animateHuman(guard.h, dt, 'walk', 1.3, null); return true; }
+    if (guard.walking) { if (walkMesh(guard.h, guard.path, 1.3, dt)) { guard.walking = false; guard.pauseT = 1.6; if (guard.toPost) { guard.h.rotation.y = -0.9; world.obstacles.push({ x1: 1.4, x2: 2.0, z1: 7.0, z2: 7.6, tag: 'guard' }); } var fn = guard.onArrive; guard.onArrive = null; if (fn) fn(); } animatePerson(guard.h, dt, 'walk', 1.3, null); return true; }
     guard.pauseT = Math.max(0, (guard.pauseT || 0) - dt); var atPost = Math.hypot(guard.h.position.x - WP.post.x, guard.h.position.z - WP.post.z) < 0.15;
     if (wantPost) { if (!atPost && guard.pauseT <= 0) { guardGo(WP.post.x, WP.post.z); return true; } return false; }
-    if (guard.pauseT > 0) { animateHuman(guard.h, dt, 'idle', 0, player.pos); return true; }
+    if (guard.pauseT > 0) { animatePerson(guard.h, dt, 'idle', 0, player.pos); return true; }
     if (gt === 'patrol') { var pts = [[6, 6.5], [9, 8.2], [3, 8.4], [-3, 7.2], [WP.post.x, WP.post.z]]; guard.pi = ((guard.pi || 0) + 1) % pts.length; guardGo(pts[guard.pi][0], pts[guard.pi][1]); return true; }
     if (gt === 'sweep') { var spot = dustList().filter(function (p) { return p.z > 4; }).sort(function (a, b) { return Math.hypot(a.x - guard.h.position.x, a.z - guard.h.position.z) - Math.hypot(b.x - guard.h.position.x, b.z - guard.h.position.z); })[0]; if (spot) { guardGo(spot.x, spot.z, function () { S.dust = dustList().filter(function (p) { return p.id !== spot.id; }); world.dustDirty = true; sfx('dust'); }); return true; } if (!atPost) { guardGo(WP.post.x, WP.post.z); return true; } return false; }
     if (gt === 'restock') { var need = ['lighter', 'rpaper', 'rgrinder'].filter(function (k) { return (S.storage[k] || 0) > 0; }); if (guard.carrying) { guardGo(0.95, 5.0, function () { Object.keys(guard.carrying).forEach(function (k) { S.display[k] = (S.display[k] || 0) + guard.carrying[k]; }); guard.carrying = null; syncDisplay(); sfx('putdown'); toast('🛡️ The guard restocked the counter display', ''); logEvent('🛡️ The guard restocked the counter display', ''); }); return true; } if (need.length) { guardGo(WP.annex.x, WP.annex.z, function () { guard.carrying = {}; need.forEach(function (k) { guard.carrying[k] = S.storage[k]; S.storage[k] = 0; }); syncStorage(); guard.say('Got the counter stock.', '#6fdc8c'); }); return true; } if (!atPost) { guardGo(WP.post.x, WP.post.z); return true; } return false; }

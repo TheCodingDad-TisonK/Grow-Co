@@ -9,16 +9,16 @@
     var g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = yaw; world.group.add(g);
     box(0.5, 0.9, 0.4, colorMat(0xe6e6ea, 0.5), 0, 0.45, 0, { parent: g });
     for (var v = 0; v < 8; v++) box(0.44, 0.012, 0.02, MAT.plastic, 0, 0.2 + v * 0.06, 0.21, { parent: g, cast: false });   // louvres on the front face
-    var lamp = box(0.3, 0.06, 0.06, glowMat(0x00ff66, 1.5), 0, 0.8, 0.21, { parent: g, cast: false });
+    var lamp = box(0.3, 0.06, 0.06, emitMat(0x00ff66, 1.5), 0, 0.8, 0.21, { parent: g, cast: false });
     cyl(0.03, 0.03, 0.06, MAT.plastic, 0, 0.93, 0.12, g, 12);
     // top exhaust: ring and a four-blade fan that spins while the unit runs
     var ring = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.008, 6, 20), MAT.plastic); ring.rotation.x = Math.PI / 2; ring.position.set(0, 0.905, -0.08); g.add(ring);
     var fan = new THREE.Group(); fan.position.set(0, 0.905, -0.08); g.add(fan);
     for (var b = 0; b < 4; b++) { var bl = new THREE.Mesh(bevelGeo(0.03, 0.005, 0.1), colorMat(0x8a8d92, 0.5)); bl.position.set(Math.sin(b * Math.PI / 2) * 0.06, 0, Math.cos(b * Math.PI / 2) * 0.06); bl.rotation.y = b * Math.PI / 2; fan.add(bl); }
     // readout on the front, redrawn whenever the numbers change
-    var panel = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.13), new THREE.MeshBasicMaterial({ map: textTex(['RH --%'], 256, 84, { size: 30, titleColor: '#6fdc8c', bg: '#101410' }), transparent: true })); panel.position.set(0, 0.68, 0.212); g.add(panel);
+    var panel = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.13), new THREE.MeshBasicMaterial({ map: signTex(['RH --%'], 256, 84, { size: 30, titleColor: '#6fdc8c', bg: '#101410' }), transparent: true })); panel.position.set(0, 0.68, 0.212); g.add(panel);
     var hit = box(0.52, 0.95, 0.44, MAT.none, 0, 0.48, 0, { parent: g, cast: false }); interactable(hit, { kind: 'dehum', zone: zone });
-    var r = rotAABB({ x1: -0.25, x2: 0.25, z1: -0.2, z2: 0.2 }, Math.round(yaw / (Math.PI / 2)));
+    var r = growRotAABB({ x1: -0.25, x2: 0.25, z1: -0.2, z2: 0.2 }, Math.round(yaw / (Math.PI / 2)));
     world.obstacles.push({ x1: x + Math.min(r.x1, r.x2), x2: x + Math.max(r.x1, r.x2), z1: z + Math.min(r.z1, r.z2), z2: z + Math.max(r.z1, r.z2), tag: 'dehum' });
     dehums[zone] = { g: g, lamp: lamp, fan: fan, panel: panel, key: '' };
   }
@@ -30,7 +30,7 @@
       if (running) { var dd = Math.hypot(u.g.position.x - player.pos.x, u.g.position.z - player.pos.z); near = Math.max(near, clamp(1 - dd / 9, 0, 1) * (on ? 1 : 0.5)); }
       u.lamp.material.emissiveIntensity = running ? (on ? 1.5 : 0.6) : 0.05; u.lamp.material.color.setHex(running ? 0x00ff66 : 0x333333); u.lamp.material.emissive.setHex(running ? 0x00ff66 : 0x000000);
       var key = Math.round(S.rh[z]) + ':' + S.dehum[z] + ':' + (on ? 1 : 0);
-      if (key !== u.key) { u.key = key; if (u.key0 !== undefined) sfx('click'); u.key0 = 1; var ob = u.panel.material.map; u.panel.material.map = textTex(['RH ' + Math.round(S.rh[z]) + '%', running ? (on ? '▶ drying to ' + S.dehum[z] + '%' : '● holding ' + S.dehum[z] + '%') : 'standby'], 256, 84, { size: 30, titleColor: running ? '#6fdc8c' : '#8a8a8a', bg: '#101410' }); u.panel.material.needsUpdate = true; if (ob) ob.dispose(); }
+      if (key !== u.key) { u.key = key; if (u.key0 !== undefined) sfx('click'); u.key0 = 1; var ob = u.panel.material.map; u.panel.material.map = signTex(['RH ' + Math.round(S.rh[z]) + '%', running ? (on ? '▶ drying to ' + S.dehum[z] + '%' : '● holding ' + S.dehum[z] + '%') : 'standby'], 256, 84, { size: 30, titleColor: running ? '#6fdc8c' : '#8a8a8a', bg: '#101410' }); u.panel.material.needsUpdate = true; if (ob) ob.dispose(); }
     }
     humUpdate(near);
   }
@@ -51,13 +51,13 @@
     vm(bevelGeo(4.6, 0.1, 2.0), dark, 0.2, 0.42, 0);                                          // sill / chassis
     vm(bevelGeo(0.15, 0.3, 2.0), dark, 3.02, 0.55, 0); vm(bevelGeo(0.15, 0.3, 2.0), dark, -2.45, 0.55, 0);   // bumpers
     vm(bevelGeo(0.1, 0.3, 0.8), colorMat(0x1a1c20, 0.4, 0.6), 3.0, 0.85, 0);                 // grille
-    [-0.75, 0.75].forEach(function (z) { vm(bevelGeo(0.06, 0.16, 0.3), glowMat(0xfff4d0, 1.2), 3.02, 0.95, z); vm(bevelGeo(0.06, 0.16, 0.24), glowMat(0xff3030, 0.9), -2.42, 1.0, z); });
+    [-0.75, 0.75].forEach(function (z) { vm(bevelGeo(0.06, 0.16, 0.3), emitMat(0xfff4d0, 1.2), 3.02, 0.95, z); vm(bevelGeo(0.06, 0.16, 0.24), emitMat(0xff3030, 0.9), -2.42, 1.0, z); });
     [-1.05, 1.05].forEach(function (z) { var mir = vm(bevelGeo(0.1, 0.16, 0.08), dark, 2.0, 1.55, z); vm(bevelGeo(0.04, 0.04, 0.12), dark, 2.0, 1.55, z * 0.95); });
     [[1.6, 1.02], [1.6, -1.02], [-1.5, 1.02], [-1.5, -1.02]].forEach(function (w) { var wh = vm(roundCylGeo(0.38, 0.38, 0.28, 18), colorMat(0x1a1a1a, 0.9), w[0], 0.38, w[1]); wh.rotation.x = Math.PI / 2; var rim = vm(roundCylGeo(0.22, 0.22, 0.29, 12), colorMat(0xc8ccd2, 0.3, 0.8), w[0], 0.38, w[1]); rim.rotation.x = Math.PI / 2; var hub = vm(roundCylGeo(0.06, 0.06, 0.3, 10), dark, w[0], 0.38, w[1]); hub.rotation.x = Math.PI / 2; var arch = vm(new THREE.TorusGeometry(0.44, 0.05, 6, 16, Math.PI), dark, w[0], 0.4, w[1] * 0.97); arch.rotation.y = w[1] > 0 ? 0 : Math.PI; });
     /* the long axis is x here, so a door panel is long in x and thin in z: built the other way round they stood out from the side like fins */
     [-1.05, -0.15].forEach(function (x) { vm(bevelGeo(0.015, 1.3, 0.008), dark, x, 1.2, 1.029); }); vm(bevelGeo(0.915, 0.015, 0.008), dark, -0.6, 1.85, 1.029); vm(bevelGeo(0.16, 0.03, 0.04), MAT.chrome, -0.25, 1.1, 1.045);   // the sliding door: its seams (the livery runs across them) and the handle
     [-1, 1].forEach(function (sz) { vm(bevelGeo(0.95, 0.75, 0.02), colorMat(0xd8d8d8, 0.4), 1.5, 0.95, sz * 1.015); vm(bevelGeo(0.16, 0.03, 0.04), MAT.chrome, 1.12, 1.15, sz * 1.035); });      // a cab door each side, under the side window
-    var logoTex = textTex(logoLines, 512, 200, { size: 46, titleColor: '#6fdc8c', bg: 'rgba(255,255,255,0)', line: 'rgba(0,0,0,0)', color: '#1a2a44' });
+    var logoTex = signTex(logoLines, 512, 200, { size: 46, titleColor: '#6fdc8c', bg: 'rgba(255,255,255,0)', line: 'rgba(0,0,0,0)', color: '#1a2a44' });
     var logo = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.9), new THREE.MeshBasicMaterial({ map: logoTex, transparent: true })); logo.position.set(-0.9, 1.35, 1.03); van.add(logo);
     var logo2 = logo.clone(); logo2.position.z = -1.03; logo2.rotation.y = Math.PI; van.add(logo2);
     var leafM = colorMat(0x3aa36a, 0.6); for (var lf = 0; lf < 5; lf++) { var lm = vm(bevelGeo(0.06, 0.5, 0.02), leafM, 0.7, 1.4, 1.04); lm.rotation.z = (lf - 2) * 0.5; }
@@ -77,7 +77,7 @@
     box(1.6, 0.06, 1.4, colorMat(0xa8a49a, 0.9), 0, 0.02, ROOM.z + 0.75, { cast: false });
     // street lamps: tapered post, arm, glowing head
     world.streetLights = world.streetLights || [];
-    [-7, 7].forEach(function (x) { cyl(0.05, 0.08, 3.8, colorMat(0x2a2d33, 0.5, 0.6), x, 1.9, SW + 1.5, null, 10); cyl(0.14, 0.16, 0.08, colorMat(0x2a2d33, 0.5, 0.6), x, 0.04, SW + 1.5, null, 12); var arm = box(0.06, 0.06, 0.8, colorMat(0x2a2d33, 0.5, 0.6), x, 3.75, SW + 1.15); var head = box(0.5, 0.14, 0.32, colorMat(0x2a2d33, 0.5, 0.6), x, 3.72, SW + 0.75); var lens = box(0.44, 0.02, 0.26, glowMat(0xfff2c0, 1.4), x, 3.64, SW + 0.75, { cast: false }); (world.lampFixtures = world.lampFixtures || []).push(lens); var l = new THREE.PointLight(0xfff2c0, 0.6, 10, 1.5); l.position.set(x, 3.4, SW + 0.9); scene.add(l); world.streetLights.push(l); });
+    [-7, 7].forEach(function (x) { cyl(0.05, 0.08, 3.8, colorMat(0x2a2d33, 0.5, 0.6), x, 1.9, SW + 1.5, null, 10); cyl(0.14, 0.16, 0.08, colorMat(0x2a2d33, 0.5, 0.6), x, 0.04, SW + 1.5, null, 12); var arm = box(0.06, 0.06, 0.8, colorMat(0x2a2d33, 0.5, 0.6), x, 3.75, SW + 1.15); var head = box(0.5, 0.14, 0.32, colorMat(0x2a2d33, 0.5, 0.6), x, 3.72, SW + 0.75); var lens = box(0.44, 0.02, 0.26, emitMat(0xfff2c0, 1.4), x, 3.64, SW + 0.75, { cast: false }); (world.lampFixtures = world.lampFixtures || []).push(lens); var l = new THREE.PointLight(0xfff2c0, 0.6, 10, 1.5); l.position.set(x, 3.4, SW + 0.9); scene.add(l); world.streetLights.push(l); });
     // delivery van parked along the kerb (long axis along x): body, cab, glass, lights, mirrors, wheels with rims, roof rack, side logo
     var van = new THREE.Group(); van.position.set(-9.5, 0, SW + 3.1); world.group.add(van); world.van = van;
     vanBody(van, ['GROW CO.', 'supply run · 24h']);
@@ -97,7 +97,7 @@
   }
   function spawnPed() {
     var spec = { skin: pick(SKINS), hair: pick(HAIRS), shirt: pick(SHIRTS), pants: pick(PANTS), hat: pick([null, null, null, 'cap', 'beanie']), capColor: pick(SHIRTS), prop: pick([null, null, 'bag', 'phone', 'coffee']), glasses: Math.random() < 0.25, longSleeve: Math.random() < 0.6, hairStyle: pick(['short', 'short', 'long', 'bun', 'afro', 'ponytail']), backpack: Math.random() < 0.25, backpackColor: pick(SHIRTS), watch: Math.random() < 0.3, socks: Math.random() < 0.3, freckles: Math.random() < 0.2, lipstick: Math.random() < 0.25, earrings: Math.random() < 0.25, coat: Math.random() < 0.2 ? pick([0x2a2d33, 0x6b5a3a, 0x8a2a2a]) : undefined, skirt: Math.random() < 0.2 ? pick(SHIRTS) : undefined, beard: Math.random() < 0.2, logo: Math.random() < 0.2 ? pick(['🌿', '420', 'RF', '★']) : undefined, eyeColor: pick(['#3a5a8a', '#2a6a3a', '#6a4a2a', '#4a4a4a']) };
-    var h = makeHuman(spec); var dir = Math.random() < 0.5 ? 1 : -1; var z = world.sidewalkZ - 0.8 + Math.random() * 1.6;
+    var h = makePerson(spec); var dir = Math.random() < 0.5 ? 1 : -1; var z = world.sidewalkZ - 0.8 + Math.random() * 1.6;
     h.position.set(-dir * (18 + Math.random() * 16), 0, z); h.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; world.group.add(h);
     peds.push({ h: h, dir: dir, speed: 0.9 + Math.random() * 0.7, pauseT: 0, z: z });
   }
@@ -108,7 +108,7 @@
   function spawnCityPed(scatter) {
     var C = CITY, ln = pick(cityLanes()), lo = ln.axis === 'x' ? -C.x + 6 : C.z1 + 6, hi = ln.axis === 'x' ? C.x - 6 : C.z2 - 6, dir = Math.random() < 0.5 ? 1 : -1;
     var spec = { skin: pick(SKINS), hair: pick(HAIRS), shirt: pick(SHIRTS), pants: pick(PANTS), hat: pick([null, null, null, 'cap', 'beanie']), capColor: pick(SHIRTS), prop: pick([null, null, 'bag', 'phone', 'coffee']), glasses: Math.random() < 0.25, longSleeve: Math.random() < 0.6, hairStyle: pick(['short', 'short', 'long', 'bun', 'afro', 'ponytail']), backpack: Math.random() < 0.25, backpackColor: pick(SHIRTS), watch: Math.random() < 0.3, socks: Math.random() < 0.3, freckles: Math.random() < 0.2, lipstick: Math.random() < 0.25, earrings: Math.random() < 0.25, coat: Math.random() < 0.2 ? pick([0x2a2d33, 0x6b5a3a, 0x8a2a2a]) : undefined, skirt: Math.random() < 0.2 ? pick(SHIRTS) : undefined, beard: Math.random() < 0.2, logo: Math.random() < 0.2 ? pick(['🌿', '420', 'RF', '★']) : undefined, eyeColor: pick(['#3a5a8a', '#2a6a3a', '#6a4a2a', '#4a4a4a']) };
-    var h = makeHuman(spec), off = randf(-0.9, 0.9), t = scatter ? randf(lo, hi) : (dir > 0 ? lo : hi);
+    var h = makePerson(spec), off = randf(-0.9, 0.9), t = scatter ? randf(lo, hi) : (dir > 0 ? lo : hi);
     if (ln.axis === 'x') { h.position.set(t, 0, ln.c + off); h.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; } else { h.position.set(ln.c + off, 0, t); h.rotation.y = dir > 0 ? 0 : Math.PI; }
     h.traverse(function (o) { o.layers.set(TOWN_LAYER); }); world.group.add(h);
     cityPeds.push({ h: h, ln: ln, dir: dir, speed: 0.9 + Math.random() * 0.7, pauseT: 0, lo: lo, hi: hi });
@@ -117,37 +117,37 @@
     var pp = drive.on ? drive.g.position : player.pos;
     for (var i = 0; i < cityPeds.length; i++) {
       var p = cityPeds[i], h = p.h, dx = h.position.x - pp.x, dz = h.position.z - pp.z, near = dx * dx + dz * dz < 80 * 80;   /* far walkers still move, they just skip the animation */
-      if (p.pauseT > 0) { p.pauseT -= dt; if (near) animateHuman(h, dt, 'idle', 0, null); continue; }
+      if (p.pauseT > 0) { p.pauseT -= dt; if (near) animatePerson(h, dt, 'idle', 0, null); continue; }
       if (p.ln.axis === 'x') h.position.x += p.dir * p.speed * dt; else h.position.z += p.dir * p.speed * dt;
-      if (near) animateHuman(h, dt, 'walk', p.speed, null);
+      if (near) animatePerson(h, dt, 'walk', p.speed, null);
       if (Math.random() < 0.0015) p.pauseT = 2 + Math.random() * 3;
-      var t = p.ln.axis === 'x' ? h.position.x : h.position.z; if (t < p.lo - 2 || t > p.hi + 2) { world.group.remove(h); disposeTree(h); cityPeds.splice(i, 1); i--; spawnCityPed(false); }
+      var t = p.ln.axis === 'x' ? h.position.x : h.position.z; if (t < p.lo - 2 || t > p.hi + 2) { world.group.remove(h); dropTree(h); cityPeds.splice(i, 1); i--; spawnCityPed(false); }
     }
     if (cityPeds.length < CITY_PED_MAX && Math.random() < 0.01) spawnCityPed(false);
   }
   function updatePeds(dt) {
     for (var i = 0; i < peds.length; i++) {
       var p = peds[i]; var h = p.h;
-      if (p.pauseT > 0) { p.pauseT -= dt; animateHuman(h, dt, 'idle', 0, player.pos); if (p.pauseT <= 0) h.rotation.y = p.dir > 0 ? Math.PI / 2 : -Math.PI / 2; continue; }
-      h.position.x += p.dir * p.speed * dt; animateHuman(h, dt, 'walk', p.speed, null);
+      if (p.pauseT > 0) { p.pauseT -= dt; animatePerson(h, dt, 'idle', 0, player.pos); if (p.pauseT <= 0) h.rotation.y = p.dir > 0 ? Math.PI / 2 : -Math.PI / 2; continue; }
+      h.position.x += p.dir * p.speed * dt; animatePerson(h, dt, 'walk', p.speed, null);
       if (Math.abs(h.position.x) < 5 && Math.random() < 0.004) { p.pauseT = 2 + Math.random() * 4; h.rotation.y = Math.PI; }
-      if (Math.abs(h.position.x) > 40) { world.group.remove(h); disposeTree(h); peds.splice(i, 1); i--; spawnPed(); }
+      if (Math.abs(h.position.x) > 40) { world.group.remove(h); dropTree(h); peds.splice(i, 1); i--; spawnPed(); }
     }
     if (peds.length < 11 && Math.random() < 0.006) spawnPed();
     updateCityPeds(dt);
   }
   // ── Room dressing (hall lounge, fridge, clock, posters) ────────────
-  function buildProps() {
+  function growBuildProps() {
     var clockG = new THREE.Group(); clockG.position.set(-3.0, 2.7, 3.88); world.group.add(clockG);
     var face = new THREE.Mesh(roundCylGeo(0.22, 0.22, 0.03, 24), new THREE.MeshStandardMaterial({ color: 0xf5f5f0 })); face.rotation.x = Math.PI / 2; clockG.add(face);
     var rim = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.02, 8, 24), MAT.black); clockG.add(rim);
     world.clockHands = { h: new THREE.Mesh(bevelGeo(0.02, 0.12, 0.01), MAT.black), m: new THREE.Mesh(bevelGeo(0.014, 0.18, 0.01), MAT.black) };
     world.clockHands.h.position.set(0, 0, -0.03); world.clockHands.m.position.set(0, 0, -0.035); world.clockHands.h.geometry.translate(0, 0.06, 0); world.clockHands.m.geometry.translate(0, 0.09, 0); clockG.add(world.clockHands.h); clockG.add(world.clockHands.m);
     var shN = STRAINS.length, shGap = Math.min(0.62, 4.6 / Math.max(1, shN - 1)), shW = Math.min(0.5, shGap * 0.82);
-    STRAINS.forEach(function (s, i) { var px = -(shN - 1) / 2 * shGap + i * shGap; var sheet = new THREE.Mesh(new THREE.PlaneGeometry(shW, shW * 1.4), new THREE.MeshStandardMaterial({ map: textTex(['STRAIN ' + (i + 1), s.emoji, s.name, s.thc.toFixed(1) + '× · ' + s.yield + 'g'], 384, 540, { size: 44, titleColor: '#8a8a8a', bg: '#f0ead8', color: '#2a2a2a', line: 'rgba(0,0,0,0)' }), roughness: 0.9 })); sheet.position.set(px, 2.25, -1.88); sheet.rotation.z = (i % 2 ? 0.02 : -0.02); world.group.add(sheet); var pin = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), new THREE.MeshStandardMaterial({ color: 0xc94a3a })); pin.position.set(px, 2.58, -1.87); world.group.add(pin); });
+    STRAINS.forEach(function (s, i) { var px = -(shN - 1) / 2 * shGap + i * shGap; var sheet = new THREE.Mesh(new THREE.PlaneGeometry(shW, shW * 1.4), new THREE.MeshStandardMaterial({ map: signTex(['STRAIN ' + (i + 1), s.emoji, s.name, s.thc.toFixed(1) + '× · ' + s.yield + 'g'], 384, 540, { size: 44, titleColor: '#8a8a8a', bg: '#f0ead8', color: '#2a2a2a', line: 'rgba(0,0,0,0)' }), roughness: 0.9 })); sheet.position.set(px, 2.25, -1.88); sheet.rotation.z = (i % 2 ? 0.02 : -0.02); world.group.add(sheet); var pin = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), new THREE.MeshStandardMaterial({ color: 0xc94a3a })); pin.position.set(px, 2.58, -1.87); world.group.add(pin); });
   }
   function syncRack() {
-    if (!propInst.rack) return; var g = propInst.rack.ctx.dynGroup(); clearKids(g);
+    if (!propInst.rack) return; var g = propInst.rack.ctx.dynGroup(); dropKids(g);
     world.interact = world.interact.filter(function (m) { return m.userData.dynGroup !== 'rack'; });
     var rx = 0, rz = 0;
     var soil = Math.min(S.supplies.soil || 0, 6);

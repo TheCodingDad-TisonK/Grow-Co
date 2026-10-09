@@ -8,9 +8,9 @@
     var C = cupState(), s = stashOf(id); if (s.g < CUP.grams) { toast('A Cup entry is ' + CUP.grams + ' g of one strain', 'bad'); return; }
     if (C.entry) cupWithdraw(true);
     var d = stashDraw(id, CUP.grams); C.entry = { strain: id, q: Math.round(d.q), thc: Math.round(d.thc * 100) / 100, day: cupNext() }; world.dirtyShelf = true; sfx('rare');
-    toast('🏆 ' + strainById(id).name + ' is entered for the Cup on day ' + C.entry.day + '.', 'good'); logEvent('🏆 Entered ' + CUP.grams + ' g of ' + strainById(id).name + ' (quality ' + C.entry.q + ') for the Cannabis Cup', ''); if (propInst.trophyCase) buildProp('trophyCase');
+    toast('🏆 ' + strainById(id).name + ' is entered for the Cup on day ' + C.entry.day + '.', 'good'); logEvent('🏆 Entered ' + CUP.grams + ' g of ' + strainById(id).name + ' (quality ' + C.entry.q + ') for the Cannabis Cup', ''); if (propInst.trophyCase) growBuildProp('trophyCase');
   }
-  function cupWithdraw(quiet) { var C = cupState(), e = C.entry; if (!e) return; stashAdd(e.strain, CUP.grams, e.q, e.thc); C.entry = null; world.dirtyShelf = true; if (!quiet) { toast('Took your entry back into the stash', ''); if (propInst.trophyCase) buildProp('trophyCase'); } }
+  function cupWithdraw(quiet) { var C = cupState(), e = C.entry; if (!e) return; stashAdd(e.strain, CUP.grams, e.q, e.thc); C.entry = null; world.dirtyShelf = true; if (!quiet) { toast('Took your entry back into the stash', ''); if (propInst.trophyCase) growBuildProp('trophyCase'); } }
   function cupJudge() {
     var C = cupState(), e = C.entry, lvl = S.level || 1, day = S.day || 1; C.entry = null;
     var field = CUP.rivals.map(function (n) { return { who: n, score: 46 + Math.min(40, lvl * 2.5) + randf(-8, 8) }; });
@@ -21,7 +21,7 @@
     if (metal) { C.trophies.push({ metal: metal, strain: st.name, day: day }); if (C.trophies.length > 40) C.trophies.shift(); }
     var said = place === 1 ? '🏆 You won the Cannabis Cup with ' + st.name + '. ' + money(prize) + ' prize money and a gold cup for the cabinet (rep +' + rep + ').' : place <= 3 ? '🏆 ' + st.name + ' came ' + (place === 2 ? 'second' : 'third') + ' at the Cup: ' + money(prize) + ' and a ' + metal + ' cup (rep +' + rep + ').' : '🏆 ' + st.name + ' came ' + place + 'th of ' + field.length + ' at the Cup. ' + field[0].who + ' took it (rep +1).';
     C.history.unshift({ day: day, place: place, note: st.name + ', quality ' + e.q + ': ' + (place === 1 ? 'first' : place === 2 ? 'second' : place === 3 ? 'third' : place + 'th') + ' of ' + field.length + (prize ? ', ' + money(prize) : '') }); C.history.length = Math.min(C.history.length, 8);
-    logEvent(said, place <= 3 ? 'rare' : ''); toast(said, place <= 3 ? 'rare' : ''); sfx(place <= 3 ? 'levelup' : 'click'); if (propInst.trophyCase) buildProp('trophyCase');
+    logEvent(said, place <= 3 ? 'rare' : ''); toast(said, place <= 3 ? 'rare' : ''); sfx(place <= 3 ? 'levelup' : 'click'); if (propInst.trophyCase) growBuildProp('trophyCase');
   }
   function cupGolds() { return cupState().trophies.filter(function (t) { return t.metal === 'gold'; }).length; }
   function paneCup() {
@@ -49,7 +49,7 @@
     g.scale.setScalar(s || 1); return g;
   }
   PROP_DLC.trophyCase = ['cup'];
-  defProp('trophyCase', { label: 'trophy cabinet', x: -5.25, z: 4 + WALL_T / 2 + 0.24, rot: 0, build: function (c) {
+  growDefProp('trophyCase', { label: 'trophy cabinet', x: -5.25, z: 4 + WALL_T / 2 + 0.24, rot: 0, build: function (c) {
     // a glazed cabinet in dark wood: three lit glass shelves, the entry jar on a stand in the middle of the top one
     var C = cupState(), w = 1.3, d = 0.42;
     c.box(w, 0.5, d, MAT.darkwood, 0, 0.25, 0, { solid: true }); drawer(c, 0.56, 0.3, 0.02, -0.31, 0.27, d / 2 - 0.01); drawer(c, 0.56, 0.3, 0.02, 0.31, 0.27, d / 2 - 0.01); c.box(w + 0.04, 0.04, d + 0.04, MAT.darkwood, 0, 0.52, 0); c.box(w + 0.04, 0.06, d + 0.04, MAT.darkwood, 0, 2.0, 0);
@@ -67,6 +67,6 @@
   dlcDefine({ id: 'cup', name: 'The Cannabis Cup', kinds: ['trophyCase'],
     prompt: function () { var C = cupState(), left = cupNext() - (S.day || 1); return 'Trophy cabinet <small>' + (C.entry ? strainById(C.entry.strain).name + ' is entered' : 'no jar entered') + ' · the Cup is ' + (left === 1 ? 'tomorrow' : 'in ' + left + ' days') + '</small>'; },
     interact: function () { ui.openPanel('cup'); },
-    newDay: function () { if ((S.day || 1) % CUP.every === 0) cupJudge(); else if (propInst.trophyCase) buildProp('trophyCase'); },
+    newDay: function () { if ((S.day || 1) % CUP.every === 0) cupJudge(); else if (propInst.trophyCase) growBuildProp('trophyCase'); },
     footfall: cupFootfall
   });

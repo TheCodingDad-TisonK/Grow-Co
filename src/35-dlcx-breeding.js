@@ -21,7 +21,7 @@
     if (!payBank(BREED.fee, 'The cross')) return;
     S.supplies['seed_' + a.id]--; S.supplies['seed_' + b.id]--; dirtySupply('seed');
     B.job = { a: a.id, b: b.id, t: 0, child: breedChild(a, b) }; B.name = B.job.child.name;
-    logEvent('🧬 Started a cross: ' + a.name + ' × ' + b.name, ''); toast('🧬 The cross is on the bench. It takes about ' + Math.round(BREED.ms / 60000) + ' min.', 'good'); if (propInst.breedBench) buildProp('breedBench');
+    logEvent('🧬 Started a cross: ' + a.name + ' × ' + b.name, ''); toast('🧬 The cross is on the bench. It takes about ' + Math.round(BREED.ms / 60000) + ' min.', 'good'); if (propInst.breedBench) growBuildProp('breedBench');
   }
   function breedFinish() {
     var B = breedState(), J = B.job; if (!J || J.t < BREED.ms / 1000) return;
@@ -29,7 +29,7 @@
     st.name = nm; B.strains.push(st); STRAINS.push(st); B.job = null; B.pickA = ''; B.pickB = ''; B.name = '';
     S.supplies['seed_' + st.id] = (S.supplies['seed_' + st.id] || 0) + BREED.seeds; dirtySupply('seed'); gainXp(40); S.rep += 2; sfx('rare');
     logEvent('🧬 Bred a new cultivar: ' + st.name + ' (' + breedStats(st) + ')', 'rare'); toast('🧬 ' + st.name + ' is yours. ' + BREED.seeds + ' seeds are on the supply rack, and the seed bank stocks it from now on (rep +2).', 'rare');
-    if (propInst.goodsShelf) buildProp('goodsShelf'); if (propInst.breedBench) buildProp('breedBench'); world.dirty = true;
+    if (propInst.goodsShelf) growBuildProp('goodsShelf'); if (propInst.breedBench) growBuildProp('breedBench'); world.dirty = true;
   }
   function paneBreed() {
     var B = breedState(), h = '<div class="g3-grid"><div class="g3-box"><h3>🧬 The cross</h3>';
@@ -57,12 +57,12 @@
     if (act === 'breedPick') { var p = (b.getAttribute('data-id') || '').split(':'), B = breedState(); if (p[0] === 'pickA' || p[0] === 'pickB') B[p[0]] = p[1]; return true; }
     if (act === 'breedStart') { breedStart(); return true; }
     if (act === 'breedFinish') { breedFinish(); return true; }
-    if (act === 'breedBuy') { var B2 = breedState(); if (!B2.owned && payBank(BREED.price, 'The breeding bench')) { B2.owned = true; buildProp('breedBench'); toast('🧬 The breeding bench is in. E on it starts a cross.', 'good'); logEvent('🧬 Fitted a breeding bench in the grow room', 'good'); } return true; }
+    if (act === 'breedBuy') { var B2 = breedState(); if (!B2.owned && payBank(BREED.price, 'The breeding bench')) { B2.owned = true; growBuildProp('breedBench'); toast('🧬 The breeding bench is in. E on it starts a cross.', 'good'); logEvent('🧬 Fitted a breeding bench in the grow room', 'good'); } return true; }
     return false;
   });
   hooks.panelInput.push(function (el) { if (el.getAttribute('data-breed') === 'name') { breedState().name = el.value; return true; } return false; });
   PROP_DLC.breedBench = ['breeding'];
-  defProp('breedBench', { label: 'breeding bench', x: -3.8, z: -ROOM.z + 0.45, rot: 0, build: function (c) {
+  growDefProp('breedBench', { label: 'breeding bench', x: -3.8, z: -ROOM.z + 0.45, rot: 0, build: function (c) {
     var B = breedState(); if (!B.owned) { notFitted(c, 1.7, 0.7, ['BREEDING BENCH', 'E to fit it · ' + money(BREED.price)], 'breedBench'); return; }
     // a steel bench with a lit hood over two mother-plant bays, a seed tray, a magnifier lamp and a read-out
     c.box(1.7, 0.05, 0.7, MAT.steel, 0, 0.9, 0, { solid: true }); c.box(1.6, 0.03, 0.6, MAT.gunmetal, 0, 0.3, 0, { cast: false }); [[-0.8, -0.3], [0.8, -0.3], [-0.8, 0.3], [0.8, 0.3]].forEach(function (l) { c.box(0.045, 0.88, 0.045, MAT.steel, l[0], 0.44, l[1]); c.cyl(0.03, 0.035, 0.02, MAT.soft, l[0], 0.01, l[1], 12); });
@@ -81,7 +81,7 @@
   dlcDefine({ id: 'breeding', name: 'The Breeding Lab', kinds: ['breedBench'],
     loaded: function () { breedState().strains.forEach(function (st) { if (!STRAINS.some(function (x) { return x.id === st.id; })) STRAINS.push(st); }); },
     prompt: function () { var B = breedState(); if (!B.owned) return 'Breeding bench <small>E fits it for ' + money(BREED.price) + '</small>'; if (!B.job) return 'Breeding bench <small>E picks the parents for a cross</small>'; return B.job.t >= BREED.ms / 1000 ? 'The seed is ready <small>E names your new strain</small>' : 'Breeding bench <small>the cross ripens in ' + minsLeft(BREED.ms / 1000 - B.job.t) + '</small>'; },
-    interact: function () { var B = breedState(); if (!B.owned) { ctxOpen('🧬 Breeding bench', 'A bench to cross two strains into one of your own. It goes against the back wall of the grow room.', [{ label: 'Fit it · ' + money(BREED.price) + ' <small>from the bank</small>', act: function () { if (payBank(BREED.price, 'The breeding bench')) { B.owned = true; buildProp('breedBench'); toast('🧬 The breeding bench is in. E on it starts a cross.', 'good'); logEvent('🧬 Fitted a breeding bench in the grow room', 'good'); } } }]); return; } ui.openPanel('breed'); },
-    tick: function (dt) { var B = breedState(); if (!B.job || !powerOn()) return; var was = B.job.t >= BREED.ms / 1000; B.job.t += dt; if (!was && B.job.t >= BREED.ms / 1000) { toast('🧬 The cross is ripe. Name your new strain at the breeding bench.', 'rare'); logEvent('🧬 The cross is ripe at the breeding bench', 'good'); sfx('rare'); if (propInst.breedBench) buildProp('breedBench'); } },
+    interact: function () { var B = breedState(); if (!B.owned) { ctxOpen('🧬 Breeding bench', 'A bench to cross two strains into one of your own. It goes against the back wall of the grow room.', [{ label: 'Fit it · ' + money(BREED.price) + ' <small>from the bank</small>', act: function () { if (payBank(BREED.price, 'The breeding bench')) { B.owned = true; growBuildProp('breedBench'); toast('🧬 The breeding bench is in. E on it starts a cross.', 'good'); logEvent('🧬 Fitted a breeding bench in the grow room', 'good'); } } }]); return; } ui.openPanel('breed'); },
+    tick: function (dt) { var B = breedState(); if (!B.job || !powerOn()) return; var was = B.job.t >= BREED.ms / 1000; B.job.t += dt; if (!was && B.job.t >= BREED.ms / 1000) { toast('🧬 The cross is ripe. Name your new strain at the breeding bench.', 'rare'); logEvent('🧬 The cross is ripe at the breeding bench', 'good'); sfx('rare'); if (propInst.breedBench) growBuildProp('breedBench'); } },
     update: function () { var W = world.breed, B = breedState(); if (!W || !W.scr || !W.scr.parent) return; var J = B.job; if (!J) { W.scr.userData.draw(['Ready', 'No cross on the bench', B.strains.length + ' of ' + BREED.max + ' cultivars bred']); return; } var k = clamp(J.t / (BREED.ms / 1000), 0, 1); W.figs.forEach(function (f) { f.userData.set(0.75 + k * 0.25, 1.15); }); W.scr.userData.draw([k >= 1 ? 'Seed ready' : 'Pollinated ' + Math.round(k * 100) + '%', strainById(J.a).name, '× ' + strainById(J.b).name, k >= 1 ? 'press E to name it' : minsLeft((1 - k) * BREED.ms / 1000) + ' to go']); }
   });

@@ -3,7 +3,7 @@
   var sit = { on: false, spot: null, prevPos: null };
   function sitDown(spot) { if (sit.on) { standUp(); return; } sfx('sit'); sit.on = true; sit.spot = spot; sit.prevPos = player.pos.clone(); player.pos.x = spot.x; player.pos.z = spot.z; player.yaw = spot.yaw; player.pitch = 0; player.vel.set(0, 0, 0); toast('Sat down. E or move to get up.', ''); }
   function standUp() { if (!sit.on) return; camExit(); sfx('sit'); sit.on = false; if (sit.prevPos) { player.pos.x = sit.prevPos.x; player.pos.z = sit.prevPos.z; } sit.spot = null; }
-  function eatSnack() { var h = held(); if (!h || h.kind !== 'snack') { toast('Grab something from the kitchen fridge first', 'bad'); return; } S.held = null; S.buff = { until: now() + 10 * 60000, speed: 1.15, label: 'well fed' }; S.stats.meals = (S.stats.meals || 0) + 1; burst(player.pos.x, player.pos.y - 0.3, player.pos.z, 0xffd766, 16, 'up'); sfx('rare'); toast('😋 ' + pick(['Nice.', 'Chef\'s kiss.', 'That hit the spot.']) + ' Well fed: +15% walk speed for 10 min', 'good'); logEvent('🍽️ Had something to eat', ''); }
+  function eatSnack() { var h = held(); if (!h || h.kind !== 'snack') { toast('Grab something from the kitchen fridge first', 'bad'); return; } S.held = null; S.buff = { until: now() + 10 * 60000, speed: 1.15, label: 'well fed' }; S.stats.meals = (S.stats.meals || 0) + 1; spark(player.pos.x, player.pos.y - 0.3, player.pos.z, 0xffd766, 16, 'up'); sfx('rare'); toast('😋 ' + pick(['Nice.', 'Chef\'s kiss.', 'That hit the spot.']) + ' Well fed: +15% walk speed for 10 min', 'good'); logEvent('🍽️ Had something to eat', ''); }
   function buffSpeed() { return S.buff && S.buff.until > now() ? S.buff.speed : 1; }
   function useHint(h) { if (!h) return ''; if (isDrink(h)) return 'V drinks it'; if (h.kind === 'snack') return 'V eats it'; if (h.kind === 'joints') return smoke.on ? 'one already lit' : 'V lights one'; if (h.kind === 'cookies') return 'V eats one'; if (h.kind === 'cupEmpty' || h.kind === 'canEmpty') return 'V bins it near a bin'; return ''; }
   function useHeld() {   /* V: drink, eat or light up where you stand; no couch or cooler needed */
@@ -24,7 +24,7 @@
   }
   function autoBin() {   /* an empty in your hand goes straight into a bin with room within a few steps, on your floor */
     var h = held(); if (!h || (h.kind !== 'cupEmpty' && h.kind !== 'canEmpty')) return false;
-    var best = null, bd = 3.5; builtUnits('trash').forEach(function (u) { var P = propPlacement(u); if ((P.floor || 0) !== (player.floor || 0)) return; var d = Math.hypot(P.x - player.pos.x, P.z - player.pos.z); if (d < bd && (machState(u).trash || 0) < 12) { bd = d; best = u; } });
+    var best = null, bd = 3.5; builtUnits('trash').forEach(function (u) { var P = growPropPlacement(u); if ((P.floor || 0) !== (player.floor || 0)) return; var d = Math.hypot(P.x - player.pos.x, P.z - player.pos.z); if (d < bd && (machState(u).trash || 0) < 12) { bd = d; best = u; } });
     if (!best) return false; var TB = machState(best); S.held = null; TB.trash = (TB.trash || 0) + 1; sfx('dust'); toast('🗑️ Tossed the empty in the bin (' + TB.trash + ' of 12)', ''); save(); return true;
   }
   function isDrink(h) { return !!h && (h.kind === 'cupWater' || h.kind === 'cup2' || h.kind === 'can2'); }
@@ -42,7 +42,7 @@
     var hand = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), new THREE.MeshStandardMaterial({ color: 0xe8b894, roughness: 0.9 })); hand.scale.set(1, 0.7, 1.2); gr.add(hand);
     var j = new THREE.Group(); j.position.set(0.0, 0.045, -0.03); j.rotation.x = -Math.PI / 2 + 0.5; gr.add(j);   // held between the fingers on top of the hand, pointing forward and up so it stays visible
     j.add(new THREE.Mesh(roundCylGeo(0.009, 0.007, 0.13, 8), colorMat(0xf5f0e0, 0.9)));
-    var ember = new THREE.Mesh(new THREE.SphereGeometry(0.01, 6, 6), glowMat(0xff6a1a, 2.0)); ember.position.y = 0.065; j.add(ember);
+    var ember = new THREE.Mesh(new THREE.SphereGeometry(0.01, 6, 6), emitMat(0xff6a1a, 2.0)); ember.position.y = 0.065; j.add(ember);
     smoke.light = new THREE.PointLight(0xff7a2a, 0, 0.6); smoke.light.position.y = 0.065; j.add(smoke.light);
     gr.position.set(0.26, -0.28, -0.55);
   }
@@ -67,7 +67,7 @@
     var up = smoke.drag > 0.7;
     if (smoke.drag > 0) {
       smoke.drag -= dt;
-      if (smoke.drag <= 0.7 && !smoke.puffed) { smoke.puffed = true; sfx('exhale'); camera.getWorldDirection(_puff); burst(camera.position.x + _puff.x * 0.4, camera.position.y - 0.04 + _puff.y * 0.4, camera.position.z + _puff.z * 0.4, 0xc9d1cc, 12, 'smoke'); }
+      if (smoke.drag <= 0.7 && !smoke.puffed) { smoke.puffed = true; sfx('exhale'); camera.getWorldDirection(_puff); spark(camera.position.x + _puff.x * 0.4, camera.position.y - 0.04 + _puff.y * 0.4, camera.position.z + _puff.z * 0.4, 0xc9d1cc, 12, 'smoke'); }
       if (smoke.drag <= 0) { smoke.drag = 0; smoke.puffed = false; }
     }
     _tp.set((up ? 0.08 : 0.26) * smokeSide(), up ? -0.13 : -0.28, up ? -0.36 : -0.55); smoke.group.position.lerp(_tp, 0.15);

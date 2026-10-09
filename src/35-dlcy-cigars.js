@@ -52,7 +52,7 @@
     return G;
   }
   function cigarSync(force) {   // the cigars you can see: on the table while a lot is being rolled, on the shelves of the humidor
-    var U = cigarUI; if (!U.dyn) return; var C = cigarState(), n = cigarCount(C), key = n * 10 + (C.job ? 1 : 0); if (!force && key === U.shown) return; U.shown = key; clearKids(U.dyn);
+    var U = cigarUI; if (!U.dyn) return; var C = cigarState(), n = cigarCount(C), key = n * 10 + (C.job ? 1 : 0); if (!force && key === U.shown) return; U.shown = key; dropKids(U.dyn);
     var show = Math.min(36, n); for (var i = 0; i < show; i++) { var c = cigarModel(1.15), row = Math.floor(i / 12), col = i % 12; c.rotation.y = Math.PI / 2; c.position.set(2.2 - 0.33 + col * 0.06, [0.142, 0.582, 1.002][row], 0.02); U.dyn.add(c); }
     if (C.job) for (var j = 0; j < 3; j++) { var t = cigarModel(1.15); t.position.set(-0.18 + j * 0.03, 0.967, 0.02 + j * 0.035); t.rotation.y = 0.3; U.dyn.add(t); }
   }
@@ -69,11 +69,11 @@
     b(0.5, 0.025, 0.34, colorMat(0xc9a36a, 0.8), -0.05, 0.943, 0.08, { r: 0.008 }); var kn = b(0.16, 0.004, 0.06, MAT.steel, 0.1, 0.958, 0.16, { cast: false, r: 0.002 }); kn.rotation.y = 0.5; b(0.04, 0.02, 0.07, oak, 0.17, 0.966, 0.19, { cast: false }).rotation.y = 0.5;
     b(0.36, 0.05, 0.2, colorMat(0x8a5a3a, 0.8), 0.5, 0.955, -0.12, { r: 0.006 }); for (var m = 0; m < 5; m++) b(0.02, 0.012, 0.17, colorMat(0x2a1a0e, 0.9), 0.38 + m * 0.06, 0.981, -0.12, { cast: false, sharp: true });
     c(0.035, 0.03, 0.05, MAT.ceramic, 0.3, 0.955, 0.22, 14); c(0.004, 0.004, 0.1, MAT.wood, 0.31, 1.0, 0.22, 6).rotation.z = 0.4;
-    c(0.07, 0.08, 0.02, MAT.black, 0.78, 0.94, -0.22, 16); var arm = c(0.008, 0.008, 0.5, MAT.brass, 0.72, 1.18, -0.22, 8); arm.rotation.z = 0.25; var shd = c(0.05, 0.11, 0.1, colorMat(0x1f4a35, 0.35, 0.2), 0.62, 1.42, -0.22, 20); shd.rotation.z = 0.5; var bl = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), glowMat(0xffe9c0, 1.4)); bl.position.set(0.6, 1.39, -0.22); g.add(bl);
+    c(0.07, 0.08, 0.02, MAT.black, 0.78, 0.94, -0.22, 16); var arm = c(0.008, 0.008, 0.5, MAT.brass, 0.72, 1.18, -0.22, 8); arm.rotation.z = 0.25; var shd = c(0.05, 0.11, 0.1, colorMat(0x1f4a35, 0.35, 0.2), 0.62, 1.42, -0.22, 20); shd.rotation.z = 0.5; var bl = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), emitMat(0xffe9c0, 1.4)); bl.position.set(0.6, 1.39, -0.22); g.add(bl);
     // a stool in front, a sack of leaf beside it
     c(0.17, 0.17, 0.04, oak, 0.0, 0.6, 0.75, 20); [[-0.11, 0.64], [0.11, 0.64], [0, 0.87]].forEach(function (p) { c(0.014, 0.018, 0.6, MAT.gunmetal, p[0], 0.3, p[1], 8); });
     // the humidor: a cedar-lined cabinet behind a glass door, three lit levels, a hygrometer in the pediment
-    var cedar = colorMat(0xb98a55, 0.7), litM = glowMat(0xffe2b0, 1.2);
+    var cedar = colorMat(0xb98a55, 0.7), litM = emitMat(0xffe2b0, 1.2);
     b(0.95, 1.7, 0.03, oak, 2.2, 0.85, -0.255); [-0.46, 0.46].forEach(function (x) { b(0.03, 1.7, 0.5, oak, 2.2 + x, 0.85, -0.02); }); b(0.95, 0.12, 0.5, oak, 2.2, 0.06, -0.02); b(0.95, 0.2, 0.5, oak, 2.2, 1.6, -0.02); b(1.0, 0.06, 0.55, oak, 2.2, 1.73, -0.02, { r: 0.015 });
     b(0.89, 1.4, 0.01, cedar, 2.2, 0.82, -0.235, { cast: false, sharp: true }); b(0.89, 0.01, 0.44, cedar, 2.2, 0.125, -0.02, { cast: false, sharp: true }); [0.56, 0.98].forEach(function (y) { b(0.89, 0.02, 0.4, cedar, 2.2, y, -0.03, { cast: false }); });
     [0.535, 0.955, 1.485].forEach(function (y) { b(0.8, 0.012, 0.02, litM, 2.2, y, 0.17, { cast: false, sharp: true }); });
@@ -82,7 +82,7 @@
     cigarUI.tScr = readout(0.34, 0.2, '#e8c27a'); cigarUI.tScr.position.set(-0.6, 1.5, -0.3); g.add(cigarUI.tScr); b(0.4, 0.26, 0.03, MAT.gloss, -0.6, 1.5, -0.32, { r: 0.008, cast: false });
     cigarUI.hScr = readout(0.3, 0.16, '#e8c27a'); cigarUI.hScr.position.set(2.2, 1.95, 0.0); g.add(cigarUI.hScr); b(0.36, 0.22, 0.03, MAT.gloss, 2.2, 1.95, -0.02, { r: 0.008, cast: false }); b(0.02, 0.2, 0.02, MAT.gunmetal, 2.2, 1.8, -0.02, { cast: false });
     cigarUI.dyn = new THREE.Group(); g.add(cigarUI.dyn);
-    var sg = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.4), new THREE.MeshBasicMaterial({ map: textTex(['ROLLING TABLE', 'whole leaf in · cigars out'], 480, 128, { titleColor: '#e8c27a' }), transparent: true })); sg.position.set(0.1, 2.35, -0.33); g.add(sg); signBack(sg, 1.5, 0.4);
+    var sg = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.4), new THREE.MeshBasicMaterial({ map: signTex(['ROLLING TABLE', 'whole leaf in · cigars out'], 480, 128, { titleColor: '#e8c27a' }), transparent: true })); sg.position.set(0.1, 2.35, -0.33); g.add(sg); signBack(sg, 1.5, 0.4);
     [[1.5, 0.95, 0.4, 'cigarTable', 1.9, 1.4, 0.9], [-0.7, 0.9, 0.35, 'cigarHumidor', 1.0, 1.8, 0.7]].forEach(function (h) { var m = new THREE.Mesh(new THREE.BoxGeometry(h[4], h[5], h[6]), MAT.none); m.position.set(h[0], Y + h[1], 2.62 - h[2] + 0.35); world.group.add(m); interactable(m, { kind: h[3] }); });
     world.obstacles.push({ x1: 0.6, x2: 2.4, z1: 2.27, z2: 2.97, tag: 'cigartable', floorLevel: -1 }); world.obstacles.push({ x1: -1.2, x2: -0.2, z1: 2.35, z2: 2.9, tag: 'humidor', floorLevel: -1 });
     g.traverse(function (o) { if (o.isMesh) o.receiveShadow = true; }); cigarSync(true);

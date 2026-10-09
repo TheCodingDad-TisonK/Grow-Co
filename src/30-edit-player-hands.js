@@ -4,26 +4,26 @@
   //    own builds and the piece you are placing, and everything else here stays furniture. ──
   var edit = { on: false, grabbed: null, hover: null, helper: null, tentDelta: null };
   function editTarget(id) { return id === 'tent' ? world.tentGroup : (propInst[id] && propInst[id].g); }
-  function editToggle() {
-    if (edit.grabbed || edit.grabbedFx) editDrop();
+  function growEditToggle() {
+    if (edit.grabbed || edit.grabbedFx) growEditDrop();
     edit.on = !edit.on; var eb = $('h-edit'); eb.hidden = !edit.on; eb.innerHTML = '🛠️ Build mode · E grab or place · R turn · Backspace put back · Del remove · C catalogue · F2 done';
     if (!edit.on && edit.helper) { scene.remove(edit.helper); edit.helper = null; }
-    runHooks(hooks.editMode, edit.on);
+    runHookList(hooks.editMode, edit.on);
     if (edit.on) { setFocus(null); toast('🛠️ Build mode: aim at furniture, a sign or a screen and E grabs it · C opens the catalogue to build your own · F2 done', ''); } else { toast('Layout saved', 'good'); save(); }
     sfx('click');
   }
-  function editHelper(obj) { if (!obj) { if (edit.helper) edit.helper.visible = false; return; } if (!edit.helper) { edit.helper = new THREE.BoxHelper(obj, 0x6fdc8c); scene.add(edit.helper); } edit.helper.visible = true; edit.helper.setFromObject(obj); }
+  function growEditHelper(obj) { if (!obj) { if (edit.helper) edit.helper.visible = false; return; } if (!edit.helper) { edit.helper = new THREE.BoxHelper(obj, 0x6fdc8c); scene.add(edit.helper); } edit.helper.visible = true; edit.helper.setFromObject(obj); }
   function editUpdate() {
     if (!edit.on) return;
     var pr = $('h-prompt');
-    if (edit.grabbedFx) { fxTick++; if (fxTick % 2 === 0) fxCarry(edit.grabbedFx); editHelper(edit.grabbedFx.root); pr.hidden = false; pr.innerHTML = edit.grabbedFx.table ? '<b>E</b>Put the ' + edit.grabbedFx.label + ' down here <small>it stands on the flat top you look at · R turn · Backspace reset</small>' : '<b>E</b>Hang the ' + edit.grabbedFx.label + ' here <small>it sticks to the surface you look at · R turn · Backspace reset</small>'; return; }
+    if (edit.grabbedFx) { fxTick++; if (fxTick % 2 === 0) fxCarry(edit.grabbedFx); growEditHelper(edit.grabbedFx.root); pr.hidden = false; pr.innerHTML = edit.grabbedFx.table ? '<b>E</b>Put the ' + edit.grabbedFx.label + ' down here <small>it stands on the flat top you look at · R turn · Backspace reset</small>' : '<b>E</b>Hang the ' + edit.grabbedFx.label + ' here <small>it sticks to the surface you look at · R turn · Backspace reset</small>'; return; }
     if (edit.grabbed) {
       ray.setFromCamera(center, camera); var y = player.floor === 1 ? UP.y : 0; var dir = ray.ray.direction; var t = (y - ray.ray.origin.y) / dir.y; var pt;
       if (dir.y < -0.05 && t > 0 && t < 10) pt = ray.ray.origin.clone().add(dir.clone().multiplyScalar(t)); else { var flat = dir.clone(); flat.y = 0; flat.normalize(); pt = ray.ray.origin.clone().add(flat.multiplyScalar(2.6)); pt.y = y; }
       pt.x = clamp(pt.x, -ROOM.x + 0.5, ROOM.x - 0.5); pt.z = clamp(pt.z, -ROOM.z + 0.5, ROOM.z - 0.5);
       if (edit.grabbed === 'tent') { world.tentGroup.position.set(pt.x - TENT_ORIGIN.x, 0, pt.z - TENT_ORIGIN.z); edit.tentDelta = { x: pt.x - TENT_ORIGIN.x, z: pt.z - TENT_ORIGIN.z }; }
       else { var g = propInst[edit.grabbed].g; g.position.x = pt.x; g.position.z = pt.z; }
-      editHelper(editTarget(edit.grabbed)); pr.hidden = false; pr.innerHTML = '<b>E</b>Drop ' + PROPS[edit.grabbed].label + ' <small>R rotate · Backspace reset</small>'; return;
+      growEditHelper(editTarget(edit.grabbed)); pr.hidden = false; pr.innerHTML = '<b>E</b>Drop ' + PROPS[edit.grabbed].label + ' <small>R rotate · Backspace reset</small>'; return;
     }
     ray.setFromCamera(center, camera); ray.far = 7; var meshes = [];
     PROP_ORDER.forEach(function (id) { var tgt = editTarget(id); if (!tgt || propGone(id)) return; if (PROPS[id].floor !== player.floor && !(PROPS[id].floor === undefined && player.floor === 0)) return; tgt.traverse(function (o) { if (o.isMesh && o.visible && o.material !== MAT.none) meshes.push(o); }); });
@@ -31,41 +31,41 @@
     var id = hits.length ? hits[0].object.userData.propId : null; if (id === undefined) id = null;
     edit.hoverFx = hits.length && !id && hits[0].object.userData.fxId ? fxById[hits[0].object.userData.fxId] : null;
     edit.hover = id;
-    if (edit.hoverFx) { pr.hidden = false; pr.innerHTML = '<b>E</b>' + (edit.hoverFx.table ? 'Pick up the ' : 'Take down the ') + edit.hoverFx.label + ' <small>R turn · Backspace reset · F2 done</small>'; editHelper(edit.hoverFx.root); return; }
-    if (id) { pr.hidden = false; pr.innerHTML = '<b>E</b>Grab ' + PROPS[id].label + ' <small>R rotate · Backspace reset' + (id !== 'tent' ? ' · Del remove' : '') + ' · F2 done</small>'; editHelper(editTarget(id)); }
-    else { pr.hidden = true; editHelper(null); }
+    if (edit.hoverFx) { pr.hidden = false; pr.innerHTML = '<b>E</b>' + (edit.hoverFx.table ? 'Pick up the ' : 'Take down the ') + edit.hoverFx.label + ' <small>R turn · Backspace reset · F2 done</small>'; growEditHelper(edit.hoverFx.root); return; }
+    if (id) { pr.hidden = false; pr.innerHTML = '<b>E</b>Grab ' + PROPS[id].label + ' <small>R rotate · Backspace reset' + (id !== 'tent' ? ' · Del remove' : '') + ' · F2 done</small>'; growEditHelper(editTarget(id)); }
+    else { pr.hidden = true; growEditHelper(null); }
   }
-  function editGrab() {
+  function growEditGrab() {
     if (edit.hoverFx && !edit.hover) { edit.grabbedFx = edit.hoverFx; sfx('click'); return; }
     if (!edit.hover) return; var id = edit.hover; edit.grabbed = id;
     world.obstacles = world.obstacles.filter(function (o) { return o.prop !== id && !(id === 'tent' && (o.tag === 'tent' || o.tag === 'pot')); });
     sfx('click');
   }
-  function editDrop() {
+  function growEditDrop() {
     if (edit.grabbedFx) { fxDrop(); return; }
     var id = edit.grabbed; if (!id) return; edit.grabbed = null;
     if (!S.layout) S.layout = {};
-    if (id === 'tent') { var d = edit.tentDelta || { x: 0, z: 0 }; world.tentGroup.position.set(0, 0, 0); S.layout.tent = { x: TENT_ORIGIN.x + d.x, z: TENT_ORIGIN.z + d.z, rot: 0 }; edit.tentDelta = null; buildProp('tent'); syncShelf(); }
-    else { var g = propInst[id].g; S.layout[id] = { x: Math.round(g.position.x * 100) / 100, z: Math.round(g.position.z * 100) / 100, rot: propInst[id].P.rot }; buildProp(id); }
+    if (id === 'tent') { var d = edit.tentDelta || { x: 0, z: 0 }; world.tentGroup.position.set(0, 0, 0); S.layout.tent = { x: TENT_ORIGIN.x + d.x, z: TENT_ORIGIN.z + d.z, rot: 0 }; edit.tentDelta = null; growBuildProp('tent'); syncShelf(); }
+    else { var g = propInst[id].g; S.layout[id] = { x: Math.round(g.position.x * 100) / 100, z: Math.round(g.position.z * 100) / 100, rot: propInst[id].P.rot }; growBuildProp(id); }
     save(); sfx('ok'); toast('Placed the ' + PROPS[id].label, 'good');
   }
-  function editRotate() {
+  function growEditRotate() {
     var rfx = edit.grabbedFx || (!edit.hover && edit.hoverFx); if (rfx) { rfx.root.rotation.y += Math.PI / 2; if (!edit.grabbedFx) { edit.grabbedFx = rfx; fxDrop(); } sfx('click'); return; }
     var id = edit.grabbed || edit.hover; if (!id || id === 'tent') { if (id === 'tent') toast('The tent only moves. It doesn\'t turn.', ''); return; }
     var inst = propInst[id]; inst.P.rot = (inst.P.rot + 1) % 4; inst.g.rotation.y = inst.P.rot * Math.PI / 2;
-    if (!edit.grabbed) { if (!S.layout) S.layout = {}; S.layout[id] = { x: inst.g.position.x, z: inst.g.position.z, rot: inst.P.rot }; buildProp(id); save(); }
+    if (!edit.grabbed) { if (!S.layout) S.layout = {}; S.layout[id] = { x: inst.g.position.x, z: inst.g.position.z, rot: inst.P.rot }; growBuildProp(id); save(); }
     sfx('click');
   }
-  function editReset() {
+  function growEditReset() {
     var zfx = edit.grabbedFx || (!edit.hover && edit.hoverFx); if (zfx) { fxReset(zfx); return; }
     var id = edit.grabbed || edit.hover; if (!id) return; edit.grabbed = null; edit.tentDelta = null;
     if (S.layout) delete S.layout[id]; if (id === 'tent') world.tentGroup.position.set(0, 0, 0);
-    buildProp(id); if (id === 'tent') syncShelf(); save(); toast('Reset the ' + PROPS[id].label + ' to its default spot', '');
+    growBuildProp(id); if (id === 'tent') syncShelf(); save(); toast('Reset the ' + PROPS[id].label + ' to its default spot', '');
   }
 
   // ── Particles ─────────────────────────────────────────────────────
-  var bursts = [];
-  function burst(x, y, z, color, n, mode) {
+  var sparks = [];
+  function spark(x, y, z, color, n, mode) {
     var geo = new THREE.BufferGeometry(); var pos = new Float32Array(n * 3); var vel = [];
     for (var i = 0; i < n; i++) {
       pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
@@ -77,14 +77,14 @@
     }
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     var pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: color, size: 0.05, transparent: true, opacity: 1, depthWrite: false }));
-    if (mode === 'smoke') { pts.material.opacity = 0.55; pts.material.size = 0.07; } scene.add(pts); bursts.push({ pts: pts, vel: vel, life: mode === 'smoke' ? 2.6 : 1.1, mode: mode });
+    if (mode === 'smoke') { pts.material.opacity = 0.55; pts.material.size = 0.07; } scene.add(pts); sparks.push({ pts: pts, vel: vel, life: mode === 'smoke' ? 2.6 : 1.1, mode: mode });
   }
-  function updateBursts(dt) {
-    for (var i = bursts.length - 1; i >= 0; i--) {
-      var b = bursts[i]; b.life -= dt; var arr = b.pts.geometry.attributes.position.array;
+  function updateSparks(dt) {
+    for (var i = sparks.length - 1; i >= 0; i--) {
+      var b = sparks[i]; b.life -= dt; var arr = b.pts.geometry.attributes.position.array;
       for (var k = 0; k < b.vel.length; k++) { var v = b.vel[k]; v[1] -= (b.mode === 'up' ? 2.2 : b.mode === 'smoke' ? -0.12 : 4.5) * dt; arr[k * 3] += v[0] * dt; arr[k * 3 + 1] += v[1] * dt; arr[k * 3 + 2] += v[2] * dt; if (arr[k * 3 + 1] < 0.02) { arr[k * 3 + 1] = 0.02; v[1] = 0; v[0] *= 0.6; v[2] *= 0.6; } }
       b.pts.geometry.attributes.position.needsUpdate = true; b.pts.material.opacity = clamp(b.life, 0, 1) * (b.mode === 'smoke' ? 0.55 : 1);
-      if (b.life <= 0) { scene.remove(b.pts); b.pts.geometry.dispose(); b.pts.material.dispose(); bursts.splice(i, 1); }
+      if (b.life <= 0) { scene.remove(b.pts); b.pts.geometry.dispose(); b.pts.material.dispose(); sparks.splice(i, 1); }
     }
   }
 
@@ -107,7 +107,7 @@
   }
   // which floor finish is underfoot, for the footstep sound
   function floorSurface() { var x = player.pos.x, z = player.pos.z; if (player.floor === -1) return 'concrete'; if (player.floor === 1) return 'planks'; if (z < -ROOM.z) return x >= 0 && x <= 8 && z >= -12.5 ? 'concrete' : 'outside'; if (z > ROOM.z) return 'outside'; if (z > 4) return 'tile'; if (z < -2) return x < -1 ? 'rubber' : 'concrete'; return x < 4 ? 'planks' : 'concrete'; }
-  function updatePlayer(dt) {
+  function growUpdatePlayer(dt) {
     if (drive.on) { updateDrive(dt); return; }
     if (player.downT > 0) { player.downT -= dt; player.vel.set(0, 0, 0); player.pos.y = lerp(player.pos.y, groundY(player.pos.x, player.pos.z) + 0.4, 1 - Math.pow(0.001, dt)); camera.position.set(player.pos.x, player.pos.y, player.pos.z); camera.rotation.set(player.pitch, player.yaw, 0.85 * clamp(player.downT / 1.2, 0, 1)); hurtFlash(clamp(player.downT / 2.5, 0, 0.9)); if (player.downT <= 0) { hurtFlash(0); toast('You get back on your feet', ''); } return; }   // stabbed or shot: on the floor for a few seconds
     var pk = player.keys; player.crouch = player.inVan || (!sit.on && player.locked && !ui.blocked() && !!(pk.ControlLeft || pk.ControlRight));   /* the cargo box is 1.35 m tall: you stoop in there */   // Ctrl held: eyes drop to 1.0 m and the walk slows
@@ -135,7 +135,7 @@
     camera.position.set(player.pos.x, player.pos.y + bobY, player.pos.z);
     camera.rotation.set(player.pitch, player.yaw, 0);
   }
-  function onMouseMove(e) {
+  function growMouseMove(e) {
     if (!player.locked || ui.blocked()) return;
     var sx = 0.0022 * SET.sens * (1 - 0.72 * scope.k);
     if (drive.on) { var lk = drive.look; lk.yaw = clamp(lk.yaw - e.movementX * sx, -2.6, 2.6); lk.pitch = clamp(lk.pitch + e.movementY * sx * (SET.invertY ? -1 : 1), -0.5, 1.1);   /* orbit pitch lifts the camera, which tilts the view DOWN: the sign is the opposite of the on-foot look */ lk.t = 1.4; return; }   /* at the wheel the mouse swings the camera round the car instead of the head */
@@ -164,7 +164,6 @@
   var handL = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), handSkin); handL.scale.set(1, 0.7, 1.3); handL.position.set(-0.28, -0.36, -0.55); hands.add(handL);
   var handR = handL.clone(); handR.position.set(0.3, -0.36, -0.55); hands.add(handR);
   var heldMesh = null, heldKey = '';
-  function mixHex(a, b, t) { var ar = a >> 16 & 255, ag = a >> 8 & 255, ab = a & 255, br = b >> 16 & 255, bg = b >> 8 & 255, bb = b & 255; return (Math.round(ar + (br - ar) * t) << 16) | (Math.round(ag + (bg - ag) * t) << 8) | Math.round(ab + (bb - ab) * t); }
   // A cola, not a pile of blobs: calyxes clustered in tapering rings, darker ones mixed through,
   // pistils curling off the sides and a dusting of trichomes. Deterministic, so it does not
   // reshuffle itself every time the mesh is rebuilt.

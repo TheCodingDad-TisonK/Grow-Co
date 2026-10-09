@@ -131,7 +131,7 @@
   function syncTabletDock() {
     var X = xs(); if (X.tablet === 'hand' && !tabletHas()) X.tablet = 'dock';   /* put down or lost: the dock gets it back */
     var b = tabletBody(); if (!b) return;
-    if (b.userData.builtLit !== hasLic('tobacco')) { exp.tabBody = null; buildProp('tabletDock'); return; }   /* the screen wakes up when the licence lands */
+    if (b.userData.builtLit !== hasLic('tobacco')) { exp.tabBody = null; growBuildProp('tabletDock'); return; }   /* the screen wakes up when the licence lands */
     b.visible = X.tablet === 'dock';
   }
   function tabletTake() {
@@ -163,7 +163,7 @@
       '<table class="g3-jobs"><tr><th></th><th>Address</th><th>Order</th><th>Left</th><th>Pays</th></tr>' + rows.join('') + '</table>';
   }
   function startGetaway(r) {
-    if (exp.getaway) { world.group.remove(exp.getaway.g); disposeTree(exp.getaway.g); } var g = new THREE.Group(); carBody(g, 0x111111); var dir = r.g.position.x > 0 ? 1 : -1; g.position.set(r.g.position.x, 0, CITY.mainZ + (dir > 0 ? 2.7 : -0.3)); g.rotation.y = dir > 0 ? -Math.PI / 2 : Math.PI / 2; world.group.add(g);
+    if (exp.getaway) { world.group.remove(exp.getaway.g); dropTree(exp.getaway.g); } var g = new THREE.Group(); carBody(g, 0x111111); var dir = r.g.position.x > 0 ? 1 : -1; g.position.set(r.g.position.x, 0, CITY.mainZ + (dir > 0 ? 2.7 : -0.3)); g.rotation.y = dir > 0 ? -Math.PI / 2 : Math.PI / 2; world.group.add(g);
     exp.getaway = { g: g, dir: dir, t: 0, loot: { grabbed: r.grabbed, goods: r.goods, disp: r.disp, cigs: r.cigs || {} } }; r.grabbed = 0; r.goods = []; r.disp = {}; r.cigs = {}; toast('🚗 They jumped into a black car heading ' + (dir > 0 ? 'east' : 'west') + ' on Main Street. Catch it with yours and you get it all back.', 'bad');
   }
   function expansionNewDay(offline) {
@@ -250,5 +250,5 @@
     var X = xs();
     X.jobs.forEach(function (j, i) { var col = j.via === 'branch' ? '#7fd4ff' : j.via === 'tablet' ? '#ffc857' : '#6fdc8c'; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(mx(j.x), mz(j.z), 9 + (now() / 200 % 6), 0, 6.29); ctx.stroke(); ctx.fillStyle = col; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('#' + (i + 1), mx(j.x), mz(j.z) + 4); });
     if (exp.getaway) { ctx.fillStyle = '#ff5a4a'; ctx.fillRect(mx(exp.getaway.g.position.x) - 5, mz(exp.getaway.g.position.z) - 5, 10, 10); }
-    ctx.textAlign = 'left'; ctx.fillStyle = '#8fa89a'; ctx.font = '12px system-ui'; ctx.fillText(season() + ' · day ' + S.day + (weekend() ? ' (weekend)' : '') + ' · ' + X.weather.kind, W + 22, H - 90); ctx.fillStyle = X.heat >= 60 ? '#ff6b6b' : X.heat >= 30 ? '#ffc857' : '#8fa89a'; ctx.fillText('Heat ' + Math.round(X.heat) + ' / 100', W + 22, H - 68);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#8fa89a'; ctx.font = '12px system-ui'; ctx.fillText(seasonLabel() + ' · day ' + S.day + (weekend() ? ' (weekend)' : '') + ' · ' + X.weather.kind, W + 22, H - 90); ctx.fillStyle = X.heat >= 60 ? '#ff6b6b' : X.heat >= 30 ? '#ffc857' : '#8fa89a'; ctx.fillText('Heat ' + Math.round(X.heat) + ' / 100', W + 22, H - 68);
   }
