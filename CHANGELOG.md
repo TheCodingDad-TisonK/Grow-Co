@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.28.4: two ways to support the game
+
+- **Support on Patreon and Support via PayPal on the main menu.** Two buttons above the Discord and site row; each opens its page in your browser. Nothing else changed.
+
 ## v1.28.3: the Desktop shortcut comes back
 
 - **Desktop shortcut on every install.** The installer created the Grow Co shortcut only on the very first install, so an update after it had gone left the Desktop empty. It is created on every install now.

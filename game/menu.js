@@ -46,6 +46,7 @@
     else { var one = readSlot(1); head = '<div class="rf-menu-btns"><button class="primary" data-rf="play">' + (used(one) ? '▶ Continue' : '▶ Start your shop') + '</button></div><div class="rf-menu-save">' + (used(one) ? line(one) : 'No shop yet. It starts with ' + money(220) + ', a tent and one pot, but no seed.') + '</div>'; }
     var WS = window.RF_WORKSHOP, wsn = WS ? WS.activeCount() : 0;
     body(head + '<div class="rf-menu-btns row"><button data-rf="how">📖 Guide</button>' + (WS ? '<button data-rf="shop">🧩 Workshop and DLC' + (wsn ? ' <b class="rf-pill">' + wsn + '</b>' : '') + '</button>' : '') + (CFG.bug ? '<button data-rf="bug">🐞 Report a bug</button>' : '') + '</div>' +
+      '<div class="rf-menu-btns row"><button data-rf="patreon">🧡 Support on Patreon</button><button data-rf="paypal">💙 Support via PayPal</button></div>' +
       '<div class="rf-menu-btns row"><button data-rf="discord">💬 Discord</button><button data-rf="site">🌐 realisticfarming.com</button><button data-rf="quit">' + (CFG.quitLabel || '⏏ Quit') + '</button></div>');
   }
   // ── Workshop: turn content packs on and off, and bring in your own ──
@@ -124,7 +125,7 @@
       '<p>Packs that ship with the game can\'t be overwritten, so give yours its own id.</p>' +
       '</div></div><div class="rf-menu-btns" style="margin-top:12px"><button data-rf="shop">← Back to the Workshop</button></div>');
   }
-  var LINKS = { discord: 'https://discord.gg/8FcgxwJ3dM', site: 'https://realisticfarming.com' };
+  var LINKS = { discord: 'https://discord.gg/8FcgxwJ3dM', site: 'https://realisticfarming.com', patreon: 'https://www.patreon.com/cw/thecodingdad', paypal: 'https://www.paypal.com/paypalme/TheCodingDad' };
   var chapter = 0;
   function showHow() {
     var G = window.RF_GUIDE || []; card.classList.add('wide');
@@ -159,7 +160,7 @@
     else if (a === 'ws-exp') window.RF_WORKSHOP.exportPack(t.getAttribute('data-id'));
     else if (a === 'ws-del') { window.RF_WORKSHOP.removePack(t.getAttribute('data-id')); wsMsg = 'Pack removed. Reloading…'; showWorkshop(); setTimeout(function () { reloadInto(urlSave ? 1 : active(), false); }, 260); }
     else if (a === 'ws-tmpl') { var ex = window.RF_WORKSHOP.example(); var bl = new Blob([JSON.stringify(ex, null, 2)], { type: 'application/json' }); var an = document.createElement('a'); an.href = URL.createObjectURL(bl); an.download = 'mypack.json'; document.body.appendChild(an); an.click(); setTimeout(function () { URL.revokeObjectURL(an.href); an.remove(); }, 1000); }
-    else if (a === 'discord' || a === 'site') window.open(LINKS[a], '_blank', 'noopener');
+    else if (a === 'discord' || a === 'site' || a === 'patreon' || a === 'paypal') window.open(LINKS[a], '_blank', 'noopener');
     else if (a === 'quit') { window.close(); setTimeout(function () { body('<div class="rf-how">You can close this window now.</div><div class="rf-menu-btns"><button data-rf="back">← Back</button></div>'); }, 300); }
   });
   if (flags['rfgc-skip-splash']) { showMain(); if (flags['rfgc-autoplay']) setTimeout(play, 60); }
