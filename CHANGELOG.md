@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.29.1: on the current engine
+
+Nothing changes for the player: the same shop, the same saves. The game moves to Co Engine v0.5.2, so the Co Engine editor opens it with everything the editor has learned since 1.29.0, and the shop's own props follow the layout the editor saves.
+
 ## v1.29.0: Grow Co. runs on Co Engine
 
 Nothing changes for the player: the same shop, the same saves, the same controls. Underneath, the game now runs on [Co Engine](https://github.com/TheCodingDad-TisonK/Co-Engine), the engine shared with Depot Co. and Garage Co.
