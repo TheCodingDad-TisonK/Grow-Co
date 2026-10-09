@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.29.2: E and the mouse work again
+
+- **Interacting works again.** Since 1.29.0 the shop showed no prompt and E and the mouse did nothing: the engine cleared what you were aiming at every frame, right after the shop worked it out. Look at a plant, a shelf, the till or a door and the prompt is back, and E and clicks act on it.
+- Under the hood: Co Engine v0.5.3.
+
 ## v1.29.1: on the current engine
 
 Nothing changes for the player: the same shop, the same saves. The game moves to Co Engine v0.5.2, so the Co Engine editor opens it with everything the editor has learned since 1.29.0, and the shop's own props follow the layout the editor saves.

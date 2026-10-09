@@ -1,7 +1,7 @@
 {
   "name": "rf-grow-co",
   "productName": "Grow Co",
-  "version": "1.29.1",
+  "version": "1.29.2",
   "description": "Standalone hobby game, NOT a Farming Simulator product. First-person shop simulator: grow, cure, pack and sell, run a basement cigarette works, fight off robbers, and drive around a small open town.",
   "main": "main.js",
   "author": "TheCodingDad-TisonK",
@@ -28,7 +28,7 @@
     "balance": "node tools/balance/report.js > docs/Balance.md"
   },
   "dependencies": {
-    "co-engine": "github:TheCodingDad-TisonK/Co-Engine#v0.5.2"
+    "co-engine": "github:TheCodingDad-TisonK/Co-Engine#v0.5.3"
   },
   "devDependencies": {
     "@electron/packager": "^18.3.6",
