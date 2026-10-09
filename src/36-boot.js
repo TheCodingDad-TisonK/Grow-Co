@@ -38,6 +38,7 @@
   GAME.weather = false; GAME.lighting = false; GAME.photo = false; GAME.editMode = false; GAME.bake = false; GAME.autoplay = false; GAME.hudFields = false; GAME.prompt = false;
   GAME.hud = hud; GAME.timeLabel = function () { return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); };
   GAME.handle = 'CO_GROW'; GAME.versionGlobal = 'RF_VERSION';
+  GAME.buildProp = growBuildProp;   // the Co Engine editor rebuilds a moved prop through the shop's own builder
   GAME.editorEnter = function () {   // the Co Engine editor starts the shop from its viewport: past the splash and the main menu, straight through the start button
     var sp = $('rf-splash'); if (sp) sp.hidden = true; var mm = $('rf-mainmenu'); if (mm) mm.hidden = true; var b = $('g3-start-btn'); if (b) b.click();
   };

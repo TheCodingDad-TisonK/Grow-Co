@@ -64,9 +64,9 @@
   var PROP_DLC = { cellarHatch: ['tobacco', 'lab'], cigCabinet: ['tobacco', 'lab'], tabletDock: ['tobacco'] };   /* built only while one of these DLC is on: the lab's door is in the basement and its stock sells from the cabinet */
   function dlcProp(id) { var need = PROP_DLC[unitBase(id)]; return !need || need.some(dlcOn); }
   function growPropPlacement(id) {
-    var d = PROPS[id]; var o = (S.layout && S.layout[id]) || {}; var base = unitBase(id);
+    var d = PROPS[id]; var o = (S.layout && S.layout[id]) || {}; var base = unitBase(id), L = (CO.layout && CO.layout().props[id]) || {};   /* the layout the editor shipped sits between the definition and the save */
     var owned = base === id || unitIds(base).indexOf(id) >= 0;   /* a unit you sold or reset away keeps its prop record but builds nothing */
-    return { x: typeof o.x === 'number' ? o.x : d.x, z: typeof o.z === 'number' ? o.z : d.z, rot: typeof o.rot === 'number' ? o.rot : (d.rot || 0), floor: d.floor || 0, unit: d.unit || 1, hidden: !!o.hidden || !owned || !dlcProp(id) };
+    return { x: typeof o.x === 'number' ? o.x : (typeof L.x === 'number' ? L.x : d.x), z: typeof o.z === 'number' ? o.z : (typeof L.z === 'number' ? L.z : d.z), rot: typeof o.rot === 'number' ? o.rot : (typeof L.rot === 'number' ? L.rot : (d.rot || 0)), floor: d.floor || 0, unit: d.unit || 1, hidden: !!o.hidden || !owned || !dlcProp(id) };
   }
   function propGone(id) { var i = propInst[id]; return !!(i && i.P && i.P.hidden); }   /* removed in build mode (Del), or a machine you don't own */
   function inGoneProp(o) { for (var p = o; p; p = p.parent) { var id = p.userData && p.userData.propId; if (id && propInst[id]) return propGone(id); } return false; }
