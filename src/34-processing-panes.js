@@ -50,7 +50,7 @@
   // run several tasks one after another, collecting each result, then hand the list to the finish callback
   function taskChain(list, finish) { var results = []; (function next() { if (!list.length) { finish(results); return; } var it = list.shift(); taskStart(it.kind, it.sub, function (r) { results.push(r); next(); }); })(); }
   var lockRetryT = 0;
-  function grabPointer(retry) { if (!ui.started) return; try { var r = canvas.requestPointerLock(); if (r && r.catch) r.catch(function () { lockRetry(); }); } catch (e) { lockRetry(); } }
+  function grabPointer(retry) { if (!ui.started || (CO.editor && CO.editor.on)) return; try { var r = canvas.requestPointerLock(); if (r && r.catch) r.catch(function () { lockRetry(); }); } catch (e) { lockRetry(); } }
   function lockRetry() {   /* Chromium refuses a lock asked for within about a second of an Esc that released it; ask once more after the cool-down, unless something opened meanwhile */
     var t = now(); if (t - lockRetryT < 1500) return; lockRetryT = t; setTimeout(function () { if (ui.started && !player.locked && !ui.blocked() && !ui.menuOpen) { try { canvas.requestPointerLock(); } catch (e) {} } }, 1200);
   }

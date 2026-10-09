@@ -38,6 +38,9 @@
   GAME.weather = false; GAME.lighting = false; GAME.photo = false; GAME.editMode = false; GAME.bake = false; GAME.autoplay = false; GAME.hudFields = false; GAME.prompt = false;
   GAME.hud = hud; GAME.timeLabel = function () { return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); };
   GAME.handle = 'CO_GROW'; GAME.versionGlobal = 'RF_VERSION';
+  GAME.editorEnter = function () {   // the Co Engine editor starts the shop from its viewport: past the splash and the main menu, straight through the start button
+    var sp = $('rf-splash'); if (sp) sp.hidden = true; var mm = $('rf-mainmenu'); if (mm) mm.hidden = true; var b = $('g3-start-btn'); if (b) b.click();
+  };
   GAME.saveLooksRight = function (s) { return typeof s.bank === 'number' || typeof s.cash === 'number'; };
   GAME.commands = {}; DEV.forEach(function (d) { GAME.commands[d[0]] = function () { devAction(d[0]); return d[1]; }; });
   GAME.devState = function () { return { level: S.level, xp: S.xp, rep: Math.round(S.rep), day: S.day, plants: S.plants.length, customer: !!S.customer, floor: player.floor, pos: [Math.round(player.pos.x * 10) / 10, Math.round(player.pos.z * 10) / 10] }; };

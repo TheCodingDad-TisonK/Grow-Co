@@ -136,7 +136,7 @@
     camera.rotation.set(player.pitch, player.yaw, 0);
   }
   function growMouseMove(e) {
-    if (!player.locked || ui.blocked()) return;
+    if (!(player.locked || (CO.editor && CO.editor.on && CO.editor.drag)) || ui.blocked()) return;   // in the Co Engine editor's viewport there is no pointer lock: the look follows the mouse while the right button is held
     var sx = 0.0022 * SET.sens * (1 - 0.72 * scope.k);
     if (drive.on) { var lk = drive.look; lk.yaw = clamp(lk.yaw - e.movementX * sx, -2.6, 2.6); lk.pitch = clamp(lk.pitch + e.movementY * sx * (SET.invertY ? -1 : 1), -0.5, 1.1);   /* orbit pitch lifts the camera, which tilts the view DOWN: the sign is the opposite of the on-foot look */ lk.t = 1.4; return; }   /* at the wheel the mouse swings the camera round the car instead of the head */
     player.yaw -= e.movementX * sx; player.pitch -= e.movementY * sx * (SET.invertY ? -1 : 1);
