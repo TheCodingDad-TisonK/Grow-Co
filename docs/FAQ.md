@@ -49,7 +49,7 @@ Pause menu, Settings, and set quality to Medium or Low. That lowers the resoluti
 It's a game. Nothing in it is advice about anything.
 
 **Can I use the code?**
-Yes, it's MIT licensed. Keep the notice. See the [Modding guide](Modding-Guide).
+Not without permission: Grow Co. is all rights reserved. You may play it and mod your own copy for your own play; copying, sharing, selling or reusing it needs written permission (see the LICENSE). See the [Modding guide](Modding-Guide) for modding your own copy.
 
 **How do I report a bug or suggest something?**
 [Open an issue](https://github.com/TheCodingDad-TisonK/Grow-Co/issues) or say hello on [Discord](https://discord.gg/8FcgxwJ3dM).

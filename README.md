@@ -120,7 +120,7 @@ Everything lives in [`docs/`](docs) and is mirrored to the [wiki](https://github
 
 ## Make it your own
 
-Fork it. The [modding guide](docs/Modding-Guide.md) walks through the patterns the game already uses, so a new machine or a new shop in town is mostly a matter of copying a neighbour. There is a developer menu in the pause screen with teleports, spawners and fillers for testing, and `window.RFGROW` exposes the running game in the console.
+You may mod your own copy for your own play; sharing a modded copy needs permission (see the licence). The [modding guide](docs/Modding-Guide.md) walks through the patterns the game already uses, so a new machine or a new shop in town is mostly a matter of copying a neighbour. There is a developer menu in the pause screen with teleports, spawners and fillers for testing, and `window.RFGROW` exposes the running game in the console.
 
 ## Credits
 
@@ -132,4 +132,4 @@ Grow Co. is free and stays free. If you want to follow the work and play new ver
 
 ## License
 
-[MIT](LICENSE). Do what you like with it. Keep the notice.
+All rights reserved. You may download and play the game for yourself; copying, sharing, selling or reusing it needs written permission. Releases up to v1.29.2 were MIT. See [LICENSE](LICENSE).
